@@ -94,17 +94,19 @@ function AdminPage() {
   const [filter, setFilter] = useState<RecipeCategory | "all">("all");
   const [query, setQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [openedFromCard, setOpenedFromCard] = useState(false);
 
   useEffect(() => {
     setShowHistory(false);
   }, [editing?.id]);
 
-  // Auto-open editor when ?edit=<recipeId> is present
+  // Auto-open editor when ?edit=<recipeId> is present (from pencil on a recipe card)
   useEffect(() => {
     if (!search.edit) return;
     const target = recipes.find((r) => r.id === search.edit && !r.deleted);
     if (target) {
       setEditing({ ...target });
+      setOpenedFromCard(true);
       navigate({ search: { edit: undefined }, replace: true });
     }
   }, [search.edit, recipes, navigate]);
