@@ -47,6 +47,7 @@ interface DbRecipeRow {
   timer_seconds: number | null;
   texture_target_hebrew: string | null;
   technique_notes_hebrew: string | null;
+  shelf_life_hebrew: string | null;
   deleted: boolean;
   sort_order: number;
 }
@@ -64,6 +65,7 @@ function rowToRecipe(row: DbRecipeRow): Recipe {
     timerSeconds: row.timer_seconds ?? undefined,
     textureTargetHebrew: row.texture_target_hebrew ?? undefined,
     techniqueNotesHebrew: row.technique_notes_hebrew ?? undefined,
+    shelfLifeHebrew: row.shelf_life_hebrew ?? undefined,
     deleted: row.deleted,
   };
 }
@@ -81,6 +83,7 @@ function recipeToRow(r: Recipe): Omit<DbRecipeRow, "sort_order"> & { sort_order?
     timer_seconds: r.timerSeconds ?? null,
     texture_target_hebrew: r.textureTargetHebrew ?? null,
     technique_notes_hebrew: r.techniqueNotesHebrew ?? null,
+    shelf_life_hebrew: r.shelfLifeHebrew ?? null,
     deleted: r.deleted ?? false,
   };
 }

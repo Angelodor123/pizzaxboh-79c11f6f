@@ -73,6 +73,7 @@ export type Database = {
           ingredients: Json
           instructions_hebrew: string
           name_hebrew: string
+          shelf_life_hebrew: string | null
           sort_order: number
           spice_bag: Json | null
           technique_notes_hebrew: string | null
@@ -90,6 +91,7 @@ export type Database = {
           ingredients?: Json
           instructions_hebrew?: string
           name_hebrew: string
+          shelf_life_hebrew?: string | null
           sort_order?: number
           spice_bag?: Json | null
           technique_notes_hebrew?: string | null
@@ -107,6 +109,7 @@ export type Database = {
           ingredients?: Json
           instructions_hebrew?: string
           name_hebrew?: string
+          shelf_life_hebrew?: string | null
           sort_order?: number
           spice_bag?: Json | null
           technique_notes_hebrew?: string | null

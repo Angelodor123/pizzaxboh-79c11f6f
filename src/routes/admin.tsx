@@ -80,6 +80,7 @@ const EMPTY: Recipe = {
   essenceHebrew: "",
   ingredients: [],
   instructionsHebrew: "",
+  shelfLifeHebrew: "",
 };
 
 function AdminPage() {
@@ -164,6 +165,7 @@ function AdminPage() {
       ...editing,
       nameHebrew: name,
       essenceHebrew: editing.essenceHebrew?.trim() || undefined,
+      shelfLifeHebrew: editing.shelfLifeHebrew?.trim() || undefined,
       ingredients: editing.ingredients
         .filter((i) => i.name.trim())
         .map((i) => ({
@@ -470,6 +472,22 @@ function AdminPage() {
               />
             </label>
 
+            <label className="block text-right">
+              <span className="text-xs font-bold text-muted-foreground">
+                חיי מדף (תוקף במקרר/הקפאה)
+              </span>
+              <input
+                type="text"
+                value={editing.shelfLifeHebrew ?? ""}
+                onChange={(e) => setEditing({ ...editing, shelfLifeHebrew: e.target.value })}
+                placeholder='לדוגמה: "3 ימים במקרר", "שבועיים", "חודש בהקפאה"'
+                className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right"
+              />
+              <span className="text-[10px] text-muted-foreground mt-1 block">
+                אם משאירים ריק — יוצג: "תוקף: לפי נוהל מטבח כללי"
+              </span>
+            </label>
+
             {saveError && (
               <p className="text-xs text-destructive text-right">{saveError}</p>
             )}
@@ -684,6 +702,7 @@ function snapshotToRecipe(snap: Record<string, unknown>): Recipe {
     timerSeconds: (snap.timer_seconds as number | null) ?? undefined,
     textureTargetHebrew: (snap.texture_target_hebrew as string | null) ?? undefined,
     techniqueNotesHebrew: (snap.technique_notes_hebrew as string | null) ?? undefined,
+    shelfLifeHebrew: (snap.shelf_life_hebrew as string | null) ?? undefined,
     deleted: Boolean(snap.deleted),
   };
 }

@@ -11,8 +11,10 @@ import {
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { AccessGate } from "@/components/AccessGate";
+import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { AuthProvider } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
+import { useUIStore } from "@/lib/ui-store";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
 function NotFoundComponent() {
@@ -122,12 +124,20 @@ function RootComponent() {
 
 function AuthedShell() {
   useRecipesSync();
+  const isServiceMode = useUIStore((s) => s.isServiceMode);
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
+      <header
+        className={`sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 transition-colors ${
+          isServiceMode
+            ? "border-orange-500 shadow-[0_4px_24px_-4px_rgba(255,140,0,0.6)]"
+            : "border-border"
+        }`}
+      >
         <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <CategoryDrawer />
+            <ServiceModeToggle />
           </div>
           <Link
             to="/"
@@ -141,7 +151,7 @@ function AuthedShell() {
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
             <span className="text-[12px] font-bold tracking-[0.3em] uppercase text-neon">
-              Back of House
+              {isServiceMode ? "Service Mode" : "Back of House"}
             </span>
           </Link>
         </div>
