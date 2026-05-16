@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pencil } from "lucide-react";
-import { categoryLabels, getRecipeSpeed, type Recipe } from "@/lib/cookbook";
+import { Pencil, Clock } from "lucide-react";
+import {
+  categoryLabels,
+  getRecipeSpeed,
+  DEFAULT_SHELF_LIFE,
+  type Recipe,
+} from "@/lib/cookbook";
 
 
 import { useAuth } from "@/lib/auth";
+import { useUIStore } from "@/lib/ui-store";
 import { CountdownTimer } from "./CountdownTimer";
 
 const EDITOR_EMAIL = "dorbareket123@gmail.com";
