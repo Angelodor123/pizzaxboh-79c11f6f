@@ -4,6 +4,7 @@ import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert } from "lucide-re
 import {
   categoryLabels,
   categoryOrder,
+  type Ingredient,
   type Recipe,
   type RecipeCategory,
 } from "@/lib/cookbook";
