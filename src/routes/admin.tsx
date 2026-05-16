@@ -177,6 +177,8 @@ function AdminPage() {
         </table>
       </div>
 
+      <InvitationsPanel />
+
       {editing && (
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
