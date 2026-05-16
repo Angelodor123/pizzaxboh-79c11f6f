@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Plus, Trash2, Pencil, X, Check } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert } from "lucide-react";
 import {
   categoryLabels,
   categoryOrder,
@@ -8,10 +8,53 @@ import {
   type RecipeCategory,
 } from "@/lib/cookbook";
 import { useCookbookStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPage,
+  component: AdminGate,
 });
+
+type AppRole = "admin" | "viewer";
+
+interface InvitationRow {
+  id: string;
+  email: string;
+  role: AppRole;
+  created_at: string;
+}
+
+interface RoleRow {
+  id: string;
+  email: string;
+  role: AppRole;
+  user_id: string;
+}
+
+function AdminGate() {
+  const { role, loading } = useAuth();
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
+  }
+  if (role !== "admin") {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <ShieldAlert className="h-10 w-10 text-neon mx-auto" />
+        <h1 className="mt-4 font-display text-2xl font-bold">אין הרשאת ניהול</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          עמוד זה זמין למשתמשים בעלי תפקיד "ניהול" בלבד.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-neon px-4 py-2 text-sm font-bold text-primary-foreground"
+        >
+          חזרה למטבח
+        </Link>
+      </div>
+    );
+  }
+  return <AdminPage />;
+}
 
 const EMPTY: Recipe = {
   id: "",
