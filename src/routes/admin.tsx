@@ -204,7 +204,7 @@ function AdminPage() {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`למחוק את "${r.nameHebrew}"?`)) softDeleteRecipe(r.id);
+                          if (confirm(`למחוק את "${r.nameHebrew}"?`)) void softDeleteRecipe(r.id);
                         }}
                         className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
                         aria-label="מחק"
