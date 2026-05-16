@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings } from "lucide-react";
+import { Menu, Settings, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
 import { useUIStore } from "@/lib/ui-store";
+import { useAuth } from "@/lib/auth";
 
 const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
   { key: "all", emoji: "📋", label: "כל המתכונים" },
