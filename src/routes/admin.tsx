@@ -475,7 +475,7 @@ function AdminPage() {
             )}
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                onClick={() => setEditing(null)}
+                onClick={closeEditor}
                 className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-card"
               >
                 ביטול
