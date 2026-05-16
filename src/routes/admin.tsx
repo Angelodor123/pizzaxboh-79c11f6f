@@ -421,7 +421,7 @@ function AdminPage() {
                       }}
                       placeholder="כמות"
                       size={4}
-                      className="w-[3.5rem] min-w-[3rem] shrink-0 bg-input border border-border rounded-md px-2 py-1.5 text-center text-neon font-bold tabular-nums field-sizing-content"
+                      className="min-w-[3rem] max-w-[6rem] shrink-0 bg-input border border-border rounded-md px-2 py-1.5 text-center text-neon font-bold tabular-nums [field-sizing:content]"
                     />
                     <input
                       type="text"
