@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings, LogOut } from "lucide-react";
+import { Menu, Settings, LogOut, ChevronDown } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,8 +12,9 @@ import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
 import { useUIStore } from "@/lib/ui-store";
 import { useAuth } from "@/lib/auth";
 
-const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
-  { key: "all", emoji: "📋", label: "כל המתכונים" },
+const SUPER_ADMIN_EMAIL = "dorbareket123@gmail.com";
+
+const CATEGORIES: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
   { key: "sauces_bases", emoji: "🍅", label: categoryLabels.sauces_bases },
   { key: "aiolis_sauces", emoji: "🍯", label: categoryLabels.aiolis_sauces },
   { key: "jams_creams", emoji: "🥘", label: categoryLabels.jams_creams },
@@ -23,8 +25,9 @@ const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
 
 export function CategoryDrawer() {
   const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
-  const { role, email, signOut } = useAuth();
-  const isAdmin = role === "admin";
+  const { email, signOut } = useAuth();
+  const [catsOpen, setCatsOpen] = useState(false);
+  const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL;
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -42,74 +45,94 @@ export function CategoryDrawer() {
       >
         <SheetHeader className="px-6 py-5 border-b border-border text-right">
           <SheetTitle className="font-display text-xl text-foreground">
-            תפריט <span className="text-neon text-glow-neon">קטגוריות</span>
+            תפריט
           </SheetTitle>
         </SheetHeader>
 
         <nav className="flex-1 overflow-y-auto py-3">
           <ul className="flex flex-col">
-            {ITEMS.map((it) => {
-              const active = category === it.key;
-              return (
-                <li key={it.key}>
-                  <Link
-                    to="/"
-                    onClick={() => setCategory(it.key)}
-                    className={`flex items-center justify-end gap-3 px-6 py-4 text-lg font-bold border-r-4 transition ${
-                      active
-                        ? "bg-neon/10 text-neon border-neon glow-neon"
-                        : "text-foreground border-transparent hover:bg-card hover:text-neon"
-                    }`}
-                  >
-                    <span className="flex-1 text-right">{it.label}</span>
-                    <span className="text-2xl leading-none">{it.emoji}</span>
-                  </Link>
-                </li>
-              );
-            })}
-
-            <li className="mt-3 border-t border-border pt-3">
-              <Link
-                to="/guide"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-end gap-3 px-6 py-4 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+            <li>
+              <button
+                onClick={() => setCatsOpen((o) => !o)}
+                className="w-full flex items-center justify-end gap-3 px-6 py-4 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
               >
-                <span className="flex-1 text-right">מדריך מקצועי</span>
-                <span className="text-2xl leading-none">📖</span>
-              </Link>
+                <ChevronDown
+                  className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`}
+                />
+                <span className="flex-1 text-right">כל המתכונים</span>
+                <span className="text-2xl leading-none">📋</span>
+              </button>
+
+              {catsOpen && (
+                <ul className="bg-background/40 border-y border-border">
+                  <li>
+                    <Link
+                      to="/"
+                      onClick={() => setCategory("all")}
+                      className={`flex items-center justify-end gap-3 px-8 py-3 text-base font-bold border-r-4 transition ${
+                        category === "all"
+                          ? "bg-neon/10 text-neon border-neon"
+                          : "text-foreground border-transparent hover:text-neon"
+                      }`}
+                    >
+                      <span className="flex-1 text-right">הכל</span>
+                      <span className="text-xl leading-none">⭐</span>
+                    </Link>
+                  </li>
+                  {CATEGORIES.map((it) => {
+                    const active = category === it.key;
+                    return (
+                      <li key={it.key}>
+                        <Link
+                          to="/"
+                          onClick={() => setCategory(it.key)}
+                          className={`flex items-center justify-end gap-3 px-8 py-3 text-base font-bold border-r-4 transition ${
+                            active
+                              ? "bg-neon/10 text-neon border-neon"
+                              : "text-foreground border-transparent hover:text-neon"
+                          }`}
+                        >
+                          <span className="flex-1 text-right">{it.label}</span>
+                          <span className="text-xl leading-none">{it.emoji}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </li>
+
+            {isSuperAdmin && (
+              <li className="mt-2">
+                <Link
+                  to="/admin"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex items-center justify-end gap-3 px-6 py-4 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+                >
+                  <span className="flex-1 text-right">מערכת ניהול</span>
+                  <Settings className="h-5 w-5" />
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
 
         <div className="border-t border-border p-4 space-y-2">
-          {isAdmin && (
-            <Link
-              to="/admin"
-              onClick={() => setDrawerOpen(false)}
-              className="flex items-center justify-end gap-3 px-4 py-3 rounded-md bg-card text-foreground font-bold hover:bg-neon hover:text-primary-foreground transition"
-            >
-              <span className="flex-1 text-right">מערכת ניהול</span>
-              <Settings className="h-5 w-5" />
-            </Link>
-          )}
-          <div className="px-1 pt-1 flex items-center justify-between gap-2">
-            <button
-              onClick={async () => {
-                setDrawerOpen(false);
-                await signOut();
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-neon transition"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              התנתק
-            </button>
-            <div className="text-[10px] text-muted-foreground truncate max-w-[60%] text-right">
+          <button
+            onClick={async () => {
+              setDrawerOpen(false);
+              await signOut();
+            }}
+            className="w-full flex items-center justify-end gap-3 px-4 py-3 rounded-md bg-card text-foreground font-bold hover:bg-neon hover:text-primary-foreground transition"
+          >
+            <span className="flex-1 text-right">התנתק</span>
+            <LogOut className="h-5 w-5" />
+          </button>
+          {email && (
+            <div className="text-[10px] text-muted-foreground truncate text-right px-1">
               {email}
-              <span className="block text-neon font-bold">
-                {isAdmin ? "ניהול" : role === "viewer" ? "צפייה בלבד" : ""}
-              </span>
             </div>
-          </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
