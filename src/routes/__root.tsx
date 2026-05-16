@@ -113,8 +113,17 @@ function RootComponent() {
       <div className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center gap-2" aria-label="Pizza X — בית">
-              <span className="inline-block w-9 h-9 rounded-md bg-neon glow-neon grid place-items-center font-black text-primary-foreground">
+            <Link to="/" className="flex items-center gap-1.5" aria-label="Pizza X — בית">
+              <span
+                className="font-display font-black text-xl tracking-tight leading-none text-foreground"
+                style={{ letterSpacing: "-0.04em" }}
+              >
+                PIZZA
+              </span>
+              <span
+                className="font-display font-black text-2xl leading-none text-neon text-glow-neon"
+                style={{ transform: "skewX(-10deg)", display: "inline-block" }}
+              >
                 X
               </span>
             </Link>
