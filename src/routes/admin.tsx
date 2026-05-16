@@ -702,6 +702,7 @@ function snapshotToRecipe(snap: Record<string, unknown>): Recipe {
     timerSeconds: (snap.timer_seconds as number | null) ?? undefined,
     textureTargetHebrew: (snap.texture_target_hebrew as string | null) ?? undefined,
     techniqueNotesHebrew: (snap.technique_notes_hebrew as string | null) ?? undefined,
+    shelfLifeHebrew: (snap.shelf_life_hebrew as string | null) ?? undefined,
     deleted: Boolean(snap.deleted),
   };
 }
