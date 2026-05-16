@@ -165,6 +165,7 @@ function AdminPage() {
       ...editing,
       nameHebrew: name,
       essenceHebrew: editing.essenceHebrew?.trim() || undefined,
+      shelfLifeHebrew: editing.shelfLifeHebrew?.trim() || undefined,
       ingredients: editing.ingredients
         .filter((i) => i.name.trim())
         .map((i) => ({
