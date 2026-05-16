@@ -249,7 +249,7 @@ function AdminPage() {
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-end">
                       <button
-                        onClick={() => setEditing({ ...r })}
+                        onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
                         className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
                         aria-label="ערוך"
                       >
