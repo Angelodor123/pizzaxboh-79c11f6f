@@ -94,41 +94,31 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NavLink({ to, label }: { to: string; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="px-3 py-2 rounded-md text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-card transition"
-      activeProps={{ className: "px-3 py-2 rounded-md text-sm font-bold bg-card text-neon glow-neon" }}
-    >
-      {label}
-    </Link>
-  );
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Pizza X — בית">
-              <img
-                src="/pizza-x-logo.png"
-                alt="Pizza X"
-                className="h-9 w-auto"
-              />
+          <div className="relative max-w-7xl mx-auto px-4 h-16 flex items-center justify-center">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <CategoryDrawer />
+            </div>
+            <Link
+              to="/"
+              className="flex flex-col items-center gap-0.5"
+              aria-label="Pizza X — בית"
+            >
               <span
-                className="hidden sm:inline text-[10px] font-bold tracking-[0.25em] uppercase text-neon"
+                className="font-display font-black text-2xl tracking-tight leading-none text-foreground"
+                style={{ letterSpacing: "0.04em" }}
               >
+                PIZZA <span className="text-neon text-glow-neon inline-block" style={{ transform: "skewX(-10deg)" }}>X</span>
+              </span>
+              <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-neon">
                 Back of House
               </span>
             </Link>
-            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-              <NavLink to="/" label="מערכת הכנות" />
-              <NavLink to="/guide" label="מדריך מקצועי" />
-            </nav>
           </div>
         </header>
         <main className="flex-1">
