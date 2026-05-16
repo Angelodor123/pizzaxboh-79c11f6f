@@ -280,8 +280,8 @@ export const pizzaXCookbook: Recipe[] = [
       { name: "פפרוני צלוי וטחון (ללא שומן)", quantity: 300, unit: "גרם" },
     ],
     instructionsHebrew:
-      "פתיחת 450 גרם ריבת שרי עם שומן פפרוני ומים, הוספת 300 גרם פפרוני צלוי וטחון (ללא שומן) ובישול למרקם Jammy.",
-    textureTargetHebrew: "Jammy",
+      "פתיחת 450 גרם ריבת שרי עם שומן פפרוני ומים, הוספת 300 גרם פפרוני צלוי וטחון (ללא שומן) ובישול למרקם ריבתי.",
+    textureTargetHebrew: "מרקם ריבתי",
   },
   {
     id: "garlic-confit-production",
