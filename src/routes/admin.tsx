@@ -80,6 +80,7 @@ const EMPTY: Recipe = {
   essenceHebrew: "",
   ingredients: [],
   instructionsHebrew: "",
+  shelfLifeHebrew: "",
 };
 
 function AdminPage() {
