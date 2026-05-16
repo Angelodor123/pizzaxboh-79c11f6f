@@ -23,41 +23,43 @@ function KitchenDashboard() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
-            Mise en Place
+    <div className="max-w-7xl mx-auto px-4 py-5">
+      <div className="mb-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
+              Mise en Place
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+              מערכת <span className="text-neon text-glow-neon">הכנות</span>
+            </h1>
           </div>
-          <h1 className="font-display text-4xl font-bold mt-1">
-            מערכת <span className="text-neon text-glow-neon">הכנות</span>
-          </h1>
-          <p className="text-muted-foreground mt-3 text-sm leading-relaxed max-w-2xl">
-            ברוכים הבאים למרכז הקולינרי של פיצה X. כאן תמצאו את כל המתכונים,
-            הטכניקות והדיוקים שהופכים אותנו למי שאנחנו. עבדו לפי הסדר, הקפידו
-            על הכמויות, וזכרו – הדיוק הוא המרכיב הכי חשוב במנה.
-          </p>
-        </div>
 
-        <div className="shrink-0 flex items-center gap-3 rounded-2xl border border-neon/50 bg-card/60 backdrop-blur px-4 py-3 glow-neon">
           <div
-            className="relative h-14 w-14 rounded-full flex items-center justify-center font-display font-black text-2xl text-neon text-glow-neon tabular-nums"
+            className="shrink-0 flex flex-col items-center justify-center h-16 w-16 rounded-full border-2 border-neon glow-neon"
             style={{
               background:
-                "radial-gradient(circle at center, rgba(255,20,147,0.15), transparent 70%)",
-              border: "2px solid #FF1493",
+                "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
             }}
+            aria-label={`${filtered.length} מתכונים זמינים`}
           >
-            {filtered.length}
-          </div>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">
+            <span className="font-display font-black text-2xl text-neon text-glow-neon tabular-nums leading-none">
+              {filtered.length}
+            </span>
+            <span className="text-[8px] font-bold tracking-[0.15em] text-neon uppercase mt-0.5">
               Live
-            </div>
-            <div className="text-xs font-bold text-foreground leading-tight max-w-[10rem]">
-              מתכונים זמינים במערכת
-            </div>
+            </span>
           </div>
+        </div>
+
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          ברוכים הבאים למרכז הקולינרי של פיצה X. כאן תמצאו את כל המתכונים,
+          הטכניקות והדיוקים שהופכים אותנו למי שאנחנו. עבדו לפי הסדר, הקפידו על
+          הכמויות, וזכרו – הדיוק הוא המרכיב הכי חשוב במנה.
+        </p>
+
+        <div className="mt-2 text-xs font-bold text-foreground/80 text-right">
+          מתכונים זמינים במערכת
         </div>
       </div>
 
