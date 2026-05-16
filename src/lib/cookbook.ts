@@ -3,6 +3,7 @@ export type RecipeCategory =
   | "aiolis_sauces"
   | "jams_creams"
   | "starters"
+  | "spices"
   | "desserts";
 
 export interface Ingredient {
