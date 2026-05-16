@@ -431,7 +431,7 @@ function AdminPage() {
                         setEditing({ ...editing, ingredients: next });
                       }}
                       placeholder="שם המרכיב"
-                      className="flex-1 bg-input border border-border rounded-md px-2 py-1.5 text-right"
+                      className="flex-1 min-w-0 bg-input border border-border rounded-md px-2 py-1.5 text-right"
                     />
                   </li>
                 ))}
