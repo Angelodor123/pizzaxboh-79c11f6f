@@ -1,10 +1,9 @@
 export type RecipeCategory =
-  | "sauces"
-  | "emulsions"
-  | "jams"
-  | "confit"
-  | "polenta_creams"
-  | "bakery";
+  | "sauces_bases"
+  | "aiolis_sauces"
+  | "jams_creams"
+  | "starters"
+  | "desserts";
 
 export interface Ingredient {
   name: string;
@@ -34,13 +33,20 @@ export interface Recipe {
 }
 
 export const categoryLabels: Record<RecipeCategory, string> = {
-  sauces: "רטבים",
-  emulsions: "אמולסיות",
-  jams: "ריבות",
-  confit: "קונפי",
-  polenta_creams: "פולנטה וקרמים",
-  bakery: "אפייה ומאפיות",
+  sauces_bases: "רטבים ובסיסים",
+  aiolis_sauces: "איולי ורטבים",
+  jams_creams: "ריבות וקרמים",
+  starters: "מנות ראשונות",
+  desserts: "קינוחים",
 };
+
+export const categoryOrder: RecipeCategory[] = [
+  "sauces_bases",
+  "aiolis_sauces",
+  "jams_creams",
+  "starters",
+  "desserts",
+];
 
 export const pizzaXCookbook: Recipe[] = [
   {
