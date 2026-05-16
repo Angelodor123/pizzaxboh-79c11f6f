@@ -90,7 +90,7 @@ export const pizzaXCookbook: Recipe[] = [
       ],
     },
     instructionsHebrew: "לערבב שמנת, שקית תבלינים ושום קונפי עד לקבלת מרקם חלק.",
-    textureTargetHebrew: "Silky",
+    textureTargetHebrew: "מרקם משי",
   },
   {
     id: "san-marzano",
@@ -151,7 +151,7 @@ export const pizzaXCookbook: Recipe[] = [
     ],
     instructionsHebrew:
       "טחינה של 10 דקות של כל המרכיבים למעט הירוקים. לאחר מכן, להוסיף את שקית הנענע והכוסברה בזילוף איטי.",
-    techniqueNotesHebrew: "Slow Stream לירוקים בסוף",
+    techniqueNotesHebrew: "זילוף איטי לירוקים בסוף",
     timerSeconds: 600,
   },
   {
@@ -280,8 +280,8 @@ export const pizzaXCookbook: Recipe[] = [
       { name: "פפרוני צלוי וטחון (ללא שומן)", quantity: 300, unit: "גרם" },
     ],
     instructionsHebrew:
-      "פתיחת 450 גרם ריבת שרי עם שומן פפרוני ומים, הוספת 300 גרם פפרוני צלוי וטחון (ללא שומן) ובישול למרקם Jammy.",
-    textureTargetHebrew: "Jammy",
+      "פתיחת 450 גרם ריבת שרי עם שומן פפרוני ומים, הוספת 300 גרם פפרוני צלוי וטחון (ללא שומן) ובישול למרקם ריבתי.",
+    textureTargetHebrew: "מרקם ריבתי",
   },
   {
     id: "garlic-confit-production",
@@ -379,7 +379,7 @@ export const pizzaXCookbook: Recipe[] = [
     baseYieldHebrew: "באטץ'",
     ingredients: [{ name: "פוקצ'ה אפויה חלקית (רכה)", quantity: 1, unit: "יחידה" }],
     instructionsHebrew:
-      "אפייה חלקית של הפוקצ'ה, קירור של שעתיים (סטאפ לבצק), חיתוך וטיגון ב-Deep Fry.",
+      "אפייה חלקית של הפוקצ'ה, קירור של שעתיים (סטאפ לבצק), חיתוך וטיגון עמוק.",
     techniqueNotesHebrew: "קירור של שעתיים (סטאפ לבצק) לפני חיתוך וטיגון",
   },
   {
