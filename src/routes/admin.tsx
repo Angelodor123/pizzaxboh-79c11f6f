@@ -73,10 +73,13 @@ function AdminPage() {
 
   const [editing, setEditing] = useState<Recipe | null>(null);
   const [filter, setFilter] = useState<RecipeCategory | "all">("all");
+  const [query, setQuery] = useState("");
 
+  const q = query.trim();
   const visible = recipes
     .filter((r) => !r.deleted)
-    .filter((r) => (filter === "all" ? true : r.category === filter));
+    .filter((r) => (filter === "all" ? true : r.category === filter))
+    .filter((r) => (q ? r.nameHebrew.includes(q) : true));
 
   const startNew = () =>
     setEditing({ ...EMPTY, id: `recipe-${Date.now()}` });
