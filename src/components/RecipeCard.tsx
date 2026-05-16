@@ -123,12 +123,12 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               ×{formatNum(scale)}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-3 gap-2">
             {[0.5, 1, 2, 3, 5, 10].map((m) => (
               <button
                 key={m}
                 onClick={() => setScale(m)}
-                className={`flex-1 min-w-[44px] py-2 rounded-md text-sm font-bold border transition ${
+                className={`py-2 rounded-md text-sm font-bold border transition ${
                   Math.abs(scale - m) < 1e-6
                     ? "bg-neon text-primary-foreground border-neon glow-neon"
                     : "border-border text-muted-foreground hover:text-foreground"
@@ -137,6 +137,28 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                 ×{m}
               </button>
             ))}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <label className="text-xs font-bold text-muted-foreground whitespace-nowrap">
+              מכפיל מותאם:
+            </label>
+            <div className="relative flex-1">
+              <span className="absolute inset-y-0 right-2 flex items-center text-muted-foreground text-sm pointer-events-none">
+                ×
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.1"
+                value={scale}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  if (!Number.isNaN(v) && v > 0) setScale(v);
+                }}
+                className="w-full bg-background border border-border rounded-md py-2 pr-7 pl-2 text-sm font-bold text-foreground tabular-nums focus:outline-none focus:border-neon"
+              />
+            </div>
           </div>
           {isScaled && (
             <div className="mt-3 flex justify-end">
