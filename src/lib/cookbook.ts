@@ -245,7 +245,7 @@ export const pizzaXCookbook: Recipe[] = [
       { name: "מים", quantity: 13.3, unit: "ק\"ג" },
     ],
     instructionsHebrew:
-      "בישול של 8 עד 14 שעות (Low & Slow). להיזהר שלא יישרף בתחתית.",
+      "בישול ארוך ואיטי של 8 עד 14 שעות. להיזהר שלא יישרף בתחתית.",
     techniqueNotesHebrew: "להיזהר שלא יישרף בתחתית, בישול 8-14 שעות",
   },
   {
