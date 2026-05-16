@@ -40,7 +40,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
-    quantity: i.quantity * scale,
+    quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
   }));
   const scaledSpiceBag = recipe.spiceBag
     ? {
@@ -48,7 +48,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         totalWeightGrams: recipe.spiceBag.totalWeightGrams * scale,
         items: recipe.spiceBag.items.map((i) => ({
           ...i,
-          quantity: i.quantity * scale,
+          quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
         })),
       }
     : undefined;
