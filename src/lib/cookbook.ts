@@ -90,7 +90,7 @@ export const pizzaXCookbook: Recipe[] = [
       ],
     },
     instructionsHebrew: "לערבב שמנת, שקית תבלינים ושום קונפי עד לקבלת מרקם חלק.",
-    textureTargetHebrew: "Silky",
+    textureTargetHebrew: "מרקם משי",
   },
   {
     id: "san-marzano",
