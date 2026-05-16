@@ -38,6 +38,60 @@ export type Database = {
         }
         Relationships: []
       }
+      recipes: {
+        Row: {
+          base_yield_hebrew: string
+          category: string
+          created_at: string
+          deleted: boolean
+          essence_hebrew: string | null
+          id: string
+          ingredients: Json
+          instructions_hebrew: string
+          name_hebrew: string
+          sort_order: number
+          spice_bag: Json | null
+          technique_notes_hebrew: string | null
+          texture_target_hebrew: string | null
+          timer_seconds: number | null
+          updated_at: string
+        }
+        Insert: {
+          base_yield_hebrew?: string
+          category: string
+          created_at?: string
+          deleted?: boolean
+          essence_hebrew?: string | null
+          id: string
+          ingredients?: Json
+          instructions_hebrew?: string
+          name_hebrew: string
+          sort_order?: number
+          spice_bag?: Json | null
+          technique_notes_hebrew?: string | null
+          texture_target_hebrew?: string | null
+          timer_seconds?: number | null
+          updated_at?: string
+        }
+        Update: {
+          base_yield_hebrew?: string
+          category?: string
+          created_at?: string
+          deleted?: boolean
+          essence_hebrew?: string | null
+          id?: string
+          ingredients?: Json
+          instructions_hebrew?: string
+          name_hebrew?: string
+          sort_order?: number
+          spice_bag?: Json | null
+          technique_notes_hebrew?: string | null
+          texture_target_hebrew?: string | null
+          timer_seconds?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
