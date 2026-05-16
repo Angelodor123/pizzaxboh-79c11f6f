@@ -282,18 +282,11 @@ function AdminPage() {
         </div>
       </section>
 
-      {editing && (() => {
-        const closeEditor = () => {
-          setEditing(null);
-          if (openedFromCard) {
-            setOpenedFromCard(false);
-            // Return the user to the page they were on when they pressed edit
-            if (typeof window !== "undefined" && window.history.length > 1) {
-              window.history.back();
-            }
-          }
-        };
-        return (
+      {editing && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
+          onClick={closeEditor}
+        >
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
           onClick={closeEditor}
