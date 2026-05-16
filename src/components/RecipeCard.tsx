@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Pencil } from "lucide-react";
-import { categoryLabels, type Recipe } from "@/lib/cookbook";
+import { categoryLabels, getRecipeSpeed, type Recipe } from "@/lib/cookbook";
 
 
 import { useAuth } from "@/lib/auth";
