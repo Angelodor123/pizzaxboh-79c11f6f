@@ -86,19 +86,49 @@ const SPEED_MAP: Record<SpeedTier, Omit<SpeedInfo, "tier">> = {
   },
 };
 
-// Heuristic score: timer + complexity proxy (ingredients + spice bag + instructions length).
+// Estimates total end-to-end minutes by combining explicit timerSeconds with
+// duration mentions in instructions / notes / yield ("8-14 שעות", "שעתיים",
+// "שעה", "דקות"). Falls back to a small complexity proxy when no time is found.
+function extractDurationMinutes(text: string): number {
+  if (!text) return 0;
+  let max = 0;
+  // ranges like "8-14 שעות" — take the upper bound
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*שעות/g)) {
+    max = Math.max(max, parseFloat(m[2]) * 60);
+  }
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*שעות/g)) {
+    max = Math.max(max, parseFloat(m[1]) * 60);
+  }
+  if (/שעתיים/.test(text)) max = Math.max(max, 120);
+  if (/\bשעה\b/.test(text)) max = Math.max(max, 60);
+  // ranges like "5-7 דקות" — take the upper bound
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*דקות/g)) {
+    max = Math.max(max, parseFloat(m[2]));
+  }
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*דקות/g)) {
+    max = Math.max(max, parseFloat(m[1]));
+  }
+  return max;
+}
+
 export function getRecipeSpeed(recipe: Recipe): SpeedInfo {
   const timerMin = (recipe.timerSeconds ?? 0) / 60;
+  const corpus = [
+    recipe.instructionsHebrew,
+    recipe.techniqueNotesHebrew ?? "",
+    recipe.baseYieldHebrew ?? "",
+    recipe.textureTargetHebrew ?? "",
+  ].join(" ");
+  const durationMin = extractDurationMinutes(corpus);
   const ingCount = recipe.ingredients.length + (recipe.spiceBag?.items.length ?? 0);
-  const instrLen = recipe.instructionsHebrew.length;
-  // Effective minutes proxy
-  const score = timerMin + ingCount * 1.5 + instrLen / 80;
+  // Total end-to-end time: explicit duration dominates; add small prep proxy.
+  const totalMin = Math.max(timerMin, durationMin) + ingCount * 1.5;
 
   let tier: SpeedTier;
-  if (score < 6) tier = "very_fast";
-  else if (score < 15) tier = "fast";
-  else if (score < 40) tier = "medium";
-  else if (score < 120) tier = "slow";
+  if (totalMin < 10) tier = "very_fast";
+  else if (totalMin < 30) tier = "fast";
+  else if (totalMin < 90) tier = "medium";
+  else if (totalMin < 300) tier = "slow";
   else tier = "very_slow";
 
   return { tier, ...SPEED_MAP[tier] };
@@ -140,9 +170,9 @@ export const pizzaXCookbook: Recipe[] = [
     id: "cream-sauce",
     category: "sauces_bases",
     nameHebrew: "רוטב שמנת",
-    baseYieldHebrew: "2 בקבוקים של 5 ליטר",
+    baseYieldHebrew: "2 קופסאות של 4 ליטר",
     ingredients: [
-      { name: "שמנת לבישול 'פקק צהוב'", quantity: 10, unit: "ליטר" },
+      { name: "שמנת לבישול 'פקק צהוב' (מיכל 5 ליטר)", quantity: 2, unit: "מיכלים" },
       { name: "שום קונפי", quantity: 40, unit: "גרם" },
     ],
     spiceBag: {
@@ -155,8 +185,8 @@ export const pizzaXCookbook: Recipe[] = [
       ],
     },
     instructionsHebrew:
-      "1. שופכים את 10 ליטר השמנת לכלי ערבוב גדול.\n2. מוסיפים את שקית התבלינים המלאה (620 גרם, סימון X) ואת 40 גרם השום הקונפי.\n3. מערבבים במטרפה או בבלנדר מוט עד שהתבלינים נמסים לחלוטין ומקבלים מרקם משי חלק וברק אחיד — בלי גבישים בתחתית.\n4. מעבירים לשני בקבוקי 5 ליטר ומסננים אם צריך.",
-    textureTargetHebrew: "מרקם משי",
+      "1. שופכים את שני המיכלים של השמנת (5 ליטר כל אחד) לכלי ערבוב גדול.\n2. מוסיפים את שקית התבלינים המלאה (620 גרם, סימון X) ואת 40 גרם השום הקונפי.\n3. מערבבים במטרפה או בבלנדר מוט עד שהתבלינים נמסים לחלוטין ומתקבל מרקם חלק וברק אחיד — בלי גבישים בתחתית.\n4. מחלקים את הכמות שיוצאת לשתי קופסאות של 4 ליטר ומסננים אם צריך.",
+    textureTargetHebrew: "מרקם חלק",
   },
   {
     id: "san-marzano",
@@ -485,7 +515,7 @@ export const pizzaXCookbook: Recipe[] = [
       { name: "שמן זית", quantity: 50, unit: "גרם" },
     ],
     instructionsHebrew:
-      "1. שוטפים ומייבשים את הפטרוזיליה היטב — מים יקלקלו את האמולסיה.\n2. מכניסים למג'ימיקס: פטרוזיליה, גרידת הלימון, השום והמלח.\n3. טוחנים תוך זילוף שמן הזית בזרם דק עד למרקם חלק, ירוק זוהר ועוצמתי.\n4. מעבירים לסקוויזר ושומרים בקירור — לצרוך תוך 48 שעות לטריות מקסימלית.",
+      "1. שוטפים ומייבשים את הפטרוזיליה היטב — מים יקלקלו את האמולסיה.\n2. מכניסים למג'ימיקס: פטרוזיליה, גרידת הלימון, השום והמלח.\n3. טוחנים תוך זילוף שמן הזית בזרם דק עד למרקם חלק, ירוק זוהר ועוצמתי.\n4. מעבירים לגסטרונום קטן ושומרים בקירור — לצרוך תוך 48 שעות לטריות מקסימלית.",
     textureTargetHebrew: "מרקם חלק",
   },
   {
