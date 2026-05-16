@@ -106,7 +106,7 @@ function RootComponent() {
         <AccessGate>
           <div className="min-h-screen flex flex-col">
             <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
-              <div className="relative max-w-7xl mx-auto px-4 h-20 flex items-center justify-center">
+              <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
                   <CategoryDrawer />
                 </div>
@@ -118,7 +118,7 @@ function RootComponent() {
                   <img
                     src={pizzaXLogo}
                     alt="Pizza X"
-                    className="h-12 sm:h-14 w-auto object-contain"
+                    className="h-[60px] sm:h-[72px] w-auto object-contain"
                     style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
                   />
                   <span className="text-[12px] font-bold tracking-[0.3em] uppercase text-neon">
