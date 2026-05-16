@@ -282,10 +282,21 @@ function AdminPage() {
         </div>
       </section>
 
-      {editing && (
+      {editing && (() => {
+        const closeEditor = () => {
+          setEditing(null);
+          if (openedFromCard) {
+            setOpenedFromCard(false);
+            // Return the user to the page they were on when they pressed edit
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            }
+          }
+        };
+        return (
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
-          onClick={() => setEditing(null)}
+          onClick={closeEditor}
         >
           <div
             dir="rtl"
@@ -312,7 +323,7 @@ function AdminPage() {
                   </button>
                 )}
                 <button
-                  onClick={() => setEditing(null)}
+                  onClick={closeEditor}
                   className="p-1 text-muted-foreground hover:text-foreground"
                   aria-label="סגור"
                 >
