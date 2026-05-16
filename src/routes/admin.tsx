@@ -118,8 +118,10 @@ function AdminPage() {
     .filter((r) => (filter === "all" ? true : r.category === filter))
     .filter((r) => (q ? r.nameHebrew.includes(q) : true));
 
-  const startNew = () =>
+  const startNew = () => {
+    setOpenedFromCard(false);
     setEditing({ ...EMPTY, id: `recipe-${Date.now()}` });
+  };
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
