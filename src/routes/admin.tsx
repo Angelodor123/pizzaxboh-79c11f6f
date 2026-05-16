@@ -69,11 +69,14 @@ const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   desserts: "🍪",
 };
 
+const UNIT_OPTIONS = ["גרם", 'ק"ג', 'מ"ל', "ליטר", "יחידות", "כפות", "כפיות", "חופן", "פחיות"];
+
 const EMPTY: Recipe = {
   id: "",
   category: "sauces_bases",
   nameHebrew: "",
   baseYieldHebrew: "",
+  essenceHebrew: "",
   ingredients: [],
   instructionsHebrew: "",
 };
