@@ -40,5 +40,8 @@ const ESSENCE_BY_CATEGORY: Record<RecipeCategory, string> = {
 };
 
 export function essenceFor(recipe: Recipe): string {
+  if (recipe.essenceHebrew && recipe.essenceHebrew.trim()) {
+    return recipe.essenceHebrew.trim();
+  }
   return ESSENCE_BY_ID[recipe.id] ?? ESSENCE_BY_CATEGORY[recipe.category];
 }
