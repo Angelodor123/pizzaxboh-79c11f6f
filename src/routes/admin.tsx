@@ -92,92 +92,105 @@ function AdminPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
-            Admin
-          </div>
-          <h1 className="font-display text-4xl font-bold mt-1">
-            מערכת <span className="text-neon text-glow-neon">ניהול</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            הוסף, ערוך ומחק מתכונים. השינויים נשמרים מקומית במכשיר.
-          </p>
+      <div className="mb-6">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
+          Admin
         </div>
-        <button
-          onClick={startNew}
-          className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
-        >
-          <Plus className="h-4 w-4" /> מתכון חדש
-        </button>
+        <h1 className="font-display text-4xl font-bold mt-1">
+          מערכת <span className="text-neon text-glow-neon">ניהול</span>
+        </h1>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-4">
-        {(["all", ...categoryOrder] as const).map((c) => (
+      <section className="mb-10">
+        <h2 className="font-display text-xl font-bold mb-3 text-right">
+          ניהול הרשאות
+        </h2>
+        <InvitationsPanel />
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="font-display text-xl font-bold text-right">
+              ניהול מתכונים
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              הוסף, ערוך ומחק מתכונים. השינויים נשמרים מקומית במכשיר.
+            </p>
+          </div>
           <button
-            key={c}
-            onClick={() => setFilter(c)}
-            className={`shrink-0 px-3 py-2 rounded-md text-xs font-bold border whitespace-nowrap ${
-              filter === c
-                ? "bg-deep-green text-jungle-foreground border-deep-green"
-                : "border-border text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={startNew}
+            className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
           >
-            {c === "all" ? "הכל" : categoryLabels[c]}
+            <Plus className="h-4 w-4" /> מתכון חדש
           </button>
-        ))}
-      </div>
+        </div>
 
-      <div className="border border-border rounded-md overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
-            <tr>
-              <th className="text-right px-3 py-2">שם</th>
-              <th className="text-right px-3 py-2">קטגוריה</th>
-              <th className="text-right px-3 py-2">תפוקה</th>
-              <th className="px-3 py-2 w-32" />
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                <td className="px-3 py-2 text-muted-foreground">{categoryLabels[r.category]}</td>
-                <td className="px-3 py-2 text-muted-foreground">{r.baseYieldHebrew}</td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-1 justify-end">
-                    <button
-                      onClick={() => setEditing({ ...r })}
-                      className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
-                      aria-label="ערוך"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`למחוק את "${r.nameHebrew}"?`)) softDeleteRecipe(r.id);
-                      }}
-                      className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
-                      aria-label="מחק"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {visible.length === 0 && (
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-4">
+          {(["all", ...categoryOrder] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              className={`shrink-0 px-3 py-2 rounded-md text-xs font-bold border whitespace-nowrap ${
+                filter === c
+                  ? "bg-deep-green text-jungle-foreground border-deep-green"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {c === "all" ? "הכל" : categoryLabels[c]}
+            </button>
+          ))}
+        </div>
+
+        <div className="border border-border rounded-md overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
-                  אין מתכונים בקטגוריה זו.
-                </td>
+                <th className="text-right px-3 py-2">שם</th>
+                <th className="text-right px-3 py-2">קטגוריה</th>
+                <th className="text-right px-3 py-2">תפוקה</th>
+                <th className="px-3 py-2 w-32" />
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <InvitationsPanel />
+            </thead>
+            <tbody>
+              {visible.map((r) => (
+                <tr key={r.id} className="border-t border-border">
+                  <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{categoryLabels[r.category]}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{r.baseYieldHebrew}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1 justify-end">
+                      <button
+                        onClick={() => setEditing({ ...r })}
+                        className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
+                        aria-label="ערוך"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`למחוק את "${r.nameHebrew}"?`)) softDeleteRecipe(r.id);
+                        }}
+                        className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
+                        aria-label="מחק"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {visible.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
+                    אין מתכונים בקטגוריה זו.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {editing && (
         <div
