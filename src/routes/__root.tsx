@@ -113,16 +113,10 @@ function RootComponent() {
       <div className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2" aria-label="Pizza X — בית">
               <span className="inline-block w-9 h-9 rounded-md bg-neon glow-neon grid place-items-center font-black text-primary-foreground">
                 X
               </span>
-              <div className="leading-tight">
-                <div className="font-display font-bold text-lg">Pizza X</div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  BOH Kitchen
-                </div>
-              </div>
             </Link>
             <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
               <NavLink to="/" label="מטבח" />

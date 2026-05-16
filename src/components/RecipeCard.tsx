@@ -3,9 +3,20 @@ import { categoryLabels, type Recipe } from "@/lib/cookbook";
 import { estimateRecipeCost, useCookbookStore } from "@/lib/store";
 import { CountdownTimer } from "./CountdownTimer";
 
-function formatQty(q: number): string {
-  const r = Math.round(q * 100) / 100;
-  return Number.isInteger(r) ? String(r) : r.toFixed(2);
+function formatNum(n: number): string {
+  const r = Math.round(n * 100) / 100;
+  return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/\.?0+$/, "");
+}
+
+// Auto-promote grams→kg and ml→liters when value ≥ 1000.
+function formatQtyUnit(quantity: number, unit: string): { value: string; unit: string } {
+  if (unit === "גרם" && quantity >= 1000) {
+    return { value: formatNum(quantity / 1000), unit: 'ק"ג' };
+  }
+  if (unit === 'מ"ל' && quantity >= 1000) {
+    return { value: formatNum(quantity / 1000), unit: "ליטר" };
+  }
+  return { value: formatNum(quantity), unit };
 }
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
@@ -33,6 +44,13 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       }
     : undefined;
 
+  const isScaled = Math.abs(scale - 1) > 1e-6;
+
+  function rescaleFromIngredient(originalQty: number, newQty: number) {
+    if (originalQty <= 0 || !Number.isFinite(newQty) || newQty <= 0) return;
+    setScale(newQty / originalQty);
+  }
+
   return (
     <article className="rounded-2xl border border-border bg-card/80 backdrop-blur p-5 flex flex-col gap-4 hover:border-neon/60 transition">
       <header className="flex items-start justify-between gap-3">
@@ -41,9 +59,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             {categoryLabels[recipe.category]}
           </div>
           <h3 className="font-display text-xl font-bold mt-1">{recipe.nameHebrew}</h3>
-          <div className="text-xs text-muted-foreground mt-1">
-            תפוקה בסיסית: {recipe.baseYieldHebrew}
-          </div>
         </div>
         {recipe.textureTargetHebrew && (
           <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-jungle/20 text-jungle border border-jungle/40">
@@ -54,11 +69,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
       <div className="rounded-lg bg-background/60 border border-border p-3">
         <div className="flex items-center justify-between mb-2">
-          <div className="text-xs font-bold text-muted-foreground">
-            מכפיל באטץ׳
-          </div>
+          <div className="text-xs font-bold text-muted-foreground">מכפיל באטץ׳</div>
           <div className="text-neon font-display font-bold text-lg tabular-nums">
-            ×{scale}
+            ×{formatNum(scale)}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -67,7 +80,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               key={m}
               onClick={() => setScale(m)}
               className={`flex-1 py-2 rounded-md text-sm font-bold border transition ${
-                scale === m
+                Math.abs(scale - m) < 1e-6
                   ? "bg-neon text-primary-foreground border-neon glow-neon"
                   : "border-border text-muted-foreground hover:text-foreground"
               }`}
@@ -76,34 +89,74 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             </button>
           ))}
         </div>
-        <input
-          type="number"
-          min={0.1}
-          step={0.1}
-          value={scale}
-          onChange={(e) => setScale(Math.max(0.1, Number(e.target.value) || 1))}
-          className="mt-2 w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-right tabular-nums"
-        />
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="number"
+            min={0.1}
+            step={0.1}
+            value={Number(scale.toFixed(3))}
+            onChange={(e) => setScale(Math.max(0.01, Number(e.target.value) || 1))}
+            className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right tabular-nums"
+          />
+          {isScaled && (
+            <button
+              onClick={() => setScale(1)}
+              className="px-3 py-2 rounded-md text-xs font-bold bg-neon text-primary-foreground glow-neon whitespace-nowrap"
+            >
+              אפס למקור
+            </button>
+          )}
+        </div>
       </div>
 
       {expanded && (
         <>
           <section>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              מצרכים
-            </h4>
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                מצרכים
+              </h4>
+              <span className="text-[10px] text-muted-foreground">
+                ערוך כמות כדי להתאים את כל המתכון
+              </span>
+            </div>
             <ul className="space-y-1.5">
-              {scaledIngredients.map((i) => (
-                <li
-                  key={i.name}
-                  className="flex justify-between items-center text-sm border-b border-border/50 pb-1.5"
-                >
-                  <span>{i.name}</span>
-                  <span className="font-bold tabular-nums text-neon-soft">
-                    {formatQty(i.quantity)} {i.unit}
-                  </span>
-                </li>
-              ))}
+              {scaledIngredients.map((i, idx) => {
+                const original = recipe.ingredients[idx];
+                const display = formatQtyUnit(i.quantity, i.unit);
+                return (
+                  <li
+                    key={i.name}
+                    className="flex justify-between items-center gap-2 text-sm border-b border-border/50 pb-1.5"
+                  >
+                    <span style={{ color: "#F4F4F4" }} className="flex-1">
+                      {i.name}
+                    </span>
+                    <div className="flex items-center gap-1.5 tabular-nums">
+                      <input
+                        type="number"
+                        min={0}
+                        step="any"
+                        value={display.value}
+                        onChange={(e) =>
+                          rescaleFromIngredient(
+                            original.unit === "גרם" && display.unit === 'ק"ג'
+                              ? original.quantity / 1000
+                              : original.unit === 'מ"ל' && display.unit === "ליטר"
+                                ? original.quantity / 1000
+                                : original.quantity,
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-20 bg-input border border-border rounded-md px-2 py-1 text-right text-neon font-bold tabular-nums"
+                      />
+                      <span className="text-xs text-muted-foreground w-12 text-right">
+                        {display.unit}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
@@ -114,21 +167,26 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   {scaledSpiceBag.name}
                 </h4>
                 <span className="text-xs tabular-nums text-amber-brand font-bold">
-                  סה״כ {formatQty(scaledSpiceBag.totalWeightGrams)} גרם
+                  סה״כ {formatQtyUnit(scaledSpiceBag.totalWeightGrams, "גרם").value}{" "}
+                  {formatQtyUnit(scaledSpiceBag.totalWeightGrams, "גרם").unit}
                 </span>
               </div>
               <ul className="space-y-1">
-                {scaledSpiceBag.items.map((i) => (
-                  <li
-                    key={i.name}
-                    className="flex justify-between text-xs text-muted-foreground"
-                  >
-                    <span>{i.name}</span>
-                    <span className="tabular-nums">
-                      {formatQty(i.quantity)} {i.unit}
-                    </span>
-                  </li>
-                ))}
+                {scaledSpiceBag.items.map((i) => {
+                  const d = formatQtyUnit(i.quantity, i.unit);
+                  return (
+                    <li
+                      key={i.name}
+                      className="flex justify-between items-center gap-2 text-xs"
+                    >
+                      <span style={{ color: "#F4F4F4" }}>{i.name}</span>
+                      <span className="tabular-nums">
+                        <span className="text-neon font-bold">{d.value}</span>{" "}
+                        <span className="text-muted-foreground">{d.unit}</span>
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}
