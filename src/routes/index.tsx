@@ -59,7 +59,7 @@ function KitchenDashboard() {
         </p>
       </div>
 
-      <div className="sticky top-16 z-30 -mx-4 px-4 py-3 bg-background/80 backdrop-blur border-b border-border mb-6">
+      <div className="sticky top-24 z-30 -mx-4 px-4 py-3 bg-background/80 backdrop-blur border-b border-border mb-6">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
