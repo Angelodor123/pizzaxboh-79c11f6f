@@ -52,31 +52,31 @@ export function CategoryDrawer() {
         <nav className="flex-1 overflow-y-auto py-3">
           <ul className="flex flex-col">
             <li>
-              <button
-                onClick={() => setCatsOpen((o) => !o)}
-                className="w-full flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-              >
-                <ChevronDown
-                  className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`}
-                />
-                <span className="flex-1 text-right">📋 כל המתכונים</span>
-              </button>
+              <div className="w-full flex items-stretch">
+                <Link
+                  to="/"
+                  onClick={() => setCategory("all")}
+                  className={`flex-1 flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold transition ${
+                    category === "all"
+                      ? "text-neon"
+                      : "text-foreground hover:bg-card hover:text-neon"
+                  }`}
+                >
+                  <span className="flex-1 text-right">📋 כל המתכונים</span>
+                </Link>
+                <button
+                  onClick={() => setCatsOpen((o) => !o)}
+                  aria-label={catsOpen ? "סגור קטגוריות" : "פתח קטגוריות"}
+                  className="px-4 flex items-center justify-center text-foreground hover:text-neon hover:bg-card transition border-r border-border/40"
+                >
+                  <ChevronDown
+                    className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+              </div>
 
               {catsOpen && (
                 <ul className="bg-background/40 border-y border-border">
-                  <li>
-                    <Link
-                      to="/"
-                      onClick={() => setCategory("all")}
-                      className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
-                        category === "all"
-                          ? "bg-neon/10 text-neon border-neon"
-                          : "text-foreground border-transparent hover:text-neon"
-                      }`}
-                    >
-                      <span className="flex-1 text-right">📋 הצג את כל המתכונים</span>
-                    </Link>
-                  </li>
                   {CATEGORIES.map((it) => {
                     const active = category === it.key;
                     return (
