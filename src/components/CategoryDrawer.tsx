@@ -23,6 +23,8 @@ const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
 
 export function CategoryDrawer() {
   const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
+  const { role, email, signOut } = useAuth();
+  const isAdmin = role === "admin";
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
