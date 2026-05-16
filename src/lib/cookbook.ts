@@ -31,8 +31,11 @@ export interface Recipe {
   timerSeconds?: number;
   textureTargetHebrew?: string;
   techniqueNotesHebrew?: string;
+  shelfLifeHebrew?: string;
   deleted?: boolean;
 }
+
+export const DEFAULT_SHELF_LIFE = "תוקף: לפי נוהל מטבח כללי";
 
 export const categoryLabels: Record<RecipeCategory, string> = {
   sauces_bases: "רטבים ובסיסים",
