@@ -472,6 +472,22 @@ function AdminPage() {
               />
             </label>
 
+            <label className="block text-right">
+              <span className="text-xs font-bold text-muted-foreground">
+                חיי מדף (תוקף במקרר/הקפאה)
+              </span>
+              <input
+                type="text"
+                value={editing.shelfLifeHebrew ?? ""}
+                onChange={(e) => setEditing({ ...editing, shelfLifeHebrew: e.target.value })}
+                placeholder='לדוגמה: "3 ימים במקרר", "שבועיים", "חודש בהקפאה"'
+                className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right"
+              />
+              <span className="text-[10px] text-muted-foreground mt-1 block">
+                אם משאירים ריק — יוצג: "תוקף: לפי נוהל מטבח כללי"
+              </span>
+            </label>
+
             {saveError && (
               <p className="text-xs text-destructive text-right">{saveError}</p>
             )}
