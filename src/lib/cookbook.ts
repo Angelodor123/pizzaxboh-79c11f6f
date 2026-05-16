@@ -43,6 +43,67 @@ export const categoryLabels: Record<RecipeCategory, string> = {
   desserts: "קינוחים",
 };
 
+export type SpeedTier = "very_fast" | "fast" | "medium" | "slow" | "very_slow";
+
+export interface SpeedInfo {
+  tier: SpeedTier;
+  label: string;
+  shortLabel: string;
+  emoji: string;
+  className: string;
+}
+
+const SPEED_MAP: Record<SpeedTier, Omit<SpeedInfo, "tier">> = {
+  very_fast: {
+    label: "מהיר מאוד",
+    shortLabel: "מהיר מאוד",
+    emoji: "⚡",
+    className: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40",
+  },
+  fast: {
+    label: "מהיר",
+    shortLabel: "מהיר",
+    emoji: "🟢",
+    className: "bg-jungle/20 text-jungle border-jungle/40",
+  },
+  medium: {
+    label: "בינוני",
+    shortLabel: "בינוני",
+    emoji: "🟡",
+    className: "bg-amber-brand/15 text-amber-brand border-amber-brand/40",
+  },
+  slow: {
+    label: "איטי",
+    shortLabel: "איטי",
+    emoji: "🟠",
+    className: "bg-orange-500/15 text-orange-300 border-orange-500/40",
+  },
+  very_slow: {
+    label: "איטי מאוד",
+    shortLabel: "איטי מאוד",
+    emoji: "🔴",
+    className: "bg-rose-500/15 text-rose-300 border-rose-500/40",
+  },
+};
+
+// Heuristic score: timer + complexity proxy (ingredients + spice bag + instructions length).
+export function getRecipeSpeed(recipe: Recipe): SpeedInfo {
+  const timerMin = (recipe.timerSeconds ?? 0) / 60;
+  const ingCount = recipe.ingredients.length + (recipe.spiceBag?.items.length ?? 0);
+  const instrLen = recipe.instructionsHebrew.length;
+  // Effective minutes proxy
+  const score = timerMin + ingCount * 1.5 + instrLen / 80;
+
+  let tier: SpeedTier;
+  if (score < 6) tier = "very_fast";
+  else if (score < 15) tier = "fast";
+  else if (score < 40) tier = "medium";
+  else if (score < 120) tier = "slow";
+  else tier = "very_slow";
+
+  return { tier, ...SPEED_MAP[tier] };
+}
+
 export const categoryOrder: RecipeCategory[] = [
   "sauces_bases",
   "aiolis_sauces",
