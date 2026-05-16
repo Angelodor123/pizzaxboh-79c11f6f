@@ -174,8 +174,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                 <button
                   onClick={() => setEditing(true)}
                   className="px-3 py-1.5 rounded-md text-xs font-bold border border-neon text-neon hover:bg-neon hover:text-primary-foreground transition"
+                  title="חישוב מחדש של כל הכמויות לפי כמות שתזין למרכיב אחד (לא נשמר)"
                 >
-                  ערוך מתכון
+                  התאם כמויות
                 </button>
               )}
             </div>
