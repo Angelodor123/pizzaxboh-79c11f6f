@@ -75,8 +75,7 @@ export function CategoryDrawer() {
                           : "text-foreground border-transparent hover:text-neon"
                       }`}
                     >
-                      <span className="flex-1 text-right">הכל</span>
-                      <span className="text-xl leading-none">⭐</span>
+                      <span className="flex-1 text-right">📋 הצג את כל המתכונים</span>
                     </Link>
                   </li>
                   {CATEGORIES.map((it) => {
