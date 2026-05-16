@@ -12,7 +12,7 @@ import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
 import { useUIStore } from "@/lib/ui-store";
 import { useAuth } from "@/lib/auth";
 
-const SUPER_ADMIN_EMAIL = "dorbareket123@gmail.com";
+
 
 const CATEGORIES: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
   { key: "sauces_bases", emoji: "🍅", label: categoryLabels.sauces_bases },
