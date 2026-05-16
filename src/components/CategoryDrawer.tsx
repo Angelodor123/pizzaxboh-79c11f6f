@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings } from "lucide-react";
+import { Menu, Settings, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
 import { useUIStore } from "@/lib/ui-store";
+import { useAuth } from "@/lib/auth";
 
 const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
   { key: "all", emoji: "📋", label: "כל המתכונים" },
@@ -22,6 +23,8 @@ const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
 
 export function CategoryDrawer() {
   const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
+  const { role, email, signOut } = useAuth();
+  const isAdmin = role === "admin";
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -78,15 +81,35 @@ export function CategoryDrawer() {
           </ul>
         </nav>
 
-        <div className="border-t border-border p-4">
-          <Link
-            to="/admin"
-            onClick={() => setDrawerOpen(false)}
-            className="flex items-center justify-end gap-3 px-4 py-3 rounded-md bg-card text-foreground font-bold hover:bg-neon hover:text-primary-foreground transition"
-          >
-            <span className="flex-1 text-right">מערכת ניהול</span>
-            <Settings className="h-5 w-5" />
-          </Link>
+        <div className="border-t border-border p-4 space-y-2">
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={() => setDrawerOpen(false)}
+              className="flex items-center justify-end gap-3 px-4 py-3 rounded-md bg-card text-foreground font-bold hover:bg-neon hover:text-primary-foreground transition"
+            >
+              <span className="flex-1 text-right">מערכת ניהול</span>
+              <Settings className="h-5 w-5" />
+            </Link>
+          )}
+          <div className="px-1 pt-1 flex items-center justify-between gap-2">
+            <button
+              onClick={async () => {
+                setDrawerOpen(false);
+                await signOut();
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-neon transition"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              התנתק
+            </button>
+            <div className="text-[10px] text-muted-foreground truncate max-w-[60%] text-right">
+              {email}
+              <span className="block text-neon font-bold">
+                {isAdmin ? "ניהול" : role === "viewer" ? "צפייה בלבד" : ""}
+              </span>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
