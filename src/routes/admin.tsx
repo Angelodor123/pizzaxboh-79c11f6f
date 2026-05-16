@@ -56,6 +56,15 @@ function AdminGate() {
   return <AdminPage />;
 }
 
+const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
+  sauces_bases: "🍅",
+  aiolis_sauces: "🍯",
+  jams_creams: "🥘",
+  starters: "🌽",
+  spices: "🧂",
+  desserts: "🍪",
+};
+
 const EMPTY: Recipe = {
   id: "",
   category: "sauces_bases",
