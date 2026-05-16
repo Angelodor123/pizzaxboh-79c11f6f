@@ -32,11 +32,11 @@ interface RoleRow {
 }
 
 function AdminGate() {
-  const { role, loading } = useAuth();
+  const { role, email, loading } = useAuth();
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
   }
-  if (role !== "admin") {
+  if (role !== "admin" || email?.toLowerCase() !== "dorbareket123@gmail.com") {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <ShieldAlert className="h-10 w-10 text-neon mx-auto" />
