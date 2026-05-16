@@ -297,7 +297,7 @@ function AdminPage() {
                 {recipes.some((r) => r.id === editing.id) ? "עריכת מתכון" : "מתכון חדש"}
               </h2>
               <div className="flex items-center gap-1">
-                {recipes.some((r) => r.id === editing.id) && openedFromCard && (
+                {recipes.some((r) => r.id === editing.id) && (
                   <button
                     onClick={() => setShowHistory((v) => !v)}
                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold transition ${
