@@ -24,6 +24,7 @@ export interface Recipe {
   category: RecipeCategory;
   nameHebrew: string;
   baseYieldHebrew: string;
+  essenceHebrew?: string;
   ingredients: Ingredient[];
   spiceBag?: SpiceBag;
   instructionsHebrew: string;
