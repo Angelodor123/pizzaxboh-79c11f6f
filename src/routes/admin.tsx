@@ -123,6 +123,17 @@ function AdminPage() {
     setEditing({ ...EMPTY, id: `recipe-${Date.now()}` });
   };
 
+  const closeEditor = () => {
+    setEditing(null);
+    if (openedFromCard) {
+      setOpenedFromCard(false);
+      // Return the user to where they were when they pressed the edit button
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        window.history.back();
+      }
+    }
+  };
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -167,7 +178,7 @@ function AdminPage() {
       const exists = recipes.some((r) => r.id === cleaned.id);
       if (exists) await updateRecipe(cleaned.id, cleaned);
       else await addRecipe(cleaned);
-      setEditing(null);
+      closeEditor();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "שמירה נכשלה");
     } finally {
@@ -285,7 +296,7 @@ function AdminPage() {
       {editing && (
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
-          onClick={() => setEditing(null)}
+          onClick={closeEditor}
         >
           <div
             dir="rtl"
@@ -312,7 +323,7 @@ function AdminPage() {
                   </button>
                 )}
                 <button
-                  onClick={() => setEditing(null)}
+                  onClick={closeEditor}
                   className="p-1 text-muted-foreground hover:text-foreground"
                   aria-label="סגור"
                 >
@@ -464,7 +475,7 @@ function AdminPage() {
             )}
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                onClick={() => setEditing(null)}
+                onClick={closeEditor}
                 className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-card"
               >
                 ביטול
