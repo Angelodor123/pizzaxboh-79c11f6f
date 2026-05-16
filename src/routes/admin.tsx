@@ -102,13 +102,45 @@ function AdminPage() {
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.nameHebrew.trim()) return;
+    const name = editing.nameHebrew.trim();
+    if (!name) {
+      setSaveError("שם המתכון חובה");
+      return;
+    }
+    if (name.length > 120) {
+      setSaveError("שם המתכון ארוך מדי (עד 120 תווים)");
+      return;
+    }
+    if ((editing.essenceHebrew ?? "").length > 500) {
+      setSaveError("התיאור הקצר ארוך מדי (עד 500 תווים)");
+      return;
+    }
+    if ((editing.instructionsHebrew ?? "").length > 10000) {
+      setSaveError("ההוראות ארוכות מדי");
+      return;
+    }
+    if (editing.ingredients.length > 100) {
+      setSaveError("יותר מדי מרכיבים (עד 100)");
+      return;
+    }
+    const cleaned: Recipe = {
+      ...editing,
+      nameHebrew: name,
+      essenceHebrew: editing.essenceHebrew?.trim() || undefined,
+      ingredients: editing.ingredients
+        .filter((i) => i.name.trim())
+        .map((i) => ({
+          ...i,
+          name: i.name.trim().slice(0, 120),
+          quantity: Number.isFinite(i.quantity) && i.quantity >= 0 ? i.quantity : 0,
+        })),
+    };
     setSaving(true);
     setSaveError(null);
     try {
-      const exists = recipes.some((r) => r.id === editing.id);
-      if (exists) await updateRecipe(editing.id, editing);
-      else await addRecipe(editing);
+      const exists = recipes.some((r) => r.id === cleaned.id);
+      if (exists) await updateRecipe(cleaned.id, cleaned);
+      else await addRecipe(cleaned);
       setEditing(null);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "שמירה נכשלה");
