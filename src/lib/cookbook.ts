@@ -379,7 +379,7 @@ export const pizzaXCookbook: Recipe[] = [
     baseYieldHebrew: "באטץ'",
     ingredients: [{ name: "פוקצ'ה אפויה חלקית (רכה)", quantity: 1, unit: "יחידה" }],
     instructionsHebrew:
-      "אפייה חלקית של הפוקצ'ה, קירור של שעתיים (סטאפ לבצק), חיתוך וטיגון ב-Deep Fry.",
+      "אפייה חלקית של הפוקצ'ה, קירור של שעתיים (סטאפ לבצק), חיתוך וטיגון עמוק.",
     techniqueNotesHebrew: "קירור של שעתיים (סטאפ לבצק) לפני חיתוך וטיגון",
   },
   {
