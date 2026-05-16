@@ -88,6 +88,11 @@ function AdminPage() {
   const [editing, setEditing] = useState<Recipe | null>(null);
   const [filter, setFilter] = useState<RecipeCategory | "all">("all");
   const [query, setQuery] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    setShowHistory(false);
+  }, [editing?.id]);
 
   const q = query.trim();
   const visible = recipes
