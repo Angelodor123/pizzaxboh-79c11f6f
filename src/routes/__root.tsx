@@ -10,6 +10,8 @@ import {
 
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { AccessGate } from "@/components/AccessGate";
+import { AuthProvider } from "@/lib/auth";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
 function NotFoundComponent() {
