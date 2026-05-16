@@ -266,7 +266,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               הוראות הכנה
             </h4>
-            <p className="text-sm leading-relaxed">{recipe.instructionsHebrew}</p>
+            <p className="text-sm leading-relaxed whitespace-pre-line">{recipe.instructionsHebrew}</p>
             {recipe.techniqueNotesHebrew && (
               <p className="mt-2 text-xs text-amber-brand">
                 ⚠ {recipe.techniqueNotesHebrew}
