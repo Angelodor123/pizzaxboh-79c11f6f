@@ -151,7 +151,7 @@ export const pizzaXCookbook: Recipe[] = [
     ],
     instructionsHebrew:
       "טחינה של 10 דקות של כל המרכיבים למעט הירוקים. לאחר מכן, להוסיף את שקית הנענע והכוסברה בזילוף איטי.",
-    techniqueNotesHebrew: "Slow Stream לירוקים בסוף",
+    techniqueNotesHebrew: "זילוף איטי לירוקים בסוף",
     timerSeconds: 600,
   },
   {
