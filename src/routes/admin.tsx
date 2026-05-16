@@ -387,6 +387,9 @@ function AdminPage() {
               />
             </label>
 
+            {saveError && (
+              <p className="text-xs text-destructive text-right">{saveError}</p>
+            )}
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setEditing(null)}
@@ -396,10 +399,10 @@ function AdminPage() {
               </button>
               <button
                 onClick={save}
-                disabled={!editing.nameHebrew.trim()}
+                disabled={!editing.nameHebrew.trim() || saving}
                 className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
               >
-                <Check className="h-4 w-4" /> שמור
+                <Check className="h-4 w-4" /> {saving ? "שומר..." : "שמור"}
               </button>
             </div>
           </div>
