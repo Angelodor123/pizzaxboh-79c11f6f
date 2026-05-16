@@ -222,7 +222,7 @@ function AdminPage() {
           onClick={() => setEditing(null)}
         >
           <div
-            className="bg-card border border-border rounded-lg w-full max-w-lg p-5 space-y-4"
+            className="bg-card border border-border rounded-lg w-full max-w-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
