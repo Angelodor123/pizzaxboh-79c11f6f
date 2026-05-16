@@ -353,17 +353,6 @@ function AdminPage() {
               </select>
             </label>
 
-            <label className="block text-right">
-              <span className="text-xs font-bold text-muted-foreground">תיאור קולינרי קצר</span>
-              <textarea
-                value={editing.essenceHebrew ?? ""}
-                onChange={(e) => setEditing({ ...editing, essenceHebrew: e.target.value })}
-                rows={2}
-                placeholder="משפט קצר שמופיע בכרטיס הקדמי"
-                className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right"
-              />
-            </label>
-
             <div className="text-right">
               <div className="flex items-center justify-between mb-2">
                 <button
