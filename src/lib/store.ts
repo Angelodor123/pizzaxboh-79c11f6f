@@ -120,7 +120,7 @@ export const useCookbookStore = create<RecipesState>((set, get) => ({
     const sortOrder = (get().recipes.length + 1) * 10 + 1000;
     const { data, error } = await supabase
       .from("recipes")
-      .insert({ ...row, sort_order: sortOrder })
+      .insert({ ...row, sort_order: sortOrder } as never)
       .select()
       .single();
     if (error) throw error;
@@ -130,7 +130,7 @@ export const useCookbookStore = create<RecipesState>((set, get) => ({
     const row = recipeToRow(r);
     const { data, error } = await supabase
       .from("recipes")
-      .update(row)
+      .update(row as never)
       .eq("id", id)
       .select()
       .single();
