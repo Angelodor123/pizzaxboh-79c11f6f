@@ -12,7 +12,7 @@ import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
 import { useUIStore } from "@/lib/ui-store";
 import { useAuth } from "@/lib/auth";
 
-const SUPER_ADMIN_EMAIL = "dorbareket123@gmail.com";
+
 
 const CATEGORIES: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
   { key: "sauces_bases", emoji: "🍅", label: categoryLabels.sauces_bases },
@@ -25,9 +25,9 @@ const CATEGORIES: { key: RecipeCategory | "all"; emoji: string; label: string }[
 
 export function CategoryDrawer() {
   const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
-  const { email, signOut } = useAuth();
+  const { email, role, signOut } = useAuth();
   const [catsOpen, setCatsOpen] = useState(false);
-  const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL;
+  const isSuperAdmin = role === "admin";
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
