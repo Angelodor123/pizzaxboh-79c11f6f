@@ -415,4 +415,32 @@ export const pizzaXCookbook: Recipe[] = [
     instructionsHebrew: "טחינה למרקם חלק.",
     textureTargetHebrew: "מרקם חלק",
   },
+  {
+    id: "spice-mix-tomato",
+    category: "spices",
+    nameHebrew: 'תבלין לרוטב עגבניות (×10 — 10 שקיות)',
+    baseYieldHebrew: '10 שקיות של 480 גרם (סה״כ 4.8 ק"ג)',
+    ingredients: [
+      { name: "סוכר", quantity: 2000, unit: "גרם" },
+      { name: "מלח", quantity: 1600, unit: "גרם" },
+      { name: "שום גבישי", quantity: 1200, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      'מערבבים את כל המרכיבים בפיילה גדולה (פוקה) עד לאחידות מלאה, ואז מחלקים ל-10 שקיות שוות במשקל 480 גרם כל אחת — שקית אחת לכל באטץ׳ של רוטב עגבניות קלאסי.',
+    techniqueNotesHebrew: "10 שקיות × 480 גרם = שקית אחת לבאטץ׳",
+  },
+  {
+    id: "spice-mix-cream",
+    category: "spices",
+    nameHebrew: 'תבלין לרוטב שמנת (×10 — 10 שקיות, סימון X)',
+    baseYieldHebrew: '10 שקיות של 620 גרם (סה״כ 6.2 ק"ג)',
+    ingredients: [
+      { name: "סוכר", quantity: 2600, unit: "גרם" },
+      { name: "מלח", quantity: 2000, unit: "גרם" },
+      { name: "שום גבישי", quantity: 1600, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      'מערבבים את כל המרכיבים בפיילה גדולה (פוקה) עד לאחידות מלאה, ואז מחלקים ל-10 שקיות שוות במשקל 620 גרם כל אחת — מסמנים כל שקית ב-X (לרוטב שמנת בלבד).',
+    techniqueNotesHebrew: "סימון X חובה — 10 שקיות × 620 גרם",
+  },
 ];
