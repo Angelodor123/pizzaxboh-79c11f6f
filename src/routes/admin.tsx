@@ -123,6 +123,17 @@ function AdminPage() {
     setEditing({ ...EMPTY, id: `recipe-${Date.now()}` });
   };
 
+  const closeEditor = () => {
+    setEditing(null);
+    if (openedFromCard) {
+      setOpenedFromCard(false);
+      // Return the user to where they were when they pressed the edit button
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        window.history.back();
+      }
+    }
+  };
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
