@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { categoryLabels, type Recipe } from "@/lib/cookbook";
-import { estimateRecipeCost, useCookbookStore } from "@/lib/store";
 import { CountdownTimer } from "./CountdownTimer";
 
 function formatNum(n: number): string {
@@ -25,12 +24,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [editing, setEditing] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [alarming, setAlarming] = useState(false);
-  const prices = useCookbookStore((s) => s.prices);
-
-  const cost = useMemo(
-    () => estimateRecipeCost(recipe, scale, prices),
-    [recipe, scale, prices],
-  );
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
@@ -272,16 +265,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       )}
 
       <footer className="flex items-center justify-between gap-3 pt-3 border-t border-border flex-wrap">
-        <div className="text-xs">
-          <div className="text-muted-foreground">עלות חומר גלם משוערת</div>
-          <div className="font-display font-bold text-jungle text-lg tabular-nums">
-            ₪{cost.total.toFixed(2)}
-          </div>
-          {cost.unknown > 0 && (
-            <div className="text-[10px] text-muted-foreground">
-              {cost.unknown} מצרכים ללא מחיר
-            </div>
-          )}
+        <div className="text-xs text-muted-foreground">
+          {recipe.baseYieldHebrew}
         </div>
         <button
           onClick={() => {
