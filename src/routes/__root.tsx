@@ -11,8 +11,10 @@ import {
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { AccessGate } from "@/components/AccessGate";
+import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { AuthProvider } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
+import { useUIStore } from "@/lib/ui-store";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
 function NotFoundComponent() {
