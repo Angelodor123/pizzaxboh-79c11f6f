@@ -66,7 +66,7 @@ function RecipesAdmin() {
           onClick={() =>
             setEditing({
               id: crypto.randomUUID(),
-              category: "sauces",
+              category: "sauces_bases",
               nameHebrew: "",
               baseYieldHebrew: "",
               ingredients: [],

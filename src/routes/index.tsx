@@ -1,23 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { RecipeCard } from "@/components/RecipeCard";
-import { SOSPanel } from "@/components/SOSPanel";
-import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
+import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
 import { useCookbookStore } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
   component: KitchenDashboard,
 });
 
-const allCats: (RecipeCategory | "all")[] = [
-  "all",
-  "sauces",
-  "emulsions",
-  "jams",
-  "confit",
-  "polenta_creams",
-  "bakery",
-];
+const allCats: (RecipeCategory | "all")[] = ["all", ...categoryOrder];
 
 function KitchenDashboard() {
   const recipes = useCookbookStore((s) => s.recipes);
@@ -42,36 +33,34 @@ function KitchenDashboard() {
           Mise en Place
         </div>
         <h1 className="font-display text-4xl font-bold mt-1">
-          המטבח <span className="text-neon text-glow-neon">חי</span>
+          מערכת <span className="text-neon text-glow-neon">הכנות</span>
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          {filtered.length} מתכונים פעילים • שלוט בסקיילינג, טיימרים ועלויות בזמן אמת.
+          {filtered.length} מתכונים פעילים • סקיילינג, טיימרים ועלויות בזמן אמת.
         </p>
       </div>
 
-      <div className="sticky top-16 z-30 -mx-4 px-4 py-3 bg-background/80 backdrop-blur border-b border-border mb-6">
-        <div className="flex flex-wrap gap-2 items-center">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="חיפוש מתכון..."
-            className="flex-1 min-w-[180px] bg-input border border-border rounded-md px-3 py-2 text-sm"
-          />
-          <div className="flex flex-wrap gap-1.5">
-            {allCats.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCat(c)}
-                className={`px-3 py-2 rounded-md text-xs font-bold border transition ${
-                  cat === c
-                    ? "bg-jungle text-jungle-foreground border-jungle glow-jungle"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {c === "all" ? "הכל" : categoryLabels[c]}
-              </button>
-            ))}
-          </div>
+      <div className="sticky top-16 z-30 -mx-4 px-4 py-3 bg-background/80 backdrop-blur border-b border-border mb-6 space-y-3">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="חיפוש מתכון..."
+          className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm"
+        />
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4">
+          {allCats.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCat(c)}
+              className={`shrink-0 px-3 py-2 rounded-md text-xs font-bold border transition whitespace-nowrap ${
+                cat === c
+                  ? "bg-deep-green text-jungle-foreground border-deep-green"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {c === "all" ? "הכל" : categoryLabels[c]}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -80,8 +69,6 @@ function KitchenDashboard() {
           <RecipeCard key={r.id} recipe={r} />
         ))}
       </div>
-
-      <SOSPanel />
     </div>
   );
 }

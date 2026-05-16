@@ -124,10 +124,9 @@ function RootComponent() {
                 </div>
               </div>
             </Link>
-            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
+            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
               <NavLink to="/" label="מטבח" />
               <NavLink to="/invoice" label="חשבונית AI" />
-              <NavLink to="/academy" label="האקדמיה" />
               <NavLink to="/admin" label="ניהול" />
             </nav>
           </div>
