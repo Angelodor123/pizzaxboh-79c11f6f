@@ -118,10 +118,10 @@ function RootComponent() {
                   <img
                     src={pizzaXLogo}
                     alt="Pizza X"
-                    className="h-9 sm:h-10 w-auto object-contain"
+                    className="h-12 sm:h-14 w-auto object-contain"
                     style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
                   />
-                  <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-neon">
+                  <span className="text-[12px] font-bold tracking-[0.3em] uppercase text-neon">
                     Back of House
                   </span>
                 </Link>
