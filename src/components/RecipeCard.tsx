@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { categoryLabels, type Recipe } from "@/lib/cookbook";
+import { essenceFor } from "@/lib/essence";
 import { CountdownTimer } from "./CountdownTimer";
 
 function formatNum(n: number): string {
@@ -94,42 +95,52 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         )}
       </header>
 
-      <div className="rounded-lg bg-background/60 border border-border p-3">
-        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-          <div className="text-xs font-bold text-muted-foreground">מכפיל באטץ׳</div>
-          <div className="text-neon font-display font-bold text-lg tabular-nums">
-            ×{formatNum(scale)}
+      {!expanded && (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {essenceFor(recipe)}
+        </p>
+      )}
+
+      {expanded && (
+        <div className="rounded-lg bg-background/60 border border-border p-3">
+          <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+            <div className="text-xs font-bold text-muted-foreground">
+              כמות הכנה
+            </div>
+            <div className="text-neon font-display font-bold text-lg tabular-nums">
+              ×{formatNum(scale)}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {[0.5, 1, 2, 3, 5, 10].map((m) => (
-            <button
-              key={m}
-              onClick={() => setScale(m)}
-              className={`flex-1 min-w-[44px] py-2 rounded-md text-sm font-bold border transition ${
-                Math.abs(scale - m) < 1e-6
-                  ? "bg-neon text-primary-foreground border-neon glow-neon"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              ×{m}
-            </button>
-          ))}
-        </div>
-        {isScaled && (
-          <div className="mt-3 flex justify-end">
-            <button
-              onClick={() => {
-                setScale(1);
-                setDrafts({});
-              }}
-              className="px-3 py-2 rounded-md text-xs font-bold bg-neon text-primary-foreground glow-neon"
-            >
-              אפס למקור
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {[0.5, 1, 2, 3, 5, 10].map((m) => (
+              <button
+                key={m}
+                onClick={() => setScale(m)}
+                className={`flex-1 min-w-[44px] py-2 rounded-md text-sm font-bold border transition ${
+                  Math.abs(scale - m) < 1e-6
+                    ? "bg-neon text-primary-foreground border-neon glow-neon"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                ×{m}
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+          {isScaled && (
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => {
+                  setScale(1);
+                  setDrafts({});
+                }}
+                className="px-3 py-2 rounded-md text-xs font-bold bg-neon text-primary-foreground glow-neon"
+              >
+                אפס למקור
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {expanded && (
         <>
