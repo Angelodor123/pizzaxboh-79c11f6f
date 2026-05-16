@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Pencil } from "lucide-react";
 import { categoryLabels, type Recipe } from "@/lib/cookbook";
 import { essenceFor } from "@/lib/essence";
+import { useAuth } from "@/lib/auth";
 import { CountdownTimer } from "./CountdownTimer";
+
+const EDITOR_EMAIL = "dorbareket123@gmail.com";
 
 function formatNum(n: number): string {
   const r = Math.round(n * 100) / 100;
