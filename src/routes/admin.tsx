@@ -178,7 +178,7 @@ function AdminPage() {
       const exists = recipes.some((r) => r.id === cleaned.id);
       if (exists) await updateRecipe(cleaned.id, cleaned);
       else await addRecipe(cleaned);
-      setEditing(null);
+      closeEditor();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "שמירה נכשלה");
     } finally {
