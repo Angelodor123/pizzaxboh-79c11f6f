@@ -642,3 +642,143 @@ function InvitationsPanel() {
     </section>
   );
 }
+
+interface VersionRow {
+  id: string;
+  changed_at: string;
+  snapshot: Record<string, unknown>;
+}
+
+function snapshotToRecipe(snap: Record<string, unknown>): Recipe {
+  return {
+    id: String(snap.id ?? ""),
+    category: (snap.category as RecipeCategory) ?? "sauces_bases",
+    nameHebrew: String(snap.name_hebrew ?? ""),
+    baseYieldHebrew: String(snap.base_yield_hebrew ?? ""),
+    essenceHebrew: (snap.essence_hebrew as string | null) ?? undefined,
+    ingredients: Array.isArray(snap.ingredients) ? (snap.ingredients as Ingredient[]) : [],
+    spiceBag: (snap.spice_bag as SpiceBag | null) ?? undefined,
+    instructionsHebrew: String(snap.instructions_hebrew ?? ""),
+    timerSeconds: (snap.timer_seconds as number | null) ?? undefined,
+    textureTargetHebrew: (snap.texture_target_hebrew as string | null) ?? undefined,
+    techniqueNotesHebrew: (snap.technique_notes_hebrew as string | null) ?? undefined,
+    deleted: Boolean(snap.deleted),
+  };
+}
+
+function formatRelative(iso: string): string {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "ממש עכשיו";
+  if (m < 60) return `לפני ${m} דק׳`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `לפני ${h} שע׳`;
+  const days = Math.floor(h / 24);
+  if (days < 7) return `לפני ${days} ימים`;
+  return d.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "2-digit" });
+}
+
+function VersionHistory({
+  recipeId,
+  onRestore,
+}: {
+  recipeId: string;
+  onRestore: (snapshot: Recipe) => void;
+}) {
+  const [versions, setVersions] = useState<VersionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    supabase
+      .from("recipe_versions")
+      .select("id,changed_at,snapshot")
+      .eq("recipe_id", recipeId)
+      .order("changed_at", { ascending: false })
+      .limit(30)
+      .then(({ data, error: e }) => {
+        if (cancelled) return;
+        if (e) setError(e.message);
+        else setVersions((data ?? []) as VersionRow[]);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [recipeId]);
+
+  return (
+    <div className="border border-border rounded-md bg-background/40 p-3 text-right">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] text-muted-foreground">
+          {versions.length} גרסאות אחרונות
+        </span>
+        <span className="text-xs font-bold text-neon">היסטוריית גרסאות</span>
+      </div>
+      {loading && (
+        <p className="text-xs text-muted-foreground text-center py-3">טוען…</p>
+      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {!loading && !error && versions.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-3">
+          אין גרסאות קודמות. שינויים עתידיים יישמרו אוטומטית.
+        </p>
+      )}
+      <ul className="space-y-1.5 max-h-56 overflow-y-auto">
+        {versions.map((v) => {
+          const snap = snapshotToRecipe(v.snapshot);
+          const isOpen = expanded === v.id;
+          return (
+            <li
+              key={v.id}
+              className="border border-border/60 rounded-md bg-card/40"
+            >
+              <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                <button
+                  onClick={() => onRestore(snap)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-neon hover:text-glow-neon"
+                  title="שחזר גרסה זו לטופס"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  שחזר
+                </button>
+                <button
+                  onClick={() => setExpanded(isOpen ? null : v.id)}
+                  className="flex-1 text-right text-xs"
+                >
+                  <span className="font-bold text-foreground truncate block">
+                    {snap.nameHebrew || "—"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatRelative(v.changed_at)}
+                  </span>
+                </button>
+              </div>
+              {isOpen && (
+                <div className="px-3 pb-2 text-[11px] text-muted-foreground space-y-1 border-t border-border/40 pt-2">
+                  {snap.essenceHebrew && (
+                    <p className="line-clamp-2">{snap.essenceHebrew}</p>
+                  )}
+                  <p>
+                    <span className="text-foreground font-bold">מרכיבים: </span>
+                    {snap.ingredients.length}
+                  </p>
+                  {snap.instructionsHebrew && (
+                    <p className="line-clamp-3 whitespace-pre-wrap">
+                      {snap.instructionsHebrew}
+                    </p>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
