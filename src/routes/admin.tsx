@@ -15,6 +15,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
 });
 
 type AppRole = "admin" | "viewer";
