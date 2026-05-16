@@ -129,20 +129,25 @@ function AdminPage() {
           </button>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-4">
-          {(["all", ...categoryOrder] as const).map((c) => (
-            <button
-              key={c}
-              onClick={() => setFilter(c)}
-              className={`shrink-0 px-3 py-2 rounded-md text-xs font-bold border whitespace-nowrap ${
-                filter === c
-                  ? "bg-deep-green text-jungle-foreground border-deep-green"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {c === "all" ? "הכל" : categoryLabels[c]}
-            </button>
-          ))}
+        <div className="mb-4 flex flex-col sm:flex-row gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="חיפוש מתכון..."
+            className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
+          />
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
+          >
+            <option value="all">📋 כל הקטגוריות</option>
+            {categoryOrder.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_EMOJI[c]} {categoryLabels[c]}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="border border-border rounded-md overflow-hidden">
@@ -151,7 +156,6 @@ function AdminPage() {
               <tr>
                 <th className="text-right px-3 py-2">שם</th>
                 <th className="text-right px-3 py-2">קטגוריה</th>
-                <th className="text-right px-3 py-2">תפוקה</th>
                 <th className="px-3 py-2 w-32" />
               </tr>
             </thead>
@@ -159,8 +163,9 @@ function AdminPage() {
               {visible.map((r) => (
                 <tr key={r.id} className="border-t border-border">
                   <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{categoryLabels[r.category]}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{r.baseYieldHebrew}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
+                  </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-end">
                       <button
@@ -185,8 +190,8 @@ function AdminPage() {
               ))}
               {visible.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
-                    אין מתכונים בקטגוריה זו.
+                  <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
+                    לא נמצאו מתכונים.
                   </td>
                 </tr>
               )}
