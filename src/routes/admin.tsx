@@ -397,7 +397,7 @@ function AdminPage() {
                         next[idx] = { ...ing, unit: e.target.value };
                         setEditing({ ...editing, ingredients: next });
                       }}
-                      className="w-20 bg-input border border-border rounded-md px-2 py-1.5 text-xs text-right"
+                      className="w-16 shrink-0 bg-input border border-border rounded-md px-1 py-1.5 text-xs text-right"
                     >
                       {UNIT_OPTIONS.map((u) => (
                         <option key={u} value={u}>
@@ -420,7 +420,8 @@ function AdminPage() {
                         setEditing({ ...editing, ingredients: next });
                       }}
                       placeholder="כמות"
-                      className="w-20 bg-input border border-border rounded-md px-2 py-1.5 text-right text-neon font-bold tabular-nums"
+                      size={4}
+                      className="w-[3.5rem] min-w-[3rem] shrink-0 bg-input border border-border rounded-md px-2 py-1.5 text-center text-neon font-bold tabular-nums field-sizing-content"
                     />
                     <input
                       type="text"
