@@ -270,14 +270,40 @@ function AdminPage() {
               <h2 className="font-display text-xl font-bold">
                 {recipes.some((r) => r.id === editing.id) ? "עריכת מתכון" : "מתכון חדש"}
               </h2>
-              <button
-                onClick={() => setEditing(null)}
-                className="p-1 text-muted-foreground hover:text-foreground"
-                aria-label="סגור"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {recipes.some((r) => r.id === editing.id) && (
+                  <button
+                    onClick={() => setShowHistory((v) => !v)}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold transition ${
+                      showHistory
+                        ? "bg-neon/10 text-neon"
+                        : "text-muted-foreground hover:text-neon"
+                    }`}
+                    aria-label="היסטוריית גרסאות"
+                  >
+                    <History className="h-4 w-4" />
+                    היסטוריה
+                  </button>
+                )}
+                <button
+                  onClick={() => setEditing(null)}
+                  className="p-1 text-muted-foreground hover:text-foreground"
+                  aria-label="סגור"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
+
+            {showHistory && recipes.some((r) => r.id === editing.id) && (
+              <VersionHistory
+                recipeId={editing.id}
+                onRestore={(snap) => {
+                  setEditing(snap);
+                  setShowHistory(false);
+                }}
+              />
+            )}
 
             <label className="block text-right">
               <span className="text-xs font-bold text-muted-foreground">שם המתכון</span>
