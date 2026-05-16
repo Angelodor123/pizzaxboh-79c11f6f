@@ -287,10 +287,6 @@ function AdminPage() {
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
           onClick={closeEditor}
         >
-        <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4"
-          onClick={closeEditor}
-        >
           <div
             dir="rtl"
             className="bg-card border border-border rounded-lg w-full max-w-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto"
