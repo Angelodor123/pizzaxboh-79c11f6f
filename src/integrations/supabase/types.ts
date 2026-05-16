@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_versions: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          recipe_id: string
+          snapshot: Json
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          recipe_id: string
+          snapshot: Json
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          recipe_id?: string
+          snapshot?: Json
+        }
+        Relationships: []
+      }
       recipes: {
         Row: {
           base_yield_hebrew: string
