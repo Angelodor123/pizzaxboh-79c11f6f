@@ -198,7 +198,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
                 >
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
-                    {editing ? (
+                    {editing && isScalable(i.unit) ? (
                       <input
                         type="text"
                         inputMode="decimal"
