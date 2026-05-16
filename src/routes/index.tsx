@@ -36,18 +36,18 @@ function KitchenDashboard() {
           </div>
 
           <div
-            className="shrink-0 flex flex-col items-center justify-center h-16 w-16 rounded-full border-2 border-neon glow-neon"
+            className="shrink-0 flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-neon glow-neon"
             style={{
               background:
                 "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
             }}
-            aria-label={`${filtered.length} מתכונים זמינים`}
+            aria-label={`${filtered.length} מתכונים`}
           >
-            <span className="font-display font-black text-2xl text-neon text-glow-neon tabular-nums leading-none">
+            <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
               {filtered.length}
             </span>
-            <span className="text-[8px] font-bold tracking-[0.15em] text-neon uppercase mt-0.5">
-              Live
+            <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
+              מתכונים
             </span>
           </div>
         </div>
@@ -57,10 +57,6 @@ function KitchenDashboard() {
           הטכניקות והדיוקים שהופכים אותנו למי שאנחנו. עבדו לפי הסדר, הקפידו על
           הכמויות, וזכרו – הדיוק הוא המרכיב הכי חשוב במנה.
         </p>
-
-        <div className="mt-2 text-xs font-bold text-foreground/80 text-right">
-          מתכונים זמינים במערכת
-        </div>
       </div>
 
       <div className="sticky top-16 z-30 -mx-4 px-4 py-3 bg-background/80 backdrop-blur border-b border-border mb-6">
