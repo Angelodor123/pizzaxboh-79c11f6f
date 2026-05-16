@@ -98,19 +98,12 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             {recipe.nameHebrew}
           </h3>
         </div>
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <span
-            className={`px-2 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap ${speed.className}`}
-            title={`קצב הכנה: ${speed.label}`}
-          >
-            {speed.emoji} {speed.shortLabel}
-          </span>
-          {recipe.textureTargetHebrew && (
-            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-jungle/20 text-jungle border border-jungle/40 whitespace-nowrap">
-              {recipe.textureTargetHebrew}
-            </span>
-          )}
-        </div>
+        <span
+          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border whitespace-nowrap ${speed.className}`}
+          title={`קצב הכנה: ${speed.label}`}
+        >
+          {speed.emoji} {speed.shortLabel}
+        </span>
       </header>
 
       {expanded && (
