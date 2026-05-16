@@ -54,13 +54,12 @@ export function CategoryDrawer() {
             <li>
               <button
                 onClick={() => setCatsOpen((o) => !o)}
-                className="w-full flex items-center justify-end gap-3 px-6 py-4 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+                className="w-full flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
               >
                 <ChevronDown
                   className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`}
                 />
-                <span className="flex-1 text-right">כל המתכונים</span>
-                <span className="text-2xl leading-none">📋</span>
+                <span className="flex-1 text-right">📋 כל המתכונים</span>
               </button>
 
               {catsOpen && (
@@ -69,14 +68,13 @@ export function CategoryDrawer() {
                     <Link
                       to="/"
                       onClick={() => setCategory("all")}
-                      className={`flex items-center justify-end gap-3 px-8 py-3 text-base font-bold border-r-4 transition ${
+                      className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
                         category === "all"
                           ? "bg-neon/10 text-neon border-neon"
                           : "text-foreground border-transparent hover:text-neon"
                       }`}
                     >
-                      <span className="flex-1 text-right">הכל</span>
-                      <span className="text-xl leading-none">⭐</span>
+                      <span className="flex-1 text-right">📋 הצג את כל המתכונים</span>
                     </Link>
                   </li>
                   {CATEGORIES.map((it) => {
@@ -86,14 +84,15 @@ export function CategoryDrawer() {
                         <Link
                           to="/"
                           onClick={() => setCategory(it.key)}
-                          className={`flex items-center justify-end gap-3 px-8 py-3 text-base font-bold border-r-4 transition ${
+                          className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
                             active
                               ? "bg-neon/10 text-neon border-neon"
                               : "text-foreground border-transparent hover:text-neon"
                           }`}
                         >
-                          <span className="flex-1 text-right">{it.label}</span>
-                          <span className="text-xl leading-none">{it.emoji}</span>
+                          <span className="flex-1 text-right">
+                            {it.emoji} {it.label}
+                          </span>
                         </Link>
                       </li>
                     );
@@ -103,11 +102,12 @@ export function CategoryDrawer() {
             </li>
 
             {isSuperAdmin && (
-              <li className="mt-2">
+              <li>
+                <div className="mx-6 my-2 h-px bg-border/60" />
                 <Link
                   to="/admin"
                   onClick={() => setDrawerOpen(false)}
-                  className="flex items-center justify-end gap-3 px-6 py-4 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+                  className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
                 >
                   <span className="flex-1 text-right">מערכת ניהול</span>
                   <Settings className="h-5 w-5" />
@@ -117,22 +117,22 @@ export function CategoryDrawer() {
           </ul>
         </nav>
 
-        <div className="border-t border-border p-4 space-y-2">
+        <div className="border-t border-border px-6 py-5 flex items-center justify-between gap-3">
+          {email && (
+            <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
+              {email}
+            </div>
+          )}
           <button
             onClick={async () => {
               setDrawerOpen(false);
               await signOut();
             }}
-            className="w-full flex items-center justify-end gap-3 px-4 py-3 rounded-md bg-card text-foreground font-bold hover:bg-neon hover:text-primary-foreground transition"
+            className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
           >
-            <span className="flex-1 text-right">התנתק</span>
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
+            התנתק
           </button>
-          {email && (
-            <div className="text-[10px] text-muted-foreground truncate text-right px-1">
-              {email}
-            </div>
-          )}
         </div>
       </SheetContent>
     </Sheet>
