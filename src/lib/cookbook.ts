@@ -351,7 +351,7 @@ export const pizzaXCookbook: Recipe[] = [
   {
     id: "garlic-confit-production",
     category: "jams_creams",
-    nameHebrew: "שום קונפי (לפי 5 קילו שום)",
+    nameHebrew: "שום קונפי",
     baseYieldHebrew: "5 ק\"ג בסיס",
     ingredients: [
       { name: "שום קלוף", quantity: 5, unit: "ק\"ג" },
@@ -417,7 +417,7 @@ export const pizzaXCookbook: Recipe[] = [
   {
     id: "truffle-squeezer",
     category: "jams_creams",
-    nameHebrew: "סקוויזר שמנת כמהין",
+    nameHebrew: "שמנת כמהין",
     baseYieldHebrew: "בקבוק לחיץ (סקוויזר)",
     ingredients: [
       { name: "מחית כמהין", quantity: 200, unit: "גרם" },

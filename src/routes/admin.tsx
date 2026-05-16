@@ -94,17 +94,19 @@ function AdminPage() {
   const [filter, setFilter] = useState<RecipeCategory | "all">("all");
   const [query, setQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [openedFromCard, setOpenedFromCard] = useState(false);
 
   useEffect(() => {
     setShowHistory(false);
   }, [editing?.id]);
 
-  // Auto-open editor when ?edit=<recipeId> is present
+  // Auto-open editor when ?edit=<recipeId> is present (from pencil on a recipe card)
   useEffect(() => {
     if (!search.edit) return;
     const target = recipes.find((r) => r.id === search.edit && !r.deleted);
     if (target) {
       setEditing({ ...target });
+      setOpenedFromCard(true);
       navigate({ search: { edit: undefined }, replace: true });
     }
   }, [search.edit, recipes, navigate]);
@@ -116,8 +118,10 @@ function AdminPage() {
     .filter((r) => (filter === "all" ? true : r.category === filter))
     .filter((r) => (q ? r.nameHebrew.includes(q) : true));
 
-  const startNew = () =>
+  const startNew = () => {
+    setOpenedFromCard(false);
     setEditing({ ...EMPTY, id: `recipe-${Date.now()}` });
+  };
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -247,7 +251,7 @@ function AdminPage() {
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-end">
                       <button
-                        onClick={() => setEditing({ ...r })}
+                        onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
                         className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
                         aria-label="ערוך"
                       >
@@ -293,7 +297,7 @@ function AdminPage() {
                 {recipes.some((r) => r.id === editing.id) ? "עריכת מתכון" : "מתכון חדש"}
               </h2>
               <div className="flex items-center gap-1">
-                {recipes.some((r) => r.id === editing.id) && (
+                {recipes.some((r) => r.id === editing.id) && openedFromCard && (
                   <button
                     onClick={() => setShowHistory((v) => !v)}
                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold transition ${
