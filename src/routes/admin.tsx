@@ -15,6 +15,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
 });
 
 type AppRole = "admin" | "viewer";
@@ -84,6 +87,8 @@ function AdminPage() {
   const addRecipe = useCookbookStore((s) => s.addRecipe);
   const updateRecipe = useCookbookStore((s) => s.updateRecipe);
   const softDeleteRecipe = useCookbookStore((s) => s.softDeleteRecipe);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const [editing, setEditing] = useState<Recipe | null>(null);
   const [filter, setFilter] = useState<RecipeCategory | "all">("all");
@@ -93,6 +98,17 @@ function AdminPage() {
   useEffect(() => {
     setShowHistory(false);
   }, [editing?.id]);
+
+  // Auto-open editor when ?edit=<recipeId> is present
+  useEffect(() => {
+    if (!search.edit) return;
+    const target = recipes.find((r) => r.id === search.edit && !r.deleted);
+    if (target) {
+      setEditing({ ...target });
+      navigate({ search: { edit: undefined }, replace: true });
+    }
+  }, [search.edit, recipes, navigate]);
+
 
   const q = query.trim();
   const visible = recipes

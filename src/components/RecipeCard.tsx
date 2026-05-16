@@ -1,7 +1,13 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Pencil } from "lucide-react";
 import { categoryLabels, type Recipe } from "@/lib/cookbook";
-import { essenceFor } from "@/lib/essence";
+
+
+import { useAuth } from "@/lib/auth";
 import { CountdownTimer } from "./CountdownTimer";
+
+const EDITOR_EMAIL = "dorbareket123@gmail.com";
 
 function formatNum(n: number): string {
   const r = Math.round(n * 100) / 100;
@@ -73,9 +79,12 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     setEditing(false);
   }
 
+  const { email } = useAuth();
+  const canEdit = email === EDITOR_EMAIL;
+
   return (
     <article
-      className={`rounded-2xl border border-border bg-card/80 backdrop-blur p-5 sm:p-6 flex flex-col gap-5 hover:border-neon/60 transition ${
+      className={`rounded-2xl border border-border bg-card/80 backdrop-blur p-4 sm:p-5 flex flex-col gap-3 hover:border-neon/60 transition ${
         alarming ? "pulse-alarm" : ""
       }`}
     >
@@ -94,12 +103,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           </span>
         )}
       </header>
-
-      {!expanded && (
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {essenceFor(recipe)}
-        </p>
-      )}
 
       {expanded && (
         <div className="rounded-lg bg-background/60 border border-border p-3">
@@ -275,10 +278,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </>
       )}
 
-      <footer className="flex items-center justify-between gap-3 pt-3 border-t border-border flex-wrap">
-        <div className="text-xs text-muted-foreground">
-          {recipe.baseYieldHebrew}
-        </div>
+      <footer className="flex items-center justify-center gap-2 pt-3 border-t border-border">
         <button
           onClick={() => {
             setExpanded((x) => !x);
@@ -287,10 +287,21 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               setDrafts({});
             }
           }}
-          className="px-4 py-2 rounded-md border border-neon text-neon font-bold text-sm hover:bg-neon hover:text-primary-foreground transition"
+          className="w-4/5 px-4 py-2 rounded-md border border-neon text-neon font-bold text-sm hover:bg-neon hover:text-primary-foreground transition"
         >
           {expanded ? "סגור" : "פתח מתכון"}
         </button>
+        {canEdit && (
+          <Link
+            to="/admin"
+            search={{ edit: recipe.id }}
+            aria-label="ערוך מתכון"
+            title="ערוך מתכון"
+            className="shrink-0 p-2 rounded-md border border-border text-muted-foreground hover:text-neon hover:border-neon transition"
+          >
+            <Pencil className="h-4 w-4" />
+          </Link>
+        )}
       </footer>
     </article>
   );
