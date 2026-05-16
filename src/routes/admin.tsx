@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert, History, RotateCcw } from "lucide-react";
 import {
   categoryLabels,
   categoryOrder,
   type Ingredient,
   type Recipe,
   type RecipeCategory,
+  type SpiceBag,
 } from "@/lib/cookbook";
 import { useCookbookStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
