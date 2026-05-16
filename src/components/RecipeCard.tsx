@@ -61,6 +61,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       const idx = Number(idxStr);
       const original = recipe.ingredients[idx];
       if (!original) continue;
+      if (!isScalable(original.unit)) continue;
       const n = Number(raw);
       if (!Number.isFinite(n) || n <= 0) continue;
       const display = formatQtyUnit(original.quantity, original.unit);
