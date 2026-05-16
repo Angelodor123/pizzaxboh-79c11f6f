@@ -186,80 +186,80 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                 </button>
               )}
             </div>
-            <ul className="space-y-2">
-              {scaledIngredients.map((i, idx) => {
-                const display = formatQtyUnit(i.quantity, i.unit);
-                const draft = drafts[idx];
-                const shownValue = draft !== undefined ? draft : display.value;
+          <ul className="space-y-1.5">
+            {scaledIngredients.map((i, idx) => {
+              const display = formatQtyUnit(i.quantity, i.unit);
+              const draft = drafts[idx];
+              const shownValue = draft !== undefined ? draft : display.value;
+              return (
+                <li
+                  key={i.name}
+                  className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
+                >
+                  <div className="flex flex-col items-center justify-center shrink-0 min-w-[64px] px-2 rounded-md bg-neon/10 border border-neon/30">
+                    {editing ? (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={shownValue}
+                        onChange={(e) =>
+                          setDrafts((d) => ({ ...d, [idx]: e.target.value }))
+                        }
+                        className="w-full bg-transparent border-b border-neon/60 text-center text-neon font-display font-bold text-lg tabular-nums focus:outline-none"
+                      />
+                    ) : (
+                      <span className="text-neon font-display font-bold text-lg tabular-nums leading-tight">
+                        {display.value}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-bold text-neon/80 uppercase tracking-wide mt-0.5">
+                      {display.unit}
+                    </span>
+                  </div>
+                  <span
+                    style={{ color: "#F4F4F4" }}
+                    className="flex-1 min-w-0 break-words text-sm self-center"
+                  >
+                    {i.name}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {scaledSpiceBag && (
+          <section className="rounded-lg border border-amber-brand/40 bg-amber-brand/5 p-3">
+            <div className="flex justify-between items-center mb-2 gap-2 flex-wrap">
+              <h4 className="text-sm font-bold text-amber-brand">
+                {scaledSpiceBag.name}
+              </h4>
+              <span className="text-xs tabular-nums text-amber-brand font-bold">
+                סה״כ {formatQtyUnit(scaledSpiceBag.totalWeightGrams, "גרם").value}{" "}
+                {formatQtyUnit(scaledSpiceBag.totalWeightGrams, "גרם").unit}
+              </span>
+            </div>
+            <ul className="space-y-1.5">
+              {scaledSpiceBag.items.map((i) => {
+                const d = formatQtyUnit(i.quantity, i.unit);
                 return (
                   <li
                     key={i.name}
-                    className="flex justify-between items-center gap-3 text-sm border-b border-border/50 pb-2"
+                    className="flex items-center gap-2 text-xs bg-background/30 rounded-md px-2 py-1.5"
                   >
+                    <span className="shrink-0 min-w-[58px] text-center px-1.5 py-0.5 rounded bg-amber-brand/15 border border-amber-brand/30">
+                      <span className="text-amber-brand font-bold tabular-nums">{d.value}</span>
+                      <span className="text-amber-brand/70 mr-1 text-[10px]">{d.unit}</span>
+                    </span>
                     <span style={{ color: "#F4F4F4" }} className="flex-1 min-w-0 break-words">
                       {i.name}
                     </span>
-                    <div className="flex items-center gap-2 tabular-nums shrink-0">
-                      {editing ? (
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={shownValue}
-                          onChange={(e) =>
-                            setDrafts((d) => ({ ...d, [idx]: e.target.value }))
-                          }
-                          className="w-20 bg-input border border-neon/60 rounded-md px-2 py-1 text-right text-neon font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-neon"
-                        />
-                      ) : (
-                        <span className="w-20 px-2 py-1 text-right text-neon font-bold">
-                          {display.value}
-                        </span>
-                      )}
-                      <span
-                        style={{ color: "#F4F4F4" }}
-                        className="text-xs w-14 text-right opacity-70"
-                      >
-                        {display.unit}
-                      </span>
-                    </div>
                   </li>
                 );
               })}
             </ul>
           </section>
-
-          {scaledSpiceBag && (
-            <section className="rounded-lg border border-amber-brand/40 bg-amber-brand/5 p-3">
-              <div className="flex justify-between items-center mb-2 gap-2 flex-wrap">
-                <h4 className="text-sm font-bold text-amber-brand">
-                  {scaledSpiceBag.name}
-                </h4>
-                <span className="text-xs tabular-nums text-amber-brand font-bold">
-                  סה״כ {formatQtyUnit(scaledSpiceBag.totalWeightGrams, "גרם").value}{" "}
-                  {formatQtyUnit(scaledSpiceBag.totalWeightGrams, "גרם").unit}
-                </span>
-              </div>
-              <ul className="space-y-1.5">
-                {scaledSpiceBag.items.map((i) => {
-                  const d = formatQtyUnit(i.quantity, i.unit);
-                  return (
-                    <li
-                      key={i.name}
-                      className="flex justify-between items-center gap-2 text-xs"
-                    >
-                      <span style={{ color: "#F4F4F4" }}>{i.name}</span>
-                      <span className="tabular-nums">
-                        <span className="text-neon font-bold">{d.value}</span>{" "}
-                        <span style={{ color: "#F4F4F4" }} className="opacity-70">
-                          {d.unit}
-                        </span>
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
+        )}
 
           <section>
             <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
