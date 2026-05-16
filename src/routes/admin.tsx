@@ -4,6 +4,7 @@ import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert } from "lucide-re
 import {
   categoryLabels,
   categoryOrder,
+  type Ingredient,
   type Recipe,
   type RecipeCategory,
 } from "@/lib/cookbook";
@@ -31,18 +32,21 @@ interface RoleRow {
   user_id: string;
 }
 
+const SUPER_ADMINS = ["dorbareket123@gmail.com", "suntzov93@gmail.com"];
+
 function AdminGate() {
   const { role, email, loading } = useAuth();
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
   }
-  if (role !== "admin" || email?.toLowerCase() !== "dorbareket123@gmail.com") {
+  const isSuper = email ? SUPER_ADMINS.includes(email.toLowerCase()) : false;
+  if (role !== "admin" || !isSuper) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <ShieldAlert className="h-10 w-10 text-neon mx-auto" />
         <h1 className="mt-4 font-display text-2xl font-bold">אין הרשאת ניהול</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          עמוד זה זמין למשתמשים בעלי תפקיד "ניהול" בלבד.
+          עמוד זה זמין למשתמשי-על בלבד.
         </p>
         <Link
           to="/"
@@ -65,11 +69,14 @@ const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   desserts: "🍪",
 };
 
+const UNIT_OPTIONS = ["גרם", 'ק"ג', 'מ"ל', "ליטר", "יחידות", "כפות", "כפיות", "חופן", "פחיות"];
+
 const EMPTY: Recipe = {
   id: "",
   category: "sauces_bases",
   nameHebrew: "",
   baseYieldHebrew: "",
+  essenceHebrew: "",
   ingredients: [],
   instructionsHebrew: "",
 };
@@ -215,7 +222,7 @@ function AdminPage() {
           onClick={() => setEditing(null)}
         >
           <div
-            className="bg-card border border-border rounded-lg w-full max-w-lg p-5 space-y-4"
+            className="bg-card border border-border rounded-lg w-full max-w-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -258,21 +265,113 @@ function AdminPage() {
             </label>
 
             <label className="block text-right">
-              <span className="text-xs font-bold text-muted-foreground">תפוקת בסיס</span>
-              <input
-                value={editing.baseYieldHebrew}
-                onChange={(e) => setEditing({ ...editing, baseYieldHebrew: e.target.value })}
-                placeholder="לדוגמה: 2 בקבוקים של 5 ליטר"
+              <span className="text-xs font-bold text-muted-foreground">תיאור קולינרי קצר</span>
+              <textarea
+                value={editing.essenceHebrew ?? ""}
+                onChange={(e) => setEditing({ ...editing, essenceHebrew: e.target.value })}
+                rows={2}
+                placeholder="משפט קצר שמופיע בכרטיס הקדמי"
                 className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right"
               />
             </label>
+
+            <div className="text-right">
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditing({
+                      ...editing,
+                      ingredients: [
+                        ...editing.ingredients,
+                        { name: "", quantity: 0, unit: "גרם" },
+                      ],
+                    })
+                  }
+                  className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:text-glow-neon"
+                >
+                  <Plus className="h-3 w-3" /> הוסף מרכיב
+                </button>
+                <span className="text-xs font-bold text-muted-foreground">
+                  רשימת מרכיבים
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {editing.ingredients.map((ing, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditing({
+                          ...editing,
+                          ingredients: editing.ingredients.filter((_, i) => i !== idx),
+                        })
+                      }
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-destructive"
+                      aria-label="מחק מרכיב"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <select
+                      value={ing.unit}
+                      onChange={(e) => {
+                        const next: Ingredient[] = [...editing.ingredients];
+                        next[idx] = { ...ing, unit: e.target.value };
+                        setEditing({ ...editing, ingredients: next });
+                      }}
+                      className="w-20 bg-input border border-border rounded-md px-2 py-1.5 text-xs text-right"
+                    >
+                      {UNIT_OPTIONS.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={ing.quantity === 0 ? "" : String(ing.quantity)}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const next: Ingredient[] = [...editing.ingredients];
+                        const n = raw === "" ? 0 : Number(raw);
+                        next[idx] = {
+                          ...ing,
+                          quantity: Number.isFinite(n) ? n : 0,
+                        };
+                        setEditing({ ...editing, ingredients: next });
+                      }}
+                      placeholder="כמות"
+                      className="w-20 bg-input border border-border rounded-md px-2 py-1.5 text-right text-neon font-bold tabular-nums"
+                    />
+                    <input
+                      type="text"
+                      value={ing.name}
+                      onChange={(e) => {
+                        const next: Ingredient[] = [...editing.ingredients];
+                        next[idx] = { ...ing, name: e.target.value };
+                        setEditing({ ...editing, ingredients: next });
+                      }}
+                      placeholder="שם המרכיב"
+                      className="flex-1 bg-input border border-border rounded-md px-2 py-1.5 text-right"
+                    />
+                  </li>
+                ))}
+                {editing.ingredients.length === 0 && (
+                  <li className="text-xs text-muted-foreground text-center py-2 border border-dashed border-border rounded-md">
+                    אין מרכיבים. לחץ "הוסף מרכיב" כדי להתחיל.
+                  </li>
+                )}
+              </ul>
+            </div>
 
             <label className="block text-right">
               <span className="text-xs font-bold text-muted-foreground">הוראות הכנה</span>
               <textarea
                 value={editing.instructionsHebrew}
                 onChange={(e) => setEditing({ ...editing, instructionsHebrew: e.target.value })}
-                rows={4}
+                rows={6}
+                placeholder="שלב אחרי שלב, בהירות מעל הכל"
                 className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right"
               />
             </label>
