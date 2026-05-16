@@ -189,7 +189,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   key={i.name}
                   className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
                 >
-                  <div className="flex flex-col items-center justify-center shrink-0 min-w-[64px] px-2 rounded-md bg-neon/10 border border-neon/30">
+                  <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
                     {editing ? (
                       <input
                         type="text"
@@ -198,7 +198,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                         onChange={(e) =>
                           setDrafts((d) => ({ ...d, [idx]: e.target.value }))
                         }
-                        className="w-full bg-transparent border-b border-neon/60 text-center text-neon font-display font-bold text-lg tabular-nums focus:outline-none"
+                        className="w-full min-w-0 bg-transparent border-b border-neon/60 text-center text-neon font-display font-bold text-lg tabular-nums focus:outline-none"
                       />
                     ) : (
                       <span className="text-neon font-display font-bold text-lg tabular-nums leading-tight">
