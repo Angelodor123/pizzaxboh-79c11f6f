@@ -32,18 +32,21 @@ interface RoleRow {
   user_id: string;
 }
 
+const SUPER_ADMINS = ["dorbareket123@gmail.com", "suntzov93@gmail.com"];
+
 function AdminGate() {
   const { role, email, loading } = useAuth();
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
   }
-  if (role !== "admin" || email?.toLowerCase() !== "dorbareket123@gmail.com") {
+  const isSuper = email ? SUPER_ADMINS.includes(email.toLowerCase()) : false;
+  if (role !== "admin" || !isSuper) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <ShieldAlert className="h-10 w-10 text-neon mx-auto" />
         <h1 className="mt-4 font-display text-2xl font-bold">אין הרשאת ניהול</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          עמוד זה זמין למשתמשים בעלי תפקיד "ניהול" בלבד.
+          עמוד זה זמין למשתמשי-על בלבד.
         </p>
         <Link
           to="/"
