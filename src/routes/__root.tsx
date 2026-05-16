@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { CategoryDrawer } from "@/components/CategoryDrawer";
 
 function NotFoundComponent() {
   return (
