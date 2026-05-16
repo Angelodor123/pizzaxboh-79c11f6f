@@ -86,19 +86,49 @@ const SPEED_MAP: Record<SpeedTier, Omit<SpeedInfo, "tier">> = {
   },
 };
 
-// Heuristic score: timer + complexity proxy (ingredients + spice bag + instructions length).
+// Estimates total end-to-end minutes by combining explicit timerSeconds with
+// duration mentions in instructions / notes / yield ("8-14 שעות", "שעתיים",
+// "שעה", "דקות"). Falls back to a small complexity proxy when no time is found.
+function extractDurationMinutes(text: string): number {
+  if (!text) return 0;
+  let max = 0;
+  // ranges like "8-14 שעות" — take the upper bound
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*שעות/g)) {
+    max = Math.max(max, parseFloat(m[2]) * 60);
+  }
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*שעות/g)) {
+    max = Math.max(max, parseFloat(m[1]) * 60);
+  }
+  if (/שעתיים/.test(text)) max = Math.max(max, 120);
+  if (/\bשעה\b/.test(text)) max = Math.max(max, 60);
+  // ranges like "5-7 דקות" — take the upper bound
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*דקות/g)) {
+    max = Math.max(max, parseFloat(m[2]));
+  }
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*דקות/g)) {
+    max = Math.max(max, parseFloat(m[1]));
+  }
+  return max;
+}
+
 export function getRecipeSpeed(recipe: Recipe): SpeedInfo {
   const timerMin = (recipe.timerSeconds ?? 0) / 60;
+  const corpus = [
+    recipe.instructionsHebrew,
+    recipe.techniqueNotesHebrew ?? "",
+    recipe.baseYieldHebrew ?? "",
+    recipe.textureTargetHebrew ?? "",
+  ].join(" ");
+  const durationMin = extractDurationMinutes(corpus);
   const ingCount = recipe.ingredients.length + (recipe.spiceBag?.items.length ?? 0);
-  const instrLen = recipe.instructionsHebrew.length;
-  // Effective minutes proxy
-  const score = timerMin + ingCount * 1.5 + instrLen / 80;
+  // Total end-to-end time: explicit duration dominates; add small prep proxy.
+  const totalMin = Math.max(timerMin, durationMin) + ingCount * 1.5;
 
   let tier: SpeedTier;
-  if (score < 6) tier = "very_fast";
-  else if (score < 15) tier = "fast";
-  else if (score < 40) tier = "medium";
-  else if (score < 120) tier = "slow";
+  if (totalMin < 10) tier = "very_fast";
+  else if (totalMin < 30) tier = "fast";
+  else if (totalMin < 90) tier = "medium";
+  else if (totalMin < 300) tier = "slow";
   else tier = "very_slow";
 
   return { tier, ...SPEED_MAP[tier] };
