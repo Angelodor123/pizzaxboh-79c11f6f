@@ -268,3 +268,173 @@ function AdminPage() {
     </div>
   );
 }
+
+function InvitationsPanel() {
+  const [invites, setInvites] = useState<InvitationRow[]>([]);
+  const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<AppRole>("viewer");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    const [{ data: i }, { data: r }] = await Promise.all([
+      supabase
+        .from("invitations")
+        .select("id,email,role,created_at")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("user_roles")
+        .select("id,email,role,user_id")
+        .order("created_at", { ascending: false }),
+    ]);
+    setInvites((i ?? []) as InvitationRow[]);
+    setRoles((r ?? []) as RoleRow[]);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const invite = async () => {
+    setError(null);
+    const clean = email.trim().toLowerCase();
+    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      setError("כתובת אימייל לא תקינה");
+      return;
+    }
+    setBusy(true);
+    const { error: e } = await supabase
+      .from("invitations")
+      .upsert({ email: clean, role }, { onConflict: "email" });
+    setBusy(false);
+    if (e) {
+      setError(e.message);
+      return;
+    }
+    setEmail("");
+    await load();
+  };
+
+  const revokeInvite = async (id: string) => {
+    if (!confirm("לבטל את ההזמנה?")) return;
+    await supabase.from("invitations").delete().eq("id", id);
+    await load();
+  };
+
+  const revokeUser = async (id: string) => {
+    if (!confirm("להסיר את הרשאת המשתמש?")) return;
+    await supabase.from("user_roles").delete().eq("id", id);
+    await load();
+  };
+
+  return (
+    <section className="mt-10 border border-border rounded-md p-5 bg-card/40">
+      <div className="flex items-center justify-end gap-2 mb-4">
+        <h2 className="font-display text-xl font-bold text-right flex-1">
+          ניהול <span className="text-neon text-glow-neon">הרשאות</span>
+        </h2>
+        <UserPlus className="h-5 w-5 text-neon" />
+      </div>
+
+      <div className="flex flex-col sm:flex-row-reverse gap-2 mb-4">
+        <input
+          type="email"
+          dir="ltr"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@example.com"
+          className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-left"
+        />
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as AppRole)}
+          className="bg-input border border-border rounded-md px-3 py-2 text-right"
+        >
+          <option value="viewer">צפייה בלבד</option>
+          <option value="admin">ניהול</option>
+        </select>
+        <button
+          onClick={invite}
+          disabled={busy}
+          className="inline-flex items-center justify-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
+        >
+          <UserPlus className="h-4 w-4" /> הזמן
+        </button>
+      </div>
+      {error && <p className="text-xs text-destructive text-right mb-3">{error}</p>}
+
+      <div className="space-y-5">
+        <div>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-right mb-2">
+            משתמשים פעילים
+          </h3>
+          <ul className="border border-border rounded-md divide-y divide-border">
+            {roles.length === 0 && (
+              <li className="px-3 py-3 text-center text-xs text-muted-foreground">
+                אין משתמשים פעילים עדיין.
+              </li>
+            )}
+            {roles.map((u) => (
+              <li
+                key={u.id}
+                className="flex items-center justify-between px-3 py-2 gap-2"
+              >
+                <button
+                  onClick={() => revokeUser(u.id)}
+                  className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive"
+                  aria-label="הסר הרשאה"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="text-right flex-1 min-w-0">
+                  <div className="text-sm font-bold truncate" dir="ltr">
+                    {u.email}
+                  </div>
+                  <div className="text-[10px] text-neon font-bold">
+                    {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-right mb-2">
+            הזמנות בהמתנה
+          </h3>
+          <ul className="border border-border rounded-md divide-y divide-border">
+            {invites.length === 0 && (
+              <li className="px-3 py-3 text-center text-xs text-muted-foreground">
+                אין הזמנות בהמתנה.
+              </li>
+            )}
+            {invites.map((inv) => (
+              <li
+                key={inv.id}
+                className="flex items-center justify-between px-3 py-2 gap-2"
+              >
+                <button
+                  onClick={() => revokeInvite(inv.id)}
+                  className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive"
+                  aria-label="בטל הזמנה"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="text-right flex-1 min-w-0">
+                  <div className="text-sm font-bold truncate" dir="ltr">
+                    {inv.email}
+                  </div>
+                  <div className="text-[10px] text-neon font-bold">
+                    {inv.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
