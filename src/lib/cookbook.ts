@@ -38,6 +38,7 @@ export const categoryLabels: Record<RecipeCategory, string> = {
   aiolis_sauces: "איולי ורטבים",
   jams_creams: "ריבות וקרמים",
   starters: "מנות ראשונות",
+  spices: "תבלינים",
   desserts: "קינוחים",
 };
 
@@ -46,6 +47,7 @@ export const categoryOrder: RecipeCategory[] = [
   "aiolis_sauces",
   "jams_creams",
   "starters",
+  "spices",
   "desserts",
 ];
 
