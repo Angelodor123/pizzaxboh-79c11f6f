@@ -11,12 +11,13 @@ import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
 import { useUIStore } from "@/lib/ui-store";
 
 const ITEMS: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
+  { key: "all", emoji: "📋", label: "כל המתכונים" },
   { key: "sauces_bases", emoji: "🍅", label: categoryLabels.sauces_bases },
   { key: "aiolis_sauces", emoji: "🍯", label: categoryLabels.aiolis_sauces },
   { key: "jams_creams", emoji: "🥘", label: categoryLabels.jams_creams },
   { key: "starters", emoji: "🌽", label: categoryLabels.starters },
+  { key: "spices", emoji: "🧂", label: categoryLabels.spices },
   { key: "desserts", emoji: "🍪", label: categoryLabels.desserts },
-  { key: "all", emoji: "📋", label: "כל המתכונים" },
 ];
 
 export function CategoryDrawer() {
