@@ -25,9 +25,9 @@ const CATEGORIES: { key: RecipeCategory | "all"; emoji: string; label: string }[
 
 export function CategoryDrawer() {
   const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
-  const { email, signOut } = useAuth();
+  const { email, role, signOut } = useAuth();
   const [catsOpen, setCatsOpen] = useState(false);
-  const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL;
+  const isSuperAdmin = role === "admin";
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>

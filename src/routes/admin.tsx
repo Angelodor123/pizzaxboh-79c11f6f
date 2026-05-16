@@ -32,15 +32,12 @@ interface RoleRow {
   user_id: string;
 }
 
-const SUPER_ADMINS = ["dorbareket123@gmail.com", "suntzov93@gmail.com"];
-
 function AdminGate() {
-  const { role, email, loading } = useAuth();
+  const { role, loading } = useAuth();
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
   }
-  const isSuper = email ? SUPER_ADMINS.includes(email.toLowerCase()) : false;
-  if (role !== "admin" || !isSuper) {
+  if (role !== "admin") {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <ShieldAlert className="h-10 w-10 text-neon mx-auto" />
