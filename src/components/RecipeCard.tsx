@@ -79,9 +79,12 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     setEditing(false);
   }
 
+  const { email } = useAuth();
+  const canEdit = email === EDITOR_EMAIL;
+
   return (
     <article
-      className={`rounded-2xl border border-border bg-card/80 backdrop-blur p-5 sm:p-6 flex flex-col gap-5 hover:border-neon/60 transition ${
+      className={`rounded-2xl border border-border bg-card/80 backdrop-blur p-4 sm:p-5 flex flex-col gap-3 hover:border-neon/60 transition ${
         alarming ? "pulse-alarm" : ""
       }`}
     >
@@ -100,12 +103,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           </span>
         )}
       </header>
-
-      {!expanded && (
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {essenceFor(recipe)}
-        </p>
-      )}
 
       {expanded && (
         <div className="rounded-lg bg-background/60 border border-border p-3">
