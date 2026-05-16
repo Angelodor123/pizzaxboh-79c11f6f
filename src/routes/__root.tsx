@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
+import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
 function NotFoundComponent() {
   return (
@@ -107,15 +108,15 @@ function RootComponent() {
             </div>
             <Link
               to="/"
-              className="flex flex-col items-center gap-0.5"
+              className="flex flex-col items-center gap-1"
               aria-label="Pizza X — בית"
             >
-              <span
-                className="font-display font-black text-2xl tracking-tight leading-none text-foreground"
-                style={{ letterSpacing: "0.04em" }}
-              >
-                PIZZA <span className="text-neon text-glow-neon inline-block" style={{ transform: "skewX(-10deg)" }}>X</span>
-              </span>
+              <img
+                src={pizzaXLogo}
+                alt="Pizza X"
+                className="h-9 sm:h-10 w-auto object-contain"
+                style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
+              />
               <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-neon">
                 Back of House
               </span>
