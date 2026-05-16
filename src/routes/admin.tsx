@@ -284,6 +284,7 @@ function AdminPage() {
           onClick={() => setEditing(null)}
         >
           <div
+            dir="rtl"
             className="bg-card border border-border rounded-lg w-full max-w-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -350,17 +351,6 @@ function AdminPage() {
                   </option>
                 ))}
               </select>
-            </label>
-
-            <label className="block text-right">
-              <span className="text-xs font-bold text-muted-foreground">תיאור קולינרי קצר</span>
-              <textarea
-                value={editing.essenceHebrew ?? ""}
-                onChange={(e) => setEditing({ ...editing, essenceHebrew: e.target.value })}
-                rows={2}
-                placeholder="משפט קצר שמופיע בכרטיס הקדמי"
-                className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right"
-              />
             </label>
 
             <div className="text-right">
@@ -441,7 +431,7 @@ function AdminPage() {
                         setEditing({ ...editing, ingredients: next });
                       }}
                       placeholder="שם המרכיב"
-                      className="flex-1 bg-input border border-border rounded-md px-2 py-1.5 text-right"
+                      className="flex-1 min-w-0 bg-input border border-border rounded-md px-2 py-1.5 text-right"
                     />
                   </li>
                 ))}
