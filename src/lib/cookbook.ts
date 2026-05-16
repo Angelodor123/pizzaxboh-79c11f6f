@@ -1,0 +1,409 @@
+export type RecipeCategory =
+  | "sauces"
+  | "emulsions"
+  | "jams"
+  | "confit"
+  | "polenta_creams"
+  | "bakery";
+
+export interface Ingredient {
+  name: string;
+  quantity: number;
+  unit: string;
+  currentUnitPrice?: number;
+}
+
+export interface SpiceBag {
+  name: string;
+  totalWeightGrams: number;
+  items: Ingredient[];
+}
+
+export interface Recipe {
+  id: string;
+  category: RecipeCategory;
+  nameHebrew: string;
+  baseYieldHebrew: string;
+  ingredients: Ingredient[];
+  spiceBag?: SpiceBag;
+  instructionsHebrew: string;
+  timerSeconds?: number;
+  textureTargetHebrew?: string;
+  techniqueNotesHebrew?: string;
+  deleted?: boolean;
+}
+
+export const categoryLabels: Record<RecipeCategory, string> = {
+  sauces: "רטבים",
+  emulsions: "אמולסיות",
+  jams: "ריבות",
+  confit: "קונפי",
+  polenta_creams: "פולנטה וקרמים",
+  bakery: "אפייה ומאפיות",
+};
+
+export const pizzaXCookbook: Recipe[] = [
+  {
+    id: "classic-tomato",
+    category: "sauces",
+    nameHebrew: "רוטב עגבניות קלאסי",
+    baseYieldHebrew: "קופסה אחת (4 פחיות)",
+    ingredients: [
+      { name: "עגבניות PELATI (1 ק\"ג כל אחת)", quantity: 4, unit: "פחיות" },
+      { name: "בזיליקום טרי", quantity: 1, unit: "חופן" },
+    ],
+    spiceBag: {
+      name: "שקית תבלינים לרוטב עגבניות",
+      totalWeightGrams: 480,
+      items: [
+        { name: "סוכר", quantity: 200, unit: "גרם" },
+        { name: "מלח", quantity: 160, unit: "גרם" },
+        { name: "שום גבישי", quantity: 120, unit: "גרם" },
+      ],
+    },
+    instructionsHebrew:
+      "פורקים את הפחיות לפיילה גדולה, מוסיפים את שקית התבלינים והבזיליקום. טוחנים עם בלנדר מוט גדול למשך 2.5 דקות בדיוק.",
+    timerSeconds: 150,
+  },
+  {
+    id: "cream-sauce",
+    category: "sauces",
+    nameHebrew: "רוטב שמנת",
+    baseYieldHebrew: "2 בקבוקים של 5 ליטר",
+    ingredients: [
+      { name: "שמנת לבישול 'פקק צהוב'", quantity: 10, unit: "ליטר" },
+      { name: "שום קונפי", quantity: 40, unit: "גרם" },
+    ],
+    spiceBag: {
+      name: "שקית תבלינים לרוטב שמנת (סימון X)",
+      totalWeightGrams: 620,
+      items: [
+        { name: "סוכר", quantity: 260, unit: "גרם" },
+        { name: "מלח", quantity: 200, unit: "גרם" },
+        { name: "שום גבישי", quantity: 160, unit: "גרם" },
+      ],
+    },
+    instructionsHebrew: "לערבב שמנת, שקית תבלינים ושום קונפי עד לקבלת מרקם חלק.",
+    textureTargetHebrew: "Silky",
+  },
+  {
+    id: "san-marzano",
+    category: "sauces",
+    nameHebrew: "רוטב עגבניות סן מרזנו",
+    baseYieldHebrew: "באטץ' בסיס",
+    ingredients: [
+      { name: "פחיות סן מרזנו", quantity: 4, unit: "פחיות" },
+      { name: "מלח פלור דה סול", quantity: 160, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "טוחנים בתוך פיילה בבלנדר מוט למשך 30 שניות בלבד (לפירוק גושים בלבד).",
+    timerSeconds: 30,
+  },
+  {
+    id: "rose-sauce",
+    category: "sauces",
+    nameHebrew: "רוטב רוזה",
+    baseYieldHebrew: "1.4 ק\"ג רוטב מוכן",
+    ingredients: [
+      { name: "רוטב עגבניות קלאסי מוכן", quantity: 1, unit: "ק\"ג" },
+      { name: "רוטב שמנת מוכן", quantity: 0.4, unit: "ק\"ג" },
+    ],
+    instructionsHebrew: "ערבוב של רוטב עגבניות קלאסי מוכן עם רוטב שמנת מוכן ביחס המצוין.",
+  },
+  {
+    id: "aioli-garlic-confit",
+    category: "emulsions",
+    nameHebrew: "איולי שום קונפי (פי 2)",
+    baseYieldHebrew: "באטץ' כפול",
+    ingredients: [
+      { name: "מיונז", quantity: 2, unit: "ק\"ג" },
+      { name: "שיני שום", quantity: 100, unit: "גרם" },
+      { name: "שום קונפי", quantity: 100, unit: "גרם" },
+      { name: "מיץ לימון", quantity: 160, unit: "גרם" },
+      { name: "דבש", quantity: 48, unit: "גרם" },
+      { name: "מלח", quantity: 16, unit: "גרם" },
+      { name: "פלפל שחור", quantity: 16, unit: "גרם" },
+      { name: "חרדל חלק", quantity: 40, unit: "גרם" },
+    ],
+    instructionsHebrew: "טחינה במג'ימיקס למשך 5 דקות.",
+    timerSeconds: 300,
+  },
+  {
+    id: "aioli-mint",
+    category: "emulsions",
+    nameHebrew: "איולי נענע (פי 2)",
+    baseYieldHebrew: "באטץ' כפול",
+    ingredients: [
+      { name: "מיונז", quantity: 2, unit: "ק\"ג" },
+      { name: "מלח", quantity: 27, unit: "גרם" },
+      { name: "מיץ לימון סחוט", quantity: 150, unit: "גרם" },
+      { name: "גרידת לימון", quantity: 3, unit: "יחידות" },
+      { name: "שיני שום", quantity: 5, unit: "יחידות" },
+      { name: "דבש", quantity: 40, unit: "גרם" },
+      { name: "שקית נענע", quantity: 1, unit: "שקית" },
+      { name: "כוסברה", quantity: 100, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "טחינה של 10 דקות של כל המרכיבים למעט הירוקים. לאחר מכן, להוסיף את שקית הנענע והכוסברה בזילוף איטי.",
+    techniqueNotesHebrew: "Slow Stream לירוקים בסוף",
+    timerSeconds: 600,
+  },
+  {
+    id: "aioli-chipotle",
+    category: "emulsions",
+    nameHebrew: "איולי צ'יפוטלה (פי 3)",
+    baseYieldHebrew: "באטץ' משולש",
+    ingredients: [
+      { name: "מיונז", quantity: 1.5, unit: "ק\"ג" },
+      { name: "צ'יפוטלה (עם הרוטב)", quantity: 720, unit: "גרם" },
+      { name: "שום קונפי", quantity: 150, unit: "מ\"ל" },
+      { name: "מיץ לימון", quantity: 150, unit: "מ\"ל" },
+      { name: "גרידת לימון", quantity: 1.5, unit: "יחידות" },
+      { name: "דבש", quantity: 36, unit: "גרם" },
+      { name: "פפריקה מעושנת", quantity: 36, unit: "גרם" },
+      { name: "מלח", quantity: 12, unit: "גרם" },
+      { name: "פלפל שחור", quantity: 12, unit: "גרם" },
+    ],
+    instructionsHebrew: "טחינה במג'ימיקס למשך 5 דקות.",
+    timerSeconds: 300,
+  },
+  {
+    id: "aioli-pepperoni",
+    category: "emulsions",
+    nameHebrew: "איולי פפרוני (יחס 1:2)",
+    baseYieldHebrew: "לפי משקל פפרוני מוכן",
+    ingredients: [
+      { name: "פפרוני צלוי וטחון (ללא שומן)", quantity: 1, unit: "גרם" },
+      { name: "איולי צ'יפוטלה", quantity: 2, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "על כל 1 גרם של פפרוני צלוי וטחון (ללא שומן), מוסיפים 2 גרם איולי צ'יפוטלה ומערבבים היטב.",
+  },
+  {
+    id: "aioli-mustard",
+    category: "emulsions",
+    nameHebrew: "איולי חרדל (50/50)",
+    baseYieldHebrew: "יחס שווה",
+    ingredients: [
+      { name: "איולי שום מוכן", quantity: 250, unit: "גרם" },
+      { name: "חרדל חלק", quantity: 250, unit: "גרם" },
+    ],
+    instructionsHebrew: "ערבוב שווה של שני הרכיבים עד לאחידות מלאה.",
+  },
+  {
+    id: "pesto",
+    category: "emulsions",
+    nameHebrew: "פסטו",
+    baseYieldHebrew: "באטץ' בסיס",
+    ingredients: [
+      { name: "בזיליקום", quantity: 1.5, unit: "ק\"ג" },
+      { name: "שמן קנולה", quantity: 1.2, unit: "ק\"ג" },
+      { name: "שמן זית", quantity: 900, unit: "גרם" },
+      { name: "מלח", quantity: 35, unit: "גרם" },
+      { name: "שום גבישי", quantity: 35, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "טוחנים את המרכיבים, כאשר את שמן הזית מוסיפים בזילוף בסוף התהליך.",
+    techniqueNotesHebrew: "שמן זית בזילוף בסוף",
+  },
+  {
+    id: "caesar-dressing",
+    category: "emulsions",
+    nameHebrew: "רוטב קיסר",
+    baseYieldHebrew: "באטץ' בסיס",
+    ingredients: [
+      { name: "מיונז", quantity: 450, unit: "גרם" },
+      { name: "חרדל גרגירים", quantity: 60, unit: "גרם" },
+      { name: "אנשובי", quantity: 100, unit: "גרם" },
+      { name: "צלפים", quantity: 100, unit: "גרם" },
+      { name: "קרם שום קונפי", quantity: 30, unit: "גרם" },
+      { name: "מיץ לימון", quantity: 70, unit: "גרם" },
+      { name: "דבש", quantity: 35, unit: "גרם" },
+      { name: "בלסמי", quantity: 40, unit: "גרם" },
+      { name: "שמן זית", quantity: 45, unit: "גרם" },
+      { name: "פרמזן", quantity: 70, unit: "גרם" },
+    ],
+    instructionsHebrew: "איחוד וטחינה של כל הרכיבים למרקם חלק ואחיד.",
+  },
+  {
+    id: "jam-red-onion",
+    category: "jams",
+    nameHebrew: "ריבת בצל סגול",
+    baseYieldHebrew: "בישול ארוך",
+    ingredients: [
+      { name: "בצל סגול חתוך", quantity: 10, unit: "ק\"ג" },
+      { name: "סוכר", quantity: 6, unit: "ק\"ג" },
+      { name: "מים", quantity: 13.3, unit: "ק\"ג" },
+    ],
+    instructionsHebrew:
+      "בישול של 8 עד 14 שעות (Low & Slow). להיזהר שלא יישרף בתחתית.",
+    techniqueNotesHebrew: "להיזהר שלא יישרף בתחתית, בישול 8-14 שעות",
+  },
+  {
+    id: "jam-bacon",
+    category: "jams",
+    nameHebrew: "ריבת בייקון",
+    baseYieldHebrew: "בישול ארוך",
+    ingredients: [
+      { name: "בצל לבן קצוץ", quantity: 5, unit: "ק\"ג" },
+      { name: "בייקון קצוץ", quantity: 3.5, unit: "ק\"ג" },
+      { name: "סוכר", quantity: 4, unit: "ק\"ג" },
+      { name: "מים", quantity: 4, unit: "ק\"ג" },
+    ],
+    instructionsHebrew: "בישול איטי של 8 עד 14 שעות למרקם ריבתי עמוק.",
+  },
+  {
+    id: "jam-cherry",
+    category: "jams",
+    nameHebrew: "ריבת שרי",
+    baseYieldHebrew: "בישול ארוך",
+    ingredients: [
+      { name: "שרי שלמות", quantity: 4, unit: "ק\"ג" },
+      { name: "סוכר", quantity: 2, unit: "ק\"ג" },
+      { name: "מים", quantity: 4, unit: "ק\"ג" },
+    ],
+    instructionsHebrew: "בישול ארוך ואיטי (8-14 שעות) עד לצמצום וקבלת מרקם ריבה.",
+  },
+  {
+    id: "jam-pepperoni",
+    category: "jams",
+    nameHebrew: "ריבת פפרוני (פי 3)",
+    baseYieldHebrew: "באטץ' משולש",
+    ingredients: [
+      { name: "ריבת שרי", quantity: 450, unit: "גרם" },
+      { name: "פפרוני צלוי וטחון (ללא שומן)", quantity: 300, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "פתיחת 450 גרם ריבת שרי עם שומן פפרוני ומים, הוספת 300 גרם פפרוני צלוי וטחון (ללא שומן) ובישול למרקם Jammy.",
+    textureTargetHebrew: "Jammy",
+  },
+  {
+    id: "garlic-confit-production",
+    category: "confit",
+    nameHebrew: "שום קונפי (לפי 5 קילו שום)",
+    baseYieldHebrew: "5 ק\"ג בסיס",
+    ingredients: [
+      { name: "שום קלוף", quantity: 5, unit: "ק\"ג" },
+      { name: "שמן ארטישוק (השלמה עם סויה)", quantity: 2.5, unit: "ליטר" },
+      { name: "מלח", quantity: 75, unit: "גרם" },
+      { name: "חרדל חלק", quantity: 50, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "בישול ב-110 מעלות עד בעבוע ראשוני, הורדה ל-90 מעלות לשעתיים. הוספת מלח וחרדל. מסננים שמן, טוחנים את השום במג'ימיקס ופותחים חזרה עם השמן בזרם דק עד לקבלת קרם יציב.",
+    textureTargetHebrew: "קרם יציב",
+  },
+  {
+    id: "polenta-sticks",
+    category: "polenta_creams",
+    nameHebrew: "אצבעות פולנטה",
+    baseYieldHebrew: "באטץ' בסיס",
+    ingredients: [
+      { name: "חלב", quantity: 500, unit: "גרם" },
+      { name: "מים", quantity: 350, unit: "גרם" },
+      { name: "שמנת", quantity: 125, unit: "גרם" },
+      { name: "קמח תירס", quantity: 130, unit: "גרם" },
+      { name: "גבינה", quantity: 250, unit: "גרם" },
+      { name: "מלח", quantity: 10, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "לאחר קיפאון עמוק, חובה לבצע ציפוי כפול (קמח-ביצה-פירורים X2).",
+    techniqueNotesHebrew: "חובה ציפוי כפול (קמח-ביצה-פירורים X2) לאחר קיפאון עמוק",
+  },
+  {
+    id: "polenta-truffle",
+    category: "polenta_creams",
+    nameHebrew: "פולנטה כמהין (לזילוף)",
+    baseYieldHebrew: "באטץ' לזילוף",
+    ingredients: [
+      { name: "חלב", quantity: 500, unit: "גרם" },
+      { name: "מים", quantity: 500, unit: "גרם" },
+      { name: "שמנת", quantity: 125, unit: "גרם" },
+      { name: "קמח תירס", quantity: 130, unit: "גרם" },
+      { name: "חמאה קרה", quantity: 30, unit: "גרם" },
+      { name: "כמהין", quantity: 30, unit: "גרם" },
+      { name: "פרמז'ן", quantity: 30, unit: "גרם" },
+      { name: "מלח", quantity: 10, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "בישול הפולנטה ואיחוד הרכיבים עד לקבלת מרקם חלק המתאים לזילוף משקית.",
+  },
+  {
+    id: "cacio-e-pepe",
+    category: "polenta_creams",
+    nameHebrew: "קרם קאצ'יאו אה פפה",
+    baseYieldHebrew: "באטץ' בסיס",
+    ingredients: [
+      { name: "פקורינו רומנו", quantity: 500, unit: "גרם" },
+      { name: "מים", quantity: 400, unit: "מ\"ל" },
+      { name: "רוטב שמנת מוכן", quantity: 50, unit: "מ\"ל" },
+      { name: "שמן זית", quantity: 50, unit: "מ\"ל" },
+      { name: "פלפל שחור קלוי", quantity: 20, unit: "גרם" },
+      { name: "קסנתן גאם", quantity: 0.5, unit: "גרם" },
+    ],
+    instructionsHebrew:
+      "טחינה ואיחוד של כל הרכיבים יחד עם הקסנתן גאם לקבלת קרם קשור ויציב.",
+  },
+  {
+    id: "truffle-squeezer",
+    category: "polenta_creams",
+    nameHebrew: "סקוויזר שמנת כמהין",
+    baseYieldHebrew: "בקבוק לחיץ (סקוויזר)",
+    ingredients: [
+      { name: "מחית כמהין", quantity: 200, unit: "גרם" },
+      { name: "שמנת", quantity: 700, unit: "גרם" },
+    ],
+    instructionsHebrew: "ערבוב אחיד של מחית הכמהין והשמנת ומילוי בקבוק סקוויזר.",
+  },
+  {
+    id: "cookies",
+    category: "bakery",
+    nameHebrew: "עוגיות",
+    baseYieldHebrew: "11 יחידות למגש",
+    ingredients: [{ name: "בצק עוגיות מנותב", quantity: 11, unit: "יחידות" }],
+    instructionsHebrew:
+      "סידור של 11 יחידות למגש (בלי נייר אפייה). אפייה ב-155 מעלות למשך 15 דקות בחלק העמוק של התנור. קירור מוחלט לפני אחסון.",
+    techniqueNotesHebrew:
+      "בלי נייר אפייה, בחלק העמוק של התנור. קירור מוחלט לפני אחסון.",
+    timerSeconds: 900,
+  },
+  {
+    id: "croutons",
+    category: "bakery",
+    nameHebrew: "קרוטונים",
+    baseYieldHebrew: "באטץ'",
+    ingredients: [{ name: "פוקצ'ה אפויה חלקית (רכה)", quantity: 1, unit: "יחידה" }],
+    instructionsHebrew:
+      "אפייה חלקית של הפוקצ'ה, קירור של שעתיים (סטאפ לבצק), חיתוך וטיגון ב-Deep Fry.",
+    techniqueNotesHebrew: "קירור של שעתיים (סטאפ לבצק) לפני חיתוך וטיגון",
+  },
+  {
+    id: "kinder-ice-cream",
+    category: "bakery",
+    nameHebrew: "גלידה קינדר",
+    baseYieldHebrew: "מיכל גלידה גדול",
+    ingredients: [
+      { name: "שקית פורמולה 2.2", quantity: 1, unit: "שקית" },
+      { name: "חלב", quantity: 7.5, unit: "ליטר" },
+      { name: "שמנת", quantity: 400, unit: "גרם" },
+      { name: "קינדר", quantity: 800, unit: "גרם" },
+      { name: "נוטלה", quantity: 200, unit: "גרם" },
+      { name: "מלח", quantity: 20, unit: "גרם" },
+    ],
+    instructionsHebrew: "איחוד, טחינה והעברה למכונת גלידה לפי הנהלים.",
+  },
+  {
+    id: "gremolata",
+    category: "bakery",
+    nameHebrew: "גרמולטה",
+    baseYieldHebrew: "באטץ' בסיס",
+    ingredients: [
+      { name: "פטרוזיליה", quantity: 60, unit: "גרם" },
+      { name: "גרידת לימון", quantity: 1, unit: "יחידה" },
+      { name: "שום", quantity: 5, unit: "גרם" },
+      { name: "מלח", quantity: 4, unit: "גרם" },
+      { name: "שמן זית", quantity: 50, unit: "גרם" },
+    ],
+    instructionsHebrew: "טחינה למרקם חלק.",
+    textureTargetHebrew: "מרקם חלק",
+  },
+];
