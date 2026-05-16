@@ -100,13 +100,24 @@ function AdminPage() {
   const startNew = () =>
     setEditing({ ...EMPTY, id: `recipe-${Date.now()}` });
 
-  const save = () => {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const save = async () => {
     if (!editing) return;
     if (!editing.nameHebrew.trim()) return;
-    const exists = recipes.some((r) => r.id === editing.id);
-    if (exists) updateRecipe(editing.id, editing);
-    else addRecipe(editing);
-    setEditing(null);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const exists = recipes.some((r) => r.id === editing.id);
+      if (exists) await updateRecipe(editing.id, editing);
+      else await addRecipe(editing);
+      setEditing(null);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "שמירה נכשלה");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
