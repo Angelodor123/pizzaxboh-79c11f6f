@@ -25,6 +25,12 @@ function formatQtyUnit(quantity: number, unit: string): { value: string; unit: s
   return { value: formatNum(quantity), unit };
 }
 
+// Units that represent non-quantifiable amounts — not scaled, not editable.
+const NON_SCALABLE_UNITS = new Set(["חופן", "לפי טעם"]);
+function isScalable(unit: string) {
+  return !NON_SCALABLE_UNITS.has(unit);
+}
+
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [scale, setScale] = useState(1);
   const [expanded, setExpanded] = useState(false);
@@ -34,7 +40,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
-    quantity: i.quantity * scale,
+    quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
   }));
   const scaledSpiceBag = recipe.spiceBag
     ? {
@@ -42,7 +48,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         totalWeightGrams: recipe.spiceBag.totalWeightGrams * scale,
         items: recipe.spiceBag.items.map((i) => ({
           ...i,
-          quantity: i.quantity * scale,
+          quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
         })),
       }
     : undefined;
@@ -55,6 +61,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       const idx = Number(idxStr);
       const original = recipe.ingredients[idx];
       if (!original) continue;
+      if (!isScalable(original.unit)) continue;
       const n = Number(raw);
       if (!Number.isFinite(n) || n <= 0) continue;
       const display = formatQtyUnit(original.quantity, original.unit);
@@ -191,7 +198,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
                 >
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
-                    {editing ? (
+                    {editing && isScalable(i.unit) ? (
                       <input
                         type="text"
                         inputMode="decimal"
