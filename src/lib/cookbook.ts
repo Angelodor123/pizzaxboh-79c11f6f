@@ -51,7 +51,7 @@ export const categoryOrder: RecipeCategory[] = [
 export const pizzaXCookbook: Recipe[] = [
   {
     id: "classic-tomato",
-    category: "sauces",
+    category: "sauces_bases",
     nameHebrew: "רוטב עגבניות קלאסי",
     baseYieldHebrew: "קופסה אחת (4 פחיות)",
     ingredients: [
@@ -73,7 +73,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "cream-sauce",
-    category: "sauces",
+    category: "sauces_bases",
     nameHebrew: "רוטב שמנת",
     baseYieldHebrew: "2 בקבוקים של 5 ליטר",
     ingredients: [
@@ -94,7 +94,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "san-marzano",
-    category: "sauces",
+    category: "sauces_bases",
     nameHebrew: "רוטב עגבניות סן מרזנו",
     baseYieldHebrew: "באטץ' בסיס",
     ingredients: [
@@ -107,7 +107,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "rose-sauce",
-    category: "sauces",
+    category: "sauces_bases",
     nameHebrew: "רוטב רוזה",
     baseYieldHebrew: "1.4 ק\"ג רוטב מוכן",
     ingredients: [
@@ -118,7 +118,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "aioli-garlic-confit",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "איולי שום קונפי (פי 2)",
     baseYieldHebrew: "באטץ' כפול",
     ingredients: [
@@ -136,7 +136,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "aioli-mint",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "איולי נענע (פי 2)",
     baseYieldHebrew: "באטץ' כפול",
     ingredients: [
@@ -156,7 +156,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "aioli-chipotle",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "איולי צ'יפוטלה (פי 3)",
     baseYieldHebrew: "באטץ' משולש",
     ingredients: [
@@ -175,7 +175,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "aioli-pepperoni",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "איולי פפרוני (יחס 1:2)",
     baseYieldHebrew: "לפי משקל פפרוני מוכן",
     ingredients: [
@@ -187,7 +187,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "aioli-mustard",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "איולי חרדל (50/50)",
     baseYieldHebrew: "יחס שווה",
     ingredients: [
@@ -198,7 +198,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "pesto",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "פסטו",
     baseYieldHebrew: "באטץ' בסיס",
     ingredients: [
@@ -214,7 +214,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "caesar-dressing",
-    category: "emulsions",
+    category: "aiolis_sauces",
     nameHebrew: "רוטב קיסר",
     baseYieldHebrew: "באטץ' בסיס",
     ingredients: [
@@ -233,7 +233,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "jam-red-onion",
-    category: "jams",
+    category: "jams_creams",
     nameHebrew: "ריבת בצל סגול",
     baseYieldHebrew: "בישול ארוך",
     ingredients: [
@@ -247,7 +247,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "jam-bacon",
-    category: "jams",
+    category: "jams_creams",
     nameHebrew: "ריבת בייקון",
     baseYieldHebrew: "בישול ארוך",
     ingredients: [
@@ -260,7 +260,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "jam-cherry",
-    category: "jams",
+    category: "jams_creams",
     nameHebrew: "ריבת שרי",
     baseYieldHebrew: "בישול ארוך",
     ingredients: [
@@ -272,7 +272,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "jam-pepperoni",
-    category: "jams",
+    category: "jams_creams",
     nameHebrew: "ריבת פפרוני (פי 3)",
     baseYieldHebrew: "באטץ' משולש",
     ingredients: [
@@ -285,7 +285,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "garlic-confit-production",
-    category: "confit",
+    category: "jams_creams",
     nameHebrew: "שום קונפי (לפי 5 קילו שום)",
     baseYieldHebrew: "5 ק\"ג בסיס",
     ingredients: [
@@ -300,7 +300,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "polenta-sticks",
-    category: "polenta_creams",
+    category: "starters",
     nameHebrew: "אצבעות פולנטה",
     baseYieldHebrew: "באטץ' בסיס",
     ingredients: [
@@ -317,7 +317,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "polenta-truffle",
-    category: "polenta_creams",
+    category: "starters",
     nameHebrew: "פולנטה כמהין (לזילוף)",
     baseYieldHebrew: "באטץ' לזילוף",
     ingredients: [
@@ -335,7 +335,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "cacio-e-pepe",
-    category: "polenta_creams",
+    category: "jams_creams",
     nameHebrew: "קרם קאצ'יאו אה פפה",
     baseYieldHebrew: "באטץ' בסיס",
     ingredients: [
@@ -351,7 +351,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "truffle-squeezer",
-    category: "polenta_creams",
+    category: "jams_creams",
     nameHebrew: "סקוויזר שמנת כמהין",
     baseYieldHebrew: "בקבוק לחיץ (סקוויזר)",
     ingredients: [
@@ -362,7 +362,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "cookies",
-    category: "bakery",
+    category: "desserts",
     nameHebrew: "עוגיות",
     baseYieldHebrew: "11 יחידות למגש",
     ingredients: [{ name: "בצק עוגיות מנותב", quantity: 11, unit: "יחידות" }],
@@ -374,7 +374,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "croutons",
-    category: "bakery",
+    category: "starters",
     nameHebrew: "קרוטונים",
     baseYieldHebrew: "באטץ'",
     ingredients: [{ name: "פוקצ'ה אפויה חלקית (רכה)", quantity: 1, unit: "יחידה" }],
@@ -384,7 +384,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "kinder-ice-cream",
-    category: "bakery",
+    category: "desserts",
     nameHebrew: "גלידה קינדר",
     baseYieldHebrew: "מיכל גלידה גדול",
     ingredients: [
@@ -399,7 +399,7 @@ export const pizzaXCookbook: Recipe[] = [
   },
   {
     id: "gremolata",
-    category: "bakery",
+    category: "starters",
     nameHebrew: "גרמולטה",
     baseYieldHebrew: "באטץ' בסיס",
     ingredients: [
