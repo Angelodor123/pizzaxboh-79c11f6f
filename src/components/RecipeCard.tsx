@@ -93,23 +93,36 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   }
 
   const { email } = useAuth();
-  const canEdit = email === EDITOR_EMAIL;
+  const isServiceMode = useUIStore((s) => s.isServiceMode);
+  const canEdit = email === EDITOR_EMAIL && !isServiceMode;
   const speed = getRecipeSpeed(recipe);
+  const shelfLife = recipe.shelfLifeHebrew?.trim() || DEFAULT_SHELF_LIFE;
+
+  // In service mode, scale typography up ~20% for at-a-glance reading.
+  const titleClass = isServiceMode
+    ? "font-display text-2xl sm:text-3xl font-bold mt-1 break-words"
+    : "font-display text-xl font-bold mt-1 break-words";
+  const ingredientTextClass = isServiceMode
+    ? "flex-1 min-w-0 break-words text-base sm:text-lg self-center font-semibold"
+    : "flex-1 min-w-0 break-words text-sm self-center";
+  const instructionsClass = isServiceMode
+    ? "text-base sm:text-lg leading-relaxed whitespace-pre-line font-medium"
+    : "text-sm leading-relaxed whitespace-pre-line";
 
   return (
     <article
-      className={`rounded-2xl border border-border bg-card/80 backdrop-blur p-4 sm:p-5 flex flex-col gap-3 hover:border-neon/60 transition ${
-        alarming ? "pulse-alarm" : ""
-      }`}
+      className={`rounded-2xl border bg-card/80 backdrop-blur p-4 sm:p-5 flex flex-col gap-3 transition ${
+        isServiceMode
+          ? "border-orange-500/60 hover:border-orange-400"
+          : "border-border hover:border-neon/60"
+      } ${alarming ? "pulse-alarm" : ""}`}
     >
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-[0.2em] text-amber-brand font-bold">
             {categoryLabels[recipe.category]}
           </div>
-          <h3 className="font-display text-xl font-bold mt-1 break-words">
-            {recipe.nameHebrew}
-          </h3>
+          <h3 className={titleClass}>{recipe.nameHebrew}</h3>
         </div>
         <span
           className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border whitespace-nowrap ${speed.className}`}
@@ -119,7 +132,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </span>
       </header>
 
-      {expanded && (
+      {expanded && !isServiceMode && (
         <div className="rounded-lg bg-background/60 border border-border p-3">
           <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
             <div className="text-xs font-bold text-muted-foreground">
@@ -184,35 +197,63 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
       {expanded && (
         <>
+          <div
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
+              isServiceMode
+                ? "border-orange-500/50 bg-orange-500/10"
+                : "border-amber-brand/40 bg-amber-brand/5"
+            }`}
+          >
+            <Clock
+              className={`h-4 w-4 shrink-0 ${
+                isServiceMode ? "text-orange-300" : "text-amber-brand"
+              }`}
+            />
+            <div className="flex-1 min-w-0 text-right">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                חיי מדף
+              </div>
+              <div
+                className={`text-sm font-bold ${
+                  isServiceMode ? "text-orange-200" : "text-amber-brand"
+                }`}
+              >
+                {shelfLife}
+              </div>
+            </div>
+          </div>
+
           <section>
             <div className="flex justify-between items-center mb-3 gap-2 flex-wrap">
               <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 מצרכים
               </h4>
-              {editing ? (
-                <div className="flex items-center gap-2">
+              {!isServiceMode && (
+                editing ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={cancelEdits}
+                      className="px-3 py-1.5 rounded-md text-xs font-bold border border-border text-muted-foreground"
+                    >
+                      בטל
+                    </button>
+                    <button
+                      onClick={confirmEdits}
+                      style={{ backgroundColor: "#228B22" }}
+                      className="px-4 py-1.5 rounded-md text-xs font-bold text-white glow-jungle"
+                    >
+                      אישור
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={cancelEdits}
-                    className="px-3 py-1.5 rounded-md text-xs font-bold border border-border text-muted-foreground"
+                    onClick={() => setEditing(true)}
+                    className="px-3 py-1.5 rounded-md text-xs font-bold border border-neon text-neon hover:bg-neon hover:text-primary-foreground transition"
+                    title="חישוב מחדש של כל הכמויות לפי כמות שתזין למרכיב אחד (לא נשמר)"
                   >
-                    בטל
+                    התאם כמויות
                   </button>
-                  <button
-                    onClick={confirmEdits}
-                    style={{ backgroundColor: "#228B22" }}
-                    className="px-4 py-1.5 rounded-md text-xs font-bold text-white glow-jungle"
-                  >
-                    אישור
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="px-3 py-1.5 rounded-md text-xs font-bold border border-neon text-neon hover:bg-neon hover:text-primary-foreground transition"
-                  title="חישוב מחדש של כל הכמויות לפי כמות שתזין למרכיב אחד (לא נשמר)"
-                >
-                  התאם כמויות
-                </button>
+                )
               )}
             </div>
           <ul className="space-y-1.5">
@@ -226,7 +267,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
                 >
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
-                    {editing && isScalable(i.unit) ? (
+                    {editing && !isServiceMode && isScalable(i.unit) ? (
                       <input
                         type="text"
                         inputMode="decimal"
@@ -237,7 +278,11 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                         className="w-full min-w-0 bg-transparent border-b border-neon/60 text-center text-neon font-display font-bold text-lg tabular-nums focus:outline-none"
                       />
                     ) : (
-                      <span className="text-neon font-display font-bold text-lg tabular-nums leading-tight">
+                      <span
+                        className={`text-neon font-display font-bold tabular-nums leading-tight ${
+                          isServiceMode ? "text-xl" : "text-lg"
+                        }`}
+                      >
                         {display.value}
                       </span>
                     )}
@@ -247,7 +292,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   </div>
                   <span
                     style={{ color: "#F4F4F4" }}
-                    className="flex-1 min-w-0 break-words text-sm self-center"
+                    className={ingredientTextClass}
                   >
                     {i.name}
                   </span>
@@ -257,7 +302,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           </ul>
         </section>
 
-        {scaledSpiceBag && (
+        {scaledSpiceBag && !isServiceMode && (
           <section className="rounded-lg border border-amber-brand/40 bg-amber-brand/5 p-3">
             <div className="flex justify-between items-center mb-2 gap-2 flex-wrap">
               <h4 className="text-sm font-bold text-amber-brand">
@@ -294,15 +339,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               הוראות הכנה
             </h4>
-            <p className="text-sm leading-relaxed whitespace-pre-line">{recipe.instructionsHebrew}</p>
-            {recipe.techniqueNotesHebrew && (
+            <p className={instructionsClass}>{recipe.instructionsHebrew}</p>
+            {recipe.techniqueNotesHebrew && !isServiceMode && (
               <p className="mt-2 text-xs text-amber-brand">
                 ⚠ {recipe.techniqueNotesHebrew}
               </p>
             )}
           </section>
 
-          {recipe.timerSeconds && (
+          {recipe.timerSeconds && !isServiceMode && (
             <CountdownTimer
               seconds={recipe.timerSeconds}
               label={`${
@@ -325,7 +370,11 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               setDrafts({});
             }
           }}
-          className="w-4/5 px-4 py-2 rounded-md border border-neon text-neon font-bold text-sm hover:bg-neon hover:text-primary-foreground transition"
+          className={`w-4/5 px-4 py-2 rounded-md border font-bold text-sm transition ${
+            isServiceMode
+              ? "border-orange-500 text-orange-300 hover:bg-orange-500 hover:text-background"
+              : "border-neon text-neon hover:bg-neon hover:text-primary-foreground"
+          }`}
         >
           {expanded ? "סגור" : "פתח מתכון"}
         </button>
