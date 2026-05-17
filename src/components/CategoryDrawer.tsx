@@ -101,6 +101,18 @@ export function CategoryDrawer() {
               )}
             </li>
 
+            <li>
+              <div className="mx-6 my-2 h-px bg-border/60" />
+              <Link
+                to="/notebook"
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+              >
+                <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
+                <NotebookPen className="h-5 w-5" />
+              </Link>
+            </li>
+
             {isSuperAdmin && (
               <li>
                 <div className="mx-6 my-2 h-px bg-border/60" />
