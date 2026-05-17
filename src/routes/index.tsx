@@ -60,10 +60,10 @@ function KitchenDashboard() {
               background:
                 "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
             }}
-            aria-label={`${filtered.length} מתכונים`}
+            aria-label={`${activeRecipes.length} מתכונים`}
           >
             <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
-              {filtered.length}
+              {activeRecipes.length}
             </span>
             <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
               מתכונים
