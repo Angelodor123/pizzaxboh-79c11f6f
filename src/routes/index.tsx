@@ -63,7 +63,7 @@ function KitchenDashboard() {
             aria-label={`${filtered.length} מתכונים`}
           >
             <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
-              {filtered.length}
+              {activeRecipes.length}
             </span>
             <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
               מתכונים
