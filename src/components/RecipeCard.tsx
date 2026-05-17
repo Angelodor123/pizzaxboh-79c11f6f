@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pencil, Clock } from "lucide-react";
+import { Pencil, Clock, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   categoryLabels,
   getRecipeSpeed,
@@ -11,6 +12,7 @@ import {
 
 import { useAuth } from "@/lib/auth";
 import { useUIStore } from "@/lib/ui-store";
+import { useRecipeProgressStore } from "@/lib/notebook-store";
 import { CountdownTimer } from "./CountdownTimer";
 
 const EDITOR_EMAIL = "dorbareket123@gmail.com";
