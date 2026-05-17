@@ -119,6 +119,7 @@ function RootComponent() {
           <AuthedShell />
         </AccessGate>
       </AuthProvider>
+      <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }
