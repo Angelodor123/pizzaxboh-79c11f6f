@@ -397,6 +397,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               onAlarmChange={setAlarming}
             />
           )}
+
+          <button
+            type="button"
+            onClick={handleComplete}
+            className="w-full inline-flex items-center justify-center gap-2 bg-neon text-primary-foreground font-bold text-base px-4 py-3 rounded-lg glow-neon hover:opacity-95 transition"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            מתכון מוכן
+          </button>
         </>
       )}
 
