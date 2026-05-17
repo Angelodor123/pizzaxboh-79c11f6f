@@ -276,8 +276,33 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               return (
                 <li
                   key={i.name}
-                  className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
+                  className={`flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition ${
+                    isChecked(idx) ? "opacity-40" : ""
+                  }`}
                 >
+                  <button
+                    type="button"
+                    onClick={() => toggleIngredient(recipe.id, idx)}
+                    aria-pressed={isChecked(idx)}
+                    aria-label={isChecked(idx) ? "בטל סימון" : "סמן כהוכן"}
+                    className={`shrink-0 self-center grid place-content-center h-6 w-6 rounded border-2 transition ${
+                      isChecked(idx)
+                        ? "bg-neon border-neon glow-neon"
+                        : "border-neon/50 hover:border-neon"
+                    }`}
+                  >
+                    {isChecked(idx) && (
+                      <svg
+                        viewBox="0 0 16 16"
+                        className="h-4 w-4 text-primary-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path d="M3 8l3.5 3.5L13 5" />
+                      </svg>
+                    )}
+                  </button>
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
                     {editing && !isServiceMode && isScalable(i.unit) ? (
                       <input
@@ -304,7 +329,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   </div>
                   <span
                     style={{ color: "#F4F4F4" }}
-                    className={ingredientTextClass}
+                    className={`${ingredientTextClass} ${
+                      isChecked(idx) ? "line-through" : ""
+                    }`}
                   >
                     {i.name}
                   </span>
