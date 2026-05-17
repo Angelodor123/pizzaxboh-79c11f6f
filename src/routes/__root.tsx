@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { AccessGate } from "@/components/AccessGate";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
 import { useUIStore } from "@/lib/ui-store";
@@ -118,6 +119,7 @@ function RootComponent() {
           <AuthedShell />
         </AccessGate>
       </AuthProvider>
+      <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }

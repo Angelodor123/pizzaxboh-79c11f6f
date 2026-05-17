@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pencil, Clock } from "lucide-react";
+import { Pencil, Clock, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   categoryLabels,
   getRecipeSpeed,
@@ -11,6 +12,7 @@ import {
 
 import { useAuth } from "@/lib/auth";
 import { useUIStore } from "@/lib/ui-store";
+import { useRecipeProgressStore } from "@/lib/notebook-store";
 import { CountdownTimer } from "./CountdownTimer";
 
 const EDITOR_EMAIL = "dorbareket123@gmail.com";
@@ -97,6 +99,16 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const canEdit = email === EDITOR_EMAIL && !isServiceMode;
   const speed = getRecipeSpeed(recipe);
   const shelfLife = recipe.shelfLifeHebrew?.trim() || DEFAULT_SHELF_LIFE;
+
+  const checkedIndices = useRecipeProgressStore((s) => s.checked[recipe.id]);
+  const toggleIngredient = useRecipeProgressStore((s) => s.toggleIngredient);
+  const resetRecipe = useRecipeProgressStore((s) => s.resetRecipe);
+  const isChecked = (idx: number) => !!checkedIndices?.includes(idx);
+
+  const handleComplete = () => {
+    resetRecipe(recipe.id);
+    toast.success("ההכנה הושלמה! שלבי ההכנה אופסו", { duration: 2500 });
+  };
 
   // In service mode, scale typography up ~20% for at-a-glance reading.
   const titleClass = isServiceMode
@@ -264,8 +276,33 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               return (
                 <li
                   key={i.name}
-                  className="flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition"
+                  className={`flex items-stretch gap-2 rounded-lg bg-background/40 border border-border/60 p-2 hover:border-neon/40 transition ${
+                    isChecked(idx) ? "opacity-40" : ""
+                  }`}
                 >
+                  <button
+                    type="button"
+                    onClick={() => toggleIngredient(recipe.id, idx)}
+                    aria-pressed={isChecked(idx)}
+                    aria-label={isChecked(idx) ? "בטל סימון" : "סמן כהוכן"}
+                    className={`shrink-0 self-center grid place-content-center h-6 w-6 rounded border-2 transition ${
+                      isChecked(idx)
+                        ? "bg-neon border-neon glow-neon"
+                        : "border-neon/50 hover:border-neon"
+                    }`}
+                  >
+                    {isChecked(idx) && (
+                      <svg
+                        viewBox="0 0 16 16"
+                        className="h-4 w-4 text-primary-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path d="M3 8l3.5 3.5L13 5" />
+                      </svg>
+                    )}
+                  </button>
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
                     {editing && !isServiceMode && isScalable(i.unit) ? (
                       <input
@@ -292,7 +329,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                   </div>
                   <span
                     style={{ color: "#F4F4F4" }}
-                    className={ingredientTextClass}
+                    className={`${ingredientTextClass} ${
+                      isChecked(idx) ? "line-through" : ""
+                    }`}
                   >
                     {i.name}
                   </span>
@@ -358,6 +397,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               onAlarmChange={setAlarming}
             />
           )}
+
+          <button
+            type="button"
+            onClick={handleComplete}
+            className="w-full inline-flex items-center justify-center gap-2 bg-neon text-primary-foreground font-bold text-base px-4 py-3 rounded-lg glow-neon hover:opacity-95 transition"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            מתכון מוכן
+          </button>
         </>
       )}
 
