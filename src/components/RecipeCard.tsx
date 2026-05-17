@@ -100,6 +100,16 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const speed = getRecipeSpeed(recipe);
   const shelfLife = recipe.shelfLifeHebrew?.trim() || DEFAULT_SHELF_LIFE;
 
+  const checkedIndices = useRecipeProgressStore((s) => s.checked[recipe.id]);
+  const toggleIngredient = useRecipeProgressStore((s) => s.toggleIngredient);
+  const resetRecipe = useRecipeProgressStore((s) => s.resetRecipe);
+  const isChecked = (idx: number) => !!checkedIndices?.includes(idx);
+
+  const handleComplete = () => {
+    resetRecipe(recipe.id);
+    toast.success("ההכנה הושלמה! שלבי ההכנה אופסו", { duration: 2500 });
+  };
+
   // In service mode, scale typography up ~20% for at-a-glance reading.
   const titleClass = isServiceMode
     ? "font-display text-2xl sm:text-3xl font-bold mt-1 break-words"
