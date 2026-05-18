@@ -277,10 +277,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               }
               return next;
             });
-            if (expanded) {
-              setEditing(false);
-              setDrafts({});
-            }
           }}
           className={`w-4/5 px-4 py-2 rounded-md border font-bold text-sm transition ${
             isServiceMode
