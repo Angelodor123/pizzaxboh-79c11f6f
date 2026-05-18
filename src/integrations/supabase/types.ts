@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       calendar_event_overrides: {
         Row: {
           created_at: string
@@ -264,6 +288,36 @@ export type Database = {
           texture_target_hebrew?: string | null
           timer_seconds?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_texts: {
+        Row: {
+          created_at: string
+          group_key: string
+          key: string
+          label: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          group_key?: string
+          key: string
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Update: {
+          created_at?: string
+          group_key?: string
+          key?: string
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
         }
         Relationships: []
       }
