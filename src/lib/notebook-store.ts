@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,33 +17,26 @@ interface DbRow {
   list_key: NotebookListKey;
   text: string;
   done: boolean;
-  sort_order: number;
   created_at: string;
 }
 
-// =========================================
-// Shared notebook (Supabase + realtime)
-// =========================================
-//
-// Replaces the previous localStorage zustand store. Same hook name so callers
-// don't change. Returns the same shape: { lists, addItem, toggleItem, ... }
-// =========================================
+interface NotebookState {
+  lists: Record<NotebookListKey, NotebookItem[]>;
+  loading: boolean;
+  initialized: boolean;
+  refresh: () => Promise<void>;
+  addItem: (list: NotebookListKey, text: string) => Promise<void>;
+  toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
+  removeItem: (list: NotebookListKey, id: string) => Promise<void>;
+  clearDone: (list: NotebookListKey) => Promise<void>;
+}
 
-const EMPTY_LISTS: Record<NotebookListKey, NotebookItem[]> = {
+const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
   tasks: [],
   shopping: [],
   orders: [],
   warehouse: [],
 };
-
-function rowToItem(r: DbRow): NotebookItem {
-  return {
-    id: r.id,
-    text: r.text,
-    done: r.done,
-    createdAt: r.created_at,
-  };
-}
 
 function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
   const out: Record<NotebookListKey, NotebookItem[]> = {
@@ -53,46 +46,103 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
     warehouse: [],
   };
   for (const r of rows) {
-    if (out[r.list_key]) out[r.list_key].push(rowToItem(r));
+    if (!out[r.list_key]) continue;
+    out[r.list_key].push({
+      id: r.id,
+      text: r.text,
+      done: r.done,
+      createdAt: r.created_at,
+    });
   }
-  // newest first within each list
   for (const k of Object.keys(out) as NotebookListKey[]) {
     out[k].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }
   return out;
 }
 
-interface NotebookApi {
-  lists: Record<NotebookListKey, NotebookItem[]>;
-  loading: boolean;
-  addItem: (list: NotebookListKey, text: string) => Promise<void>;
-  toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
-  removeItem: (list: NotebookListKey, id: string) => Promise<void>;
-  clearDone: (list: NotebookListKey) => Promise<void>;
-}
+export const useNotebookStore = create<NotebookState>((set, get) => ({
+  lists: EMPTY,
+  loading: true,
+  initialized: false,
 
-export function useNotebookStore<T = NotebookApi>(selector?: (s: NotebookApi) => T): T {
-  const [lists, setLists] = useState<Record<NotebookListKey, NotebookItem[]>>(EMPTY_LISTS);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
+  refresh: async () => {
     const { data } = await supabase
       .from("notebook_items")
-      .select("id,list_key,text,done,sort_order,created_at")
+      .select("id,list_key,text,done,created_at")
       .order("created_at", { ascending: false });
-    setLists(groupRows((data ?? []) as DbRow[]));
-    setLoading(false);
-  }, []);
+    set({ lists: groupRows((data ?? []) as DbRow[]), loading: false, initialized: true });
+  },
 
+  addItem: async (list, text) => {
+    const clean = text.trim().slice(0, 500);
+    if (!clean) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const optimistic: NotebookItem = {
+      id: `tmp-${crypto.randomUUID()}`,
+      text: clean,
+      done: false,
+      createdAt: new Date().toISOString(),
+    };
+    set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
+    await supabase.from("notebook_items").insert({
+      list_key: list,
+      text: clean,
+      created_by: user.id,
+    });
+  },
+
+  toggleItem: async (list, id) => {
+    let nextDone = false;
+    set((s) => ({
+      lists: {
+        ...s.lists,
+        [list]: s.lists[list].map((it) => {
+          if (it.id !== id) return it;
+          nextDone = !it.done;
+          return { ...it, done: nextDone };
+        }),
+      },
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
+  },
+
+  removeItem: async (list, id) => {
+    set((s) => ({
+      lists: { ...s.lists, [list]: s.lists[list].filter((it) => it.id !== id) },
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").delete().eq("id", id);
+  },
+
+  clearDone: async (list) => {
+    const toDelete = get().lists[list].filter((it) => it.done && !it.id.startsWith("tmp-"));
+    set((s) => ({
+      lists: { ...s.lists, [list]: s.lists[list].filter((it) => !it.done) },
+    }));
+    if (toDelete.length === 0) return;
+    await supabase
+      .from("notebook_items")
+      .delete()
+      .in("id", toDelete.map((it) => it.id));
+  },
+}));
+
+/**
+ * Mount once at the root of the app to load notebook items and keep them
+ * synced via Supabase realtime.
+ */
+export function useNotebookRealtime() {
+  const refresh = useNotebookStore((s) => s.refresh);
   useEffect(() => {
-    refresh();
+    void refresh();
     const channel = supabase
       .channel("notebook-items-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notebook_items" },
         () => {
-          // Cheap and correct: re-fetch on any change.
           void refresh();
         },
       )
@@ -101,63 +151,10 @@ export function useNotebookStore<T = NotebookApi>(selector?: (s: NotebookApi) =>
       supabase.removeChannel(channel);
     };
   }, [refresh]);
-
-  const addItem = useCallback(async (list: NotebookListKey, text: string) => {
-    const clean = text.trim().slice(0, 500);
-    if (!clean) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    // Optimistic
-    const optimistic: NotebookItem = {
-      id: `tmp-${crypto.randomUUID()}`,
-      text: clean,
-      done: false,
-      createdAt: new Date().toISOString(),
-    };
-    setLists((s) => ({ ...s, [list]: [optimistic, ...s[list]] }));
-    await supabase.from("notebook_items").insert({
-      list_key: list,
-      text: clean,
-      created_by: user.id,
-    });
-  }, []);
-
-  const toggleItem = useCallback(async (list: NotebookListKey, id: string) => {
-    let nextDone = false;
-    setLists((s) => ({
-      ...s,
-      [list]: s[list].map((it) => {
-        if (it.id !== id) return it;
-        nextDone = !it.done;
-        return { ...it, done: nextDone };
-      }),
-    }));
-    if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
-  }, []);
-
-  const removeItem = useCallback(async (list: NotebookListKey, id: string) => {
-    setLists((s) => ({ ...s, [list]: s[list].filter((it) => it.id !== id) }));
-    if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").delete().eq("id", id);
-  }, []);
-
-  const clearDone = useCallback(async (list: NotebookListKey) => {
-    const toDelete = lists[list].filter((it) => it.done && !it.id.startsWith("tmp-"));
-    setLists((s) => ({ ...s, [list]: s[list].filter((it) => !it.done) }));
-    if (toDelete.length === 0) return;
-    await supabase
-      .from("notebook_items")
-      .delete()
-      .in("id", toDelete.map((it) => it.id));
-  }, [lists]);
-
-  const api: NotebookApi = { lists, loading, addItem, toggleItem, removeItem, clearDone };
-  return (selector ? selector(api) : api) as T;
 }
 
 // =========================================
-// Per-recipe ingredient progress (still local — per-chef workspace)
+// Per-recipe ingredient progress (local — per-chef workspace)
 // =========================================
 
 interface RecipeProgressState {
