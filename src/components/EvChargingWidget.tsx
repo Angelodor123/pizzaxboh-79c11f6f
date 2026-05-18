@@ -222,17 +222,31 @@ export function EvChargingWidget() {
                   </select>
                   <button
                     type="button"
-                    onClick={() => startCharge(v.id, 45)}
+                    onClick={() => startCharge(v.id, 120)}
                     className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
                   >
-                    <Plug className="h-3 w-3" /> 45 ד׳
+                    <Plug className="h-3 w-3" /> 2 ש׳
                   </button>
                   <button
                     type="button"
-                    onClick={() => startCharge(v.id, 90)}
+                    onClick={() => startCharge(v.id, 180)}
                     className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
                   >
-                    <Plug className="h-3 w-3" /> 90 ד׳
+                    <Plug className="h-3 w-3" /> 3 ש׳
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startCharge(v.id, 240)}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
+                  >
+                    <Plug className="h-3 w-3" /> 4 ש׳
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startCustomCharge(v.id)}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/60 text-neon font-bold hover:bg-neon/10"
+                  >
+                    <Plug className="h-3 w-3" /> מותאם
                   </button>
                   {(v.status === "בטעינה" || v.swap_at) && (
                     <button
