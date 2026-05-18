@@ -1,0 +1,345 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Plus, X, Trash2, Pencil, Truck, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/suppliers")({
+  component: SuppliersPage,
+});
+
+const WEEKDAYS_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+interface Supplier {
+  id: string;
+  name: string;
+  category: string;
+  delivery_weekdays: number[];
+  default_start_time: string | null;
+  default_end_time: string | null;
+  contact: string | null;
+  notes: string | null;
+  active: boolean;
+}
+
+function SuppliersPage() {
+  const { role } = useAuth();
+  const canEdit = role === "admin";
+  const [list, setList] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Supplier | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("suppliers" as never)
+        .select("*")
+        .order("name", { ascending: true });
+      if (!mounted) return;
+      if (error) toast.error("שגיאה בטעינת ספקים");
+      else setList((data as Supplier[]) ?? []);
+      setLoading(false);
+    };
+    load();
+    const ch = supabase
+      .channel("suppliers_rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, () => load())
+      .subscribe();
+    return () => {
+      mounted = false;
+      supabase.removeChannel(ch);
+    };
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("למחוק את הספק? כל אירועי הסחורה האוטומטיים שלו יימחקו מהלוח.")) return;
+    const { error } = await supabase.from("suppliers" as never).delete().eq("id", id);
+    if (error) toast.error("שגיאה במחיקה");
+    else toast.success("הספק נמחק");
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6" dir="rtl">
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+            🚚 ניהול <span className="text-neon text-glow-neon">ספקים</span>
+          </h1>
+          <p className="text-muted-foreground mt-2 text-sm">
+            ימי החלוקה מסונכרנים אוטומטית ללו״ז קבלת הסחורה בלוח.
+          </p>
+        </div>
+        {canEdit && (
+          <button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+            className="shrink-0 inline-flex items-center gap-2 h-10 px-3 rounded-md bg-neon text-primary-foreground font-bold glow-neon"
+          >
+            <Plus className="h-4 w-4" />
+            ספק חדש
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-center text-muted-foreground py-12">טוען…</div>
+      ) : list.length === 0 ? (
+        <div className="text-center text-muted-foreground py-12 rounded-2xl border border-border bg-card/60">
+          אין ספקים עדיין
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {list.map((s) => (
+            <li
+              key={s.id}
+              className={`rounded-2xl border p-4 bg-card/80 backdrop-blur ${
+                s.active ? "border-emerald-500/60" : "border-border opacity-70"
+              }`}
+              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 font-bold">
+                    <Truck className="h-4 w-4 text-emerald-400" />
+                    <span className="truncate">{s.name}</span>
+                    <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
+                      {s.category}
+                    </span>
+                    {!s.active && (
+                      <span className="text-[10px] font-bold text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                        לא פעיל
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {WEEKDAYS_HE.map((w, i) => (
+                      <span
+                        key={i}
+                        className={`text-[11px] font-bold rounded px-2 py-0.5 border ${
+                          s.delivery_weekdays.includes(i)
+                            ? "bg-emerald-500/15 border-emerald-500/60 text-emerald-300"
+                            : "border-border/40 text-muted-foreground/60"
+                        }`}
+                      >
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2 tabular-nums">
+                    {s.default_start_time?.slice(0, 5) || "—"}
+                    {s.default_end_time ? ` – ${s.default_end_time.slice(0, 5)}` : ""}
+                    {s.contact ? ` · ${s.contact}` : ""}
+                  </div>
+                  {s.notes && (
+                    <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{s.notes}</p>
+                  )}
+                </div>
+                {canEdit && (
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      onClick={() => {
+                        setEditing(s);
+                        setFormOpen(true);
+                      }}
+                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
+                      aria-label="ערוך"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(s.id)}
+                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
+                      aria-label="מחק"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {formOpen && (
+        <SupplierForm
+          existing={editing}
+          onClose={() => {
+            setFormOpen(false);
+            setEditing(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function SupplierForm({
+  existing,
+  onClose,
+}: {
+  existing: Supplier | null;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(existing?.name ?? "");
+  const [category, setCategory] = useState(existing?.category ?? "כללי");
+  const [weekdays, setWeekdays] = useState<number[]>(existing?.delivery_weekdays ?? []);
+  const [startTime, setStartTime] = useState(existing?.default_start_time?.slice(0, 5) ?? "");
+  const [endTime, setEndTime] = useState(existing?.default_end_time?.slice(0, 5) ?? "");
+  const [contact, setContact] = useState(existing?.contact ?? "");
+  const [notes, setNotes] = useState(existing?.notes ?? "");
+  const [active, setActive] = useState(existing?.active ?? true);
+  const [saving, setSaving] = useState(false);
+
+  const toggleDay = (i: number) =>
+    setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("חובה להזין שם ספק");
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      name: name.trim().slice(0, 120),
+      category: category.trim().slice(0, 60) || "כללי",
+      delivery_weekdays: weekdays,
+      default_start_time: startTime || null,
+      default_end_time: endTime || null,
+      contact: contact.trim().slice(0, 200) || null,
+      notes: notes.trim().slice(0, 2000) || null,
+      active,
+    };
+    const { error } = existing
+      ? await supabase.from("suppliers" as never).update(payload).eq("id", existing.id)
+      : await supabase.from("suppliers" as never).insert(payload);
+    setSaving(false);
+    if (error) {
+      toast.error("שמירה נכשלה: " + error.message);
+      return;
+    }
+    toast.success(existing ? "הספק עודכן והלוח סונכרן" : "הספק נוסף והלוח סונכרן");
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm grid place-items-center p-4"
+      onClick={onClose}
+      dir="rtl"
+    >
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+        className="w-full max-w-md bg-card border border-border rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-xl font-bold">{existing ? "ערוך ספק" : "ספק חדש"}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <Field label="שם הספק">
+          <input value={name} onChange={(e) => setName(e.target.value)} className="sup-input" maxLength={120} dir="rtl" />
+        </Field>
+
+        <Field label="קטגוריה (לדוגמה: ירקות, בשר, יבש)">
+          <input value={category} onChange={(e) => setCategory(e.target.value)} className="sup-input" maxLength={60} dir="rtl" />
+        </Field>
+
+        <div>
+          <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי חלוקה / הגעה</span>
+          <div className="flex flex-wrap gap-1.5">
+            {WEEKDAYS_HE.map((w, i) => {
+              const on = weekdays.includes(i);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggleDay(i)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
+                    on
+                      ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
+                      : "border-border text-foreground hover:border-neon"
+                  }`}
+                >
+                  {on && <Check className="inline h-3 w-3 ms-1" />}
+                  {w}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="משעה (ברירת מחדל)">
+            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="sup-input" />
+          </Field>
+          <Field label="עד שעה">
+            <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="sup-input" />
+          </Field>
+        </div>
+
+        <Field label="איש קשר / טלפון">
+          <input value={contact} onChange={(e) => setContact(e.target.value)} className="sup-input" maxLength={200} dir="rtl" />
+        </Field>
+
+        <Field label="הערות">
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="sup-input min-h-[80px]" maxLength={2000} dir="rtl" />
+        </Field>
+
+        <label className="flex items-center justify-end gap-2 text-sm cursor-pointer">
+          <span>ספק פעיל (יוצר אירועים בלוח)</span>
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-[hsl(var(--neon))]" />
+        </label>
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full h-11 rounded-md bg-neon text-primary-foreground font-bold glow-neon disabled:opacity-50"
+        >
+          {saving ? "שומר…" : existing ? "עדכן" : "הוסף"}
+        </button>
+
+        <style>{`
+          .sup-input {
+            width: 100%;
+            background: hsl(var(--input));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            color: hsl(var(--foreground));
+            text-align: right;
+          }
+          .sup-input:focus {
+            outline: none;
+            border-color: hsl(var(--neon, var(--primary)));
+            box-shadow: 0 0 0 2px hsl(var(--neon, var(--primary)) / 0.4);
+          }
+        `}</style>
+      </form>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">{label}</span>
+      {children}
+    </label>
+  );
+}

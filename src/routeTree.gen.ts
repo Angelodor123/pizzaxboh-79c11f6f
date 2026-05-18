@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SuppliersRoute = SuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotebookRoute = NotebookRouteImport.update({
   id: '/notebook',
   path: '/notebook',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/suppliers': typeof SuppliersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/suppliers': typeof SuppliersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,27 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/suppliers': typeof SuppliersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/calendar' | '/guide' | '/notebook'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/calendar'
+    | '/guide'
+    | '/notebook'
+    | '/suppliers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/calendar' | '/guide' | '/notebook'
-  id: '__root__' | '/' | '/admin' | '/calendar' | '/guide' | '/notebook'
+  to: '/' | '/admin' | '/calendar' | '/guide' | '/notebook' | '/suppliers'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/calendar'
+    | '/guide'
+    | '/notebook'
+    | '/suppliers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,10 +99,18 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   NotebookRoute: typeof NotebookRoute
+  SuppliersRoute: typeof SuppliersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/suppliers': {
+      id: '/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof SuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notebook': {
       id: '/notebook'
       path: '/notebook'
@@ -125,7 +155,18 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   NotebookRoute: NotebookRoute,
+  SuppliersRoute: SuppliersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
