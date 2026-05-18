@@ -4,10 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "viewer";
 
+// Boot super-admins (hardcoded, also enforced server-side via is_super_admin())
+const SUPER_ADMIN_EMAILS = new Set([
+  "dorbareket123@gmail.com",
+  "suntzov93@gmail.com",
+]);
+
 interface AuthState {
   session: Session | null;
   email: string | null;
   role: AppRole | null;
+  isSuperAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
@@ -63,6 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         email: session?.user?.email ?? null,
         role,
+        isSuperAdmin: SUPER_ADMIN_EMAILS.has(
+          (session?.user?.email ?? "").toLowerCase(),
+        ),
         loading,
         signOut,
         refreshRole,
