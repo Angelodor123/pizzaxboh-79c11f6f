@@ -72,10 +72,7 @@ function OperationalDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
-          Back of House Control
-        </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight text-foreground">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight text-foreground">
           ברוכים הבאים למרכז השליטה של <span className="text-neon font-bold text-glow-neon">Pizza X</span>
         </h1>
         <p className="text-foreground/80 mt-2 text-sm leading-relaxed">
