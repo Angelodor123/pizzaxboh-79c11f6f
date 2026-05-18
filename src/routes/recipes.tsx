@@ -60,20 +60,37 @@ function KitchenDashboard() {
             </h1>
           </div>
 
-          <div
-            className="shrink-0 flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-neon glow-neon"
-            style={{
-              background:
-                "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
-            }}
-            aria-label={`${activeRecipes.length} מתכונים`}
-          >
-            <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
-              {activeRecipes.length}
-            </span>
-            <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
-              מתכונים
-            </span>
+          <div className="shrink-0 flex items-center gap-2">
+            <div
+              className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-neon glow-neon"
+              style={{
+                background:
+                  "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
+              }}
+              aria-label={`${activeRecipes.length} מתכונים`}
+            >
+              <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
+                {activeRecipes.length}
+              </span>
+              <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
+                מתכונים
+              </span>
+            </div>
+            <div
+              className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-jungle"
+              style={{
+                background:
+                  "radial-gradient(circle at center, rgba(34,197,94,0.18), transparent 70%)",
+              }}
+              aria-label={`${activeDishes.length} מנות`}
+            >
+              <span className="font-display font-black text-3xl text-jungle tabular-nums leading-none">
+                {activeDishes.length}
+              </span>
+              <span className="text-[10px] font-bold tracking-[0.1em] text-jungle mt-1">
+                מנות
+              </span>
+            </div>
           </div>
         </div>
 
