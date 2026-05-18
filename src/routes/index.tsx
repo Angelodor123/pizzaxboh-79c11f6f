@@ -56,6 +56,18 @@ function OperationalDashboard() {
     );
   }, [events]);
 
+  const tomorrowDeliveries = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const wd = d.getDay();
+    return events.filter(
+      (e) =>
+        e.category === "delivery" &&
+        (e.event_date === iso || e.recurring_weekday === wd),
+    );
+  }, [events]);
+
   const openTasks = lists.tasks.filter((t) => !t.done).length;
   const shoppingCount = lists.shopping.filter((t) => !t.done).length;
   const ordersCount = lists.orders.filter((t) => !t.done).length;
@@ -149,10 +161,32 @@ function OperationalDashboard() {
         </Link>
       </div>
 
+      {/* Supplier reminders — tomorrow */}
+      {tomorrowDeliveries.length > 0 && (
+        <Link
+          to="/calendar"
+          className="block mb-6 rounded-xl border-2 border-neon/40 hover:border-neon bg-neon/5 p-4 transition"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Truck className="h-5 w-5 text-neon" />
+            <h2 className="font-display text-base font-bold">
+              🔔 תזכורת — מחר מגיעים {tomorrowDeliveries.length} ספקים
+            </h2>
+          </div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {tomorrowDeliveries.slice(0, 6).map((e) => (
+              <li key={e.id} className="text-xs text-foreground/90 truncate">
+                • {e.supplier || e.title}
+              </li>
+            ))}
+          </ul>
+        </Link>
+      )}
+
       {/* Shortcut tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" />
-        <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="סטטוס מוצרים" />
+        <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="פנקס יומי" />
         <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" />
         {role === "admin" && (
           <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" />
