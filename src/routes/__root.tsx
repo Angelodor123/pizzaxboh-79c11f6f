@@ -138,13 +138,10 @@ function AuthedShell() {
   useSiteTextsSync();
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
   const isServiceMode = useUIStore((s) => s.isServiceMode);
-  const lastRecipeId = useUIStore((s) => s.lastRecipeId);
-  const lastRecipeName = useUIStore((s) => s.lastRecipeName);
-  const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const showServiceToggle = pathname === "/recipes";
-  const showQuickBack = pathname !== "/recipes" && !!lastRecipeId && !!lastRecipeName;
+  const showQuickBack = pathname !== "/recipes";
   return (
     <div className="min-h-screen flex flex-col">
       <header
@@ -179,26 +176,7 @@ function AuthedShell() {
       <main className="flex-1">
         <Outlet />
       </main>
-      {showQuickBack && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-stretch gap-1 bg-card/95 backdrop-blur border-2 border-neon rounded-full pl-1 pr-3 py-1 glow-neon shadow-lg">
-          <Link
-            to="/recipes"
-            hash={`recipe-${lastRecipeId}`}
-            className="flex items-center gap-2 text-sm font-bold text-neon px-3 py-1.5"
-          >
-            <span aria-hidden>↩</span>
-            <span className="max-w-[180px] truncate">חזור ל: {lastRecipeName}</span>
-          </Link>
-          <button
-            type="button"
-            onClick={clearLastRecipe}
-            aria-label="סגור"
-            className="px-2 text-muted-foreground hover:text-foreground"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">
           Pizza X • Urban Jungle Kitchen OS
