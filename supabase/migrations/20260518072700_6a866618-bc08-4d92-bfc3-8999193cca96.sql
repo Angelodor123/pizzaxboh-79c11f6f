@@ -1,0 +1,1 @@
+ALTER TABLE public.ev_vehicles ADD COLUMN IF NOT EXISTS issue_note TEXT;
