@@ -33,17 +33,10 @@ function formatQtyUnit(quantity: number, unit: string): { value: string; unit: s
   return { value: formatNum(quantity), unit };
 }
 
-// Units that represent non-quantifiable amounts — not scaled, not editable.
-const NON_SCALABLE_UNITS = new Set(["חופן", "לפי טעם"]);
-function isScalable(unit: string) {
-  return !NON_SCALABLE_UNITS.has(unit);
-}
+
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
-  const [scale, setScale] = useState(1);
   const [expanded, setExpanded] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [alarming, setAlarming] = useState(false);
 
   useEffect(() => {
@@ -55,53 +48,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     }
   }, [recipe.id]);
 
-  const scaledIngredients = recipe.ingredients.map((i) => ({
-    ...i,
-    quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
-  }));
-  const scaledSpiceBag = recipe.spiceBag
-    ? {
-        ...recipe.spiceBag,
-        totalWeightGrams: recipe.spiceBag.totalWeightGrams * scale,
-        items: recipe.spiceBag.items.map((i) => ({
-          ...i,
-          quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
-        })),
-      }
-    : undefined;
-
-  const isScaled = Math.abs(scale - 1) > 1e-6;
-
-  function confirmEdits() {
-    // Find first edited ingredient with a valid numeric value, derive new scale.
-    for (const [idxStr, raw] of Object.entries(drafts)) {
-      const idx = Number(idxStr);
-      const original = recipe.ingredients[idx];
-      if (!original) continue;
-      if (!isScalable(original.unit)) continue;
-      const n = Number(raw);
-      if (!Number.isFinite(n) || n <= 0) continue;
-      const display = formatQtyUnit(original.quantity, original.unit);
-      // Convert input back to original unit baseline
-      let newInOriginalUnit = n;
-      if (original.unit === "גרם" && display.unit === 'ק"ג') {
-        newInOriginalUnit = n * 1000;
-      } else if (original.unit === 'מ"ל' && display.unit === "ליטר") {
-        newInOriginalUnit = n * 1000;
-      }
-      if (original.quantity > 0) {
-        setScale(newInOriginalUnit / original.quantity);
-        break;
-      }
-    }
-    setDrafts({});
-    setEditing(false);
-  }
-
-  function cancelEdits() {
-    setDrafts({});
-    setEditing(false);
-  }
+  const scaledIngredients = recipe.ingredients;
+  const scaledSpiceBag = recipe.spiceBag;
 
   const { role } = useAuth();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
@@ -153,68 +101,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </span>
       </header>
 
-      {expanded && !isServiceMode && (
-        <div className="rounded-lg bg-background/60 border border-border p-3">
-          <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-            <div className="text-xs font-bold text-muted-foreground">
-              כמות הכנה
-            </div>
-            <div className="text-neon font-display font-bold text-lg tabular-nums">
-              ×{formatNum(scale)}
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {[0.5, 1, 2, 3, 5, 10].map((m) => (
-              <button
-                key={m}
-                onClick={() => setScale(m)}
-                className={`py-2 rounded-md text-sm font-bold border transition ${
-                  Math.abs(scale - m) < 1e-6
-                    ? "bg-neon text-primary-foreground border-neon glow-neon"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                ×{m}
-              </button>
-            ))}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <label className="text-xs font-bold text-muted-foreground whitespace-nowrap">
-              מכפיל מותאם:
-            </label>
-            <div className="relative flex-1">
-              <span className="absolute inset-y-0 right-2 flex items-center text-muted-foreground text-sm pointer-events-none">
-                ×
-              </span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.1"
-                value={scale}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value);
-                  if (!Number.isNaN(v) && v > 0) setScale(v);
-                }}
-                className="w-full bg-background border border-border rounded-md py-2 pr-7 pl-2 text-sm font-bold text-foreground tabular-nums focus:outline-none focus:border-neon"
-              />
-            </div>
-          </div>
-          {isScaled && (
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={() => {
-                  setScale(1);
-                  setDrafts({});
-                }}
-                className="px-3 py-2 rounded-md text-xs font-bold bg-neon text-primary-foreground glow-neon"
-              >
-                אפס למקור
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {expanded && (
         <>
@@ -249,39 +135,10 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 מצרכים
               </h4>
-              {!isServiceMode && (
-                editing ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={cancelEdits}
-                      className="px-3 py-1.5 rounded-md text-xs font-bold border border-border text-muted-foreground"
-                    >
-                      בטל
-                    </button>
-                    <button
-                      onClick={confirmEdits}
-                      style={{ backgroundColor: "#228B22" }}
-                      className="px-4 py-1.5 rounded-md text-xs font-bold text-white glow-jungle"
-                    >
-                      אישור
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="px-3 py-1.5 rounded-md text-xs font-bold border border-neon text-neon hover:bg-neon hover:text-primary-foreground transition"
-                    title="חישוב מחדש של כל הכמויות לפי כמות שתזין למרכיב אחד (לא נשמר)"
-                  >
-                    התאם כמויות
-                  </button>
-                )
-              )}
             </div>
           <ul className="space-y-1.5">
             {scaledIngredients.map((i, idx) => {
               const display = formatQtyUnit(i.quantity, i.unit);
-              const draft = drafts[idx];
-              const shownValue = draft !== undefined ? draft : display.value;
               return (
                 <li
                   key={i.name}
@@ -313,25 +170,13 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                     )}
                   </button>
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
-                    {editing && !isServiceMode && isScalable(i.unit) ? (
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={shownValue}
-                        onChange={(e) =>
-                          setDrafts((d) => ({ ...d, [idx]: e.target.value }))
-                        }
-                        className="w-full min-w-0 bg-transparent border-b border-neon/60 text-center text-neon font-display font-bold text-lg tabular-nums focus:outline-none"
-                      />
-                    ) : (
-                      <span
-                        className={`text-neon font-display font-bold tabular-nums leading-tight ${
-                          isServiceMode ? "text-xl" : "text-lg"
-                        }`}
-                      >
-                        {display.value}
-                      </span>
-                    )}
+                    <span
+                      className={`text-neon font-display font-bold tabular-nums leading-tight ${
+                        isServiceMode ? "text-xl" : "text-lg"
+                      }`}
+                    >
+                      {display.value}
+                    </span>
                     <span className="text-[10px] font-bold text-neon/80 uppercase tracking-wide mt-0.5">
                       {display.unit}
                     </span>
@@ -428,10 +273,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               }
               return next;
             });
-            if (expanded) {
-              setEditing(false);
-              setDrafts({});
-            }
           }}
           className={`w-4/5 px-4 py-2 rounded-md border font-bold text-sm transition ${
             isServiceMode
