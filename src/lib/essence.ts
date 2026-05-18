@@ -31,12 +31,16 @@ const ESSENCE_BY_ID: Record<string, string> = {
 };
 
 const ESSENCE_BY_CATEGORY: Record<RecipeCategory, string> = {
+  dishes: "מנה מוגמרת — הרכבה, חימום והגשה לפי סטנדרט פיצה X.",
   sauces_bases: "רוטב בסיס — דיוק בכמויות ובזמני טחינה.",
   aiolis_sauces: "אמולסיה מאוזנת — מרקם חלק וטעם ברור.",
   jams_creams: "בישול ארוך — עומק טעם וצמיגות נכונה.",
   starters: "מנת פתיחה — מרקם וטעם הם הכל.",
   spices: "תערובת תבלינים — שקילה מדויקת לכל שקית.",
   desserts: "סיום מתוק — דיוק באפייה ובקירור.",
+  pastas: "פסטה — בישול אל-דנטה ואיחוד עם הרוטב במחבת.",
+  authentic_pastas: "פסטה אותנטית — נאמנות למקור הרומאי.",
+  salads: "סלט — רעננות, חיתוך אחיד ותיבול מדויק בסוף.",
 };
 
 export function essenceFor(recipe: Recipe): string {
