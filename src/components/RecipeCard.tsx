@@ -46,6 +46,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [alarming, setAlarming] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === `#recipe-${recipe.id}`) {
+      setExpanded(true);
+      const el = document.getElementById(`recipe-${recipe.id}`);
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    }
+  }, [recipe.id]);
+
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
     quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
