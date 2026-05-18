@@ -42,12 +42,16 @@ export interface Recipe {
 export const DEFAULT_SHELF_LIFE = "תוקף: לפי נוהל מטבח כללי";
 
 export const categoryLabels: Record<RecipeCategory, string> = {
+  dishes: "מנות",
   sauces_bases: "רטבים ובסיסים",
   aiolis_sauces: "איולי ורטבים",
   jams_creams: "ריבות וקרמים",
   starters: "מנות ראשונות",
   spices: "תבלינים",
   desserts: "קינוחים",
+  pastas: "פסטות",
+  authentic_pastas: "פסטות אותנטיות",
+  salads: "סלטים",
 };
 
 export type SpeedTier = "very_fast" | "fast" | "medium" | "slow" | "very_slow";
