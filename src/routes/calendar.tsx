@@ -59,6 +59,7 @@ function CalendarPage() {
   const { role } = useAuth();
   const canEdit = role === "admin";
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [overrides, setOverrides] = useState<EventOverride[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(() => {
@@ -69,20 +70,22 @@ function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string>(toIsoDate(new Date()));
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
+  const [instanceEdit, setInstanceEdit] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
 
-  // Load events
+  // Load events + overrides
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const { data, error } = await supabase
-        .from("calendar_events")
-        .select("*")
-        .order("event_date", { ascending: true });
+      const [ev, ov] = await Promise.all([
+        supabase.from("calendar_events").select("*").order("event_date", { ascending: true }),
+        supabase.from("calendar_event_overrides").select("*"),
+      ]);
       if (!mounted) return;
-      if (error) {
+      if (ev.error || ov.error) {
         toast.error("שגיאה בטעינת לוח האירועים");
       } else {
-        setEvents((data as CalendarEvent[]) ?? []);
+        setEvents((ev.data as CalendarEvent[]) ?? []);
+        setOverrides((ov.data as EventOverride[]) ?? []);
       }
       setLoading(false);
     };
@@ -90,11 +93,8 @@ function CalendarPage() {
 
     const channel = supabase
       .channel("calendar_events_rt")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "calendar_events" },
-        () => load(),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "calendar_events" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "calendar_event_overrides" }, () => load())
       .subscribe();
 
     return () => {
@@ -103,15 +103,34 @@ function CalendarPage() {
     };
   }, []);
 
-  // Get events for a given date (combines one-off + recurring weekly)
-  const eventsForDate = (isoDate: string): CalendarEvent[] => {
+  // Get events for a given date (one-off + recurring weekly), with per-instance overrides applied.
+  const eventsForDate = (isoDate: string): EffectiveEvent[] => {
     const d = new Date(isoDate + "T00:00:00");
     const wd = d.getDay();
-    return events.filter(
-      (e) =>
-        e.event_date === isoDate ||
-        (e.recurring_weekday !== null && e.recurring_weekday === wd),
+    const matched = events.filter(
+      (e) => e.event_date === isoDate || (e.recurring_weekday !== null && e.recurring_weekday === wd),
     );
+    const out: EffectiveEvent[] = [];
+    for (const e of matched) {
+      const ov = overrides.find((o) => o.event_id === e.id && o.override_date === isoDate);
+      if (!ov) {
+        out.push({ ...e, _occurrenceDate: isoDate });
+        continue;
+      }
+      if (ov.deleted) continue;
+      out.push({
+        ...e,
+        title: ov.title ?? e.title,
+        start_time: ov.start_time ?? e.start_time,
+        end_time: ov.end_time ?? e.end_time,
+        notes: ov.notes ?? e.notes,
+        high_priority: ov.high_priority ?? e.high_priority,
+        _overrideId: ov.id,
+        _isOverride: true,
+        _occurrenceDate: isoDate,
+      });
+    }
+    return out;
   };
 
   return (
