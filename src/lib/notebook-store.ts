@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type NotebookListKey = "tasks" | "shopping" | "orders";
+export type NotebookListKey = "tasks" | "shopping" | "orders" | "warehouse";
 
 export interface NotebookItem {
   id: string;
@@ -21,7 +21,7 @@ interface NotebookState {
 export const useNotebookStore = create<NotebookState>()(
   persist(
     (set) => ({
-      lists: { tasks: [], shopping: [], orders: [] },
+      lists: { tasks: [], shopping: [], orders: [], warehouse: [] },
       addItem: (list, text) => {
         const clean = text.trim().slice(0, 200);
         if (!clean) return;
@@ -64,7 +64,17 @@ export const useNotebookStore = create<NotebookState>()(
           },
         })),
     }),
-    { name: "pizzax-notebook-v1" },
+    {
+      name: "pizzax-notebook-v1",
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<NotebookState>;
+        return {
+          ...current,
+          ...p,
+          lists: { ...current.lists, ...(p.lists ?? {}) },
+        };
+      },
+    },
   ),
 );
 

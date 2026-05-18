@@ -36,6 +36,12 @@ const LISTS: ListConfig[] = [
     emoji: "📦",
     placeholder: 'לדוגמה: "בצל סגול — 10 ק״ג"',
   },
+  {
+    key: "warehouse",
+    title: "להביא מהמחסן",
+    emoji: "🏬",
+    placeholder: 'לדוגמה: "קרטון מפיות", "שקיות ואקום"',
+  },
 ];
 
 function NotebookPage() {
