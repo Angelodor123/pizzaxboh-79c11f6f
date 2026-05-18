@@ -1,149 +1,225 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
-import { RecipeCard } from "@/components/RecipeCard";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { NotebookPen, CalendarDays, ChefHat, ListChecks, Truck, ShieldCheck } from "lucide-react";
 import { useCookbookStore } from "@/lib/store";
-import { useUIStore } from "@/lib/ui-store";
-import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
+import { useNotebookStore } from "@/lib/notebook-store";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
-  component: KitchenDashboard,
+  component: OperationalDashboard,
 });
 
-const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
-  sauces_bases: "🍅",
-  aiolis_sauces: "🍯",
-  jams_creams: "🥘",
-  starters: "🌽",
-  spices: "🧂",
-  desserts: "🍪",
-};
+interface CalEvent {
+  id: string;
+  title: string;
+  category: string;
+  event_date: string | null;
+  recurring_weekday: number | null;
+  high_priority: boolean | null;
+  supplier: string | null;
+}
 
-function KitchenDashboard() {
+const WEEKDAYS_HE = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
+
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function OperationalDashboard() {
+  const { role } = useAuth();
   const recipes = useCookbookStore((s) => s.recipes);
-  const cat = useUIStore((s) => s.category);
-  const setCategory = useUIStore((s) => s.setCategory);
-  const [q, setQ] = useState("");
+  const lists = useNotebookStore((s) => s.lists);
+  const [events, setEvents] = useState<CalEvent[]>([]);
 
-  const filtered = useMemo(
-    () =>
-      recipes
-        .filter((r) => !r.deleted)
-        .filter((r) => (cat === "all" ? true : r.category === cat))
-        .filter((r) => (q.trim() ? r.nameHebrew.includes(q.trim()) : true)),
-    [recipes, cat, q],
-  );
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data } = await supabase
+        .from("calendar_events")
+        .select("id,title,category,event_date,recurring_weekday,high_priority,supplier");
+      if (mounted && data) setEvents(data as CalEvent[]);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const activeRecipes = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
-  const countByCat = useMemo(() => {
-    const m = new Map<RecipeCategory, number>();
-    for (const r of activeRecipes) m.set(r.category, (m.get(r.category) ?? 0) + 1);
-    return m;
-  }, [activeRecipes]);
+
+  const todayEvents = useMemo(() => {
+    const iso = todayIso();
+    const wd = new Date(iso + "T00:00:00").getDay();
+    return events.filter(
+      (e) => e.event_date === iso || e.recurring_weekday === wd,
+    );
+  }, [events]);
+
+  const openTasks = lists.tasks.filter((t) => !t.done).length;
+  const shoppingCount = lists.shopping.filter((t) => !t.done).length;
+  const ordersCount = lists.orders.filter((t) => !t.done).length;
+
+  const today = new Date();
+  const dateLabel = today.toLocaleDateString("he-IL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-5">
-      <div className="mb-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
-              Mise en Place
-            </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-              מערכת <span className="text-neon text-glow-neon">הכנות</span>
-            </h1>
-          </div>
-
-          <div
-            className="shrink-0 flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-neon glow-neon"
-            style={{
-              background:
-                "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
-            }}
-            aria-label={`${activeRecipes.length} מתכונים`}
-          >
-            <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
-              {activeRecipes.length}
-            </span>
-            <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
-              מתכונים
-            </span>
-          </div>
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
+          Back of House Control
         </div>
-
-        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-          ברוכים הבאים למרכז הקולינרי של פיצה X. כאן תמצאו את כל המתכונים,
-          הטכניקות והדיוקים שהופכים אותנו למי שאנחנו. עבדו לפי הסדר, הקפידו על
-          הכמויות, וזכרו – הדיוק הוא המרכיב הכי חשוב במנה.
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          ברוכים הבאים ל<span className="text-neon text-glow-neon">Pizza X</span>
+        </h1>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          מרכז הבקרה התפעולי של המטבח – {dateLabel}. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.
         </p>
       </div>
 
-      <div className="sticky top-24 z-30 -mx-4 px-4 py-3 bg-background/90 backdrop-blur border-b border-border mb-6 space-y-3">
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="חיפוש מתכון..."
-            className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
-          />
-        </div>
-
-        <div
-          className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin"
-          role="tablist"
-          aria-label="קטגוריות מהירות"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={cat === "all"}
-            onClick={() => setCategory("all")}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
-              cat === "all"
-                ? "bg-neon text-primary-foreground border-neon glow-neon"
-                : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
-            }`}
-          >
-            📋 הכל
-            <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
-          </button>
-          {categoryOrder.map((key) => {
-            const active = cat === key;
-            const count = countByCat.get(key) ?? 0;
-            if (count === 0) return null;
-            return (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setCategory(key)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
-                  active
-                    ? "bg-neon text-primary-foreground border-neon glow-neon"
-                    : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
-                }`}
-              >
-                {CATEGORY_EMOJI[key]} {categoryLabels[key]}
-                <span className="opacity-70 tabular-nums mr-1">({count})</span>
-              </button>
-            );
-          })}
-        </div>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <StatCard label="מתכונים פעילים" value={activeRecipes.length} to="/recipes" />
+        <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
+        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight />
+        <StatCard label="פריטים לקנייה" value={shoppingCount} to="/notebook" />
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground text-sm">
-          לא נמצאו מתכונים תואמים.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((r) => (
-            <RecipeCard key={r.id} recipe={r} />
-          ))}
-        </div>
-      )}
+      {/* Quick Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Today's Schedule */}
+        <Link
+          to="/calendar"
+          className="group rounded-xl border-2 border-border hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-neon" />
+              <h2 className="font-display text-lg font-bold">📅 לוח אירועים – היום</h2>
+            </div>
+            <span className="text-xs text-muted-foreground">{WEEKDAYS_HE[today.getDay()]}</span>
+          </div>
+          {todayEvents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {todayEvents.slice(0, 4).map((e) => (
+                <li
+                  key={e.id}
+                  className={`text-sm flex items-center justify-between gap-2 rounded-md px-2 py-1.5 ${
+                    e.high_priority ? "bg-neon/10 text-neon" : "bg-background/40"
+                  }`}
+                >
+                  <span className="truncate">{e.title}</span>
+                  {e.supplier && (
+                    <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
+                  )}
+                </li>
+              ))}
+              {todayEvents.length > 4 && (
+                <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
+              )}
+            </ul>
+          )}
+          <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
+            פתח לוח מלא →
+          </span>
+        </Link>
+
+        {/* Daily Notebook */}
+        <Link
+          to="/notebook"
+          className="group rounded-xl border-2 border-border hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+        >
+          <div className="flex items-center gap-2">
+            <NotebookPen className="h-5 w-5 text-neon" />
+            <h2 className="font-display text-lg font-bold">📋 פנקס עבודה יומי</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <NotebookMini label="משימות" value={openTasks} />
+            <NotebookMini label="קניות" value={shoppingCount} />
+            <NotebookMini label="הזמנות" value={ordersCount} />
+          </div>
+          <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
+            פתח פנקס →
+          </span>
+        </Link>
+      </div>
+
+      {/* Shortcut tiles */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" />
+        <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="סטטוס מוצרים" />
+        <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" />
+        {role === "admin" && (
+          <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" />
+        )}
+      </div>
     </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  to,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  to: string;
+  highlight?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      className={`rounded-xl border-2 p-4 text-right transition hover:border-neon ${
+        highlight ? "border-neon glow-neon bg-neon/5" : "border-border bg-card"
+      }`}
+    >
+      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        {label}
+      </div>
+      <div className="font-display text-3xl font-black text-neon tabular-nums mt-1">
+        {value}
+      </div>
+    </Link>
+  );
+}
+
+function NotebookMini({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md bg-background/40 border border-border py-2">
+      <div className="font-display text-xl font-black text-neon tabular-nums leading-none">
+        {value}
+      </div>
+      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
+    </div>
+  );
+}
+
+function ShortcutTile({
+  to,
+  icon,
+  label,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="rounded-xl border border-border hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
+    >
+      <div className="text-neon">{icon}</div>
+      <span className="text-sm font-bold">{label}</span>
+    </Link>
   );
 }
