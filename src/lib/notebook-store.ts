@@ -31,6 +31,7 @@ interface NotebookState {
   refresh: () => Promise<void>;
   addItem: (list: NotebookListKey, text: string, priority?: NotebookPriority) => Promise<void>;
   toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
+  editItem: (list: NotebookListKey, id: string, text: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
   clearDone: (list: NotebookListKey) => Promise<void>;
 }
