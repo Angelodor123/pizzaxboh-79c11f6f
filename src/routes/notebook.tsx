@@ -261,11 +261,14 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
                 aria-pressed={it.done}
               >
                 <span
-                  className={`flex-1 min-w-0 break-words text-sm ${
+                  className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
                     it.done ? "line-through text-muted-foreground" : "text-foreground"
                   }`}
                 >
-                  {it.text}
+                  {it.priority === "urgent" && !it.done && (
+                    <Flame className="h-3.5 w-3.5 text-neon shrink-0" />
+                  )}
+                  <span className="min-w-0 break-words">{it.text}</span>
                 </span>
                 <span
                   className={`shrink-0 grid place-content-center h-5 w-5 rounded border-2 transition ${
