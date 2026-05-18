@@ -33,11 +33,7 @@ function formatQtyUnit(quantity: number, unit: string): { value: string; unit: s
   return { value: formatNum(quantity), unit };
 }
 
-// Units that represent non-quantifiable amounts — not scaled, not editable.
-const NON_SCALABLE_UNITS = new Set(["חופן", "לפי טעם"]);
-function isScalable(unit: string) {
-  return !NON_SCALABLE_UNITS.has(unit);
-}
+
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [expanded, setExpanded] = useState(false);
