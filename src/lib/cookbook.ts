@@ -146,12 +146,16 @@ export function getRecipeSpeed(recipe: Recipe): SpeedInfo {
 }
 
 export const categoryOrder: RecipeCategory[] = [
+  "dishes",
   "sauces_bases",
   "aiolis_sauces",
   "jams_creams",
   "starters",
   "spices",
   "desserts",
+  "pastas",
+  "authentic_pastas",
+  "salads",
 ];
 
 export const pizzaXCookbook: Recipe[] = [
