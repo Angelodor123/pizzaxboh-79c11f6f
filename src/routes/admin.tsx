@@ -61,6 +61,11 @@ function AdminGate() {
   return <AdminPage />;
 }
 
+const SUPER_ADMIN_EMAILS_RO = new Set([
+  "dorbareket123@gmail.com",
+  "suntzov93@gmail.com",
+]);
+
 const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   sauces_bases: "🍅",
   aiolis_sauces: "🍯",
@@ -514,6 +519,7 @@ function AdminPage() {
 }
 
 function InvitationsPanel() {
+  const { isSuperAdmin, email: myEmail } = useAuth();
   const [invites, setInvites] = useState<InvitationRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [email, setEmail] = useState("");
@@ -540,11 +546,20 @@ function InvitationsPanel() {
     load();
   }, []);
 
+  // Force viewer if not super admin
+  useEffect(() => {
+    if (!isSuperAdmin && role === "admin") setRole("viewer");
+  }, [isSuperAdmin, role]);
+
   const invite = async () => {
     setError(null);
     const clean = email.trim().toLowerCase();
     if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
       setError("כתובת אימייל לא תקינה");
+      return;
+    }
+    if (role === "admin" && !isSuperAdmin) {
+      setError("רק סופר-אדמין יכול להזמין מנהל חדש");
       return;
     }
     setBusy(true);
@@ -562,13 +577,23 @@ function InvitationsPanel() {
 
   const revokeInvite = async (id: string) => {
     if (!confirm("לבטל את ההזמנה?")) return;
-    await supabase.from("invitations").delete().eq("id", id);
+    const { error: e } = await supabase.from("invitations").delete().eq("id", id);
+    if (e) { setError(e.message); return; }
     await load();
   };
 
-  const revokeUser = async (id: string) => {
+  const revokeUser = async (id: string, userRole: AppRole, userEmail: string) => {
+    if (userRole === "admin" && !isSuperAdmin) {
+      setError("רק סופר-אדמין יכול להסיר מנהל");
+      return;
+    }
+    if (SUPER_ADMIN_EMAILS_RO.has(userEmail.toLowerCase())) {
+      setError("לא ניתן להסיר סופר-אדמין");
+      return;
+    }
     if (!confirm("להסיר את הרשאת המשתמש?")) return;
-    await supabase.from("user_roles").delete().eq("id", id);
+    const { error: e } = await supabase.from("user_roles").delete().eq("id", id);
+    if (e) { setError(e.message); return; }
     await load();
   };
 
@@ -577,9 +602,20 @@ function InvitationsPanel() {
       <div className="flex items-center justify-end gap-2 mb-4">
         <h2 className="font-display text-xl font-bold text-right flex-1">
           ניהול <span className="text-neon text-glow-neon">הרשאות</span>
+          {isSuperAdmin && (
+            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neon text-primary-foreground">
+              Super Admin
+            </span>
+          )}
         </h2>
         <UserPlus className="h-5 w-5 text-neon" />
       </div>
+
+      {!isSuperAdmin && (
+        <p className="text-[11px] text-muted-foreground text-right mb-3">
+          ניתן להזמין משתמשי "צפייה בלבד". הזמנת מנהלים חדשים שמורה לסופר-אדמין.
+        </p>
+      )}
 
       <div className="flex flex-col sm:flex-row-reverse gap-2 mb-4">
         <input
@@ -596,7 +632,7 @@ function InvitationsPanel() {
           className="bg-input border border-border rounded-md px-3 py-2 text-right"
         >
           <option value="viewer">צפייה בלבד</option>
-          <option value="admin">ניהול</option>
+          {isSuperAdmin && <option value="admin">ניהול</option>}
         </select>
         <button
           onClick={invite}
@@ -625,9 +661,11 @@ function InvitationsPanel() {
                 className="flex items-center justify-between px-3 py-2 gap-2"
               >
                 <button
-                  onClick={() => revokeUser(u.id)}
-                  className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive"
+                  onClick={() => revokeUser(u.id, u.role, u.email)}
+                  disabled={SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) || (u.role === "admin" && !isSuperAdmin)}
+                  className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="הסר הרשאה"
+                  title={SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) ? "לא ניתן להסיר סופר-אדמין" : ""}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

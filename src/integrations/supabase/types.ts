@@ -153,6 +153,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notebook_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          done: boolean
+          id: string
+          list_key: string
+          sort_order: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          id?: string
+          list_key: string
+          sort_order?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          id?: string
+          list_key?: string
+          sort_order?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recipe_versions: {
         Row: {
           changed_at: string
@@ -319,6 +352,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "viewer"

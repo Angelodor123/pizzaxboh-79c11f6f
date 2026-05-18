@@ -15,6 +15,7 @@ import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
+import { useNotebookRealtime } from "@/lib/notebook-store";
 import { useUIStore } from "@/lib/ui-store";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
@@ -49,7 +50,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           תקלה בטעינת הדף
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          אירעה שגיאה. אנא נסה שוב או חזור למטבח.
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -126,6 +129,7 @@ function RootComponent() {
 
 function AuthedShell() {
   useRecipesSync();
+  useNotebookRealtime();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
   const router = useRouter();
   const pathname = router.state.location.pathname;

@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 export type NotebookListKey = "tasks" | "shopping" | "orders" | "warehouse";
 
@@ -10,80 +12,152 @@ export interface NotebookItem {
   createdAt: string;
 }
 
-interface NotebookState {
-  lists: Record<NotebookListKey, NotebookItem[]>;
-  addItem: (list: NotebookListKey, text: string) => void;
-  toggleItem: (list: NotebookListKey, id: string) => void;
-  removeItem: (list: NotebookListKey, id: string) => void;
-  clearDone: (list: NotebookListKey) => void;
+interface DbRow {
+  id: string;
+  list_key: NotebookListKey;
+  text: string;
+  done: boolean;
+  created_at: string;
 }
 
-export const useNotebookStore = create<NotebookState>()(
-  persist(
-    (set) => ({
-      lists: { tasks: [], shopping: [], orders: [], warehouse: [] },
-      addItem: (list, text) => {
-        const clean = text.trim().slice(0, 200);
-        if (!clean) return;
-        set((s) => ({
-          lists: {
-            ...s.lists,
-            [list]: [
-              {
-                id: crypto.randomUUID(),
-                text: clean,
-                done: false,
-                createdAt: new Date().toISOString(),
-              },
-              ...s.lists[list],
-            ],
-          },
-        }));
+interface NotebookState {
+  lists: Record<NotebookListKey, NotebookItem[]>;
+  loading: boolean;
+  initialized: boolean;
+  refresh: () => Promise<void>;
+  addItem: (list: NotebookListKey, text: string) => Promise<void>;
+  toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
+  removeItem: (list: NotebookListKey, id: string) => Promise<void>;
+  clearDone: (list: NotebookListKey) => Promise<void>;
+}
+
+const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
+  tasks: [],
+  shopping: [],
+  orders: [],
+  warehouse: [],
+};
+
+function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
+  const out: Record<NotebookListKey, NotebookItem[]> = {
+    tasks: [],
+    shopping: [],
+    orders: [],
+    warehouse: [],
+  };
+  for (const r of rows) {
+    if (!out[r.list_key]) continue;
+    out[r.list_key].push({
+      id: r.id,
+      text: r.text,
+      done: r.done,
+      createdAt: r.created_at,
+    });
+  }
+  for (const k of Object.keys(out) as NotebookListKey[]) {
+    out[k].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
+  return out;
+}
+
+export const useNotebookStore = create<NotebookState>((set, get) => ({
+  lists: EMPTY,
+  loading: true,
+  initialized: false,
+
+  refresh: async () => {
+    const { data } = await supabase
+      .from("notebook_items")
+      .select("id,list_key,text,done,created_at")
+      .order("created_at", { ascending: false });
+    set({ lists: groupRows((data ?? []) as DbRow[]), loading: false, initialized: true });
+  },
+
+  addItem: async (list, text) => {
+    const clean = text.trim().slice(0, 500);
+    if (!clean) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const optimistic: NotebookItem = {
+      id: `tmp-${crypto.randomUUID()}`,
+      text: clean,
+      done: false,
+      createdAt: new Date().toISOString(),
+    };
+    set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
+    await supabase.from("notebook_items").insert({
+      list_key: list,
+      text: clean,
+      created_by: user.id,
+    });
+  },
+
+  toggleItem: async (list, id) => {
+    let nextDone = false;
+    set((s) => ({
+      lists: {
+        ...s.lists,
+        [list]: s.lists[list].map((it) => {
+          if (it.id !== id) return it;
+          nextDone = !it.done;
+          return { ...it, done: nextDone };
+        }),
       },
-      toggleItem: (list, id) =>
-        set((s) => ({
-          lists: {
-            ...s.lists,
-            [list]: s.lists[list].map((it) =>
-              it.id === id ? { ...it, done: !it.done } : it,
-            ),
-          },
-        })),
-      removeItem: (list, id) =>
-        set((s) => ({
-          lists: {
-            ...s.lists,
-            [list]: s.lists[list].filter((it) => it.id !== id),
-          },
-        })),
-      clearDone: (list) =>
-        set((s) => ({
-          lists: {
-            ...s.lists,
-            [list]: s.lists[list].filter((it) => !it.done),
-          },
-        })),
-    }),
-    {
-      name: "pizzax-notebook-v1",
-      merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<NotebookState>;
-        return {
-          ...current,
-          ...p,
-          lists: { ...current.lists, ...(p.lists ?? {}) },
-        };
-      },
-    },
-  ),
-);
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
+  },
+
+  removeItem: async (list, id) => {
+    set((s) => ({
+      lists: { ...s.lists, [list]: s.lists[list].filter((it) => it.id !== id) },
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").delete().eq("id", id);
+  },
+
+  clearDone: async (list) => {
+    const toDelete = get().lists[list].filter((it) => it.done && !it.id.startsWith("tmp-"));
+    set((s) => ({
+      lists: { ...s.lists, [list]: s.lists[list].filter((it) => !it.done) },
+    }));
+    if (toDelete.length === 0) return;
+    await supabase
+      .from("notebook_items")
+      .delete()
+      .in("id", toDelete.map((it) => it.id));
+  },
+}));
+
+/**
+ * Mount once at the root of the app to load notebook items and keep them
+ * synced via Supabase realtime.
+ */
+export function useNotebookRealtime() {
+  const refresh = useNotebookStore((s) => s.refresh);
+  useEffect(() => {
+    void refresh();
+    const channel = supabase
+      .channel("notebook-items-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notebook_items" },
+        () => {
+          void refresh();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refresh]);
+}
 
 // =========================================
-// Per-recipe ingredient progress (chef's place-holder)
+// Per-recipe ingredient progress (local — per-chef workspace)
 // =========================================
 
 interface RecipeProgressState {
-  // recipeId -> set of ingredient indices that are checked off
   checked: Record<string, number[]>;
   toggleIngredient: (recipeId: string, index: number) => void;
   resetRecipe: (recipeId: string) => void;
