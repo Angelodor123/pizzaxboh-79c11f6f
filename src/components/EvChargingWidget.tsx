@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BatteryCharging, Plug, Car, Bell, AlertTriangle, X } from "lucide-react";
+import { BatteryCharging, Plug, Car, Bell, AlertTriangle, X, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { playBeep, playPop } from "@/lib/audio";
 import {
@@ -186,6 +186,7 @@ export function EvChargingWidget() {
           {vehicles.map((v) => {
             const cd = fmtCountdown(v.swap_at);
             const isExpired = cd.expired && v.status === "בטעינה";
+            const isCharging = v.status === "בטעינה" && !isExpired;
             const hasIssue = !!v.issue_note;
             return (
               <li
@@ -193,22 +194,30 @@ export function EvChargingWidget() {
                 className={`rounded-xl border bg-background/40 p-3 flex flex-col gap-2 transition ${
                   isExpired
                     ? "border-neon glow-neon"
+                    : isCharging
+                    ? "ev-charging"
                     : hasIssue
                     ? "border-destructive/60"
                     : "border-border"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
+                <div className="relative z-10 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <Car className="h-4 w-4 text-foreground/70 shrink-0" />
                     <span className="font-bold text-sm truncate">{v.name}</span>
+                    {isCharging && (
+                      <Zap
+                        className="h-4 w-4 text-amber-brand shrink-0 ev-bolt-pulse"
+                        aria-label="בטעינה"
+                      />
+                    )}
                   </div>
                   <span
                     className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusClasses(
                       v.status,
                     )}`}
                   >
-                    {v.status}
+                    {isCharging ? "⚡ בטעינה" : v.status}
                   </span>
                 </div>
 
