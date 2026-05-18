@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame } from "lucide-react";
 import { toast } from "sonner";
 import {
   useNotebookStore,
@@ -85,14 +85,17 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const removeItem = useNotebookStore((s) => s.removeItem);
   const clearDone = useNotebookStore((s) => s.clearDone);
   const [draft, setDraft] = useState("");
+  const [urgent, setUrgent] = useState(false);
 
   const doneCount = items.filter((i) => i.done).length;
 
   const submit = async () => {
     if (!draft.trim()) return;
     const text = draft;
+    const wasUrgent = urgent;
     setDraft("");
-    await addItem(cfg.key, text);
+    setUrgent(false);
+    await addItem(cfg.key, text, wasUrgent ? "urgent" : "normal");
   };
 
   const openItems = items.filter((i) => !i.done);
@@ -202,6 +205,19 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md bg-neon text-primary-foreground glow-neon disabled:opacity-40 disabled:glow-none"
         >
           <Plus className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setUrgent((u) => !u)}
+          aria-pressed={urgent}
+          title={urgent ? "דחוף" : "סמן כדחוף"}
+          className={`shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border transition ${
+            urgent
+              ? "bg-neon/15 border-neon text-neon glow-neon"
+              : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+          }`}
+        >
+          <Flame className="h-4 w-4" />
         </button>
         <input
           value={draft}
