@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_events: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          end_time: string | null
+          event_date: string | null
+          high_priority: boolean
+          id: string
+          notes: string | null
+          recurring_weekday: number | null
+          start_time: string | null
+          supplier: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          end_time?: string | null
+          event_date?: string | null
+          high_priority?: boolean
+          id?: string
+          notes?: string | null
+          recurring_weekday?: number | null
+          start_time?: string | null
+          supplier?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          end_time?: string | null
+          event_date?: string | null
+          high_priority?: boolean
+          id?: string
+          notes?: string | null
+          recurring_weekday?: number | null
+          start_time?: string | null
+          supplier?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           created_at: string
