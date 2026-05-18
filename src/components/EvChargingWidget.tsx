@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BatteryCharging, Plug, Car, Bell, AlertTriangle, X, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { playBeep, playPop } from "@/lib/audio";
+import { notify } from "@/lib/notifications";
 import {
   Dialog,
   DialogContent,
