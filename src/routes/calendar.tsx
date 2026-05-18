@@ -208,11 +208,16 @@ function CalendarPage() {
             setEditing(ev);
             setFormOpen(true);
           }}
+          onInstanceEdit={(ev, date) => setInstanceEdit({ ev, date })}
         />
       )}
 
       {/* Weekly delivery schedule strip */}
-      <WeeklyDeliveries events={events} canEdit={canEdit} onEdit={(ev) => { setEditing(ev); setFormOpen(true); }} />
+      <WeeklyDeliveries
+        events={events}
+        canEdit={canEdit}
+        onInstanceEdit={(ev, date) => setInstanceEdit({ ev, date })}
+      />
 
       {formOpen && (
         <EventForm
@@ -222,6 +227,14 @@ function CalendarPage() {
             setFormOpen(false);
             setEditing(null);
           }}
+        />
+      )}
+
+      {instanceEdit && (
+        <InstanceOverrideForm
+          ev={instanceEdit.ev}
+          date={instanceEdit.date}
+          onClose={() => setInstanceEdit(null)}
         />
       )}
     </div>
