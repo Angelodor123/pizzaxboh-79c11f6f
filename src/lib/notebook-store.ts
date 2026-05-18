@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type NotebookListKey = "tasks" | "shopping" | "orders";
+export type NotebookListKey = "tasks" | "shopping" | "orders" | "warehouse";
 
 export interface NotebookItem {
   id: string;
