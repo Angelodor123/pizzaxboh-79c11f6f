@@ -474,10 +474,18 @@ function DayDetails({
   canEdit,
   onEdit,
 }: {
+function DayDetails({
+  isoDate,
+  events,
+  canEdit,
+  onEdit,
+  onInstanceEdit,
+}: {
   isoDate: string;
-  events: CalendarEvent[];
+  events: EffectiveEvent[];
   canEdit: boolean;
   onEdit: (ev: CalendarEvent) => void;
+  onInstanceEdit: (ev: EffectiveEvent, date: string) => void;
 }) {
   const d = new Date(isoDate + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
@@ -489,6 +497,16 @@ function DayDetails({
     else toast.success("האירוע נמחק");
   };
 
+  const cancelInstance = async (ev: EffectiveEvent, date: string) => {
+    if (!confirm("לבטל את המופע ליום זה בלבד? פרופיל הספק לא ישתנה.")) return;
+    const payload = { event_id: ev.id, override_date: date, deleted: true };
+    const { error } = await supabase
+      .from("calendar_event_overrides")
+      .upsert(payload, { onConflict: "event_id,override_date" });
+    if (error) toast.error("שגיאה בביטול המופע");
+    else toast.success("המופע בוטל ליום זה בלבד");
+  };
+
   return (
     <div className="mt-4 rounded-2xl border border-border bg-card/80 backdrop-blur p-4">
       <h2 className="font-display text-lg font-bold mb-3 text-right">{label}</h2>
@@ -496,61 +514,101 @@ function DayDetails({
         <p className="text-sm text-muted-foreground text-center py-4">אין אירועים ביום זה</p>
       ) : (
         <ul className="space-y-2">
-          {events.map((ev) => (
-            <li
-              key={ev.id}
-              className={`rounded-xl border p-3 ${
-                ev.high_priority
-                  ? "border-destructive/60 bg-destructive/5"
-                  : "border-border bg-background/40"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 font-bold">
-                    {ev.high_priority && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                    {ev.category === "delivery" ? (
-                      <Truck className="h-4 w-4 text-neon" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 text-neon" />
-                    )}
-                    <span>{ev.title}</span>
-                    {ev.recurring_weekday !== null && (
-                      <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
-                        שבועי
-                      </span>
+          {events.map((ev) => {
+            const isRecurring = ev.recurring_weekday !== null;
+            const isAuto = !!ev.is_auto;
+            return (
+              <li
+                key={ev.id}
+                className={`rounded-xl border p-3 ${
+                  ev.high_priority
+                    ? "border-destructive/60 bg-destructive/5"
+                    : isAuto
+                    ? "border-emerald-500/70 bg-emerald-500/5"
+                    : "border-border bg-background/40"
+                }`}
+                style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 font-bold flex-wrap">
+                      {ev.high_priority && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                      {ev.category === "delivery" ? (
+                        <Truck className={`h-4 w-4 ${isAuto ? "text-emerald-400" : "text-neon"}`} />
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-neon" />
+                      )}
+                      <span>{ev.title}</span>
+                      {isRecurring && (
+                        <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
+                          שבועי
+                        </span>
+                      )}
+                      {isAuto && (
+                        <span className="text-[10px] font-bold text-emerald-300 border border-emerald-500/60 rounded px-1.5 py-0.5">
+                          ספק
+                        </span>
+                      )}
+                      {ev._isOverride && (
+                        <span className="text-[10px] font-bold text-amber-300 border border-amber-500/60 rounded px-1.5 py-0.5">
+                          שונה ליום זה
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 tabular-nums">
+                      {ev.start_time?.slice(0, 5) || "—"}
+                      {ev.end_time ? ` – ${ev.end_time.slice(0, 5)}` : ""}
+                      {ev.supplier ? ` · ${ev.supplier}` : ""}
+                    </div>
+                    {ev.notes && (
+                      <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{ev.notes}</p>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">
-                    {ev.start_time?.slice(0, 5) || "—"}
-                    {ev.end_time ? ` – ${ev.end_time.slice(0, 5)}` : ""}
-                    {ev.supplier ? ` · ${ev.supplier}` : ""}
-                  </div>
-                  {ev.notes && (
-                    <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{ev.notes}</p>
+                  {canEdit && (
+                    <div className="flex flex-col gap-1 shrink-0">
+                      {isRecurring ? (
+                        <>
+                          <button
+                            onClick={() => onInstanceEdit(ev, isoDate)}
+                            className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
+                            aria-label="ערוך מופע יחיד"
+                            title="ערוך מופע ליום זה בלבד"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => cancelInstance(ev, isoDate)}
+                            className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
+                            aria-label="בטל מופע יחיד"
+                            title="בטל מופע ליום זה בלבד"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => onEdit(ev)}
+                            className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
+                            aria-label="ערוך"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(ev.id)}
+                            className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
+                            aria-label="מחק"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
-                {canEdit && (
-                  <div className="flex flex-col gap-1 shrink-0">
-                    <button
-                      onClick={() => onEdit(ev)}
-                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
-                      aria-label="ערוך"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(ev.id)}
-                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
-                      aria-label="מחק"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -560,14 +618,24 @@ function DayDetails({
 function WeeklyDeliveries({
   events,
   canEdit,
-  onEdit,
+  onInstanceEdit,
 }: {
   events: CalendarEvent[];
   canEdit: boolean;
-  onEdit: (ev: CalendarEvent) => void;
+  onInstanceEdit: (ev: EffectiveEvent, date: string) => void;
 }) {
   const recurring = events.filter((e) => e.recurring_weekday !== null && e.category === "delivery");
   if (recurring.length === 0) return null;
+
+  // For the "next occurrence" of each weekday from today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextDateForWeekday = (wd: number) => {
+    const d = new Date(today);
+    const diff = (wd - today.getDay() + 7) % 7;
+    d.setDate(d.getDate() + diff);
+    return toIsoDate(d);
+  };
 
   const byDay = WEEKDAYS_HE.map((_, i) => recurring.filter((e) => e.recurring_weekday === i));
 
@@ -588,10 +656,10 @@ function WeeklyDeliveries({
                   <li key={ev.id}>
                     <button
                       type="button"
-                      onClick={() => canEdit && onEdit(ev)}
+                      onClick={() => canEdit && onInstanceEdit(ev as EffectiveEvent, nextDateForWeekday(i))}
                       className="w-full text-right"
                     >
-                      <EventChip ev={ev} />
+                      <EventChip ev={ev as EffectiveEvent} />
                     </button>
                   </li>
                 ))}
@@ -600,6 +668,152 @@ function WeeklyDeliveries({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function InstanceOverrideForm({
+  ev,
+  date,
+  onClose,
+}: {
+  ev: EffectiveEvent;
+  date: string;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(ev.title);
+  const [startTime, setStartTime] = useState(ev.start_time?.slice(0, 5) ?? "");
+  const [endTime, setEndTime] = useState(ev.end_time?.slice(0, 5) ?? "");
+  const [highPriority, setHighPriority] = useState(!!ev.high_priority);
+  const [notes, setNotes] = useState(ev.notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const d = new Date(date + "T00:00:00");
+  const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const payload = {
+      event_id: ev.id,
+      override_date: date,
+      deleted: false,
+      title: title.trim().slice(0, 200) || null,
+      start_time: startTime || null,
+      end_time: endTime || null,
+      high_priority: highPriority,
+      notes: notes.trim().slice(0, 2000) || null,
+    };
+    const { error } = await supabase
+      .from("calendar_event_overrides")
+      .upsert(payload, { onConflict: "event_id,override_date" });
+    setSaving(false);
+    if (error) {
+      toast.error("שמירה נכשלה: " + error.message);
+      return;
+    }
+    toast.success("המופע עודכן ליום זה בלבד");
+    onClose();
+  };
+
+  const clearOverride = async () => {
+    if (!ev._overrideId) {
+      onClose();
+      return;
+    }
+    if (!confirm("לאפס את העריכה ולחזור לערכי המאסטר?")) return;
+    const { error } = await supabase.from("calendar_event_overrides").delete().eq("id", ev._overrideId);
+    if (error) toast.error("שגיאה");
+    else {
+      toast.success("העריכה אופסה");
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm grid place-items-center p-4"
+      onClick={onClose}
+      dir="rtl"
+    >
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+        className="w-full max-w-md bg-card border border-emerald-500/60 rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
+        style={{ borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-xl font-bold">ערוך מופע ליום זה</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{label} · {ev.title}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/40 rounded p-2">
+          השינוי כאן יחול רק על {label}. פרופיל הספק / המאסטר לא ישתנה.
+        </p>
+
+        <Field label="כותרת">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} className="input" maxLength={200} dir="rtl" />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="משעה">
+            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="input" />
+          </Field>
+          <Field label="עד שעה">
+            <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="input" />
+          </Field>
+        </div>
+
+        <label className="flex items-center justify-end gap-2 text-sm cursor-pointer">
+          <span className="flex items-center gap-1">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> דחיפות גבוהה
+          </span>
+          <input
+            type="checkbox"
+            checked={highPriority}
+            onChange={(e) => setHighPriority(e.target.checked)}
+            className="accent-[hsl(var(--destructive))]"
+          />
+        </label>
+
+        <Field label="הערה ליום זה (לדוגמה: עיכוב באספקה)">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="input min-h-[80px]"
+            maxLength={2000}
+            dir="rtl"
+          />
+        </Field>
+
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 h-11 rounded-md bg-neon text-primary-foreground font-bold glow-neon disabled:opacity-50"
+          >
+            {saving ? "שומר…" : "שמור ליום זה"}
+          </button>
+          {ev._overrideId && (
+            <button
+              type="button"
+              onClick={clearOverride}
+              className="h-11 px-3 rounded-md border border-border text-sm font-bold hover:text-destructive hover:border-destructive"
+            >
+              אפס
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
