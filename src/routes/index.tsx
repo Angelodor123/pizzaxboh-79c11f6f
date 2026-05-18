@@ -180,10 +180,10 @@ function StatCard({
     <Link
       to={to}
       className={`rounded-xl border-2 p-4 text-right transition hover:border-neon ${
-        highlight ? "border-neon glow-neon bg-neon/5" : "border-border bg-card"
+        highlight ? "border-neon glow-neon bg-neon/5" : "border-jungle/30 bg-jungle/5"
       }`}
     >
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-foreground/70 font-bold">
         {label}
       </div>
       <div className="font-display text-3xl font-black text-neon tabular-nums mt-1">
