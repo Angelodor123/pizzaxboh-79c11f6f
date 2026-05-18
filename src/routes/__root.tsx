@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
 import { useNotebookRealtime } from "@/lib/notebook-store";
+import { useSiteTextsSync, useSiteText } from "@/lib/site-texts";
 import { useUIStore } from "@/lib/ui-store";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
@@ -130,6 +131,8 @@ function RootComponent() {
 function AuthedShell() {
   useRecipesSync();
   useNotebookRealtime();
+  useSiteTextsSync();
+  const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
   const isServiceMode = useUIStore((s) => s.isServiceMode);
   const router = useRouter();
   const pathname = router.state.location.pathname;
@@ -168,8 +171,13 @@ function AuthedShell() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
-        Pizza X • Urban Jungle Kitchen OS
+      <footer className="border-t border-border py-4 px-4 text-center space-y-1">
+        <p className="text-xs text-muted-foreground/70">
+          Pizza X • Urban Jungle Kitchen OS
+        </p>
+        <p className="text-[11px] text-foreground/40 tracking-wide" dir="rtl">
+          {footerCredit}
+        </p>
       </footer>
     </div>
   );
