@@ -158,6 +158,7 @@ export type Database = {
           battery_pct: number
           created_at: string
           id: string
+          issue_note: string | null
           name: string
           sort_order: number
           status: string
@@ -168,6 +169,7 @@ export type Database = {
           battery_pct?: number
           created_at?: string
           id?: string
+          issue_note?: string | null
           name: string
           sort_order?: number
           status?: string
@@ -178,6 +180,7 @@ export type Database = {
           battery_pct?: number
           created_at?: string
           id?: string
+          issue_note?: string | null
           name?: string
           sort_order?: number
           status?: string
