@@ -238,7 +238,11 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           {items.map((it) => (
             <li
               key={it.id}
-              className="flex items-center gap-2 rounded-lg bg-background/40 border border-border/60 px-2.5 py-2 hover:border-neon/40 transition"
+              className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:border-neon/40 transition ${
+                it.priority === "urgent" && !it.done
+                  ? "bg-neon/10 border-neon/50"
+                  : "bg-background/40 border-border/60"
+              }`}
             >
               <button
                 type="button"
