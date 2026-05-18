@@ -20,7 +20,13 @@ import { useRecipesSync } from "@/lib/store";
 import { useNotebookRealtime } from "@/lib/notebook-store";
 import { useSiteTextsSync, useSiteText } from "@/lib/site-texts";
 import { useUIStore } from "@/lib/ui-store";
+import {
+  ensureServiceWorker,
+  notificationPermission,
+  requestNotificationPermission,
+} from "@/lib/notifications";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
+import { useEffect } from "react";
 
 function NotFoundComponent() {
   return (
