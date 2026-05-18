@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame } from "lucide-react";
 import { toast } from "sonner";
 import {
   useNotebookStore,
@@ -85,14 +85,17 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const removeItem = useNotebookStore((s) => s.removeItem);
   const clearDone = useNotebookStore((s) => s.clearDone);
   const [draft, setDraft] = useState("");
+  const [urgent, setUrgent] = useState(false);
 
   const doneCount = items.filter((i) => i.done).length;
 
   const submit = async () => {
     if (!draft.trim()) return;
     const text = draft;
+    const wasUrgent = urgent;
     setDraft("");
-    await addItem(cfg.key, text);
+    setUrgent(false);
+    await addItem(cfg.key, text, wasUrgent ? "urgent" : "normal");
   };
 
   const openItems = items.filter((i) => !i.done);
@@ -203,6 +206,19 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
         >
           <Plus className="h-5 w-5" />
         </button>
+        <button
+          type="button"
+          onClick={() => setUrgent((u) => !u)}
+          aria-pressed={urgent}
+          title={urgent ? "דחוף" : "סמן כדחוף"}
+          className={`shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border transition ${
+            urgent
+              ? "bg-neon/15 border-neon text-neon glow-neon"
+              : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+          }`}
+        >
+          <Flame className="h-4 w-4" />
+        </button>
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -222,7 +238,11 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           {items.map((it) => (
             <li
               key={it.id}
-              className="flex items-center gap-2 rounded-lg bg-background/40 border border-border/60 px-2.5 py-2 hover:border-neon/40 transition"
+              className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:border-neon/40 transition ${
+                it.priority === "urgent" && !it.done
+                  ? "bg-neon/10 border-neon/50"
+                  : "bg-background/40 border-border/60"
+              }`}
             >
               <button
                 type="button"
@@ -241,11 +261,14 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
                 aria-pressed={it.done}
               >
                 <span
-                  className={`flex-1 min-w-0 break-words text-sm ${
+                  className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
                     it.done ? "line-through text-muted-foreground" : "text-foreground"
                   }`}
                 >
-                  {it.text}
+                  {it.priority === "urgent" && !it.done && (
+                    <Flame className="h-3.5 w-3.5 text-neon shrink-0" />
+                  )}
+                  <span className="min-w-0 break-words">{it.text}</span>
                 </span>
                 <span
                   className={`shrink-0 grid place-content-center h-5 w-5 rounded border-2 transition ${

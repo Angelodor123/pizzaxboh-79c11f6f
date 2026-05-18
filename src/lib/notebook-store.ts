@@ -5,10 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type NotebookListKey = "tasks" | "shopping" | "orders" | "warehouse";
 
+export type NotebookPriority = "normal" | "urgent";
+
 export interface NotebookItem {
   id: string;
   text: string;
   done: boolean;
+  priority: NotebookPriority;
   createdAt: string;
 }
 
@@ -17,6 +20,7 @@ interface DbRow {
   list_key: NotebookListKey;
   text: string;
   done: boolean;
+  priority: NotebookPriority | null;
   created_at: string;
 }
 
@@ -25,7 +29,7 @@ interface NotebookState {
   loading: boolean;
   initialized: boolean;
   refresh: () => Promise<void>;
-  addItem: (list: NotebookListKey, text: string) => Promise<void>;
+  addItem: (list: NotebookListKey, text: string, priority?: NotebookPriority) => Promise<void>;
   toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
   clearDone: (list: NotebookListKey) => Promise<void>;
@@ -51,11 +55,16 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
       id: r.id,
       text: r.text,
       done: r.done,
+      priority: (r.priority as NotebookPriority) ?? "normal",
       createdAt: r.created_at,
     });
   }
   for (const k of Object.keys(out) as NotebookListKey[]) {
-    out[k].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    out[k].sort((a, b) => {
+      // urgent first, then newest
+      if (a.priority !== b.priority) return a.priority === "urgent" ? -1 : 1;
+      return a.createdAt < b.createdAt ? 1 : -1;
+    });
   }
   return out;
 }
@@ -68,12 +77,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   refresh: async () => {
     const { data } = await supabase
       .from("notebook_items")
-      .select("id,list_key,text,done,created_at")
+      .select("id,list_key,text,done,priority,created_at")
+      .is("archived_at", null)
       .order("created_at", { ascending: false });
     set({ lists: groupRows((data ?? []) as DbRow[]), loading: false, initialized: true });
   },
 
-  addItem: async (list, text) => {
+  addItem: async (list, text, priority = "normal") => {
     const clean = text.trim().slice(0, 500);
     if (!clean) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -82,12 +92,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       id: `tmp-${crypto.randomUUID()}`,
       text: clean,
       done: false,
+      priority,
       createdAt: new Date().toISOString(),
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
     await supabase.from("notebook_items").insert({
       list_key: list,
       text: clean,
+      priority,
       created_by: user.id,
     });
   },
