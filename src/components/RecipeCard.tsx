@@ -40,10 +40,7 @@ function isScalable(unit: string) {
 }
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
-  const [scale, setScale] = useState(1);
   const [expanded, setExpanded] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [alarming, setAlarming] = useState(false);
 
   useEffect(() => {
@@ -55,53 +52,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     }
   }, [recipe.id]);
 
-  const scaledIngredients = recipe.ingredients.map((i) => ({
-    ...i,
-    quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
-  }));
-  const scaledSpiceBag = recipe.spiceBag
-    ? {
-        ...recipe.spiceBag,
-        totalWeightGrams: recipe.spiceBag.totalWeightGrams * scale,
-        items: recipe.spiceBag.items.map((i) => ({
-          ...i,
-          quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
-        })),
-      }
-    : undefined;
-
-  const isScaled = Math.abs(scale - 1) > 1e-6;
-
-  function confirmEdits() {
-    // Find first edited ingredient with a valid numeric value, derive new scale.
-    for (const [idxStr, raw] of Object.entries(drafts)) {
-      const idx = Number(idxStr);
-      const original = recipe.ingredients[idx];
-      if (!original) continue;
-      if (!isScalable(original.unit)) continue;
-      const n = Number(raw);
-      if (!Number.isFinite(n) || n <= 0) continue;
-      const display = formatQtyUnit(original.quantity, original.unit);
-      // Convert input back to original unit baseline
-      let newInOriginalUnit = n;
-      if (original.unit === "גרם" && display.unit === 'ק"ג') {
-        newInOriginalUnit = n * 1000;
-      } else if (original.unit === 'מ"ל' && display.unit === "ליטר") {
-        newInOriginalUnit = n * 1000;
-      }
-      if (original.quantity > 0) {
-        setScale(newInOriginalUnit / original.quantity);
-        break;
-      }
-    }
-    setDrafts({});
-    setEditing(false);
-  }
-
-  function cancelEdits() {
-    setDrafts({});
-    setEditing(false);
-  }
+  const scaledIngredients = recipe.ingredients;
+  const scaledSpiceBag = recipe.spiceBag;
 
   const { role } = useAuth();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
