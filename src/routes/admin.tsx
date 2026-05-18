@@ -915,3 +915,272 @@ function VersionHistory({
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Admin sub-components: tabs, supplier reminders, CMS texts
+// ---------------------------------------------------------------------------
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
+        active
+          ? "text-neon"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {icon}
+      {children}
+      {active && (
+        <span className="absolute right-0 left-0 -bottom-px h-0.5 bg-neon shadow-[0_0_8px_var(--neon)]" />
+      )}
+    </button>
+  );
+}
+
+function SupplierRemindersPanel() {
+  const { settings, setLocal, save, loading } = useSupplierReminderSettings();
+  const [users, setUsers] = useState<{ user_id: string; email: string; role: string }[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void supabase
+      .from("user_roles")
+      .select("user_id,email,role")
+      .order("email")
+      .then(({ data }) => setUsers((data ?? []) as never));
+  }, []);
+
+  const toggleRecipient = (id: string) => {
+    const next = settings.recipients.includes(id)
+      ? settings.recipients.filter((r) => r !== id)
+      : [...settings.recipients, id];
+    setLocal({ ...settings, recipients: next });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await save(settings);
+      toast.success("הגדרות התזכורות נשמרו");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "שמירה נכשלה");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-center text-muted-foreground py-8 text-sm">טוען…</p>;
+  }
+
+  return (
+    <section className="border border-border rounded-md p-5 bg-card/40 space-y-6" dir="rtl">
+      <div className="flex items-center gap-2">
+        <Bell className="h-5 w-5 text-neon" />
+        <h2 className="font-display text-xl font-bold">
+          תזכורות <span className="text-neon text-glow-neon">ספקים</span>
+        </h2>
+      </div>
+      <p className="text-xs text-muted-foreground -mt-3">
+        קבעו מתי תישלח התזכורת ולמי, לפני הגעת ספקים.
+      </p>
+
+      <div>
+        <label className="block text-xs font-bold text-muted-foreground mb-2 text-right">
+          מתי לשלוח תזכורת
+        </label>
+        <select
+          value={settings.timing}
+          onChange={(e) =>
+            setLocal({
+              ...settings,
+              timing: e.target.value as SupplierReminderSettings["timing"],
+            })
+          }
+          className="w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"
+        >
+          <option value="evening_before">ערב לפני ההגעה (20:00)</option>
+          <option value="morning_of">בבוקר ההגעה (07:00)</option>
+          <option value="both">גם ערב לפני וגם בבוקר</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-muted-foreground mb-2 text-right">
+          למי לשלוח ({settings.recipients.length} נבחרו)
+        </label>
+        <ul className="border border-border rounded-md divide-y divide-border max-h-72 overflow-y-auto">
+          {users.length === 0 && (
+            <li className="px-3 py-3 text-center text-xs text-muted-foreground">
+              אין משתמשים פעילים.
+            </li>
+          )}
+          {users.map((u) => {
+            const checked = settings.recipients.includes(u.user_id);
+            return (
+              <li key={u.user_id} className="flex items-center justify-between px-3 py-2 gap-2">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleRecipient(u.user_id)}
+                  className="h-4 w-4 accent-[oklch(0.65_0.31_5)] shrink-0"
+                />
+                <div className="flex-1 text-right min-w-0">
+                  <div className="text-sm font-bold truncate" dir="ltr">{u.email}</div>
+                  <div className="text-[10px] text-neon font-bold">
+                    {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" /> {saving ? "שומר…" : "שמור הגדרות"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+const GROUP_LABELS: Record<string, string> = {
+  home: "📊 דף הבית",
+  notebook: "📋 פנקס יומי",
+  general: "🏷️ כותרות כלליות",
+};
+
+function ContentTextsPanel() {
+  const all = useSiteTextsStore((s) => s.all);
+  const loaded = useSiteTextsStore((s) => s.loaded);
+  const load = useSiteTextsStore((s) => s.load);
+  const update = useSiteTextsStore((s) => s.update);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loaded) void load();
+  }, [loaded, load]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, typeof all> = {};
+    all.forEach((t) => {
+      (map[t.group_key] ??= []).push(t);
+    });
+    return map;
+  }, [all]);
+
+  const handleSave = async (key: string) => {
+    const value = drafts[key];
+    if (value === undefined) return;
+    setSavingKey(key);
+    try {
+      await update(key, value);
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[key];
+        return next;
+      });
+      toast.success("הטקסט עודכן");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "שמירה נכשלה");
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  if (!loaded) {
+    return <p className="text-center text-muted-foreground py-8 text-sm">טוען…</p>;
+  }
+
+  return (
+    <section className="space-y-6" dir="rtl">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-neon" />
+        <h2 className="font-display text-xl font-bold">
+          ניהול <span className="text-neon text-glow-neon">תוכן וטקסטים</span>
+        </h2>
+      </div>
+      <p className="text-xs text-muted-foreground -mt-3">
+        ערכו את כל הטקסטים הדינמיים של האתר. השינויים נשמרים ומשתקפים בכל המכשירים בזמן אמת.
+      </p>
+
+      {Object.entries(grouped).map(([group, items]) => (
+        <div key={group} className="border border-border rounded-md p-4 bg-card/40">
+          <h3 className="font-display text-sm font-bold mb-3 text-neon">
+            {GROUP_LABELS[group] ?? group}
+          </h3>
+          <ul className="space-y-3">
+            {items.map((t) => {
+              const draft = drafts[t.key];
+              const current = draft ?? t.value;
+              const dirty = draft !== undefined && draft !== t.value;
+              const isLong = current.length > 60 || current.includes("\n");
+              return (
+                <li key={t.key} className="space-y-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">
+                      {t.key}
+                    </span>
+                    <label className="text-xs font-bold text-foreground/80">
+                      {t.label}
+                    </label>
+                  </div>
+                  {isLong ? (
+                    <textarea
+                      value={current}
+                      onChange={(e) =>
+                        setDrafts((d) => ({ ...d, [t.key]: e.target.value }))
+                      }
+                      rows={3}
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={current}
+                      onChange={(e) =>
+                        setDrafts((d) => ({ ...d, [t.key]: e.target.value }))
+                      }
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"
+                    />
+                  )}
+                  {dirty && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleSave(t.key)}
+                        disabled={savingKey === t.key}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:text-glow-neon disabled:opacity-50"
+                      >
+                        <Save className="h-3 w-3" />
+                        {savingKey === t.key ? "שומר…" : "שמור"}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
