@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays } from "lucide-react";
+import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays, Truck } from "lucide-react";
 import {
   Sheet,
   SheetContent,
