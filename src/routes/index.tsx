@@ -75,10 +75,10 @@ function OperationalDashboard() {
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
           Back of House Control
         </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-          ברוכים הבאים ל<span className="text-neon text-glow-neon">Pizza X</span>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight text-foreground">
+          ברוכים הבאים למרכז השליטה של <span className="text-neon font-bold text-glow-neon">Pizza X</span>
         </h1>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+        <p className="text-foreground/80 mt-2 text-sm leading-relaxed">
           מרכז הבקרה התפעולי של המטבח – {dateLabel}. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.
         </p>
       </div>
@@ -96,17 +96,17 @@ function OperationalDashboard() {
         {/* Today's Schedule */}
         <Link
           to="/calendar"
-          className="group rounded-xl border-2 border-border hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+          className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-neon" />
               <h2 className="font-display text-lg font-bold">📅 לוח אירועים – היום</h2>
             </div>
-            <span className="text-xs text-muted-foreground">{WEEKDAYS_HE[today.getDay()]}</span>
+            <span className="text-xs text-foreground/70">{WEEKDAYS_HE[today.getDay()]}</span>
           </div>
           {todayEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
+            <p className="text-sm text-foreground/80">אין אירועים מתוזמנים להיום.</p>
           ) : (
             <ul className="space-y-1.5">
               {todayEvents.slice(0, 4).map((e) => (
@@ -118,12 +118,12 @@ function OperationalDashboard() {
                 >
                   <span className="truncate">{e.title}</span>
                   {e.supplier && (
-                    <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
+                    <span className="text-[10px] text-foreground/70 shrink-0">{e.supplier}</span>
                   )}
                 </li>
               ))}
               {todayEvents.length > 4 && (
-                <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
+                <li className="text-xs text-foreground/70">+ {todayEvents.length - 4} נוספים</li>
               )}
             </ul>
           )}
@@ -135,7 +135,7 @@ function OperationalDashboard() {
         {/* Daily Notebook */}
         <Link
           to="/notebook"
-          className="group rounded-xl border-2 border-border hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+          className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center gap-2">
             <NotebookPen className="h-5 w-5 text-neon" />
@@ -180,10 +180,10 @@ function StatCard({
     <Link
       to={to}
       className={`rounded-xl border-2 p-4 text-right transition hover:border-neon ${
-        highlight ? "border-neon glow-neon bg-neon/5" : "border-border bg-card"
+        highlight ? "border-neon glow-neon bg-neon/5" : "border-jungle/30 bg-jungle/5"
       }`}
     >
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-foreground/70 font-bold">
         {label}
       </div>
       <div className="font-display text-3xl font-black text-neon tabular-nums mt-1">
@@ -195,11 +195,11 @@ function StatCard({
 
 function NotebookMini({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-background/40 border border-border py-2">
+    <div className="rounded-md bg-jungle/5 border border-jungle/30 py-2">
       <div className="font-display text-xl font-black text-neon tabular-nums leading-none">
         {value}
       </div>
-      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
+      <div className="text-[10px] text-foreground/70 mt-1">{label}</div>
     </div>
   );
 }
@@ -216,7 +216,7 @@ function ShortcutTile({
   return (
     <Link
       to={to}
-      className="rounded-xl border border-border hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
+      className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
     >
       <div className="text-neon">{icon}</div>
       <span className="text-sm font-bold">{label}</span>
