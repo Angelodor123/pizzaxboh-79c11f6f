@@ -434,22 +434,29 @@ function WeekView({
   );
 }
 
-function EventChip({ ev }: { ev: CalendarEvent }) {
+function EventChip({ ev }: { ev: EffectiveEvent }) {
   const Icon = ev.category === "delivery" ? Truck : Sparkles;
+  const isAuto = !!ev.is_auto;
   return (
     <li
       className={`rounded-md px-2 py-1.5 border text-[11px] leading-tight ${
         ev.high_priority
           ? "border-destructive/60 bg-destructive/10"
+          : isAuto
+          ? "bg-emerald-500/5"
           : ev.category === "delivery"
           ? "border-neon/40 bg-neon/5"
           : "border-border bg-background/40"
-      }`}
+      } ${isAuto ? "border-emerald-500/70" : ""}`}
+      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
     >
       <div className="flex items-center gap-1 font-bold">
         {ev.high_priority && <AlertTriangle className="h-3 w-3 text-destructive" />}
-        <Icon className="h-3 w-3 text-neon" />
+        <Icon className={`h-3 w-3 ${isAuto ? "text-emerald-400" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
+        {ev._isOverride && (
+          <span className="text-[9px] text-amber-400 border border-amber-500/40 rounded px-1">שונה</span>
+        )}
       </div>
       {(ev.start_time || ev.supplier) && (
         <div className="text-muted-foreground mt-0.5 truncate">
