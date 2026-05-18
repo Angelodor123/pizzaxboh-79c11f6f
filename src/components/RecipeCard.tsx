@@ -187,33 +187,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 מצרכים
               </h4>
-              {!isServiceMode && (
-                editing ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={cancelEdits}
-                      className="px-3 py-1.5 rounded-md text-xs font-bold border border-border text-muted-foreground"
-                    >
-                      בטל
-                    </button>
-                    <button
-                      onClick={confirmEdits}
-                      style={{ backgroundColor: "#228B22" }}
-                      className="px-4 py-1.5 rounded-md text-xs font-bold text-white glow-jungle"
-                    >
-                      אישור
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="px-3 py-1.5 rounded-md text-xs font-bold border border-neon text-neon hover:bg-neon hover:text-primary-foreground transition"
-                    title="חישוב מחדש של כל הכמויות לפי כמות שתזין למרכיב אחד (לא נשמר)"
-                  >
-                    התאם כמויות
-                  </button>
-                )
-              )}
             </div>
           <ul className="space-y-1.5">
             {scaledIngredients.map((i, idx) => {
