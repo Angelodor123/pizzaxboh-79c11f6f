@@ -153,6 +153,39 @@ export type Database = {
           },
         ]
       }
+      ev_vehicles: {
+        Row: {
+          battery_pct: number
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          status: string
+          swap_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          battery_pct?: number
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          status?: string
+          swap_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          battery_pct?: number
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          status?: string
+          swap_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           created_at: string
@@ -179,34 +212,85 @@ export type Database = {
       }
       notebook_items: {
         Row: {
+          archived_at: string | null
           created_at: string
           created_by: string | null
           done: boolean
           id: string
           list_key: string
+          priority: string
           sort_order: number
           text: string
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           created_by?: string | null
           done?: boolean
           id?: string
           list_key: string
+          priority?: string
           sort_order?: number
           text: string
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           created_by?: string | null
           done?: boolean
           id?: string
           list_key?: string
+          priority?: string
           sort_order?: number
           text?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notebook_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          list_key: string
+          snapshot_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          list_key: string
+          snapshot_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          list_key?: string
+          snapshot_date?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          has_accepted_nda: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          has_accepted_nda?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          has_accepted_nda?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -407,6 +491,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      notebook_daily_reset: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "viewer"
