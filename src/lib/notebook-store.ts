@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotebookListKey = "tasks" | "shopping" | "orders" | "warehouse";
+export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse";
 
 export type NotebookPriority = "normal" | "urgent";
 
@@ -38,6 +38,7 @@ interface NotebookState {
 const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
   tasks: [],
   shopping: [],
+  recurring: [],
   orders: [],
   warehouse: [],
 };
@@ -46,6 +47,7 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
   const out: Record<NotebookListKey, NotebookItem[]> = {
     tasks: [],
     shopping: [],
+    recurring: [],
     orders: [],
     warehouse: [],
   };
