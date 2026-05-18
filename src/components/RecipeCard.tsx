@@ -15,7 +15,7 @@ import { useUIStore } from "@/lib/ui-store";
 import { useRecipeProgressStore } from "@/lib/notebook-store";
 import { CountdownTimer } from "./CountdownTimer";
 
-const EDITOR_EMAIL = "dorbareket123@gmail.com";
+// canEdit is derived from the authenticated user's role (admin) — see below.
 
 function formatNum(n: number): string {
   const r = Math.round(n * 100) / 100;
@@ -94,9 +94,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     setEditing(false);
   }
 
-  const { email } = useAuth();
+  const { role } = useAuth();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
-  const canEdit = email === EDITOR_EMAIL && !isServiceMode;
+  const canEdit = role === "admin" && !isServiceMode;
   const speed = getRecipeSpeed(recipe);
   const shelfLife = recipe.shelfLifeHebrew?.trim() || DEFAULT_SHELF_LIFE;
 
