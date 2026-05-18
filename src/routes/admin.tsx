@@ -598,17 +598,26 @@ function InvitationsPanel() {
   };
 
   return (
-    <section className="mt-10 border border-border rounded-md p-5 bg-card/40">
-      <div className="flex items-center justify-end gap-2 mb-4">
-        <h2 className="font-display text-xl font-bold text-right flex-1">
-          ניהול <span className="text-neon text-glow-neon">הרשאות</span>
-          {isSuperAdmin && (
-            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neon text-primary-foreground">
-              Super Admin
-            </span>
+    <section className="border border-border rounded-md p-5 bg-card/40">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <UserPlus className="h-5 w-5 text-neon shrink-0" />
+        <div className="flex-1 text-right min-w-0">
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            {isSuperAdmin && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neon text-primary-foreground whitespace-nowrap">
+                Super Admin
+              </span>
+            )}
+            <h2 className="font-display text-xl font-bold leading-none">
+              ניהול <span className="text-neon text-glow-neon">הרשאות</span>
+            </h2>
+          </div>
+          {myEmail && (
+            <p className="text-[11px] text-muted-foreground mt-1 truncate" dir="ltr">
+              {myEmail}
+            </p>
           )}
-        </h2>
-        <UserPlus className="h-5 w-5 text-neon" />
+        </div>
       </div>
 
       {!isSuperAdmin && (
