@@ -49,7 +49,9 @@ function OperationalDashboard() {
     };
   }, []);
 
-  const activeRecipes = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
+  const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
+  const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
+  const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
 
   const todayEvents = useMemo(() => {
     const iso = todayIso();
