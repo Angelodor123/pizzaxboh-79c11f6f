@@ -38,12 +38,14 @@ function KitchenDashboard() {
     [recipes, cat, q],
   );
 
-  const activeRecipes = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
+  const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
+  const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
+  const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
   const countByCat = useMemo(() => {
     const m = new Map<RecipeCategory, number>();
-    for (const r of activeRecipes) m.set(r.category, (m.get(r.category) ?? 0) + 1);
+    for (const r of activeAll) m.set(r.category, (m.get(r.category) ?? 0) + 1);
     return m;
-  }, [activeRecipes]);
+  }, [activeAll]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5">
