@@ -64,7 +64,17 @@ export const useNotebookStore = create<NotebookState>()(
           },
         })),
     }),
-    { name: "pizzax-notebook-v1" },
+    {
+      name: "pizzax-notebook-v1",
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<NotebookState>;
+        return {
+          ...current,
+          ...p,
+          lists: { ...current.lists, ...(p.lists ?? {}) },
+        };
+      },
+    },
   ),
 );
 
