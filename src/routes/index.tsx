@@ -96,7 +96,7 @@ function OperationalDashboard() {
         {/* Today's Schedule */}
         <Link
           to="/calendar"
-          className="group rounded-xl border-2 border-border hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+          className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
