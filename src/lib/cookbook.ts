@@ -1,10 +1,14 @@
 export type RecipeCategory =
+  | "dishes"
   | "sauces_bases"
   | "aiolis_sauces"
   | "jams_creams"
   | "starters"
   | "spices"
-  | "desserts";
+  | "desserts"
+  | "pastas"
+  | "authentic_pastas"
+  | "salads";
 
 export interface Ingredient {
   name: string;
