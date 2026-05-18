@@ -135,7 +135,7 @@ function OperationalDashboard() {
         {/* Daily Notebook */}
         <Link
           to="/notebook"
-          className="group rounded-xl border-2 border-border hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+          className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center gap-2">
             <NotebookPen className="h-5 w-5 text-neon" />
@@ -195,11 +195,11 @@ function StatCard({
 
 function NotebookMini({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-background/40 border border-border py-2">
+    <div className="rounded-md bg-jungle/5 border border-jungle/30 py-2">
       <div className="font-display text-xl font-black text-neon tabular-nums leading-none">
         {value}
       </div>
-      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
+      <div className="text-[10px] text-foreground/70 mt-1">{label}</div>
     </div>
   );
 }
@@ -216,7 +216,7 @@ function ShortcutTile({
   return (
     <Link
       to={to}
-      className="rounded-xl border border-border hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
+      className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
     >
       <div className="text-neon">{icon}</div>
       <span className="text-sm font-bold">{label}</span>
