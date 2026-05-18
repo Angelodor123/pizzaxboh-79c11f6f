@@ -409,10 +409,16 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </>
       )}
 
-      <footer className="flex items-center justify-center gap-2 pt-3 border-t border-border">
+      <footer className="flex items-center justify-center gap-2 pt-3 border-t border-border" id={`recipe-${recipe.id}`}>
         <button
           onClick={() => {
-            setExpanded((x) => !x);
+            setExpanded((x) => {
+              const next = !x;
+              if (next) {
+                useUIStore.getState().setLastRecipe(recipe.id, recipe.nameHebrew);
+              }
+              return next;
+            });
             if (expanded) {
               setEditing(false);
               setDrafts({});
