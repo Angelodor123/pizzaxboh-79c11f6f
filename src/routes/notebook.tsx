@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users } from "lucide-react";
+import { toast } from "sonner";
 import {
   useNotebookStore,
   type NotebookListKey,
+  type NotebookItem,
 } from "@/lib/notebook-store";
 
 export const Route = createFileRoute("/notebook")({
@@ -54,8 +56,9 @@ function NotebookPage() {
         <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
           📋 פנקס עבודה <span className="text-neon text-glow-neon">יומי</span>
         </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          רשימות מהירות לעבודת המטבח. הכל נשמר במכשיר שלך.
+        <p className="text-foreground/80 mt-2 text-sm flex items-center gap-2 flex-wrap">
+          <Users className="h-4 w-4 text-neon" />
+          רשימות משותפות בזמן אמת לכל הצוות. כל שינוי מסונכרן מיידית.
         </p>
       </div>
 
@@ -68,6 +71,11 @@ function NotebookPage() {
   );
 }
 
+function buildShareText(cfg: ListConfig, items: NotebookItem[]): string {
+  const lines = items.map((it) => `${it.done ? "✔" : "•"} ${it.text}`);
+  return `${cfg.emoji} ${cfg.title} — Pizza X\n\n${lines.join("\n")}`;
+}
+
 function NotebookList({ cfg }: { cfg: ListConfig }) {
   const items = useNotebookStore((s) => s.lists[cfg.key]);
   const addItem = useNotebookStore((s) => s.addItem);
@@ -78,10 +86,52 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
 
   const doneCount = items.filter((i) => i.done).length;
 
-  const submit = () => {
+  const submit = async () => {
     if (!draft.trim()) return;
-    addItem(cfg.key, draft);
+    const text = draft;
     setDraft("");
+    await addItem(cfg.key, text);
+  };
+
+  const openItems = items.filter((i) => !i.done);
+
+  const shareWhatsApp = () => {
+    if (openItems.length === 0) {
+      toast.info("אין פריטים פתוחים לשתף");
+      return;
+    }
+    const text = encodeURIComponent(buildShareText(cfg, openItems));
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  const copyToClipboard = async () => {
+    if (openItems.length === 0) {
+      toast.info("אין פריטים פתוחים להעתיק");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(buildShareText(cfg, openItems));
+      toast.success("הרשימה הועתקה ללוח");
+    } catch {
+      toast.error("ההעתקה נכשלה");
+    }
+  };
+
+  const nativeShare = async () => {
+    if (openItems.length === 0) {
+      toast.info("אין פריטים פתוחים לשתף");
+      return;
+    }
+    const text = buildShareText(cfg, openItems);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: cfg.title, text });
+      } catch {
+        /* user dismissed */
+      }
+    } else {
+      await copyToClipboard();
+    }
   };
 
   return (
@@ -95,22 +145,51 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             {items.length} פריטים · {doneCount} הושלמו
           </div>
         </div>
-        {doneCount > 0 && (
+        <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => clearDone(cfg.key)}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-neon transition px-2 py-1 rounded-md border border-border"
+            onClick={shareWhatsApp}
+            aria-label="שתף בוואטסאפ"
+            title="שתף בוואטסאפ"
+            className="p-2 rounded-md border border-border hover:border-jungle hover:text-jungle text-muted-foreground transition"
           >
-            <Trash2 className="h-3 w-3" />
-            נקה הושלמו
+            <MessageCircle className="h-4 w-4" />
           </button>
-        )}
+          <button
+            type="button"
+            onClick={copyToClipboard}
+            aria-label="העתק רשימה"
+            title="העתק רשימה"
+            className="p-2 rounded-md border border-border hover:border-neon hover:text-neon text-muted-foreground transition"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={nativeShare}
+            aria-label="שתף"
+            title="שתף"
+            className="p-2 rounded-md border border-border hover:border-neon hover:text-neon text-muted-foreground transition"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+          {doneCount > 0 && (
+            <button
+              type="button"
+              onClick={() => void clearDone(cfg.key)}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-destructive transition px-2 py-1 rounded-md border border-border"
+            >
+              <Trash2 className="h-3 w-3" />
+              נקה הושלמו
+            </button>
+          )}
+        </div>
       </header>
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          submit();
+          void submit();
         }}
         className="flex gap-2 mb-3"
       >
@@ -126,7 +205,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={cfg.placeholder}
-          maxLength={200}
+          maxLength={500}
           className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
           dir="rtl"
         />
@@ -145,7 +224,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             >
               <button
                 type="button"
-                onClick={() => removeItem(cfg.key, it.id)}
+                onClick={() => void removeItem(cfg.key, it.id)}
                 aria-label="מחק"
                 className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive transition"
               >
@@ -153,7 +232,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
               </button>
               <button
                 type="button"
-                onClick={() => toggleItem(cfg.key, it.id)}
+                onClick={() => void toggleItem(cfg.key, it.id)}
                 className={`flex-1 min-w-0 flex items-center gap-3 text-right cursor-pointer ${
                   it.done ? "opacity-50" : ""
                 }`}
