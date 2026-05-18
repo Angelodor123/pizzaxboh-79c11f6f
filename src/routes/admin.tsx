@@ -1,6 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert, History, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  X,
+  Check,
+  UserPlus,
+  ShieldAlert,
+  History,
+  RotateCcw,
+  Users,
+  ChefHat,
+  Bell,
+  FileText,
+  Save,
+} from "lucide-react";
 import {
   categoryLabels,
   categoryOrder,
@@ -12,6 +27,12 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  useSiteTextsStore,
+  useSupplierReminderSettings,
+  type SupplierReminderSettings,
+} from "@/lib/site-texts";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
