@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -19,6 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SuppliersRoute = SuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesRoute = RecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotebookRoute = NotebookRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/recipes': typeof RecipesRoute
   '/suppliers': typeof SuppliersRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/recipes': typeof RecipesRoute
   '/suppliers': typeof SuppliersRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/recipes': typeof RecipesRoute
   '/suppliers': typeof SuppliersRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +89,17 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/notebook'
+    | '/recipes'
     | '/suppliers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/calendar' | '/guide' | '/notebook' | '/suppliers'
+  to:
+    | '/'
+    | '/admin'
+    | '/calendar'
+    | '/guide'
+    | '/notebook'
+    | '/recipes'
+    | '/suppliers'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/notebook'
+    | '/recipes'
     | '/suppliers'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +117,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   NotebookRoute: typeof NotebookRoute
+  RecipesRoute: typeof RecipesRoute
   SuppliersRoute: typeof SuppliersRoute
 }
 
@@ -109,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/suppliers'
       fullPath: '/suppliers'
       preLoaderRoute: typeof SuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes': {
+      id: '/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof RecipesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notebook': {
@@ -155,8 +181,19 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   NotebookRoute: NotebookRoute,
+  RecipesRoute: RecipesRoute,
   SuppliersRoute: SuppliersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
