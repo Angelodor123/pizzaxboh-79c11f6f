@@ -31,6 +31,7 @@ interface NotebookState {
   refresh: () => Promise<void>;
   addItem: (list: NotebookListKey, text: string, priority?: NotebookPriority) => Promise<void>;
   toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
+  editItem: (list: NotebookListKey, id: string, text: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
   clearDone: (list: NotebookListKey) => Promise<void>;
 }
@@ -120,6 +121,19 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     }));
     if (id.startsWith("tmp-")) return;
     await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
+  },
+
+  editItem: async (list, id, text) => {
+    const clean = text.trim().slice(0, 500);
+    if (!clean) return;
+    set((s) => ({
+      lists: {
+        ...s.lists,
+        [list]: s.lists[list].map((it) => (it.id === id ? { ...it, text: clean } : it)),
+      },
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").update({ text: clean }).eq("id", id);
   },
 
   removeItem: async (list, id) => {
