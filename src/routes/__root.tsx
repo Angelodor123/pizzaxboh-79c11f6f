@@ -20,7 +20,13 @@ import { useRecipesSync } from "@/lib/store";
 import { useNotebookRealtime } from "@/lib/notebook-store";
 import { useSiteTextsSync, useSiteText } from "@/lib/site-texts";
 import { useUIStore } from "@/lib/ui-store";
+import {
+  ensureServiceWorker,
+  notificationPermission,
+  requestNotificationPermission,
+} from "@/lib/notifications";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
+import { useEffect } from "react";
 
 function NotFoundComponent() {
   return (
@@ -87,9 +93,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/gna0ipaNRGTI5yjH5wtF1u61HNB3/social-images/social-1778951248400-1000188452.webp" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
+      { name: "theme-color", content: "#ff1493" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Pizza X" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/pizza-x-logo.png" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap",
@@ -138,10 +150,36 @@ function AuthedShell() {
   useSiteTextsSync();
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
   const isServiceMode = useUIStore((s) => s.isServiceMode);
+  const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const showServiceToggle = pathname === "/recipes";
   const showQuickBack = pathname !== "/recipes";
+
+  // Register service worker once
+  useEffect(() => {
+    void ensureServiceWorker();
+  }, []);
+
+  // Gentle one-time prompt for notification permission
+  useEffect(() => {
+    const KEY = "pizzax-notif-prompt-v1";
+    if (typeof window === "undefined") return;
+    if (notificationPermission() !== "default") return;
+    if (localStorage.getItem(KEY)) return;
+    const t = setTimeout(() => {
+      localStorage.setItem(KEY, "1");
+      void requestNotificationPermission();
+    }, 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // When the user is back on the recipes page, the "return to recipe" hint
+  // is no longer useful — clear it.
+  useEffect(() => {
+    if (pathname === "/recipes") clearLastRecipe();
+  }, [pathname, clearLastRecipe]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <header
