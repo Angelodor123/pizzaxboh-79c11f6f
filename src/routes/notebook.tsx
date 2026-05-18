@@ -7,6 +7,7 @@ import {
   type NotebookListKey,
   type NotebookItem,
 } from "@/lib/notebook-store";
+import { useSiteText } from "@/lib/site-texts";
 
 export const Route = createFileRoute("/notebook")({
   component: NotebookPage,
@@ -47,6 +48,7 @@ const LISTS: ListConfig[] = [
 ];
 
 function NotebookPage() {
+  const title = useSiteText("notebook.title", "פנקס עבודה יומי");
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="mb-6">
@@ -54,7 +56,7 @@ function NotebookPage() {
           Daily Workbook
         </div>
         <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-          📋 פנקס עבודה <span className="text-neon text-glow-neon">יומי</span>
+          📋 <span className="text-neon text-glow-neon">{title}</span>
         </h1>
         <p className="text-foreground/80 mt-2 text-sm flex items-center gap-2 flex-wrap">
           <Users className="h-4 w-4 text-neon" />
