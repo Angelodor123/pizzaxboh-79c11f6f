@@ -22,11 +22,19 @@ export const useSiteTextsStore = create<SiteTextsState>((set, get) => ({
   all: [],
   loaded: false,
   load: async () => {
-    const { data } = await supabase.from("site_texts").select("key,group_key,label,value");
-    if (!data) return;
+    const { data, error } = await supabase
+      .from("site_texts")
+      .select("key,group_key,label,value")
+      .order("group_key", { ascending: true });
+    if (error) {
+      console.error("[site-texts] load failed", error);
+      set({ loaded: true });
+      return;
+    }
+    const rows = (data ?? []) as SiteText[];
     const map: Record<string, string> = {};
-    data.forEach((row) => (map[row.key] = row.value));
-    set({ all: data as SiteText[], texts: map, loaded: true });
+    rows.forEach((row) => (map[row.key] = row.value));
+    set({ all: rows, texts: map, loaded: true });
   },
   update: async (key, value) => {
     const { error } = await supabase
