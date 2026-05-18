@@ -34,12 +34,6 @@ const DAILY_LISTS: ListConfig[] = [
     placeholder: 'לדוגמה: "בננות", "ביצים 2 תבניות"',
   },
   {
-    key: "recurring",
-    title: "משימות חוזרות",
-    emoji: "🔁",
-    placeholder: 'לדוגמה: "ניקוי משטחי עבודה בסוף משמרת"',
-  },
-  {
     key: "orders",
     title: "הזמנת סחורה",
     emoji: "📦",
