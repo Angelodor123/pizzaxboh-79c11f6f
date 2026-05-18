@@ -103,10 +103,10 @@ function OperationalDashboard() {
               <CalendarDays className="h-5 w-5 text-neon" />
               <h2 className="font-display text-lg font-bold">📅 לוח אירועים – היום</h2>
             </div>
-            <span className="text-xs text-muted-foreground">{WEEKDAYS_HE[today.getDay()]}</span>
+            <span className="text-xs text-foreground/70">{WEEKDAYS_HE[today.getDay()]}</span>
           </div>
           {todayEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
+            <p className="text-sm text-foreground/80">אין אירועים מתוזמנים להיום.</p>
           ) : (
             <ul className="space-y-1.5">
               {todayEvents.slice(0, 4).map((e) => (
@@ -118,12 +118,12 @@ function OperationalDashboard() {
                 >
                   <span className="truncate">{e.title}</span>
                   {e.supplier && (
-                    <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
+                    <span className="text-[10px] text-foreground/70 shrink-0">{e.supplier}</span>
                   )}
                 </li>
               ))}
               {todayEvents.length > 4 && (
-                <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
+                <li className="text-xs text-foreground/70">+ {todayEvents.length - 4} נוספים</li>
               )}
             </ul>
           )}
