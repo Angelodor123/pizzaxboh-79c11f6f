@@ -1,14 +1,29 @@
 import { Zap } from "lucide-react";
+import { toast } from "sonner";
 import { useUIStore } from "@/lib/ui-store";
 
 export function ServiceModeToggle() {
   const active = useUIStore((s) => s.isServiceMode);
   const toggle = useUIStore((s) => s.toggleServiceMode);
 
+  const handleClick = () => {
+    const next = !active;
+    toggle();
+    if (next) {
+      toast.success("מצב סרוויס הופעל", {
+        description: "תצוגה מהירה למתכונים — כמויות מוגדלות, ניווט מקוצר ומידע קריטי בלבד.",
+      });
+    } else {
+      toast("מצב סרוויס כובה", {
+        description: "חזרה לתצוגת ה-Back of House המלאה.",
+      });
+    }
+  };
+
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={handleClick}
       aria-pressed={active}
       aria-label="מצב סרוויס"
       title={active ? "מצב סרוויס פעיל — לחץ לכיבוי" : "הפעל מצב סרוויס"}
@@ -28,3 +43,4 @@ export function ServiceModeToggle() {
     </button>
   );
 }
+
