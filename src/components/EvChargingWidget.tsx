@@ -102,6 +102,10 @@ export function EvChargingWidget() {
         alarmedIdsRef.current.add(v.id);
         playBeep();
         setTimeout(playBeep, 350);
+        void notify("🔋 רכב מוכן להחלפה", {
+          body: `${v.name} סיים טעינה — צריך להחליף עכשיו`,
+          tag: `ev-swap-${v.id}`,
+        });
       }
       if (!expired) alarmedIdsRef.current.delete(v.id);
     }
