@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_event_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted: boolean
+          end_time: string | null
+          event_id: string
+          high_priority: boolean | null
+          id: string
+          notes: string | null
+          override_date: string
+          start_time: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted?: boolean
+          end_time?: string | null
+          event_id: string
+          high_priority?: boolean | null
+          id?: string
+          notes?: string | null
+          override_date: string
+          start_time?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted?: boolean
+          end_time?: string | null
+          event_id?: string
+          high_priority?: boolean | null
+          id?: string
+          notes?: string | null
+          override_date?: string
+          start_time?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_overrides_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           category: string
@@ -23,10 +76,12 @@ export type Database = {
           event_date: string | null
           high_priority: boolean
           id: string
+          is_auto: boolean
           notes: string | null
           recurring_weekday: number | null
           start_time: string | null
           supplier: string | null
+          supplier_id: string | null
           title: string
           updated_at: string
         }
@@ -38,10 +93,12 @@ export type Database = {
           event_date?: string | null
           high_priority?: boolean
           id?: string
+          is_auto?: boolean
           notes?: string | null
           recurring_weekday?: number | null
           start_time?: string | null
           supplier?: string | null
+          supplier_id?: string | null
           title: string
           updated_at?: string
         }
@@ -53,14 +110,24 @@ export type Database = {
           event_date?: string | null
           high_priority?: boolean
           id?: string
+          is_auto?: boolean
           notes?: string | null
           recurring_weekday?: number | null
           start_time?: string | null
           supplier?: string | null
+          supplier_id?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invitations: {
         Row: {
@@ -163,6 +230,51 @@ export type Database = {
           technique_notes_hebrew?: string | null
           texture_target_hebrew?: string | null
           timer_seconds?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          active: boolean
+          category: string
+          contact: string | null
+          created_at: string
+          created_by: string | null
+          default_end_time: string | null
+          default_start_time: string | null
+          delivery_weekdays: number[]
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          contact?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_end_time?: string | null
+          default_start_time?: string | null
+          delivery_weekdays?: number[]
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          contact?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_end_time?: string | null
+          default_start_time?: string | null
+          delivery_weekdays?: number[]
+          id?: string
+          name?: string
+          notes?: string | null
           updated_at?: string
         }
         Relationships: []
