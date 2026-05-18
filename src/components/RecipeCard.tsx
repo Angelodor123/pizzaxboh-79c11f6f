@@ -143,8 +143,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           <ul className="space-y-1.5">
             {scaledIngredients.map((i, idx) => {
               const display = formatQtyUnit(i.quantity, i.unit);
-              const draft = drafts[idx];
-              const shownValue = draft !== undefined ? draft : display.value;
               return (
                 <li
                   key={i.name}
@@ -176,25 +174,13 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                     )}
                   </button>
                   <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
-                    {editing && !isServiceMode && isScalable(i.unit) ? (
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={shownValue}
-                        onChange={(e) =>
-                          setDrafts((d) => ({ ...d, [idx]: e.target.value }))
-                        }
-                        className="w-full min-w-0 bg-transparent border-b border-neon/60 text-center text-neon font-display font-bold text-lg tabular-nums focus:outline-none"
-                      />
-                    ) : (
-                      <span
-                        className={`text-neon font-display font-bold tabular-nums leading-tight ${
-                          isServiceMode ? "text-xl" : "text-lg"
-                        }`}
-                      >
-                        {display.value}
-                      </span>
-                    )}
+                    <span
+                      className={`text-neon font-display font-bold tabular-nums leading-tight ${
+                        isServiceMode ? "text-xl" : "text-lg"
+                      }`}
+                    >
+                      {display.value}
+                    </span>
                     <span className="text-[10px] font-bold text-neon/80 uppercase tracking-wide mt-0.5">
                       {display.unit}
                     </span>
