@@ -35,7 +35,7 @@ function SuppliersPage() {
     let mounted = true;
     const load = async () => {
       const { data, error } = await supabase
-        .from("suppliers" as never)
+        .from("suppliers")
         .select("*")
         .order("name", { ascending: true });
       if (!mounted) return;
@@ -56,7 +56,7 @@ function SuppliersPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("למחוק את הספק? כל אירועי הסחורה האוטומטיים שלו יימחקו מהלוח.")) return;
-    const { error } = await supabase.from("suppliers" as never).delete().eq("id", id);
+    const { error } = await supabase.from("suppliers").delete().eq("id", id);
     if (error) toast.error("שגיאה במחיקה");
     else toast.success("הספק נמחק");
   };
@@ -218,8 +218,8 @@ function SupplierForm({
       active,
     };
     const { error } = existing
-      ? await supabase.from("suppliers" as never).update(payload).eq("id", existing.id)
-      : await supabase.from("suppliers" as never).insert(payload);
+      ? await supabase.from("suppliers").update(payload).eq("id", existing.id)
+      : await supabase.from("suppliers").insert(payload);
     setSaving(false);
     if (error) {
       toast.error("שמירה נכשלה: " + error.message);
