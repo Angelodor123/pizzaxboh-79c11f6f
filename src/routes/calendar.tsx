@@ -473,12 +473,6 @@ function DayDetails({
   events,
   canEdit,
   onEdit,
-}: {
-function DayDetails({
-  isoDate,
-  events,
-  canEdit,
-  onEdit,
   onInstanceEdit,
 }: {
   isoDate: string;
