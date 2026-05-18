@@ -88,12 +88,16 @@ const SUPER_ADMIN_EMAILS_RO = new Set([
 ]);
 
 const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
+  dishes: "🍕",
   sauces_bases: "🍅",
   aiolis_sauces: "🍯",
   jams_creams: "🥘",
   starters: "🌽",
   spices: "🧂",
   desserts: "🍪",
+  pastas: "🍝",
+  authentic_pastas: "🇮🇹",
+  salads: "🥗",
 };
 
 const UNIT_OPTIONS = ["גרם", 'ק"ג', 'מ"ל', "ליטר", "יחידות", "כפות", "כפיות", "חופן", "פחיות"];
