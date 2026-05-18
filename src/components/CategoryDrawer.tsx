@@ -119,6 +119,14 @@ export function CategoryDrawer() {
                 <span className="flex-1 text-right">📅 לוח אירועים וסחורות</span>
                 <CalendarDays className="h-5 w-5" />
               </Link>
+              <Link
+                to="/suppliers"
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+              >
+                <span className="flex-1 text-right">🚚 ניהול ספקים</span>
+                <Truck className="h-5 w-5" />
+              </Link>
             </li>
 
             {isSuperAdmin && (
