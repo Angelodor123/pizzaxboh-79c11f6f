@@ -22,7 +22,25 @@ interface CalendarEvent {
   high_priority: boolean;
   notes: string | null;
   recurring_weekday: number | null;
+  supplier_id?: string | null;
+  is_auto?: boolean;
 }
+
+interface EventOverride {
+  id: string;
+  event_id: string;
+  override_date: string;
+  deleted: boolean;
+  title: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  notes: string | null;
+  high_priority: boolean | null;
+}
+
+// Effective event = base event + per-instance override fields for that date.
+// Returns null if the instance is canceled.
+type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string };
 
 const WEEKDAYS_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const MONTHS_HE = [
