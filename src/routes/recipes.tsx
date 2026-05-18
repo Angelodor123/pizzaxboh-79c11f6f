@@ -29,23 +29,28 @@ function KitchenDashboard() {
   const setCategory = useUIStore((s) => s.setCategory);
   const [q, setQ] = useState("");
 
-  const filtered = useMemo(
-    () =>
-      recipes
-        .filter((r) => !r.deleted)
-        .filter((r) => (cat === "all" ? true : r.category === cat))
-        .filter((r) => (q.trim() ? r.nameHebrew.includes(q.trim()) : true)),
-    [recipes, cat, q],
-  );
-
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
   const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
   const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
+
+  const filtered = useMemo(
+    () => {
+      const base =
+        cat === "all"
+          ? activeRecipes
+          : cat === "dishes"
+          ? activeDishes
+          : activeAll.filter((r) => r.category === cat);
+      return q.trim() ? base.filter((r) => r.nameHebrew.includes(q.trim())) : base;
+    },
+    [activeAll, activeRecipes, activeDishes, cat, q],
+  );
+
   const countByCat = useMemo(() => {
     const m = new Map<RecipeCategory, number>();
-    for (const r of activeAll) m.set(r.category, (m.get(r.category) ?? 0) + 1);
+    for (const r of activeRecipes) m.set(r.category, (m.get(r.category) ?? 0) + 1);
     return m;
-  }, [activeAll]);
+  }, [activeRecipes]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5">
@@ -76,21 +81,23 @@ function KitchenDashboard() {
                 מתכונים
               </span>
             </div>
-            <div
-              className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-jungle"
-              style={{
-                background:
-                  "radial-gradient(circle at center, rgba(34,197,94,0.18), transparent 70%)",
-              }}
-              aria-label={`${activeDishes.length} מנות`}
-            >
-              <span className="font-display font-black text-3xl text-jungle tabular-nums leading-none">
-                {activeDishes.length}
-              </span>
-              <span className="text-[10px] font-bold tracking-[0.1em] text-jungle mt-1">
-                מנות
-              </span>
-            </div>
+            {cat !== "all" && (
+              <div
+                className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-jungle"
+                style={{
+                  background:
+                    "radial-gradient(circle at center, rgba(34,197,94,0.18), transparent 70%)",
+                }}
+                aria-label={`${activeDishes.length} מנות`}
+              >
+                <span className="font-display font-black text-3xl text-jungle tabular-nums leading-none">
+                  {activeDishes.length}
+                </span>
+                <span className="text-[10px] font-bold tracking-[0.1em] text-jungle mt-1">
+                  מנות
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -129,7 +136,7 @@ function KitchenDashboard() {
             }`}
           >
             📋 הכל
-            <span className="opacity-70 tabular-nums mr-1">({activeAll.length})</span>
+            <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
           </button>
           {categoryOrder.map((key) => {
             const active = cat === key;

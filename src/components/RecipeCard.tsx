@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Pencil, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +45,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [editing, setEditing] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [alarming, setAlarming] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === `#recipe-${recipe.id}`) {
+      setExpanded(true);
+      const el = document.getElementById(`recipe-${recipe.id}`);
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    }
+  }, [recipe.id]);
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
@@ -409,10 +418,16 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </>
       )}
 
-      <footer className="flex items-center justify-center gap-2 pt-3 border-t border-border">
+      <footer className="flex items-center justify-center gap-2 pt-3 border-t border-border" id={`recipe-${recipe.id}`}>
         <button
           onClick={() => {
-            setExpanded((x) => !x);
+            setExpanded((x) => {
+              const next = !x;
+              if (next) {
+                useUIStore.getState().setLastRecipe(recipe.id, recipe.nameHebrew);
+              }
+              return next;
+            });
             if (expanded) {
               setEditing(false);
               setDrafts({});
