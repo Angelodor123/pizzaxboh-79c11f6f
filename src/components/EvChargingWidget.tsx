@@ -104,6 +104,27 @@ export function EvChargingWidget() {
     void update(id, { status: "בטעינה", swap_at });
   };
 
+  const startCustomCharge = (id: string) => {
+    const raw = window.prompt("כמה זמן לטעינה? אפשר לרשום שעות (למשל 2 או 2.5) או דקות (למשל 90m)", "2");
+    if (!raw) return;
+    const trimmed = raw.trim().toLowerCase();
+    let minutes = 0;
+    if (trimmed.endsWith("m") || trimmed.endsWith("מ")) {
+      minutes = parseFloat(trimmed.replace(/[mמ]$/, ""));
+    } else if (trimmed.endsWith("h") || trimmed.endsWith("ש")) {
+      minutes = parseFloat(trimmed.replace(/[hש]$/, "")) * 60;
+    } else {
+      const n = parseFloat(trimmed);
+      // Treat numbers <= 12 as hours, otherwise as minutes
+      minutes = n <= 12 ? n * 60 : n;
+    }
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      window.alert("ערך לא תקין");
+      return;
+    }
+    startCharge(id, Math.round(minutes));
+  };
+
   return (
     <section
       className={`rounded-2xl border-2 p-4 bg-card/80 backdrop-blur transition ${
@@ -201,17 +222,31 @@ export function EvChargingWidget() {
                   </select>
                   <button
                     type="button"
-                    onClick={() => startCharge(v.id, 45)}
+                    onClick={() => startCharge(v.id, 120)}
                     className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
                   >
-                    <Plug className="h-3 w-3" /> 45 ד׳
+                    <Plug className="h-3 w-3" /> 2 ש׳
                   </button>
                   <button
                     type="button"
-                    onClick={() => startCharge(v.id, 90)}
+                    onClick={() => startCharge(v.id, 180)}
                     className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
                   >
-                    <Plug className="h-3 w-3" /> 90 ד׳
+                    <Plug className="h-3 w-3" /> 3 ש׳
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startCharge(v.id, 240)}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
+                  >
+                    <Plug className="h-3 w-3" /> 4 ש׳
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startCustomCharge(v.id)}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/60 text-neon font-bold hover:bg-neon/10"
+                  >
+                    <Plug className="h-3 w-3" /> מותאם
                   </button>
                   {(v.status === "בטעינה" || v.swap_at) && (
                     <button
