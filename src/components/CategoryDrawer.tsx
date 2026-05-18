@@ -64,6 +64,15 @@ export function CategoryDrawer() {
 
             <li>
               <div className="w-full flex items-stretch">
+                <button
+                  onClick={() => setCatsOpen((o) => !o)}
+                  aria-label={catsOpen ? "סגור קטגוריות" : "פתח קטגוריות"}
+                  className="px-4 flex items-center justify-center text-foreground hover:text-neon hover:bg-card transition border-l border-border/40"
+                >
+                  <ChevronDown
+                    className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
                 <Link
                   to="/recipes"
                   onClick={() => {
@@ -79,15 +88,6 @@ export function CategoryDrawer() {
                   <span className="flex-1 text-right">📋 כל המתכונים</span>
                   <ChefHat className="h-5 w-5" />
                 </Link>
-                <button
-                  onClick={() => setCatsOpen((o) => !o)}
-                  aria-label={catsOpen ? "סגור קטגוריות" : "פתח קטגוריות"}
-                  className="px-4 flex items-center justify-center text-foreground hover:text-neon hover:bg-card transition border-r border-border/40"
-                >
-                  <ChevronDown
-                    className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
               </div>
 
               {catsOpen && (
