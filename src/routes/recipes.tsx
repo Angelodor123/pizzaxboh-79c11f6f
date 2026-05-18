@@ -81,21 +81,23 @@ function KitchenDashboard() {
                 מתכונים
               </span>
             </div>
-            <div
-              className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-jungle"
-              style={{
-                background:
-                  "radial-gradient(circle at center, rgba(34,197,94,0.18), transparent 70%)",
-              }}
-              aria-label={`${activeDishes.length} מנות`}
-            >
-              <span className="font-display font-black text-3xl text-jungle tabular-nums leading-none">
-                {activeDishes.length}
-              </span>
-              <span className="text-[10px] font-bold tracking-[0.1em] text-jungle mt-1">
-                מנות
-              </span>
-            </div>
+            {cat !== "all" && (
+              <div
+                className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-jungle"
+                style={{
+                  background:
+                    "radial-gradient(circle at center, rgba(34,197,94,0.18), transparent 70%)",
+                }}
+                aria-label={`${activeDishes.length} מנות`}
+              >
+                <span className="font-display font-black text-3xl text-jungle tabular-nums leading-none">
+                  {activeDishes.length}
+                </span>
+                <span className="text-[10px] font-bold tracking-[0.1em] text-jungle mt-1">
+                  מנות
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
