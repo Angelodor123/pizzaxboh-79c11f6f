@@ -21,7 +21,7 @@ interface NotebookState {
 export const useNotebookStore = create<NotebookState>()(
   persist(
     (set) => ({
-      lists: { tasks: [], shopping: [], orders: [] },
+      lists: { tasks: [], shopping: [], orders: [], warehouse: [] },
       addItem: (list, text) => {
         const clean = text.trim().slice(0, 200);
         if (!clean) return;
