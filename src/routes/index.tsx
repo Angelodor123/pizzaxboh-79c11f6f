@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { NotebookPen, CalendarDays, ChefHat, ListChecks, Truck, ShieldCheck } from "lucide-react";
 import { useCookbookStore } from "@/lib/store";
 import { useNotebookStore } from "@/lib/notebook-store";
+import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { WeatherWidget } from "@/components/WeatherWidget";
 
 export const Route = createFileRoute("/")({
   component: OperationalDashboard,
@@ -80,16 +82,43 @@ function OperationalDashboard() {
     year: "numeric",
   });
 
+  const homeTitle = useSiteText("home.title", "ברוכים הבאים למרכז השליטה של Pizza X");
+  const homeSubtitle = useSiteText(
+    "home.subtitle",
+    "מרכז הבקרה התפעולי של המטבח. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.",
+  );
+  const weatherTitle = useSiteText("home.weather_title", "מזג אוויר — מודיעין");
+  const rainAlert = useSiteText(
+    "home.rain_alert",
+    "⚠️ צפי לגשם, אין לפתוח שולחנות וכיסאות בחוץ",
+  );
+
+  // Replace generic brand mention with neon-styled "Pizza X"
+  const titleParts = homeTitle.split("Pizza X");
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6">
         <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight text-foreground">
-          ברוכים הבאים למרכז השליטה של <span className="text-neon font-bold text-glow-neon">Pizza X</span>
+          {titleParts.length > 1 ? (
+            <>
+              {titleParts[0]}
+              <span className="text-neon font-bold text-glow-neon">Pizza X</span>
+              {titleParts.slice(1).join("Pizza X")}
+            </>
+          ) : (
+            homeTitle
+          )}
         </h1>
         <p className="text-foreground/80 mt-2 text-sm leading-relaxed">
-          מרכז הבקרה התפעולי של המטבח – {dateLabel}. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.
+          {homeSubtitle} <span className="text-foreground/60">• {dateLabel}</span>
         </p>
+      </div>
+
+      {/* Weather widget */}
+      <div className="mb-6">
+        <WeatherWidget title={weatherTitle} alertText={rainAlert} />
       </div>
 
       {/* Quick Stats */}

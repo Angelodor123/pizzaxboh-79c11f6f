@@ -1,6 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, X, Check, UserPlus, ShieldAlert, History, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  X,
+  Check,
+  UserPlus,
+  ShieldAlert,
+  History,
+  RotateCcw,
+  Users,
+  ChefHat,
+  Bell,
+  FileText,
+  Save,
+} from "lucide-react";
 import {
   categoryLabels,
   categoryOrder,
@@ -12,6 +27,12 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  useSiteTextsStore,
+  useSupplierReminderSettings,
+  type SupplierReminderSettings,
+} from "@/lib/site-texts";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -193,6 +214,8 @@ function AdminPage() {
     }
   };
 
+  const [tab, setTab] = useState<"recipes" | "users" | "reminders" | "cms">("recipes");
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="mb-6">
@@ -204,101 +227,116 @@ function AdminPage() {
         </h1>
       </div>
 
-      <section className="mb-10">
-        <h2 className="font-display text-xl font-bold mb-3 text-right">
-          ניהול הרשאות
-        </h2>
-        <InvitationsPanel />
-      </section>
+      {/* Tabs */}
+      <div className="mb-6 border-b border-border flex gap-1 overflow-x-auto scrollbar-hide" dir="rtl">
+        <TabButton active={tab === "recipes"} onClick={() => setTab("recipes")} icon={<ChefHat className="h-4 w-4" />}>
+          מתכונים
+        </TabButton>
+        <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={<Users className="h-4 w-4" />}>
+          הרשאות
+        </TabButton>
+        <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
+          תזכורות ספקים
+        </TabButton>
+        <TabButton active={tab === "cms"} onClick={() => setTab("cms")} icon={<FileText className="h-4 w-4" />}>
+          ניהול תוכן וטקסטים
+        </TabButton>
+      </div>
 
-      <section>
-        <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
-          <div>
-            <h2 className="font-display text-xl font-bold text-right">
-              ניהול מתכונים
-            </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              הוסף, ערוך ומחק מתכונים. השינויים מסונכרנים בענן בזמן אמת לכל המשתמשים.
-            </p>
+      {tab === "users" && <InvitationsPanel />}
+      {tab === "reminders" && <SupplierRemindersPanel />}
+      {tab === "cms" && <ContentTextsPanel />}
+
+      {tab === "recipes" && (
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-display text-xl font-bold text-right">
+                ניהול מתכונים
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                הוסף, ערוך ומחק מתכונים. השינויים מסונכרנים בענן בזמן אמת לכל המשתמשים.
+              </p>
+            </div>
+            <button
+              onClick={startNew}
+              className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
+            >
+              <Plus className="h-4 w-4" /> מתכון חדש
+            </button>
           </div>
-          <button
-            onClick={startNew}
-            className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
-          >
-            <Plus className="h-4 w-4" /> מתכון חדש
-          </button>
-        </div>
 
-        <div className="mb-4 flex flex-col sm:flex-row gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="חיפוש מתכון..."
-            className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
-          />
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
-            className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
-          >
-            <option value="all">📋 כל הקטגוריות</option>
-            {categoryOrder.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_EMOJI[c]} {categoryLabels[c]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="border border-border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-right px-3 py-2">שם</th>
-                <th className="text-right px-3 py-2">קטגוריה</th>
-                <th className="px-3 py-2 w-32" />
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((r) => (
-                <tr key={r.id} className="border-t border-border">
-                  <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-1 justify-end">
-                      <button
-                        onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
-                        className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
-                        aria-label="ערוך"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`למחוק את "${r.nameHebrew}"?`)) void softDeleteRecipe(r.id);
-                        }}
-                        className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
-                        aria-label="מחק"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+          <div className="mb-4 flex flex-col sm:flex-row gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="חיפוש מתכון..."
+              className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
+            />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
+            >
+              <option value="all">📋 כל הקטגוריות</option>
+              {categoryOrder.map((c) => (
+                <option key={c} value={c}>
+                  {CATEGORY_EMOJI[c]} {categoryLabels[c]}
+                </option>
               ))}
-              {visible.length === 0 && (
+            </select>
+          </div>
+
+          <div className="border border-border rounded-md overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
                 <tr>
-                  <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
-                    לא נמצאו מתכונים.
-                  </td>
+                  <th className="text-right px-3 py-2">שם</th>
+                  <th className="text-right px-3 py-2">קטגוריה</th>
+                  <th className="px-3 py-2 w-32" />
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {visible.map((r) => (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button
+                          onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
+                          className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
+                          aria-label="ערוך"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`למחוק את "${r.nameHebrew}"?`)) void softDeleteRecipe(r.id);
+                          }}
+                          className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
+                          aria-label="מחק"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {visible.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
+                      לא נמצאו מתכונים.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {editing && (
         <div
@@ -598,17 +636,26 @@ function InvitationsPanel() {
   };
 
   return (
-    <section className="mt-10 border border-border rounded-md p-5 bg-card/40">
-      <div className="flex items-center justify-end gap-2 mb-4">
-        <h2 className="font-display text-xl font-bold text-right flex-1">
-          ניהול <span className="text-neon text-glow-neon">הרשאות</span>
-          {isSuperAdmin && (
-            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neon text-primary-foreground">
-              Super Admin
-            </span>
+    <section className="border border-border rounded-md p-5 bg-card/40">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <UserPlus className="h-5 w-5 text-neon shrink-0" />
+        <div className="flex-1 text-right min-w-0">
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            {isSuperAdmin && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neon text-primary-foreground whitespace-nowrap">
+                Super Admin
+              </span>
+            )}
+            <h2 className="font-display text-xl font-bold leading-none">
+              ניהול <span className="text-neon text-glow-neon">הרשאות</span>
+            </h2>
+          </div>
+          {myEmail && (
+            <p className="text-[11px] text-muted-foreground mt-1 truncate" dir="ltr">
+              {myEmail}
+            </p>
           )}
-        </h2>
-        <UserPlus className="h-5 w-5 text-neon" />
+        </div>
       </div>
 
       {!isSuperAdmin && (
@@ -669,12 +716,19 @@ function InvitationsPanel() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-                <div className="text-right flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate" dir="ltr">
+                <div className="text-right flex-1 min-w-0 flex flex-col items-end gap-1">
+                  <div className="text-sm font-bold truncate w-full text-right" dir="ltr">
                     {u.email}
                   </div>
-                  <div className="text-[10px] text-neon font-bold">
-                    {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    {SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neon/15 text-neon border border-neon/40 whitespace-nowrap">
+                        Super
+                      </span>
+                    )}
+                    <span className="text-[10px] text-neon font-bold whitespace-nowrap">
+                      {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                    </span>
                   </div>
                 </div>
               </li>
@@ -859,5 +913,274 @@ function VersionHistory({
         })}
       </ul>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Admin sub-components: tabs, supplier reminders, CMS texts
+// ---------------------------------------------------------------------------
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
+        active
+          ? "text-neon"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {icon}
+      {children}
+      {active && (
+        <span className="absolute right-0 left-0 -bottom-px h-0.5 bg-neon shadow-[0_0_8px_var(--neon)]" />
+      )}
+    </button>
+  );
+}
+
+function SupplierRemindersPanel() {
+  const { settings, setLocal, save, loading } = useSupplierReminderSettings();
+  const [users, setUsers] = useState<{ user_id: string; email: string; role: string }[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void supabase
+      .from("user_roles")
+      .select("user_id,email,role")
+      .order("email")
+      .then(({ data }) => setUsers((data ?? []) as never));
+  }, []);
+
+  const toggleRecipient = (id: string) => {
+    const next = settings.recipients.includes(id)
+      ? settings.recipients.filter((r) => r !== id)
+      : [...settings.recipients, id];
+    setLocal({ ...settings, recipients: next });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await save(settings);
+      toast.success("הגדרות התזכורות נשמרו");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "שמירה נכשלה");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-center text-muted-foreground py-8 text-sm">טוען…</p>;
+  }
+
+  return (
+    <section className="border border-border rounded-md p-5 bg-card/40 space-y-6" dir="rtl">
+      <div className="flex items-center gap-2">
+        <Bell className="h-5 w-5 text-neon" />
+        <h2 className="font-display text-xl font-bold">
+          תזכורות <span className="text-neon text-glow-neon">ספקים</span>
+        </h2>
+      </div>
+      <p className="text-xs text-muted-foreground -mt-3">
+        קבעו מתי תישלח התזכורת ולמי, לפני הגעת ספקים.
+      </p>
+
+      <div>
+        <label className="block text-xs font-bold text-muted-foreground mb-2 text-right">
+          מתי לשלוח תזכורת
+        </label>
+        <select
+          value={settings.timing}
+          onChange={(e) =>
+            setLocal({
+              ...settings,
+              timing: e.target.value as SupplierReminderSettings["timing"],
+            })
+          }
+          className="w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"
+        >
+          <option value="evening_before">ערב לפני ההגעה (20:00)</option>
+          <option value="morning_of">בבוקר ההגעה (07:00)</option>
+          <option value="both">גם ערב לפני וגם בבוקר</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-muted-foreground mb-2 text-right">
+          למי לשלוח ({settings.recipients.length} נבחרו)
+        </label>
+        <ul className="border border-border rounded-md divide-y divide-border max-h-72 overflow-y-auto">
+          {users.length === 0 && (
+            <li className="px-3 py-3 text-center text-xs text-muted-foreground">
+              אין משתמשים פעילים.
+            </li>
+          )}
+          {users.map((u) => {
+            const checked = settings.recipients.includes(u.user_id);
+            return (
+              <li key={u.user_id} className="flex items-center justify-between px-3 py-2 gap-2">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleRecipient(u.user_id)}
+                  className="h-4 w-4 accent-[oklch(0.65_0.31_5)] shrink-0"
+                />
+                <div className="flex-1 text-right min-w-0">
+                  <div className="text-sm font-bold truncate" dir="ltr">{u.email}</div>
+                  <div className="text-[10px] text-neon font-bold">
+                    {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" /> {saving ? "שומר…" : "שמור הגדרות"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+const GROUP_LABELS: Record<string, string> = {
+  home: "📊 דף הבית",
+  notebook: "📋 פנקס יומי",
+  general: "🏷️ כותרות כלליות",
+};
+
+function ContentTextsPanel() {
+  const all = useSiteTextsStore((s) => s.all);
+  const loaded = useSiteTextsStore((s) => s.loaded);
+  const load = useSiteTextsStore((s) => s.load);
+  const update = useSiteTextsStore((s) => s.update);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loaded) void load();
+  }, [loaded, load]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, typeof all> = {};
+    all.forEach((t) => {
+      (map[t.group_key] ??= []).push(t);
+    });
+    return map;
+  }, [all]);
+
+  const handleSave = async (key: string) => {
+    const value = drafts[key];
+    if (value === undefined) return;
+    setSavingKey(key);
+    try {
+      await update(key, value);
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[key];
+        return next;
+      });
+      toast.success("הטקסט עודכן");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "שמירה נכשלה");
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  if (!loaded) {
+    return <p className="text-center text-muted-foreground py-8 text-sm">טוען…</p>;
+  }
+
+  return (
+    <section className="space-y-6" dir="rtl">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-neon" />
+        <h2 className="font-display text-xl font-bold">
+          ניהול <span className="text-neon text-glow-neon">תוכן וטקסטים</span>
+        </h2>
+      </div>
+      <p className="text-xs text-muted-foreground -mt-3">
+        ערכו את כל הטקסטים הדינמיים של האתר. השינויים נשמרים ומשתקפים בכל המכשירים בזמן אמת.
+      </p>
+
+      {Object.entries(grouped).map(([group, items]) => (
+        <div key={group} className="border border-border rounded-md p-4 bg-card/40">
+          <h3 className="font-display text-sm font-bold mb-3 text-neon">
+            {GROUP_LABELS[group] ?? group}
+          </h3>
+          <ul className="space-y-3">
+            {items.map((t) => {
+              const draft = drafts[t.key];
+              const current = draft ?? t.value;
+              const dirty = draft !== undefined && draft !== t.value;
+              const isLong = current.length > 60 || current.includes("\n");
+              return (
+                <li key={t.key} className="space-y-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">
+                      {t.key}
+                    </span>
+                    <label className="text-xs font-bold text-foreground/80">
+                      {t.label}
+                    </label>
+                  </div>
+                  {isLong ? (
+                    <textarea
+                      value={current}
+                      onChange={(e) =>
+                        setDrafts((d) => ({ ...d, [t.key]: e.target.value }))
+                      }
+                      rows={3}
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={current}
+                      onChange={(e) =>
+                        setDrafts((d) => ({ ...d, [t.key]: e.target.value }))
+                      }
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"
+                    />
+                  )}
+                  {dirty && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleSave(t.key)}
+                        disabled={savingKey === t.key}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:text-glow-neon disabled:opacity-50"
+                      >
+                        <Save className="h-3 w-3" />
+                        {savingKey === t.key ? "שומר…" : "שמור"}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
   );
 }
