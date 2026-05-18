@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { AccessGate } from "@/components/AccessGate";
+import { NdaGate } from "@/components/NdaGate";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
@@ -120,7 +121,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AccessGate>
-          <AuthedShell />
+          <NdaGate>
+            <AuthedShell />
+          </NdaGate>
         </AccessGate>
       </AuthProvider>
       <Toaster position="top-center" richColors closeButton />

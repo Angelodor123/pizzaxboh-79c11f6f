@@ -7,6 +7,7 @@ import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { WeatherWidget } from "@/components/WeatherWidget";
+import { EvChargingWidget } from "@/components/EvChargingWidget";
 
 export const Route = createFileRoute("/")({
   component: OperationalDashboard,
@@ -119,6 +120,11 @@ function OperationalDashboard() {
       {/* Weather widget */}
       <div className="mb-6">
         <WeatherWidget title={weatherTitle} alertText={rainAlert} />
+      </div>
+
+      {/* EV charging widget */}
+      <div className="mb-6">
+        <EvChargingWidget />
       </div>
 
       {/* Quick Stats */}
