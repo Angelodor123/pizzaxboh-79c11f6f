@@ -63,6 +63,24 @@ export function CategoryDrawer() {
             </li>
 
             <li>
+              <Link
+                to="/recipes"
+                onClick={() => {
+                  setCategory("dishes");
+                  setDrawerOpen(false);
+                }}
+                className={`flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold transition ${
+                  category === "dishes"
+                    ? "bg-neon/10 text-neon"
+                    : "text-foreground hover:bg-card hover:text-neon"
+                }`}
+              >
+                <span className="flex-1 text-right">🍽️ כל המנות</span>
+                <ChefHat className="h-5 w-5" />
+              </Link>
+            </li>
+
+            <li>
               <button
                 type="button"
                 onClick={() => setCatsOpen((o) => !o)}
@@ -91,7 +109,7 @@ export function CategoryDrawer() {
                           : "text-foreground border-transparent hover:text-neon"
                       }`}
                     >
-                      <span className="flex-1 text-right">🍽️ הצג הכל</span>
+                      <span className="flex-1 text-right">📋 הצג הכל</span>
                     </Link>
                   </li>
                   {CATEGORIES.map((it) => {
