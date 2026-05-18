@@ -267,65 +267,126 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
       ) : (
         <ul className="space-y-1.5">
           {items.map((it) => (
-            <li
-              key={it.id}
-              className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:border-neon/40 transition ${
-                it.priority === "urgent" && !it.done
-                  ? "bg-neon/10 border-neon/50"
-                  : "bg-background/40 border-border/60"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => void removeItem(cfg.key, it.id)}
-                aria-label="מחק"
-                className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive transition"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => void toggleItem(cfg.key, it.id)}
-                className={`flex-1 min-w-0 flex items-center gap-3 text-right cursor-pointer ${
-                  it.done ? "opacity-50" : ""
-                }`}
-                aria-pressed={it.done}
-              >
-                <span
-                  className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
-                    it.done ? "line-through text-muted-foreground" : "text-foreground"
-                  }`}
-                >
-                  {it.priority === "urgent" && !it.done && (
-                    <Flame className="h-3.5 w-3.5 text-neon shrink-0" />
-                  )}
-                  <span className="min-w-0 break-words">{it.text}</span>
-                </span>
-                <span
-                  className={`shrink-0 grid place-content-center h-5 w-5 rounded border-2 transition ${
-                    it.done
-                      ? "bg-neon border-neon"
-                      : "border-neon/50 hover:border-neon"
-                  }`}
-                  aria-hidden
-                >
-                  {it.done && (
-                    <svg
-                      viewBox="0 0 16 16"
-                      className="h-3 w-3 text-primary-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <path d="M3 8l3.5 3.5L13 5" />
-                    </svg>
-                  )}
-                </span>
-              </button>
-            </li>
+            <NotebookRow key={it.id} item={it} listKey={cfg.key} />
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function NotebookRow({ item, listKey }: { item: NotebookItem; listKey: NotebookListKey }) {
+  const toggleItem = useNotebookStore((s) => s.toggleItem);
+  const removeItem = useNotebookStore((s) => s.removeItem);
+  const editItem = useNotebookStore((s) => s.editItem);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.text);
+
+  const startEdit = () => {
+    setDraft(item.text);
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    const clean = draft.trim();
+    if (!clean || clean === item.text) {
+      setEditing(false);
+      return;
+    }
+    await editItem(listKey, item.id, clean);
+    setEditing(false);
+  };
+
+  return (
+    <li
+      className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:border-neon/40 transition ${
+        item.priority === "urgent" && !item.done
+          ? "bg-neon/10 border-neon/50"
+          : "bg-background/40 border-border/60"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => void removeItem(listKey, item.id)}
+        aria-label="מחק"
+        className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive transition"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
+      {editing ? (
+        <>
+          <button
+            type="button"
+            onClick={() => void saveEdit()}
+            aria-label="שמור"
+            className="shrink-0 p-1 rounded text-neon hover:text-neon transition"
+          >
+            <Check className="h-4 w-4" />
+          </button>
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void saveEdit();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            onBlur={() => void saveEdit()}
+            maxLength={500}
+            dir="rtl"
+            className="flex-1 min-w-0 bg-input border border-neon/60 rounded-md px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60"
+          />
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={startEdit}
+            aria-label="ערוך"
+            className="shrink-0 p-1 rounded text-muted-foreground hover:text-neon transition"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => void toggleItem(listKey, item.id)}
+            className={`flex-1 min-w-0 flex items-center gap-3 text-right cursor-pointer ${
+              item.done ? "opacity-50" : ""
+            }`}
+            aria-pressed={item.done}
+          >
+            <span
+              className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
+                item.done ? "line-through text-muted-foreground" : "text-foreground"
+              }`}
+            >
+              {item.priority === "urgent" && !item.done && (
+                <Flame className="h-3.5 w-3.5 text-neon shrink-0" />
+              )}
+              <span className="min-w-0 break-words">{item.text}</span>
+            </span>
+            <span
+              className={`shrink-0 grid place-content-center h-5 w-5 rounded border-2 transition ${
+                item.done ? "bg-neon border-neon" : "border-neon/50 hover:border-neon"
+              }`}
+              aria-hidden
+            >
+              {item.done && (
+                <svg
+                  viewBox="0 0 16 16"
+                  className="h-3 w-3 text-primary-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
+                  <path d="M3 8l3.5 3.5L13 5" />
+                </svg>
+              )}
+            </span>
+          </button>
+        </>
+      )}
+    </li>
   );
 }
