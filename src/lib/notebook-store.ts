@@ -123,6 +123,19 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
   },
 
+  editItem: async (list, id, text) => {
+    const clean = text.trim().slice(0, 500);
+    if (!clean) return;
+    set((s) => ({
+      lists: {
+        ...s.lists,
+        [list]: s.lists[list].map((it) => (it.id === id ? { ...it, text: clean } : it)),
+      },
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").update({ text: clean }).eq("id", id);
+  },
+
   removeItem: async (list, id) => {
     set((s) => ({
       lists: { ...s.lists, [list]: s.lists[list].filter((it) => it.id !== id) },
