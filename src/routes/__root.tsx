@@ -127,6 +127,9 @@ function RootComponent() {
 function AuthedShell() {
   useRecipesSync();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
+  const showServiceToggle = pathname === "/recipes";
   return (
     <div className="min-h-screen flex flex-col">
       <header
@@ -139,7 +142,7 @@ function AuthedShell() {
         <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <CategoryDrawer />
-            <ServiceModeToggle />
+            {showServiceToggle && <ServiceModeToggle />}
           </div>
           <Link
             to="/"
