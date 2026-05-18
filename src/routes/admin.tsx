@@ -678,12 +678,19 @@ function InvitationsPanel() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-                <div className="text-right flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate" dir="ltr">
+                <div className="text-right flex-1 min-w-0 flex flex-col items-end gap-1">
+                  <div className="text-sm font-bold truncate w-full text-right" dir="ltr">
                     {u.email}
                   </div>
-                  <div className="text-[10px] text-neon font-bold">
-                    {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    {SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neon/15 text-neon border border-neon/40 whitespace-nowrap">
+                        Super
+                      </span>
+                    )}
+                    <span className="text-[10px] text-neon font-bold whitespace-nowrap">
+                      {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
+                    </span>
                   </div>
                 </div>
               </li>
