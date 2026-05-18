@@ -52,10 +52,24 @@ export function CategoryDrawer() {
         <nav className="flex-1 overflow-y-auto py-3">
           <ul className="flex flex-col">
             <li>
+              <Link
+                to="/"
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+              >
+                <span className="flex-1 text-right">🏠 דף הבית</span>
+                <Home className="h-5 w-5" />
+              </Link>
+            </li>
+
+            <li>
               <div className="w-full flex items-stretch">
                 <Link
-                  to="/"
-                  onClick={() => setCategory("all")}
+                  to="/recipes"
+                  onClick={() => {
+                    setCategory("all");
+                    setDrawerOpen(false);
+                  }}
                   className={`flex-1 flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold transition ${
                     category === "all"
                       ? "text-neon"
@@ -63,6 +77,7 @@ export function CategoryDrawer() {
                   }`}
                 >
                   <span className="flex-1 text-right">📋 כל המתכונים</span>
+                  <ChefHat className="h-5 w-5" />
                 </Link>
                 <button
                   onClick={() => setCatsOpen((o) => !o)}
@@ -82,8 +97,11 @@ export function CategoryDrawer() {
                     return (
                       <li key={it.key}>
                         <Link
-                          to="/"
-                          onClick={() => setCategory(it.key)}
+                          to="/recipes"
+                          onClick={() => {
+                            setCategory(it.key);
+                            setDrawerOpen(false);
+                          }}
                           className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
                             active
                               ? "bg-neon/10 text-neon border-neon"
