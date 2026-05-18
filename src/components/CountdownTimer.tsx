@@ -22,11 +22,15 @@ export function CountdownTimer({
     if (remaining <= 0) {
       setRunning(false);
       setAlarming(true);
+      void notify("⏰ הטיימר הסתיים", {
+        body: label || "שלב ההכנה הושלם",
+        tag: `recipe-timer-${label}`,
+      });
       return;
     }
     const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
     return () => clearTimeout(t);
-  }, [running, remaining]);
+  }, [running, remaining, label]);
 
   // Looping kitchen-bell alarm
   useEffect(() => {
