@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   useNotebookStore,
