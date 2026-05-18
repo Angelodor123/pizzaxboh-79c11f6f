@@ -20,7 +20,7 @@ interface ListConfig {
   placeholder: string;
 }
 
-const LISTS: ListConfig[] = [
+const DAILY_LISTS: ListConfig[] = [
   {
     key: "tasks",
     title: "משימות להיום",
@@ -34,14 +34,23 @@ const LISTS: ListConfig[] = [
     placeholder: 'לדוגמה: "בננות", "ביצים 2 תבניות"',
   },
   {
+    key: "recurring",
+    title: "משימות חוזרות",
+    emoji: "🔁",
+    placeholder: 'לדוגמה: "ניקוי משטחי עבודה בסוף משמרת"',
+  },
+  {
     key: "orders",
-    title: "חוסרים והזמנות סחורה",
+    title: "הזמנת סחורה",
     emoji: "📦",
     placeholder: 'לדוגמה: "בצל סגול — 10 ק״ג"',
   },
+];
+
+const WAREHOUSE_LISTS: ListConfig[] = [
   {
     key: "warehouse",
-    title: "להביא מהמחסן",
+    title: "רשימת מחסן",
     emoji: "🏬",
     placeholder: 'לדוגמה: "קרטון מפיות", "שקיות ואקום"',
   },
@@ -49,6 +58,8 @@ const LISTS: ListConfig[] = [
 
 function NotebookPage() {
   const title = useSiteText("notebook.title", "פנקס עבודה יומי");
+  const [tab, setTab] = useState<"daily" | "warehouse">("daily");
+  const lists = tab === "daily" ? DAILY_LISTS : WAREHOUSE_LISTS;
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="mb-6">
@@ -64,8 +75,28 @@ function NotebookPage() {
         </p>
       </div>
 
+      <div className="flex gap-2 mb-4 border-b border-border">
+        {[
+          { id: "daily" as const, label: "📋 פנקס יומי" },
+          { id: "warehouse" as const, label: "🏬 רשימת מחסן" },
+        ].map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-2 text-sm font-bold border-b-2 -mb-px transition ${
+              tab === t.id
+                ? "border-neon text-neon"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-4">
-        {LISTS.map((cfg) => (
+        {lists.map((cfg) => (
           <NotebookList key={cfg.key} cfg={cfg} />
         ))}
       </div>
