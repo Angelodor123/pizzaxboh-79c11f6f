@@ -1009,18 +1009,23 @@ function EventForm({
       <style>{`
         .input {
           width: 100%;
-          background: hsl(var(--input));
-          border: 1px solid hsl(var(--border));
-          border-radius: 0.375rem;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
+          min-height: 2.5rem;
+          background: hsl(var(--background));
+          border: 1.5px solid hsl(var(--border));
+          border-radius: 0.5rem;
+          padding: 0.55rem 0.85rem;
+          font-size: 0.95rem;
           color: hsl(var(--foreground));
           text-align: right;
+          transition: border-color .15s, box-shadow .15s, background .15s;
         }
+        .input::placeholder { color: hsl(var(--muted-foreground) / 0.7); }
+        .input:hover { border-color: hsl(var(--neon, var(--primary)) / 0.5); }
         .input:focus {
           outline: none;
+          background: hsl(var(--card));
           border-color: hsl(var(--neon, var(--primary)));
-          box-shadow: 0 0 0 2px hsl(var(--neon, var(--primary)) / 0.4);
+          box-shadow: 0 0 0 3px hsl(var(--neon, var(--primary)) / 0.25);
         }
       `}</style>
     </div>
