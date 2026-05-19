@@ -145,30 +145,10 @@
   .bg-deep-green { background-color: #013220; }
   .border-deep-green { border-color: #013220; }
 
-  /* EV charging visual */
+  /* EV charging visual — static, no constant pulse */
   .ev-charging {
-    position: relative;
     border-color: var(--amber-brand) !important;
-    box-shadow: 0 0 0 1px oklch(0.78 0.16 75 / 0.5), 0 0 22px oklch(0.78 0.16 75 / 0.35);
-    animation: ev-charging-glow 2s ease-in-out infinite;
-    overflow: hidden;
-  }
-  @keyframes ev-charging-glow {
-    0%, 100% { box-shadow: 0 0 0 1px oklch(0.78 0.16 75 / 0.5), 0 0 14px oklch(0.78 0.16 75 / 0.25); }
-    50%      { box-shadow: 0 0 0 2px oklch(0.78 0.16 75 / 0.75), 0 0 32px oklch(0.78 0.16 75 / 0.55); }
-  }
-  .ev-charging::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(115deg, transparent 30%, oklch(0.78 0.16 75 / 0.18) 50%, transparent 70%);
-    background-size: 250% 100%;
-    animation: ev-shimmer 2.4s linear infinite;
-    pointer-events: none;
-  }
-  @keyframes ev-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -100% 0; }
+    box-shadow: inset 0 0 0 1px oklch(0.78 0.16 75 / 0.4);
   }
   .ev-bolt-pulse {
     animation: ev-bolt-pulse 1.1s ease-in-out infinite;
