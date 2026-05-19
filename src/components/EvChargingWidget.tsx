@@ -180,7 +180,7 @@ export function EvChargingWidget() {
   return (
     <section
       className={`rounded-2xl border-2 p-4 bg-card/80 backdrop-blur transition ${
-        anyExpired ? "border-neon glow-neon animate-pulse" : "border-jungle/30"
+        anyExpired ? "border-neon glow-neon" : "border-jungle/30"
       }`}
     >
       <header className="flex items-center justify-between mb-3">
