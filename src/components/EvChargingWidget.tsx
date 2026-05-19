@@ -243,31 +243,34 @@ export function EvChargingWidget() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    סוללה
+                    אחוז סוללה נוכחי
                   </span>
-                  <span className="font-display text-xl font-black text-neon tabular-nums">
-                    {v.battery_pct}%
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      value={v.battery_pct}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const n = raw === "" ? 0 : Math.max(0, Math.min(100, Number(raw)));
+                        setVehicles((prev) =>
+                          prev.map((x) => (x.id === v.id ? { ...x, battery_pct: n } : x)),
+                        );
+                      }}
+                      onBlur={(e) => {
+                        const n = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                        void update(v.id, { battery_pct: n });
+                      }}
+                      className="w-16 bg-input border border-border rounded px-2 py-1 text-center font-display text-lg font-black text-neon tabular-nums focus:outline-none focus:ring-2 focus:ring-neon"
+                      aria-label={`סוללה ${v.name}`}
+                    />
+                    <span className="font-display text-lg font-black text-neon">%</span>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={v.battery_pct}
-                  onChange={(e) =>
-                    setVehicles((prev) =>
-                      prev.map((x) => (x.id === v.id ? { ...x, battery_pct: Number(e.target.value) } : x)),
-                    )
-                  }
-                  onPointerUp={(e) =>
-                    void update(v.id, { battery_pct: Number((e.target as HTMLInputElement).value) })
-                  }
-                  className="w-full accent-neon"
-                  aria-label={`סוללה ${v.name}`}
-                />
 
                 <div className="text-xs text-foreground/80 flex items-center justify-between">
                   <span>זמן להחלפה:</span>
