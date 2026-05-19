@@ -33,6 +33,8 @@ import {
   type SupplierReminderSettings,
 } from "@/lib/site-texts";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendInvitationEmail } from "@/lib/invitations.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -593,6 +595,8 @@ function InvitationsPanel() {
     if (!isSuperAdmin && role === "admin") setRole("viewer");
   }, [isSuperAdmin, role]);
 
+  const sendInvite = useServerFn(sendInvitationEmail);
+
   const invite = async () => {
     setError(null);
     const clean = email.trim().toLowerCase();
@@ -608,11 +612,23 @@ function InvitationsPanel() {
     const { error: e } = await supabase
       .from("invitations")
       .upsert({ email: clean, role }, { onConflict: "email" });
-    setBusy(false);
     if (e) {
+      setBusy(false);
       setError(e.message);
       return;
     }
+    try {
+      await sendInvite({
+        data: { to: clean, role, appUrl: window.location.origin },
+      });
+      toast.success(`הזמנה נשלחה ל-${clean}`);
+    } catch (err) {
+      toast.error(
+        "ההזמנה נשמרה אך שליחת המייל נכשלה: " +
+          (err instanceof Error ? err.message : "שגיאה"),
+      );
+    }
+    setBusy(false);
     setEmail("");
     await load();
   };
