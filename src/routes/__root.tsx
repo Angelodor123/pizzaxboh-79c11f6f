@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { ArrowRight, Home } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
