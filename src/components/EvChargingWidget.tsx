@@ -93,8 +93,22 @@ export function EvChargingWidget() {
     };
   }, []);
 
-  // Alarm on expiration
+  // Track which vehicles were already expired when this component mounted —
+  // we don't want to beep again every time the user re-enters the page.
+  const initialExpiredSeededRef = useRef(false);
   useEffect(() => {
+    if (initialExpiredSeededRef.current || vehicles.length === 0) return;
+    initialExpiredSeededRef.current = true;
+    for (const v of vehicles) {
+      if (v.swap_at && new Date(v.swap_at).getTime() <= Date.now()) {
+        alarmedIdsRef.current.add(v.id);
+      }
+    }
+  }, [vehicles]);
+
+  // Alarm only when a timer transitions to expired during this session
+  useEffect(() => {
+    if (!initialExpiredSeededRef.current) return;
     for (const v of vehicles) {
       if (!v.swap_at) continue;
       const expired = new Date(v.swap_at).getTime() <= Date.now();
