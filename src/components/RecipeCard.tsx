@@ -43,6 +43,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [alarming, setAlarming] = useState(false);
   const [scale, setScale] = useState(1);
   const [customScale, setCustomScale] = useState("");
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
