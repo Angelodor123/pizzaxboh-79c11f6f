@@ -43,6 +43,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [alarming, setAlarming] = useState(false);
   const [scale, setScale] = useState(1);
   const [customScale, setCustomScale] = useState("");
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -244,18 +246,79 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
                       </svg>
                     )}
                   </button>
-                  <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30">
-                    <span
-                      className={`text-neon font-display font-bold tabular-nums leading-tight ${
-                        isServiceMode ? "text-xl" : "text-lg"
-                      }`}
-                    >
-                      {display.value}
-                    </span>
-                    <span className="text-[10px] font-bold text-neon/80 uppercase tracking-wide mt-0.5">
-                      {display.unit}
-                    </span>
-                  </div>
+                  {(() => {
+                    const base = recipe.ingredients[idx];
+                    const canEditQty = isScalable(base.unit) && !isServiceMode;
+                    const commitEdit = () => {
+                      const n = parseFloat(editValue);
+                      if (!isNaN(n) && n > 0) {
+                        const factor =
+                          display.unit !== base.unit &&
+                          (display.unit === 'ק"ג' || display.unit === "ליטר")
+                            ? 1000
+                            : 1;
+                        const newRaw = n * factor;
+                        const newScale = newRaw / base.quantity;
+                        if (newScale > 0 && newScale <= 1000) {
+                          setScale(newScale);
+                          setCustomScale("");
+                        }
+                      }
+                      setEditingIdx(null);
+                    };
+                    return editingIdx === idx ? (
+                      <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-1 rounded-md bg-neon/20 border border-neon">
+                        <input
+                          autoFocus
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={commitEdit}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              commitEdit();
+                            } else if (e.key === "Escape") {
+                              setEditingIdx(null);
+                            }
+                          }}
+                          className={`w-full bg-transparent text-neon font-display font-bold tabular-nums text-center outline-none ${
+                            isServiceMode ? "text-xl" : "text-lg"
+                          }`}
+                        />
+                        <span className="text-[10px] font-bold text-neon/80 uppercase tracking-wide mt-0.5">
+                          {display.unit}
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={!canEditQty}
+                        onClick={() => {
+                          setEditingIdx(idx);
+                          setEditValue(display.value);
+                        }}
+                        title={canEditQty ? "לחץ לעריכת הכמות" : undefined}
+                        className={`flex flex-col items-center justify-center shrink-0 w-[72px] px-2 rounded-md bg-neon/10 border border-neon/30 transition ${
+                          canEditQty ? "hover:bg-neon/20 hover:border-neon cursor-pointer" : "cursor-default"
+                        }`}
+                      >
+                        <span
+                          className={`text-neon font-display font-bold tabular-nums leading-tight ${
+                            isServiceMode ? "text-xl" : "text-lg"
+                          }`}
+                        >
+                          {display.value}
+                        </span>
+                        <span className="text-[10px] font-bold text-neon/80 uppercase tracking-wide mt-0.5">
+                          {display.unit}
+                        </span>
+                      </button>
+                    );
+                  })()}
                   <span
                     style={{ color: "#F4F4F4" }}
                     className={`${ingredientTextClass} ${
