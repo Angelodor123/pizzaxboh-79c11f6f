@@ -33,11 +33,16 @@ function formatQtyUnit(quantity: number, unit: string): { value: string; unit: s
   return { value: formatNum(quantity), unit };
 }
 
+const NON_SCALABLE_UNITS = new Set(["חופן", "לפי טעם"]);
+const isScalable = (unit: string) => !NON_SCALABLE_UNITS.has(unit);
 
+const SCALE_PRESETS = [0.5, 1, 2, 3, 5, 10];
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [expanded, setExpanded] = useState(false);
   const [alarming, setAlarming] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [customScale, setCustomScale] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -48,8 +53,20 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     }
   }, [recipe.id]);
 
-  const scaledIngredients = recipe.ingredients;
-  const scaledSpiceBag = recipe.spiceBag;
+  const scaledIngredients = recipe.ingredients.map((i) => ({
+    ...i,
+    quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
+  }));
+  const scaledSpiceBag = recipe.spiceBag
+    ? {
+        ...recipe.spiceBag,
+        totalWeightGrams: recipe.spiceBag.totalWeightGrams * scale,
+        items: recipe.spiceBag.items.map((i) => ({
+          ...i,
+          quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
+        })),
+      }
+    : undefined;
 
   const { role } = useAuth();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
@@ -61,6 +78,13 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const toggleIngredient = useRecipeProgressStore((s) => s.toggleIngredient);
   const resetRecipe = useRecipeProgressStore((s) => s.resetRecipe);
   const isChecked = (idx: number) => !!checkedIndices?.includes(idx);
+
+  const applyCustomScale = () => {
+    const n = parseFloat(customScale);
+    if (!isNaN(n) && n > 0 && n <= 100) {
+      setScale(n);
+    }
+  };
 
   const handleComplete = () => {
     resetRecipe(recipe.id);
@@ -135,7 +159,58 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
               <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 מצרכים
               </h4>
+              {scale !== 1 && (
+                <span className="text-[10px] font-bold text-neon">×{scale}</span>
+              )}
             </div>
+
+            {!isServiceMode && (
+              <div className="mb-3 rounded-lg border border-neon/30 bg-neon/5 p-2.5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 text-right">
+                  התאמת כמויות
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {SCALE_PRESETS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => {
+                        setScale(s);
+                        setCustomScale("");
+                      }}
+                      className={`px-2 py-1.5 rounded-md text-xs font-bold border transition ${
+                        scale === s && !customScale
+                          ? "bg-neon text-primary-foreground border-neon glow-neon"
+                          : "border-neon/40 text-neon hover:border-neon"
+                      }`}
+                    >
+                      ×{s}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="text-neon font-bold text-sm">×</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0.1"
+                    step="0.1"
+                    placeholder="מכפיל מותאם"
+                    value={customScale}
+                    onChange={(e) => setCustomScale(e.target.value)}
+                    onBlur={applyCustomScale}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyCustomScale();
+                      }
+                    }}
+                    className="flex-1 px-2 py-1.5 rounded-md bg-background/40 border border-neon/40 text-sm text-right focus:border-neon outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
           <ul className="space-y-1.5">
             {scaledIngredients.map((i, idx) => {
               const display = formatQtyUnit(i.quantity, i.unit);
