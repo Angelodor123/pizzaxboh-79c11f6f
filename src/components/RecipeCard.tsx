@@ -33,11 +33,16 @@ function formatQtyUnit(quantity: number, unit: string): { value: string; unit: s
   return { value: formatNum(quantity), unit };
 }
 
+const NON_SCALABLE_UNITS = new Set(["חופן", "לפי טעם"]);
+const isScalable = (unit: string) => !NON_SCALABLE_UNITS.has(unit);
 
+const SCALE_PRESETS = [0.5, 1, 2, 3, 5, 10];
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const [expanded, setExpanded] = useState(false);
   const [alarming, setAlarming] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [customScale, setCustomScale] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -48,8 +53,20 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     }
   }, [recipe.id]);
 
-  const scaledIngredients = recipe.ingredients;
-  const scaledSpiceBag = recipe.spiceBag;
+  const scaledIngredients = recipe.ingredients.map((i) => ({
+    ...i,
+    quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
+  }));
+  const scaledSpiceBag = recipe.spiceBag
+    ? {
+        ...recipe.spiceBag,
+        totalWeightGrams: recipe.spiceBag.totalWeightGrams * scale,
+        items: recipe.spiceBag.items.map((i) => ({
+          ...i,
+          quantity: isScalable(i.unit) ? i.quantity * scale : i.quantity,
+        })),
+      }
+    : undefined;
 
   const { role } = useAuth();
   const isServiceMode = useUIStore((s) => s.isServiceMode);
@@ -61,6 +78,13 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const toggleIngredient = useRecipeProgressStore((s) => s.toggleIngredient);
   const resetRecipe = useRecipeProgressStore((s) => s.resetRecipe);
   const isChecked = (idx: number) => !!checkedIndices?.includes(idx);
+
+  const applyCustomScale = () => {
+    const n = parseFloat(customScale);
+    if (!isNaN(n) && n > 0 && n <= 100) {
+      setScale(n);
+    }
+  };
 
   const handleComplete = () => {
     resetRecipe(recipe.id);
