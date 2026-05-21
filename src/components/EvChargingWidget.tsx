@@ -52,6 +52,7 @@ export function EvChargingWidget() {
   const [vehicles, setVehicles] = useState<EvVehicle[]>([]);
   const [, setTick] = useState(0);
   const alarmedIdsRef = useRef<Set<string>>(new Set());
+  const [batteryDraft, setBatteryDraft] = useState<Record<string, string>>({});
 
   // Custom-time dialog state
   const [timeDialogId, setTimeDialogId] = useState<string | null>(null);
