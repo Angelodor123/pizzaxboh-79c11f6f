@@ -268,16 +268,25 @@ export function EvChargingWidget() {
                       inputMode="numeric"
                       min={0}
                       max={100}
-                      value={v.battery_pct}
+                      value={batteryDraft[v.id] ?? String(v.battery_pct)}
+                      onFocus={(e) => {
+                        setBatteryDraft((d) => ({ ...d, [v.id]: String(v.battery_pct) }));
+                        e.currentTarget.select();
+                      }}
                       onChange={(e) => {
-                        const raw = e.target.value;
-                        const n = raw === "" ? 0 : Math.max(0, Math.min(100, Number(raw)));
+                        setBatteryDraft((d) => ({ ...d, [v.id]: e.target.value }));
+                      }}
+                      onBlur={(e) => {
+                        const raw = e.target.value.trim();
+                        setBatteryDraft((d) => {
+                          const { [v.id]: _, ...rest } = d;
+                          return rest;
+                        });
+                        if (raw === "") return;
+                        const n = Math.max(0, Math.min(100, Number(raw) || 0));
                         setVehicles((prev) =>
                           prev.map((x) => (x.id === v.id ? { ...x, battery_pct: n } : x)),
                         );
-                      }}
-                      onBlur={(e) => {
-                        const n = Math.max(0, Math.min(100, Number(e.target.value) || 0));
                         void update(v.id, { battery_pct: n });
                       }}
                       className="w-16 bg-input border border-border rounded px-2 py-1 text-center font-display text-lg font-black text-neon tabular-nums focus:outline-none focus:ring-2 focus:ring-neon"
