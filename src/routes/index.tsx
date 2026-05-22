@@ -225,6 +225,8 @@ function OperationalDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" />
         <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="פנקס יומי" />
+        <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" />
+        <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" />
         <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" />
         {role === "admin" && (
           <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" />
