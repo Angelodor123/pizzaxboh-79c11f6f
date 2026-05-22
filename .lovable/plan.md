@@ -1,41 +1,52 @@
-## Plan: Comprehensive feature rollout
+# Plan: Onboarding Banners + Par Level Modules
 
-This is a large multi-system update. I'll batch into focused implementation phases.
+## 1. Global Onboarding Banner (כל הדפים)
+- New component `src/components/PageOnboarding.tsx` — semi-transparent card with title + Hebrew explanation, themed to "Urban Jungle" (green/leaf accents from existing tokens), positioned below page title.
+- Stored in DB table `page_onboarding` (key, title, body, updated_at). Seed default Hebrew explanations for every existing route (index, recipes, calendar, suppliers, notebook, guide, admin, new prep + restock pages).
+- Admin can edit text per-page from admin panel (new "הסברי דפים" tab).
+- Insert `<PageOnboarding pageKey="..." />` at top of every route component.
 
-### Phase 1 — Database (single migration)
-- `profiles` table: `user_id`, `has_accepted_nda` (bool) + RLS (user reads/writes own)
-- `ev_vehicles` table: `id`, `name`, `battery_pct`, `status`, `swap_at` (timestamptz), `updated_at` + RLS (admin/viewer read, admin write); seed BYD / Leapmotor / Hyundai Kona
-- `notebook_items`: add `priority` ('urgent'|'normal'), `archived_at` (timestamptz)
-- `notebook_snapshots` table: `snapshot_date`, `list_key`, `items` (jsonb) — for 14-day history; daily cron at 05:00 snapshots + clears
-- pg_cron: 05:00 Asia/Jerusalem job → snapshot active `notebook_items`, then set `archived_at = now()` on all undone+done
-- Wipe existing `recipes` rows (deleted=true) and seed the full recipe catalog from the prompt (5 categories, all items)
+## 2. Shared Units of Measurement
+- DB table `measurement_units` (id, name, sort_order).
+- Admin tab "יחידות מידה": CRUD list with inline add/edit/delete.
+- Seeded with: ק"ג, ליטר, קופסה, פיילה, שק, ארגז, יחידה.
+- Used by both modules as a dropdown.
 
-### Phase 2 — NDA gate
-- New `<NdaGate />` mounted in `__root.tsx` after auth: fetches profile, if `has_accepted_nda=false` shows non-dismissible modal with exact text + "מאשר/ת" button → updates profile.
+## 3. Module A — הכנות יומיות (`/prep`)
+- DB table `prep_items`: id, name, unit, target_sun..target_sat (numeric), sort_order, active.
+- DB table `prep_log`: id, prep_item_id, log_date, current_stock, completed, updated_by.
+- Admin tab "הכנות יומיות": form with name, unit dropdown, 7 numeric inputs (one per weekday).
+- Shift page `/prep`:
+  - Filter items whose target for today's weekday > 0.
+  - Each row: name, target, "מלאי קיים" input (empty when 0), computed "להכנה" = max(target - stock, 0).
+  - Green badge when stock ≥ target; bold red/amber warning otherwise.
+  - Swipe right → set current_stock = target (100% done). Swipe left → clear.
+  - Persist per-day log via upsert on (prep_item_id, log_date).
 
-### Phase 3 — EV Charging widget
-- `<EvChargingWidget />` on dashboard: per-vehicle card with battery slider/input, status select, countdown timer (set hours+minutes). On expiry: neon-pink pulse + beep audio. Realtime sync via Supabase channel.
+## 4. Module B — השלמות מהמחסן (`/restock`)
+- DB table `restock_items`: id, name, unit, barcode (text nullable), target_sun..target_sat, sort_order, active.
+- DB table `restock_log`: id, restock_item_id, log_date, current_stock, completed.
+- Admin tab "השלמות מהמחסן": same per-weekday form + optional barcode field.
+- Shift page `/restock`:
+  - Search bar + prominent "סריקת פריט" button. Scanner uses `@zxing/browser` (BrowserMultiFormatReader) opening device camera; on detect, matches by `barcode` and focuses that row's input.
+  - Row: target, "מלאי בעמדה" input, computed "להשלמה".
+  - Swipe right → mark complete (sets stock = target). Swipe left → clear.
 
-### Phase 4 — Notebook enhancements
-- Priority selector on create; urgent items pinned + neon-pink badge
-- "📋 היסטוריית פנקס" route/section with date picker reading `notebook_snapshots`
-- Frontend uses `archived_at IS NULL` for active view (cron handles reset)
+## 5. Shared UX
+- Empty-on-clear numeric input pattern (already used elsewhere) for all stock fields.
+- Swipe via touch handlers (no extra lib needed): track touchstart/touchend deltaX with threshold ~60px.
+- Strict RTL (`dir="rtl"`), green complete state via `bg-emerald-500/20 border-emerald-500`, warning via `bg-amber-500/20 border-amber-500 text-amber-200`.
 
-### Phase 5 — Recipes module UX
-- `/recipes` already exists — enhance: search bar, horizontal category tabs, card grid, detail view with ingredient checklist + pop audio
-- Recipes import seeds via migration above
+## Technical Details
+- DB: one migration creates 6 tables with RLS — admins write, admins+viewers read (mirrors existing tables).
+- Routes: `src/routes/prep.tsx`, `src/routes/restock.tsx` (file-based). Add nav entries to home page.
+- Admin: extend `src/routes/admin.tsx` with new tabs.
+- Barcode: `bun add @zxing/browser @zxing/library`.
+- Onboarding insertion: each route renders `<PageOnboarding pageKey="<route>" />` below its existing header.
 
-### Phase 6 — Audio system
-- `src/lib/audio.ts`: WebAudio synthesized tones — `playPop()`, `playSuccess()`, `playBeep()`, `playThud()`. Wire into checkboxes, EV alerts, deletions.
+## Out of scope (to keep this turn focused)
+- Historical analytics on prep/restock logs.
+- Multi-user assignment / sign-off names beyond `updated_by`.
+- Offline mode for scanner.
 
-### Phase 7 — Weather, footer, admin fixes, CMS
-- Already implemented from prior turns; verify in place and only patch if missing.
-
-### Technical notes
-- Recipes table uses text `id` — generate stable slugs (e.g. `dessert-nutella-classic`).
-- Cron uses `pg_cron` + a SQL function (no HTTP needed).
-- All new tables RLS-aligned with existing `current_user_role()` pattern.
-- Audio: synthesized via Web Audio API — no asset files.
-
-### Scope of this turn
-Execute Phase 1 migration first, then build all frontend modules in parallel file writes.
+Confirm and I'll build it.

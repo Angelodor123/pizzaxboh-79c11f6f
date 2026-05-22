@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as RestockRouteImport } from './routes/restock'
 import { Route as RecipesRouteImport } from './routes/recipes'
+import { Route as PrepRouteImport } from './routes/prep'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -22,9 +24,19 @@ const SuppliersRoute = SuppliersRouteImport.update({
   path: '/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RestockRoute = RestockRouteImport.update({
+  id: '/restock',
+  path: '/restock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecipesRoute = RecipesRouteImport.update({
   id: '/recipes',
   path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrepRoute = PrepRouteImport.update({
+  id: '/prep',
+  path: '/prep',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotebookRoute = NotebookRouteImport.update({
@@ -59,7 +71,9 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
+  '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
 }
 export interface FileRoutesByTo {
@@ -68,7 +82,9 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
+  '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
 }
 export interface FileRoutesById {
@@ -78,7 +94,9 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/notebook': typeof NotebookRoute
+  '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
+  '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
 }
 export interface FileRouteTypes {
@@ -89,7 +107,9 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/notebook'
+    | '/prep'
     | '/recipes'
+    | '/restock'
     | '/suppliers'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -98,7 +118,9 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/notebook'
+    | '/prep'
     | '/recipes'
+    | '/restock'
     | '/suppliers'
   id:
     | '__root__'
@@ -107,7 +129,9 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/notebook'
+    | '/prep'
     | '/recipes'
+    | '/restock'
     | '/suppliers'
   fileRoutesById: FileRoutesById
 }
@@ -117,7 +141,9 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   NotebookRoute: typeof NotebookRoute
+  PrepRoute: typeof PrepRoute
   RecipesRoute: typeof RecipesRoute
+  RestockRoute: typeof RestockRoute
   SuppliersRoute: typeof SuppliersRoute
 }
 
@@ -130,11 +156,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/restock': {
+      id: '/restock'
+      path: '/restock'
+      fullPath: '/restock'
+      preLoaderRoute: typeof RestockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recipes': {
       id: '/recipes'
       path: '/recipes'
       fullPath: '/recipes'
       preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prep': {
+      id: '/prep'
+      path: '/prep'
+      fullPath: '/prep'
+      preLoaderRoute: typeof PrepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notebook': {
@@ -181,19 +221,11 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   NotebookRoute: NotebookRoute,
+  PrepRoute: PrepRoute,
   RecipesRoute: RecipesRoute,
+  RestockRoute: RestockRoute,
   SuppliersRoute: SuppliersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
+import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -220,7 +221,7 @@ function AdminPage() {
     }
   };
 
-  const [tab, setTab] = useState<"recipes" | "users" | "reminders" | "cms">("recipes");
+  const [tab, setTab] = useState<"recipes" | "users" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -247,11 +248,27 @@ function AdminPage() {
         <TabButton active={tab === "cms"} onClick={() => setTab("cms")} icon={<FileText className="h-4 w-4" />}>
           ניהול תוכן וטקסטים
         </TabButton>
+        <TabButton active={tab === "onboarding"} onClick={() => setTab("onboarding")} icon={<FileText className="h-4 w-4" />}>
+          הסברי דפים
+        </TabButton>
+        <TabButton active={tab === "units"} onClick={() => setTab("units")} icon={<FileText className="h-4 w-4" />}>
+          יחידות מידה
+        </TabButton>
+        <TabButton active={tab === "prep"} onClick={() => setTab("prep")} icon={<ChefHat className="h-4 w-4" />}>
+          הכנות יומיות
+        </TabButton>
+        <TabButton active={tab === "restock"} onClick={() => setTab("restock")} icon={<ChefHat className="h-4 w-4" />}>
+          השלמות מהמחסן
+        </TabButton>
       </div>
 
       {tab === "users" && <InvitationsPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
       {tab === "cms" && <ContentTextsPanel />}
+      {tab === "onboarding" && <OnboardingPanel />}
+      {tab === "units" && <UnitsPanel />}
+      {tab === "prep" && <PrepItemsPanel />}
+      {tab === "restock" && <RestockItemsPanel />}
 
       {tab === "recipes" && (
         <section>

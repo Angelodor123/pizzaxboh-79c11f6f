@@ -213,6 +213,27 @@ export type Database = {
         }
         Relationships: []
       }
+      measurement_units: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       notebook_items: {
         Row: {
           archived_at: string | null
@@ -275,6 +296,122 @@ export type Database = {
           snapshot_date?: string
         }
         Relationships: []
+      }
+      page_onboarding: {
+        Row: {
+          body: string
+          id: string
+          page_key: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string
+          id?: string
+          page_key: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          id?: string
+          page_key?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      prep_items: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          target_fri: number
+          target_mon: number
+          target_sat: number
+          target_sun: number
+          target_thu: number
+          target_tue: number
+          target_wed: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          target_fri?: number
+          target_mon?: number
+          target_sat?: number
+          target_sun?: number
+          target_thu?: number
+          target_tue?: number
+          target_wed?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          target_fri?: number
+          target_mon?: number
+          target_sat?: number
+          target_sun?: number
+          target_thu?: number
+          target_tue?: number
+          target_wed?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prep_log: {
+        Row: {
+          completed: boolean
+          current_stock: number
+          id: string
+          log_date: string
+          prep_item_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          completed?: boolean
+          current_stock?: number
+          id?: string
+          log_date: string
+          prep_item_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          completed?: boolean
+          current_stock?: number
+          id?: string
+          log_date?: string
+          prep_item_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_log_prep_item_id_fkey"
+            columns: ["prep_item_id"]
+            isOneToOne: false
+            referencedRelation: "prep_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -377,6 +514,98 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      restock_items: {
+        Row: {
+          active: boolean
+          barcode: string | null
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          target_fri: number
+          target_mon: number
+          target_sat: number
+          target_sun: number
+          target_thu: number
+          target_tue: number
+          target_wed: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          target_fri?: number
+          target_mon?: number
+          target_sat?: number
+          target_sun?: number
+          target_thu?: number
+          target_tue?: number
+          target_wed?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          target_fri?: number
+          target_mon?: number
+          target_sat?: number
+          target_sun?: number
+          target_thu?: number
+          target_tue?: number
+          target_wed?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      restock_log: {
+        Row: {
+          completed: boolean
+          current_stock: number
+          id: string
+          log_date: string
+          restock_item_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          completed?: boolean
+          current_stock?: number
+          id?: string
+          log_date: string
+          restock_item_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          completed?: boolean
+          current_stock?: number
+          id?: string
+          log_date?: string
+          restock_item_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restock_log_restock_item_id_fkey"
+            columns: ["restock_item_id"]
+            isOneToOne: false
+            referencedRelation: "restock_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_texts: {
         Row: {
