@@ -221,7 +221,7 @@ function AdminPage() {
     }
   };
 
-  const [tab, setTab] = useState<"recipes" | "users" | "reminders" | "cms">("recipes");
+  const [tab, setTab] = useState<"recipes" | "users" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
