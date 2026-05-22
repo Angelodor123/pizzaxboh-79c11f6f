@@ -37,7 +37,8 @@ function todayIso() {
 }
 
 function PrepPage() {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
   const [items, setItems] = useState<Item[]>([]);
   const [log, setLog] = useState<Record<string, LogRow>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
