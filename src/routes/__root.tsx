@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { QuickBackBubble } from "@/components/QuickBackBubble";
 import { AccessGate } from "@/components/AccessGate";
+import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { NdaGate } from "@/components/NdaGate";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
