@@ -134,7 +134,7 @@ function OperationalDashboard() {
         <StatCard label="מתכונים פעילים" value={activeRecipes.length} to="/recipes" />
         <StatCard label="מנות פעילות" value={activeDishes.length} to="/recipes" />
         <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
-        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight />
+        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight tourId="stat-events-today" />
         <StatCard label="פריטים לקנייה" value={shoppingCount} to="/notebook" />
       </div>
 
