@@ -138,6 +138,7 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
   const [rows, setRows] = useState<ParItem[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [editing, setEditing] = useState<ParItem | null>(null);
+  const bulk = useBulkSelection();
 
   const load = async () => {
     const { data } = await supabase.from(table).select("*").order("sort_order").order("name");
@@ -183,15 +184,27 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
           <h2 className="font-display text-xl font-bold">{title}</h2>
           <p className="text-sm text-muted-foreground mt-1">כמויות יעד לפי יום בשבוע. הזן 0 ביום בו הפריט לא נדרש.</p>
         </div>
-        <button onClick={() => setEditing(blank())} className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md">
-          <Plus className="h-4 w-4" /> פריט חדש
-        </button>
+        <div className="flex items-center gap-2">
+          {rows.length > 0 && (
+            <button
+              onClick={() => bulk.toggleAll(rows.map((r) => r.id))}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              {bulk.selectionMode ? "סיים" : "בחר מרובה"}
+            </button>
+          )}
+          <button onClick={() => setEditing(blank())} className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md">
+            <Plus className="h-4 w-4" /> פריט חדש
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 border border-border rounded-md overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-card text-muted-foreground text-xs">
             <tr>
+              {bulk.selectionMode && <th className="w-8" />}
               <th className="text-right px-3 py-2">שם</th>
               <th className="text-right px-3 py-2">יח׳</th>
               {DAY_LABELS.map((d) => (<th key={d} className="px-2 py-2">{d}</th>))}
@@ -199,21 +212,43 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="px-3 py-2 font-bold">{r.name}</td>
-                <td className="px-3 py-2 text-muted-foreground">{r.unit}</td>
-                {DAY_COLS.map((c) => (
-                  <td key={c} className="px-2 py-2 text-center text-xs">{Number(r[c]) || ""}</td>
-                ))}
-                <td className="px-2 py-2">
-                  <div className="flex gap-1 justify-end">
-                    <button onClick={() => setEditing({ ...r })} className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const selected = bulk.isSelected(r.id);
+              return (
+                <tr
+                  key={r.id}
+                  onClickCapture={(e) => {
+                    if (bulk.selectionMode) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      bulk.toggle(r.id);
+                    }
+                  }}
+                  className={`border-t border-border ${selected ? "bg-neon/10" : ""}`}
+                >
+                  {bulk.selectionMode && (
+                    <td className="px-2 py-2 text-center">
+                      <span className={`inline-grid place-content-center h-5 w-5 rounded border-2 ${
+                        selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+                      }`}>{selected ? "✓" : ""}</span>
+                    </td>
+                  )}
+                  <td className="px-3 py-2 font-bold">{r.name} {!r.active && <span className="text-[10px] text-muted-foreground">(לא פעיל)</span>}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{r.unit}</td>
+                  {DAY_COLS.map((c) => (
+                    <td key={c} className="px-2 py-2 text-center text-xs">{Number(r[c]) || ""}</td>
+                  ))}
+                  <td className="px-2 py-2">
+                    {!bulk.selectionMode && (
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => setEditing({ ...r })} className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
               <tr><td colSpan={10} className="text-center text-muted-foreground text-sm py-6">אין פריטים עדיין.</td></tr>
             )}
