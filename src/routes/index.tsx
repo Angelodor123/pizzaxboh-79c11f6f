@@ -102,7 +102,7 @@ function OperationalDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6" data-tour="home-header">
         <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight text-foreground">
           {titleParts.length > 1 ? (
             <>
@@ -134,7 +134,7 @@ function OperationalDashboard() {
         <StatCard label="מתכונים פעילים" value={activeRecipes.length} to="/recipes" />
         <StatCard label="מנות פעילות" value={activeDishes.length} to="/recipes" />
         <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
-        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight />
+        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight tourId="stat-events-today" />
         <StatCard label="פריטים לקנייה" value={shoppingCount} to="/notebook" />
       </div>
 
@@ -182,6 +182,7 @@ function OperationalDashboard() {
         {/* Daily Notebook */}
         <Link
           to="/notebook"
+          data-tour="card-notebook"
           className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center gap-2">
@@ -223,13 +224,13 @@ function OperationalDashboard() {
 
       {/* Shortcut tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" />
+        <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
         <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="פנקס יומי" />
-        <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" />
-        <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" />
-        <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" />
+        <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
+        <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
+        <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
         {role === "admin" && (
-          <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" />
+          <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
         )}
       </div>
     </div>
@@ -241,15 +242,18 @@ function StatCard({
   value,
   to,
   highlight,
+  tourId,
 }: {
   label: string;
   value: number;
   to: string;
   highlight?: boolean;
+  tourId?: string;
 }) {
   return (
     <Link
       to={to}
+      data-tour={tourId}
       className={`rounded-xl border-2 p-4 text-right transition hover:border-neon ${
         highlight ? "border-neon glow-neon bg-neon/5" : "border-jungle/30 bg-jungle/5"
       }`}
@@ -279,14 +283,17 @@ function ShortcutTile({
   to,
   icon,
   label,
+  tourId,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
+  tourId?: string;
 }) {
   return (
     <Link
       to={to}
+      data-tour={tourId}
       className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
     >
       <div className="text-neon">{icon}</div>

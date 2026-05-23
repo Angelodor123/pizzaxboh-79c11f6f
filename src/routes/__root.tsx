@@ -14,6 +14,7 @@ import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { QuickBackBubble } from "@/components/QuickBackBubble";
 import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
+import { GuidedTour, ReplayTourButton } from "@/components/GuidedTour";
 import { NdaGate } from "@/components/NdaGate";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
@@ -195,6 +196,7 @@ function AuthedShell() {
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <CategoryDrawer />
             {showServiceToggle && <ServiceModeToggle />}
+            <ReplayTourButton />
           </div>
           {pathname !== "/" && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -243,6 +245,7 @@ function AuthedShell() {
         <PageOnboarding pageKey={pageKeyFromPath(pathname)} />
         <Outlet />
       </main>
+      <GuidedTour />
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">
