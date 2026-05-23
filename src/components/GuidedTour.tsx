@@ -343,36 +343,36 @@ export function GuidedTour() {
 }
 
 export function ReplayTourButton() {
-  const [expanded, setExpanded] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
 
-  // Show expanded initially so users notice the button, then collapse to a
-  // discreet icon so it doesn't get in the way of the rest of the UI.
-  useEffect(() => {
-    const t = setTimeout(() => setExpanded(false), 4500);
-    return () => clearTimeout(t);
-  }, []);
+  if (dismissed) return null;
 
   return (
-    <button
-      onClick={() => window.dispatchEvent(new Event("pizzax:start-tour"))}
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
-      onFocus={() => setExpanded(true)}
-      onBlur={() => setExpanded(false)}
-      className={`fixed bottom-4 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-neon/40 bg-card/90 backdrop-blur-md text-neon shadow-lg shadow-neon/10 hover:border-neon hover:bg-card hover:shadow-neon/30 transition-all duration-300 ${
-        expanded ? "h-10 px-3.5" : "h-10 w-10 justify-center px-0"
-      }`}
-      aria-label="הפעל סיור מודרך מחדש"
-      title="הפעל סיור מודרך מחדש"
+    <div
+      className="fixed bottom-4 left-4 z-30 inline-flex items-center gap-1 rounded-full border border-neon/40 bg-card/90 backdrop-blur-md text-neon shadow-lg shadow-neon/10 hover:border-neon hover:bg-card hover:shadow-neon/30 transition-colors pl-1 pr-2.5 h-10"
+      role="group"
     >
-      <HelpCircle className="h-4 w-4 shrink-0" />
-      <span
-        className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-300 ${
-          expanded ? "max-w-[140px] opacity-100" : "max-w-0 opacity-0"
-        }`}
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("pizzax:start-tour"))}
+        className="inline-flex items-center gap-2 h-full pr-1"
+        aria-label="הפעל סיור מודרך מחדש"
+        title="הפעל סיור מודרך מחדש"
       >
-        איך זה עובד?
-      </span>
-    </button>
+        <HelpCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2.2} />
+        <span className="whitespace-nowrap text-xs font-semibold leading-none">
+          איך זה עובד?
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setDismissed(true)}
+        className="ml-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-neon/70 hover:text-neon hover:bg-neon/10 transition-colors"
+        aria-label="הסתר"
+        title="הסתר"
+      >
+        <X className="h-3.5 w-3.5" strokeWidth={2.4} />
+      </button>
+    </div>
   );
 }
