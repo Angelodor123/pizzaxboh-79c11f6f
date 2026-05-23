@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { BulkActionBar } from "@/components/BulkActionBar";
-import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
