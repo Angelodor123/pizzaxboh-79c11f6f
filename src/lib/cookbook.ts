@@ -156,6 +156,8 @@ export const categoryOrder: RecipeCategory[] = [
   "jams_creams",
   "starters",
   "spices",
+  "croutons",
+
   "desserts",
   "pastas",
   "authentic_pastas",
