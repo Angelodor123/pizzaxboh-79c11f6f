@@ -5,6 +5,13 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { useCookbookStore } from "@/lib/store";
 import { useUIStore } from "@/lib/ui-store";
 import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
+import {
+  inferMenuCategory,
+  menuCategoryEmoji,
+  menuCategoryLabels,
+  menuCategoryOrder,
+  type MenuCategory,
+} from "@/lib/menu-categories";
 
 export const Route = createFileRoute("/recipes")({
   component: KitchenDashboard,
@@ -28,22 +35,43 @@ function KitchenDashboard() {
   const cat = useUIStore((s) => s.category);
   const setCategory = useUIStore((s) => s.setCategory);
   const [q, setQ] = useState("");
+  const [menuCat, setMenuCat] = useState<MenuCategory | "all">("all");
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
   const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
   const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
 
+  const isDishesView = cat === "dishes";
+
+  const dishesWithMenuCat = useMemo(
+    () => activeDishes.map((r) => ({ recipe: r, menuCategory: inferMenuCategory(r.nameHebrew) })),
+    [activeDishes],
+  );
+
+  const menuCountByCat = useMemo(() => {
+    const m = new Map<MenuCategory, number>();
+    for (const { menuCategory } of dishesWithMenuCat) {
+      m.set(menuCategory, (m.get(menuCategory) ?? 0) + 1);
+    }
+    return m;
+  }, [dishesWithMenuCat]);
+
   const filtered = useMemo(
     () => {
-      const base =
-        cat === "all"
-          ? activeRecipes
-          : cat === "dishes"
-          ? activeDishes
-          : activeAll.filter((r) => r.category === cat);
+      let base;
+      if (isDishesView) {
+        base =
+          menuCat === "all"
+            ? activeDishes
+            : dishesWithMenuCat.filter((d) => d.menuCategory === menuCat).map((d) => d.recipe);
+      } else if (cat === "all") {
+        base = activeRecipes;
+      } else {
+        base = activeAll.filter((r) => r.category === cat);
+      }
       return q.trim() ? base.filter((r) => r.nameHebrew.includes(q.trim())) : base;
     },
-    [activeAll, activeRecipes, activeDishes, cat, q],
+    [activeAll, activeRecipes, activeDishes, dishesWithMenuCat, cat, menuCat, isDishesView, q],
   );
 
   const countByCat = useMemo(() => {
