@@ -49,10 +49,13 @@ const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
 
 
 export function CategoryDrawer() {
-  const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
+  const { category, menuCategory, drawerOpen, setCategory, openDishes, setDrawerOpen } = useUIStore();
   const { email, role, signOut } = useAuth();
-  const [catsOpen, setCatsOpen] = useState(false);
+  const [recipesOpen, setRecipesOpen] = useState(false);
+  const [dishesOpen, setDishesOpen] = useState(false);
   const isSuperAdmin = role === "admin";
+  const isDishesView = category === "dishes";
+
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
