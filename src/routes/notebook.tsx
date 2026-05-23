@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useNotebookStore,
   type NotebookListKey,
   type NotebookItem,
 } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 
 export const Route = createFileRoute("/notebook")({
   component: NotebookPage,
