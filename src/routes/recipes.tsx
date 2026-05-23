@@ -56,13 +56,24 @@ function KitchenDashboard() {
   const [moveOpen, setMoveOpen] = useState(false);
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
-  const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
-  const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
+  // "מתכונים" = back-of-house only (sauces, bases, spices, aiolis, jams).
+  // "מנות" = everything that lives on the customer-facing menu (dishes,
+  // starters, desserts, pastas, salads...). This split is independent of
+  // any individual recipe's internal category, so moving a pasta dish into
+  // the "פסטות" category keeps it visible on the dishes page.
+  const activeRecipes = useMemo(
+    () => activeAll.filter((r) => !isMenuItem(r)),
+    [activeAll],
+  );
+  const activeDishes = useMemo(
+    () => activeAll.filter((r) => isMenuItem(r)),
+    [activeAll],
+  );
 
   const isDishesView = cat === "dishes";
 
   const dishesWithMenuCat = useMemo(
-    () => activeDishes.map((r) => ({ recipe: r, menuCategory: inferMenuCategory(r.nameHebrew) })),
+    () => activeDishes.map((r) => ({ recipe: r, menuCategory: recipeToMenuCategory(r) })),
     [activeDishes],
   );
 
@@ -97,6 +108,7 @@ function KitchenDashboard() {
     for (const r of activeRecipes) m.set(r.category, (m.get(r.category) ?? 0) + 1);
     return m;
   }, [activeRecipes]);
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5">
