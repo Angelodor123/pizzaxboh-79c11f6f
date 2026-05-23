@@ -241,7 +241,7 @@ function AuthedShell() {
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
             <span className="text-[12px] font-bold tracking-[0.3em] uppercase text-neon">
-              {isServiceMode ? "Service Mode" : "Back of House"}
+              {serviceModeVisible ? "Service Mode" : "Back of House"}
             </span>
           </Link>
         </div>
