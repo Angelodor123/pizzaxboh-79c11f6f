@@ -47,6 +47,10 @@ function KitchenDashboard() {
   const setCategory = useUIStore((s) => s.setCategory);
   const [q, setQ] = useState("");
   const [menuCat, setMenuCat] = useState<MenuCategory | "all">("all");
+  const { role } = useAuth();
+  const canEdit = role === "admin";
+  const bulk = useBulkSelection();
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
   const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
