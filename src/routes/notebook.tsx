@@ -365,7 +365,19 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   );
 }
 
-function NotebookRow({ item, listKey }: { item: NotebookItem; listKey: NotebookListKey }) {
+function NotebookRow({
+  item,
+  listKey,
+  selectionMode = false,
+  selected = false,
+  onSelectToggle,
+}: {
+  item: NotebookItem;
+  listKey: NotebookListKey;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onSelectToggle?: () => void;
+}) {
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
   const editItem = useNotebookStore((s) => s.editItem);
@@ -389,12 +401,30 @@ function NotebookRow({ item, listKey }: { item: NotebookItem; listKey: NotebookL
 
   return (
     <li
+      onClickCapture={(e) => {
+        if (selectionMode && onSelectToggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelectToggle();
+        }
+      }}
       className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:border-neon/40 transition ${
+        selected ? "ring-2 ring-neon " : ""
+      }${
         item.priority === "urgent" && !item.done
           ? "bg-neon/10 border-neon/50"
           : "bg-background/40 border-border/60"
       }`}
     >
+      {selectionMode && (
+        <span
+          className={`shrink-0 grid place-content-center h-5 w-5 rounded-full border-2 ${
+            selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+          }`}
+        >
+          {selected ? "✓" : ""}
+        </span>
+      )}
       <button
         type="button"
         onClick={() => void removeItem(listKey, item.id)}
