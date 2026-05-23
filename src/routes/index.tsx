@@ -283,14 +283,17 @@ function ShortcutTile({
   to,
   icon,
   label,
+  tourId,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
+  tourId?: string;
 }) {
   return (
     <Link
       to={to}
+      data-tour={tourId}
       className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
     >
       <div className="text-neon">{icon}</div>
