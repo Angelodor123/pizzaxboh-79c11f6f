@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      branches: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calendar_event_overrides: {
         Row: {
           created_at: string
@@ -93,6 +117,7 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          branch_id: string
           category: string
           created_at: string
           created_by: string | null
@@ -110,6 +135,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id: string
           category: string
           created_at?: string
           created_by?: string | null
@@ -127,6 +153,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string
           category?: string
           created_at?: string
           created_by?: string | null
@@ -145,6 +172,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "calendar_events_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "calendar_events_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -156,6 +190,7 @@ export type Database = {
       ev_vehicles: {
         Row: {
           battery_pct: number
+          branch_id: string
           created_at: string
           id: string
           issue_note: string | null
@@ -167,6 +202,7 @@ export type Database = {
         }
         Insert: {
           battery_pct?: number
+          branch_id: string
           created_at?: string
           id?: string
           issue_note?: string | null
@@ -178,6 +214,7 @@ export type Database = {
         }
         Update: {
           battery_pct?: number
+          branch_id?: string
           created_at?: string
           id?: string
           issue_note?: string | null
@@ -187,7 +224,15 @@ export type Database = {
           swap_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ev_vehicles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invitations: {
         Row: {
@@ -237,6 +282,7 @@ export type Database = {
       notebook_items: {
         Row: {
           archived_at: string | null
+          branch_id: string
           created_at: string
           created_by: string | null
           done: boolean
@@ -249,6 +295,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          branch_id: string
           created_at?: string
           created_by?: string | null
           done?: boolean
@@ -261,6 +308,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          branch_id?: string
           created_at?: string
           created_by?: string | null
           done?: boolean
@@ -271,7 +319,15 @@ export type Database = {
           text?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notebook_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notebook_snapshots: {
         Row: {
@@ -327,6 +383,7 @@ export type Database = {
       prep_items: {
         Row: {
           active: boolean
+          branch_id: string
           created_at: string
           id: string
           name: string
@@ -343,6 +400,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          branch_id: string
           created_at?: string
           id?: string
           name: string
@@ -359,6 +417,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          branch_id?: string
           created_at?: string
           id?: string
           name?: string
@@ -373,7 +432,15 @@ export type Database = {
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prep_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prep_log: {
         Row: {
@@ -461,6 +528,7 @@ export type Database = {
       recipes: {
         Row: {
           base_yield_hebrew: string
+          branch_id: string
           category: string
           created_at: string
           deleted: boolean
@@ -479,6 +547,7 @@ export type Database = {
         }
         Insert: {
           base_yield_hebrew?: string
+          branch_id: string
           category: string
           created_at?: string
           deleted?: boolean
@@ -497,6 +566,7 @@ export type Database = {
         }
         Update: {
           base_yield_hebrew?: string
+          branch_id?: string
           category?: string
           created_at?: string
           deleted?: boolean
@@ -513,12 +583,21 @@ export type Database = {
           timer_seconds?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recipes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       restock_items: {
         Row: {
           active: boolean
           barcode: string | null
+          branch_id: string
           created_at: string
           id: string
           name: string
@@ -536,6 +615,7 @@ export type Database = {
         Insert: {
           active?: boolean
           barcode?: string | null
+          branch_id: string
           created_at?: string
           id?: string
           name: string
@@ -553,6 +633,7 @@ export type Database = {
         Update: {
           active?: boolean
           barcode?: string | null
+          branch_id?: string
           created_at?: string
           id?: string
           name?: string
@@ -567,7 +648,15 @@ export type Database = {
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "restock_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       restock_log: {
         Row: {
@@ -640,6 +729,7 @@ export type Database = {
       suppliers: {
         Row: {
           active: boolean
+          branch_id: string
           category: string
           contact: string | null
           created_at: string
@@ -654,6 +744,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          branch_id: string
           category?: string
           contact?: string | null
           created_at?: string
@@ -668,6 +759,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          branch_id?: string
           category?: string
           contact?: string | null
           created_at?: string
@@ -680,10 +772,19 @@ export type Database = {
           notes?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
+          assigned_branch_id: string | null
           created_at: string
           email: string
           id: string
@@ -691,6 +792,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_branch_id?: string | null
           created_at?: string
           email: string
           id?: string
@@ -698,19 +800,29 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_branch_id?: string | null
           created_at?: string
           email?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_assigned_branch_id_fkey"
+            columns: ["assigned_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      current_user_branch_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
