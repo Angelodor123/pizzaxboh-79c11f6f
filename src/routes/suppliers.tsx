@@ -90,6 +90,19 @@ function SuppliersPage() {
         )}
       </div>
 
+      {canEdit && list.length > 0 && (
+        <div className="flex items-center justify-end mb-3">
+          <button
+            type="button"
+            onClick={() => bulk.toggleAll(list.map((s) => s.id))}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center text-muted-foreground py-12">טוען…</div>
       ) : list.length === 0 ? (
@@ -98,15 +111,38 @@ function SuppliersPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {list.map((s) => (
+          {list.map((s) => {
+            const selected = bulk.isSelected(s.id);
+            const lp = useLongPress(() => bulk.enter(s.id));
+            return (
             <li
               key={s.id}
-              className={`rounded-2xl border p-4 bg-card/80 backdrop-blur ${
+              {...(canEdit ? lp : {})}
+              onClickCapture={(e) => {
+                if (canEdit && bulk.selectionMode) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  bulk.toggle(s.id);
+                }
+              }}
+              className={`rounded-2xl border p-4 bg-card/80 backdrop-blur transition ${
                 s.active ? "border-emerald-500/60" : "border-border opacity-70"
-              }`}
+              } ${selected ? "ring-2 ring-neon" : ""}`}
               style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
             >
               <div className="flex items-start justify-between gap-2">
+                {canEdit && bulk.selectionMode && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); bulk.toggle(s.id); }}
+                    className={`h-7 w-7 grid place-content-center rounded-full border-2 shrink-0 ${
+                      selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    {selected ? "✓" : ""}
+                  </button>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-bold">
                     <Truck className="h-4 w-4 text-emerald-400" />
@@ -143,7 +179,7 @@ function SuppliersPage() {
                     <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{s.notes}</p>
                   )}
                 </div>
-                {canEdit && (
+                {canEdit && !bulk.selectionMode && (
                   <div className="flex flex-col gap-1 shrink-0">
                     <button
                       onClick={() => {
@@ -166,8 +202,57 @@ function SuppliersPage() {
                 )}
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
+      )}
+
+      {canEdit && (
+        <BulkActionBar
+          count={bulk.count}
+          totalCount={list.length}
+          allSelected={bulk.count === list.length && list.length > 0}
+          onClear={bulk.clear}
+          onSelectAll={() => bulk.toggleAll(list.map((s) => s.id))}
+          actions={[
+            {
+              key: "activate",
+              label: "הפעל",
+              icon: Power,
+              onClick: async () => {
+                const { error } = await supabase.from("suppliers").update({ active: true }).in("id", bulk.ids);
+                if (error) return toast.error(error.message);
+                toast.success(`הופעלו ${bulk.count} ספקים`);
+                bulk.clear();
+              },
+            },
+            {
+              key: "deactivate",
+              label: "השבת",
+              icon: Power,
+              onClick: async () => {
+                const { error } = await supabase.from("suppliers").update({ active: false }).in("id", bulk.ids);
+                if (error) return toast.error(error.message);
+                toast.success(`הושבתו ${bulk.count} ספקים`);
+                bulk.clear();
+              },
+            },
+            {
+              key: "delete",
+              label: "מחק",
+              icon: Trash2,
+              variant: "destructive",
+              confirm: "למחוק {count} ספקים? כל אירועי הסחורה האוטומטיים שלהם יימחקו מהלוח.",
+              onClick: async () => {
+                const ids = bulk.ids;
+                const { error } = await supabase.from("suppliers").delete().in("id", ids);
+                if (error) return toast.error(error.message);
+                toast.success(`נמחקו ${ids.length} ספקים`);
+                bulk.clear();
+              },
+            },
+          ]}
+        />
       )}
 
       {formOpen && (
