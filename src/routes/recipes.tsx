@@ -237,7 +237,7 @@ function KitchenDashboard() {
                 📋 הכל
                 <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
               </button>
-              {categoryOrder.map((key) => {
+              {BACK_OF_HOUSE_CATEGORIES.map((key) => {
                 const active = cat === key;
                 const count = countByCat.get(key) ?? 0;
                 if (count === 0) return null;
