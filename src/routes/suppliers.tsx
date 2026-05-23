@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { BulkActionBar } from "@/components/BulkActionBar";
