@@ -19,15 +19,21 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadRole = async (uid: string | undefined) => {
     if (!uid) {
       setRole(null);
+      setIsSuperAdmin(false);
       return;
     }
-    const { data } = await supabase.rpc("current_user_role");
-    setRole((data as AppRole | null) ?? null);
+    const [{ data: roleData }, { data: superData }] = await Promise.all([
+      supabase.rpc("current_user_role"),
+      supabase.rpc("is_super_admin", { _user_id: uid }),
+    ]);
+    setRole((roleData as AppRole | null) ?? null);
+    setIsSuperAdmin(Boolean(superData));
   };
 
   useEffect(() => {
@@ -52,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
+    setIsSuperAdmin(false);
   };
 
   const refreshRole = async () => {
@@ -64,9 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         email: session?.user?.email ?? null,
         role,
-        isSuperAdmin: SUPER_ADMIN_EMAILS.has(
-          (session?.user?.email ?? "").toLowerCase(),
-        ),
+        isSuperAdmin,
         loading,
         signOut,
         refreshRole,
