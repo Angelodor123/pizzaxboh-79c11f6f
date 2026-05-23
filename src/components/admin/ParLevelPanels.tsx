@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, Save, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Power, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { refreshOnboarding } from "@/components/PageOnboarding";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 
 const DAY_COLS = ["target_sun","target_mon","target_tue","target_wed","target_thu","target_fri","target_sat"] as const;
 const DAY_LABELS = ["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
@@ -12,6 +14,7 @@ interface Unit { id: string; name: string; sort_order: number; }
 export function UnitsPanel() {
   const [rows, setRows] = useState<Unit[]>([]);
   const [name, setName] = useState("");
+  const bulk = useBulkSelection();
 
   const load = async () => {
     const { data } = await supabase.from("measurement_units").select("*").order("sort_order").order("name");
@@ -50,17 +53,77 @@ export function UnitsPanel() {
           <Plus className="h-4 w-4" /> הוסף
         </button>
       </div>
+      {rows.length > 0 && (
+        <div className="mt-3 flex justify-end">
+          <button
+            onClick={() => bulk.toggleAll(rows.map((r) => r.id))}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+          </button>
+        </div>
+      )}
       <ul className="mt-4 space-y-2">
-        {rows.map((r) => (
-          <li key={r.id} className="flex items-center justify-between bg-card border border-border rounded-md px-3 py-2">
-            <span className="font-bold">{r.name}</span>
-            <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </li>
-        ))}
+        {rows.map((r) => {
+          const selected = bulk.isSelected(r.id);
+          return (
+            <li
+              key={r.id}
+              onClickCapture={(e) => {
+                if (bulk.selectionMode) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  bulk.toggle(r.id);
+                }
+              }}
+              className={`flex items-center justify-between bg-card border rounded-md px-3 py-2 transition ${
+                selected ? "border-neon ring-2 ring-neon/40" : "border-border"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {bulk.selectionMode && (
+                  <span className={`h-5 w-5 grid place-content-center rounded-full border-2 ${
+                    selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+                  }`}>{selected ? "✓" : ""}</span>
+                )}
+                <span className="font-bold">{r.name}</span>
+              </div>
+              {!bulk.selectionMode && (
+                <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </li>
+          );
+        })}
         {rows.length === 0 && <li className="text-center text-muted-foreground text-sm py-6">אין יחידות עדיין.</li>}
       </ul>
+
+      <BulkActionBar
+        count={bulk.count}
+        totalCount={rows.length}
+        allSelected={bulk.count === rows.length && rows.length > 0}
+        onClear={bulk.clear}
+        onSelectAll={() => bulk.toggleAll(rows.map((r) => r.id))}
+        actions={[
+          {
+            key: "delete",
+            label: "מחק",
+            icon: Trash2,
+            variant: "destructive",
+            confirm: "למחוק {count} יחידות מידה?",
+            onClick: async () => {
+              const ids = bulk.ids;
+              const { error } = await supabase.from("measurement_units").delete().in("id", ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`נמחקו ${ids.length} יחידות`);
+              bulk.clear();
+              void load();
+            },
+          },
+        ]}
+      />
     </section>
   );
 }
@@ -75,6 +138,7 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
   const [rows, setRows] = useState<ParItem[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [editing, setEditing] = useState<ParItem | null>(null);
+  const bulk = useBulkSelection();
 
   const load = async () => {
     const { data } = await supabase.from(table).select("*").order("sort_order").order("name");
@@ -120,15 +184,27 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
           <h2 className="font-display text-xl font-bold">{title}</h2>
           <p className="text-sm text-muted-foreground mt-1">כמויות יעד לפי יום בשבוע. הזן 0 ביום בו הפריט לא נדרש.</p>
         </div>
-        <button onClick={() => setEditing(blank())} className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md">
-          <Plus className="h-4 w-4" /> פריט חדש
-        </button>
+        <div className="flex items-center gap-2">
+          {rows.length > 0 && (
+            <button
+              onClick={() => bulk.toggleAll(rows.map((r) => r.id))}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              {bulk.selectionMode ? "סיים" : "בחר מרובה"}
+            </button>
+          )}
+          <button onClick={() => setEditing(blank())} className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md">
+            <Plus className="h-4 w-4" /> פריט חדש
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 border border-border rounded-md overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-card text-muted-foreground text-xs">
             <tr>
+              {bulk.selectionMode && <th className="w-8" />}
               <th className="text-right px-3 py-2">שם</th>
               <th className="text-right px-3 py-2">יח׳</th>
               {DAY_LABELS.map((d) => (<th key={d} className="px-2 py-2">{d}</th>))}
@@ -136,27 +212,96 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="px-3 py-2 font-bold">{r.name}</td>
-                <td className="px-3 py-2 text-muted-foreground">{r.unit}</td>
-                {DAY_COLS.map((c) => (
-                  <td key={c} className="px-2 py-2 text-center text-xs">{Number(r[c]) || ""}</td>
-                ))}
-                <td className="px-2 py-2">
-                  <div className="flex gap-1 justify-end">
-                    <button onClick={() => setEditing({ ...r })} className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const selected = bulk.isSelected(r.id);
+              return (
+                <tr
+                  key={r.id}
+                  onClickCapture={(e) => {
+                    if (bulk.selectionMode) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      bulk.toggle(r.id);
+                    }
+                  }}
+                  className={`border-t border-border ${selected ? "bg-neon/10" : ""}`}
+                >
+                  {bulk.selectionMode && (
+                    <td className="px-2 py-2 text-center">
+                      <span className={`inline-grid place-content-center h-5 w-5 rounded border-2 ${
+                        selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+                      }`}>{selected ? "✓" : ""}</span>
+                    </td>
+                  )}
+                  <td className="px-3 py-2 font-bold">{r.name} {!r.active && <span className="text-[10px] text-muted-foreground">(לא פעיל)</span>}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{r.unit}</td>
+                  {DAY_COLS.map((c) => (
+                    <td key={c} className="px-2 py-2 text-center text-xs">{Number(r[c]) || ""}</td>
+                  ))}
+                  <td className="px-2 py-2">
+                    {!bulk.selectionMode && (
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => setEditing({ ...r })} className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
               <tr><td colSpan={10} className="text-center text-muted-foreground text-sm py-6">אין פריטים עדיין.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <BulkActionBar
+        count={bulk.count}
+        totalCount={rows.length}
+        allSelected={bulk.count === rows.length && rows.length > 0}
+        onClear={bulk.clear}
+        onSelectAll={() => bulk.toggleAll(rows.map((r) => r.id))}
+        actions={[
+          {
+            key: "activate",
+            label: "הפעל",
+            icon: Power,
+            onClick: async () => {
+              const { error } = await supabase.from(table).update({ active: true }).in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`הופעלו ${bulk.count} פריטים`);
+              bulk.clear(); void load();
+            },
+          },
+          {
+            key: "deactivate",
+            label: "השבת",
+            icon: Power,
+            onClick: async () => {
+              const { error } = await supabase.from(table).update({ active: false }).in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`הושבתו ${bulk.count} פריטים`);
+              bulk.clear(); void load();
+            },
+          },
+          {
+            key: "delete",
+            label: "מחק",
+            icon: Trash2,
+            variant: "destructive",
+            confirm: "למחוק {count} פריטים? פעולה בלתי הפיכה.",
+            onClick: async () => {
+              const ids = bulk.ids;
+              const { error } = await supabase.from(table).delete().in("id", ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`נמחקו ${ids.length} פריטים`);
+              bulk.clear(); void load();
+            },
+          },
+        ]}
+      />
+
 
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditing(null)}>

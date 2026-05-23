@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useNotebookStore,
   type NotebookListKey,
   type NotebookItem,
 } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 
 export const Route = createFileRoute("/notebook")({
   component: NotebookPage,
@@ -109,8 +112,10 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
   const clearDone = useNotebookStore((s) => s.clearDone);
+  const refresh = useNotebookStore((s) => s.refresh);
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
+  const bulk = useBulkSelection();
 
   const doneCount = items.filter((i) => i.done).length;
 
@@ -203,6 +208,17 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           >
             <Share2 className="h-4 w-4" />
           </button>
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={() => bulk.toggleAll(items.map((i) => i.id))}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-neon hover:border-neon transition px-2 py-1 rounded-md border border-border"
+              title="בחירה מרובה"
+            >
+              <CheckSquare className="h-3 w-3" />
+              {bulk.selectionMode ? "סיים" : "בחר"}
+            </button>
+          )}
           {doneCount > 0 && (
             <button
               type="button"
@@ -261,15 +277,107 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
       ) : (
         <ul className="space-y-1.5">
           {items.map((it) => (
-            <NotebookRow key={it.id} item={it} listKey={cfg.key} />
+            <NotebookRow
+              key={it.id}
+              item={it}
+              listKey={cfg.key}
+              selectionMode={bulk.selectionMode}
+              selected={bulk.isSelected(it.id)}
+              onSelectToggle={() => bulk.toggle(it.id)}
+            />
           ))}
         </ul>
       )}
+
+      <BulkActionBar
+        count={bulk.count}
+        totalCount={items.length}
+        allSelected={bulk.count === items.length && items.length > 0}
+        onClear={bulk.clear}
+        onSelectAll={() => bulk.toggleAll(items.map((i) => i.id))}
+        actions={[
+          {
+            key: "done",
+            label: "סמן כבוצע",
+            icon: CheckCheck,
+            onClick: async () => {
+              const { error } = await supabase
+                .from("notebook_items")
+                .update({ done: true })
+                .in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`סומנו ${bulk.count} פריטים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+          {
+            key: "undone",
+            label: "החזר",
+            icon: RotateCcw,
+            onClick: async () => {
+              const { error } = await supabase
+                .from("notebook_items")
+                .update({ done: false })
+                .in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`הוחזרו ${bulk.count} פריטים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+          {
+            key: "urgent",
+            label: "סמן כדחוף",
+            icon: Flame,
+            onClick: async () => {
+              const { error } = await supabase
+                .from("notebook_items")
+                .update({ priority: "urgent" })
+                .in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`סומנו ${bulk.count} כדחופים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+          {
+            key: "delete",
+            label: "מחק",
+            icon: Trash2,
+            variant: "destructive",
+            confirm: "למחוק {count} פריטים?",
+            onClick: async () => {
+              const ids = bulk.ids;
+              const { error } = await supabase
+                .from("notebook_items")
+                .delete()
+                .in("id", ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`נמחקו ${ids.length} פריטים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+        ]}
+      />
     </section>
   );
 }
 
-function NotebookRow({ item, listKey }: { item: NotebookItem; listKey: NotebookListKey }) {
+function NotebookRow({
+  item,
+  listKey,
+  selectionMode = false,
+  selected = false,
+  onSelectToggle,
+}: {
+  item: NotebookItem;
+  listKey: NotebookListKey;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onSelectToggle?: () => void;
+}) {
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
   const editItem = useNotebookStore((s) => s.editItem);
@@ -293,12 +401,30 @@ function NotebookRow({ item, listKey }: { item: NotebookItem; listKey: NotebookL
 
   return (
     <li
+      onClickCapture={(e) => {
+        if (selectionMode && onSelectToggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelectToggle();
+        }
+      }}
       className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:border-neon/40 transition ${
+        selected ? "ring-2 ring-neon " : ""
+      }${
         item.priority === "urgent" && !item.done
           ? "bg-neon/10 border-neon/50"
           : "bg-background/40 border-border/60"
       }`}
     >
+      {selectionMode && (
+        <span
+          className={`shrink-0 grid place-content-center h-5 w-5 rounded-full border-2 ${
+            selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+          }`}
+        >
+          {selected ? "✓" : ""}
+        </span>
+      )}
       <button
         type="button"
         onClick={() => void removeItem(listKey, item.id)}

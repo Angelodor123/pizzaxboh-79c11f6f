@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Trash2, FolderInput, CheckSquare } from "lucide-react";
+import { toast } from "sonner";
 import { RecipeCard } from "@/components/RecipeCard";
 import { useCookbookStore } from "@/lib/store";
 import { useUIStore } from "@/lib/ui-store";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
 import {
   inferMenuCategory,
@@ -12,6 +15,14 @@ import {
   menuCategoryOrder,
   type MenuCategory,
 } from "@/lib/menu-categories";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/recipes")({
   component: KitchenDashboard,
@@ -36,6 +47,10 @@ function KitchenDashboard() {
   const setCategory = useUIStore((s) => s.setCategory);
   const [q, setQ] = useState("");
   const [menuCat, setMenuCat] = useState<MenuCategory | "all">("all");
+  const { role } = useAuth();
+  const canEdit = role === "admin";
+  const bulk = useBulkSelection();
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
   const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
@@ -234,6 +249,18 @@ function KitchenDashboard() {
         </div>
       </div>
 
+      {canEdit && filtered.length > 0 && (
+        <div className="flex items-center justify-end gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => bulk.toggleAll(filtered.map((r) => r.id))}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+          </button>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground text-sm">
@@ -242,10 +269,146 @@ function KitchenDashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((r) => (
-            <RecipeCard key={r.id} recipe={r} />
+            <SelectableRecipeCard
+              key={r.id}
+              recipeId={r.id}
+              selectionMode={canEdit && bulk.selectionMode}
+              selected={bulk.isSelected(r.id)}
+              onToggle={() => bulk.toggle(r.id)}
+              onLongPress={() => bulk.enter(r.id)}
+            >
+              <RecipeCard recipe={r} />
+            </SelectableRecipeCard>
           ))}
         </div>
       )}
+
+      {canEdit && (
+        <BulkActionBar
+          count={bulk.count}
+          totalCount={filtered.length}
+          allSelected={bulk.count === filtered.length && filtered.length > 0}
+          onClear={bulk.clear}
+          onSelectAll={() => bulk.toggleAll(filtered.map((r) => r.id))}
+          actions={[
+            {
+              key: "move",
+              label: "העבר קטגוריה",
+              icon: FolderInput,
+              onClick: () => setMoveOpen(true),
+            },
+            {
+              key: "delete",
+              label: "מחק",
+              icon: Trash2,
+              variant: "destructive",
+              confirm: "למחוק {count} מתכונים? פעולה זו בלתי הפיכה (מחיקה רכה).",
+              onClick: async () => {
+                const ids = bulk.ids;
+                const { error } = await supabase
+                  .from("recipes")
+                  .update({ deleted: true })
+                  .in("id", ids);
+                if (error) {
+                  toast.error("שגיאה במחיקה: " + error.message);
+                  return;
+                }
+                toast.success(`נמחקו ${ids.length} מתכונים`);
+                bulk.clear();
+                void useCookbookStore.getState().refresh();
+              },
+            },
+          ]}
+        />
+      )}
+
+      <Dialog open={moveOpen} onOpenChange={setMoveOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>העבר {bulk.count} מתכונים לקטגוריה</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            {categoryOrder.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={async () => {
+                  const ids = bulk.ids;
+                  const { error } = await supabase
+                    .from("recipes")
+                    .update({ category: key })
+                    .in("id", ids);
+                  if (error) {
+                    toast.error("שגיאה: " + error.message);
+                    return;
+                  }
+                  toast.success(`הועברו ${ids.length} מתכונים`);
+                  setMoveOpen(false);
+                  bulk.clear();
+                  void useCookbookStore.getState().refresh();
+                }}
+                className="h-11 rounded-md border border-border text-sm font-bold hover:border-neon hover:text-neon text-right px-3"
+              >
+                {CATEGORY_EMOJI[key]} {categoryLabels[key]}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SelectableRecipeCard({
+  recipeId,
+  selectionMode,
+  selected,
+  onToggle,
+  onLongPress,
+  children,
+}: {
+  recipeId: string;
+  selectionMode: boolean;
+  selected: boolean;
+  onToggle: () => void;
+  onLongPress: () => void;
+  children: React.ReactNode;
+}) {
+  const lp = useLongPress(onLongPress);
+  return (
+    <div
+      className={`relative rounded-2xl transition ${
+        selected ? "ring-2 ring-neon ring-offset-2 ring-offset-background" : ""
+      }`}
+      {...lp}
+      onClickCapture={(e) => {
+        if (selectionMode) {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle();
+        }
+      }}
+      data-recipe-row={recipeId}
+    >
+      {selectionMode && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          aria-pressed={selected}
+          aria-label={selected ? "הסר מהבחירה" : "הוסף לבחירה"}
+          className={`absolute top-2 right-2 z-10 h-7 w-7 grid place-content-center rounded-full border-2 transition ${
+            selected
+              ? "bg-neon border-neon text-primary-foreground"
+              : "bg-card/80 border-border hover:border-neon"
+          }`}
+        >
+          {selected ? "✓" : ""}
+        </button>
+      )}
+      {children}
     </div>
   );
 }
