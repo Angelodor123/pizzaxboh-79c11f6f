@@ -192,10 +192,11 @@ function AuthedShell() {
     <div className="min-h-screen flex flex-col">
       <header
         className={`sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 transition-colors ${
-          isServiceMode
+          serviceModeVisible
             ? "border-orange-500 shadow-[0_4px_24px_-4px_rgba(255,140,0,0.6)]"
             : "border-border"
         }`}
+
       >
         <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
