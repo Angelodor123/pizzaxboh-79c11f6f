@@ -723,6 +723,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_super_admin_user_ids: { Args: never; Returns: string[] }
       notebook_daily_reset: { Args: never; Returns: undefined }
     }
     Enums: {
