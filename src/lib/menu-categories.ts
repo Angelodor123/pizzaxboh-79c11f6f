@@ -107,7 +107,9 @@ export const BACK_OF_HOUSE_CATEGORIES: ReadonlyArray<RecipeCategory> = [
   "aiolis_sauces",
   "jams_creams",
   "spices",
+  "croutons",
 ];
+
 
 export function isMenuItem(recipe: Pick<Recipe, "category">): boolean {
   return MENU_ITEM_CATEGORIES.includes(recipe.category);
