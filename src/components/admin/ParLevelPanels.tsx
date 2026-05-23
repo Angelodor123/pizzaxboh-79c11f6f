@@ -256,6 +256,53 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
         </table>
       </div>
 
+      <BulkActionBar
+        count={bulk.count}
+        totalCount={rows.length}
+        allSelected={bulk.count === rows.length && rows.length > 0}
+        onClear={bulk.clear}
+        onSelectAll={() => bulk.toggleAll(rows.map((r) => r.id))}
+        actions={[
+          {
+            key: "activate",
+            label: "הפעל",
+            icon: Power,
+            onClick: async () => {
+              const { error } = await supabase.from(table).update({ active: true }).in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`הופעלו ${bulk.count} פריטים`);
+              bulk.clear(); void load();
+            },
+          },
+          {
+            key: "deactivate",
+            label: "השבת",
+            icon: Power,
+            onClick: async () => {
+              const { error } = await supabase.from(table).update({ active: false }).in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`הושבתו ${bulk.count} פריטים`);
+              bulk.clear(); void load();
+            },
+          },
+          {
+            key: "delete",
+            label: "מחק",
+            icon: Trash2,
+            variant: "destructive",
+            confirm: "למחוק {count} פריטים? פעולה בלתי הפיכה.",
+            onClick: async () => {
+              const ids = bulk.ids;
+              const { error } = await supabase.from(table).delete().in("id", ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`נמחקו ${ids.length} פריטים`);
+              bulk.clear(); void load();
+            },
+          },
+        ]}
+      />
+
+
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditing(null)}>
           <div className="bg-card border border-border rounded-2xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} dir="rtl">
