@@ -91,38 +91,77 @@ export function CategoryDrawer() {
             </li>
 
             <li>
-              <Link
-                to="/recipes"
-                onClick={() => {
-                  setCategory("dishes");
-                  setDrawerOpen(false);
-                }}
-                className={`flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold transition ${
-                  category === "dishes"
+              <button
+                type="button"
+                onClick={() => setDishesOpen((o) => !o)}
+                aria-expanded={dishesOpen}
+                className={`w-full flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold transition ${
+                  isDishesView
                     ? "bg-neon/10 text-neon"
                     : "text-foreground hover:bg-card hover:text-neon"
                 }`}
               >
-                <span className="flex-1 text-right">🍽️ כל המנות</span>
-                <ChefHat className="h-5 w-5" />
-              </Link>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${dishesOpen ? "rotate-180" : ""}`}
+                />
+                <span className="flex-1 text-right">🍽️ תפריט המנות</span>
+                <UtensilsCrossed className="h-5 w-5" />
+              </button>
+
+              {dishesOpen && (
+                <ul className="bg-background/40 border-y border-border">
+                  <li>
+                    <Link
+                      to="/recipes"
+                      onClick={() => openDishes("all")}
+                      className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
+                        isDishesView && menuCategory === "all"
+                          ? "bg-neon/10 text-neon border-neon"
+                          : "text-foreground border-transparent hover:text-neon"
+                      }`}
+                    >
+                      <span className="flex-1 text-right">🍽️ כל המנות</span>
+                    </Link>
+                  </li>
+                  {MENU_CATEGORIES.map((it) => {
+                    const active = isDishesView && menuCategory === it.key;
+                    return (
+                      <li key={it.key}>
+                        <Link
+                          to="/recipes"
+                          onClick={() => openDishes(it.key)}
+                          className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
+                            active
+                              ? "bg-neon/10 text-neon border-neon"
+                              : "text-foreground border-transparent hover:text-neon"
+                          }`}
+                        >
+                          <span className="flex-1 text-right">
+                            {it.emoji} {it.label}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </li>
 
             <li>
               <button
                 type="button"
-                onClick={() => setCatsOpen((o) => !o)}
-                aria-expanded={catsOpen}
+                onClick={() => setRecipesOpen((o) => !o)}
+                aria-expanded={recipesOpen}
                 className="w-full flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
               >
                 <ChevronDown
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${catsOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${recipesOpen ? "rotate-180" : ""}`}
                 />
                 <span className="flex-1 text-right">📋 כל המתכונים</span>
                 <ChefHat className="h-5 w-5" />
               </button>
 
-              {catsOpen && (
+              {recipesOpen && (
                 <ul className="bg-background/40 border-y border-border">
                   <li>
                     <Link
@@ -140,7 +179,7 @@ export function CategoryDrawer() {
                       <span className="flex-1 text-right">📋 הצג הכל</span>
                     </Link>
                   </li>
-                  {CATEGORIES.map((it) => {
+                  {RECIPE_CATEGORIES.map((it) => {
                     const active = category === it.key;
                     return (
                       <li key={it.key}>
@@ -166,6 +205,7 @@ export function CategoryDrawer() {
                 </ul>
               )}
             </li>
+
 
             <li>
               <div className="mx-6 my-2 h-px bg-border/60" />
