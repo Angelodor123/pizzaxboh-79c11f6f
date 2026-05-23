@@ -113,11 +113,9 @@ function SuppliersPage() {
         <ul className="space-y-3">
           {list.map((s) => {
             const selected = bulk.isSelected(s.id);
-            const lp = useLongPress(() => bulk.enter(s.id));
             return (
             <li
               key={s.id}
-              {...(canEdit ? lp : {})}
               onClickCapture={(e) => {
                 if (canEdit && bulk.selectionMode) {
                   e.preventDefault();
