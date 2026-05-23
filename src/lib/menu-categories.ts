@@ -2,6 +2,9 @@
 // Used to filter "dishes" (מנות) by their position on the customer-facing menu,
 // independent of the back-of-house recipe-book categories.
 
+import type { Recipe, RecipeCategory } from "./cookbook";
+
+
 export type MenuCategory =
   | "starters"
   | "pizza_tomato"
@@ -84,4 +87,51 @@ export function inferMenuCategory(name: string): MenuCategory {
   if (/(מיוחד|ספיישל|שף)/.test(n)) return "specials";
   if (/(ראשונ|מתאבן|פתיח|אצבע|קרוקט|ארנצ|בסקט)/.test(n)) return "starters";
   return "other";
+}
+
+/**
+ * Recipe categories that represent customer-facing menu items ("דף המנות").
+ * Everything else is back-of-house / "דף המתכונים" (sauces, bases, spices, etc.).
+ */
+export const MENU_ITEM_CATEGORIES: ReadonlyArray<RecipeCategory> = [
+  "dishes",
+  "starters",
+  "desserts",
+  "pastas",
+  "authentic_pastas",
+  "salads",
+];
+
+export const BACK_OF_HOUSE_CATEGORIES: ReadonlyArray<RecipeCategory> = [
+  "sauces_bases",
+  "aiolis_sauces",
+  "jams_creams",
+  "spices",
+];
+
+export function isMenuItem(recipe: Pick<Recipe, "category">): boolean {
+  return MENU_ITEM_CATEGORIES.includes(recipe.category);
+}
+
+/**
+ * Map a recipe to the public-menu category. Recipes already tagged with a
+ * menu-aligned category (starters/desserts/pastas/salads) map directly;
+ * generic "dishes" fall back to name-based inference.
+ */
+export function recipeToMenuCategory(recipe: Pick<Recipe, "category" | "nameHebrew">): MenuCategory {
+  switch (recipe.category) {
+    case "starters":
+      return "starters";
+    case "desserts":
+      return "desserts";
+    case "pastas":
+    case "authentic_pastas":
+      return "pastas";
+    case "salads":
+      return "salads";
+    case "dishes":
+      return inferMenuCategory(recipe.nameHebrew);
+    default:
+      return "other";
+  }
 }

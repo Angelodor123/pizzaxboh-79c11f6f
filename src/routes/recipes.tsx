@@ -9,12 +9,17 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
 import {
-  inferMenuCategory,
+  BACK_OF_HOUSE_CATEGORIES,
+  isMenuItem,
+  MENU_ITEM_CATEGORIES,
   menuCategoryEmoji,
   menuCategoryLabels,
   menuCategoryOrder,
+  recipeToMenuCategory,
   type MenuCategory,
 } from "@/lib/menu-categories";
+
+
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
 import {
@@ -53,13 +58,27 @@ function KitchenDashboard() {
   const [moveOpen, setMoveOpen] = useState(false);
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
-  const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
-  const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
+  // "מתכונים" = back-of-house only (sauces, bases, spices, aiolis, jams).
+  // "מנות" = everything that lives on the customer-facing menu (dishes,
+  // starters, desserts, pastas, salads...). This split is independent of
+  // any individual recipe's internal category, so moving a pasta dish into
+  // the "פסטות" category keeps it visible on the dishes page.
+  const activeRecipes = useMemo(
+    () => activeAll.filter((r) => !isMenuItem(r)),
+    [activeAll],
+  );
+  const activeDishes = useMemo(
+    () => activeAll.filter((r) => isMenuItem(r)),
+    [activeAll],
+  );
 
-  const isDishesView = cat === "dishes";
+  // Treat any menu-item category selection as the dishes view so legacy
+  // persisted state (e.g. cat === "pastas") doesn't strand items off-screen.
+  const isDishesView = cat === "dishes" || (cat !== "all" && MENU_ITEM_CATEGORIES.includes(cat));
+
 
   const dishesWithMenuCat = useMemo(
-    () => activeDishes.map((r) => ({ recipe: r, menuCategory: inferMenuCategory(r.nameHebrew) })),
+    () => activeDishes.map((r) => ({ recipe: r, menuCategory: recipeToMenuCategory(r) })),
     [activeDishes],
   );
 
@@ -94,6 +113,7 @@ function KitchenDashboard() {
     for (const r of activeRecipes) m.set(r.category, (m.get(r.category) ?? 0) + 1);
     return m;
   }, [activeRecipes]);
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5">
@@ -222,7 +242,7 @@ function KitchenDashboard() {
                 📋 הכל
                 <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
               </button>
-              {categoryOrder.map((key) => {
+              {BACK_OF_HOUSE_CATEGORIES.map((key) => {
                 const active = cat === key;
                 const count = countByCat.get(key) ?? 0;
                 if (count === 0) return null;

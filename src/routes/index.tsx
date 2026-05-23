@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
+import { isMenuItem } from "@/lib/menu-categories";
+
 
 export const Route = createFileRoute("/")({
   component: OperationalDashboard,
@@ -50,8 +52,9 @@ function OperationalDashboard() {
   }, []);
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
-  const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
-  const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
+  const activeRecipes = useMemo(() => activeAll.filter((r) => !isMenuItem(r)), [activeAll]);
+  const activeDishes = useMemo(() => activeAll.filter((r) => isMenuItem(r)), [activeAll]);
+
 
   const todayEvents = useMemo(() => {
     const iso = todayIso();
