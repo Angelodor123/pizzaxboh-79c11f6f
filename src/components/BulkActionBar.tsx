@@ -18,7 +18,7 @@ export interface BulkAction {
   variant?: "default" | "destructive" | "neon";
   /** If set, opens an AlertDialog with this message before running. */
   confirm?: string;
-  onClick: () => void | Promise<void>;
+  onClick: () => unknown | Promise<unknown>;
   disabled?: boolean;
 }
 
