@@ -583,6 +583,7 @@ function InvitationsPanel() {
   const { isSuperAdmin, email: myEmail } = useAuth();
   const [invites, setInvites] = useState<InvitationRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [superAdminIds, setSuperAdminIds] = useState<Set<string>>(new Set());
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AppRole>("viewer");
   const [busy, setBusy] = useState(false);
