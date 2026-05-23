@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays, Truck, Home, ChefHat } from "lucide-react";
+import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays, Truck, Home, ChefHat, UtensilsCrossed } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,19 +9,44 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
+import {
+  BACK_OF_HOUSE_CATEGORIES,
+  menuCategoryEmoji,
+  menuCategoryLabels,
+  menuCategoryOrder,
+  type MenuCategory,
+} from "@/lib/menu-categories";
 import { useUIStore } from "@/lib/ui-store";
 import { useAuth } from "@/lib/auth";
 
+const RECIPE_EMOJI: Record<RecipeCategory, string> = {
+  dishes: "🍕",
+  sauces_bases: "🍅",
+  aiolis_sauces: "🍯",
+  jams_creams: "🥘",
+  starters: "🌽",
+  spices: "🧂",
+  croutons: "🥖",
+  desserts: "🍪",
+  pastas: "🍝",
+  authentic_pastas: "🇮🇹",
+  salads: "🥗",
+};
 
+const RECIPE_CATEGORIES: { key: RecipeCategory; emoji: string; label: string }[] =
+  BACK_OF_HOUSE_CATEGORIES.map((key) => ({
+    key,
+    emoji: RECIPE_EMOJI[key],
+    label: categoryLabels[key],
+  }));
 
-const CATEGORIES: { key: RecipeCategory | "all"; emoji: string; label: string }[] = [
-  { key: "sauces_bases", emoji: "🍅", label: categoryLabels.sauces_bases },
-  { key: "aiolis_sauces", emoji: "🍯", label: categoryLabels.aiolis_sauces },
-  { key: "jams_creams", emoji: "🥘", label: categoryLabels.jams_creams },
-  { key: "starters", emoji: "🌽", label: categoryLabels.starters },
-  { key: "spices", emoji: "🧂", label: categoryLabels.spices },
-  { key: "desserts", emoji: "🍪", label: categoryLabels.desserts },
-];
+const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
+  menuCategoryOrder.map((key) => ({
+    key,
+    emoji: menuCategoryEmoji[key],
+    label: menuCategoryLabels[key],
+  }));
+
 
 export function CategoryDrawer() {
   const { category, drawerOpen, setCategory, setDrawerOpen } = useUIStore();
