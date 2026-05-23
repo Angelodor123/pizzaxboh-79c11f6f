@@ -5,6 +5,13 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { useCookbookStore } from "@/lib/store";
 import { useUIStore } from "@/lib/ui-store";
 import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
+import {
+  inferMenuCategory,
+  menuCategoryEmoji,
+  menuCategoryLabels,
+  menuCategoryOrder,
+  type MenuCategory,
+} from "@/lib/menu-categories";
 
 export const Route = createFileRoute("/recipes")({
   component: KitchenDashboard,
@@ -28,22 +35,43 @@ function KitchenDashboard() {
   const cat = useUIStore((s) => s.category);
   const setCategory = useUIStore((s) => s.setCategory);
   const [q, setQ] = useState("");
+  const [menuCat, setMenuCat] = useState<MenuCategory | "all">("all");
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
   const activeRecipes = useMemo(() => activeAll.filter((r) => r.category !== "dishes"), [activeAll]);
   const activeDishes = useMemo(() => activeAll.filter((r) => r.category === "dishes"), [activeAll]);
 
+  const isDishesView = cat === "dishes";
+
+  const dishesWithMenuCat = useMemo(
+    () => activeDishes.map((r) => ({ recipe: r, menuCategory: inferMenuCategory(r.nameHebrew) })),
+    [activeDishes],
+  );
+
+  const menuCountByCat = useMemo(() => {
+    const m = new Map<MenuCategory, number>();
+    for (const { menuCategory } of dishesWithMenuCat) {
+      m.set(menuCategory, (m.get(menuCategory) ?? 0) + 1);
+    }
+    return m;
+  }, [dishesWithMenuCat]);
+
   const filtered = useMemo(
     () => {
-      const base =
-        cat === "all"
-          ? activeRecipes
-          : cat === "dishes"
-          ? activeDishes
-          : activeAll.filter((r) => r.category === cat);
+      let base;
+      if (isDishesView) {
+        base =
+          menuCat === "all"
+            ? activeDishes
+            : dishesWithMenuCat.filter((d) => d.menuCategory === menuCat).map((d) => d.recipe);
+      } else if (cat === "all") {
+        base = activeRecipes;
+      } else {
+        base = activeAll.filter((r) => r.category === cat);
+      }
       return q.trim() ? base.filter((r) => r.nameHebrew.includes(q.trim())) : base;
     },
-    [activeAll, activeRecipes, activeDishes, cat, q],
+    [activeAll, activeRecipes, activeDishes, dishesWithMenuCat, cat, menuCat, isDishesView, q],
   );
 
   const countByCat = useMemo(() => {
@@ -124,44 +152,88 @@ function KitchenDashboard() {
           role="tablist"
           aria-label="קטגוריות מהירות"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={cat === "all"}
-            onClick={() => setCategory("all")}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
-              cat === "all"
-                ? "bg-neon text-primary-foreground border-neon glow-neon"
-                : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
-            }`}
-          >
-            📋 הכל
-            <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
-          </button>
-          {categoryOrder.map((key) => {
-            const active = cat === key;
-            const count = countByCat.get(key) ?? 0;
-            if (count === 0) return null;
-            return (
+          {isDishesView ? (
+            <>
               <button
-                key={key}
                 type="button"
                 role="tab"
-                aria-selected={active}
-                onClick={() => setCategory(key)}
+                aria-selected={menuCat === "all"}
+                onClick={() => setMenuCat("all")}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
-                  active
+                  menuCat === "all"
                     ? "bg-neon text-primary-foreground border-neon glow-neon"
                     : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
                 }`}
               >
-                {CATEGORY_EMOJI[key]} {categoryLabels[key]}
-                <span className="opacity-70 tabular-nums mr-1">({count})</span>
+                🍽️ כל המנות
+                <span className="opacity-70 tabular-nums mr-1">({activeDishes.length})</span>
               </button>
-            );
-          })}
+              {menuCategoryOrder.map((key) => {
+                const count = menuCountByCat.get(key) ?? 0;
+                if (count === 0) return null;
+                const active = menuCat === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setMenuCat(key)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
+                      active
+                        ? "bg-neon text-primary-foreground border-neon glow-neon"
+                        : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+                    }`}
+                  >
+                    {menuCategoryEmoji[key]} {menuCategoryLabels[key]}
+                    <span className="opacity-70 tabular-nums mr-1">({count})</span>
+                  </button>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={cat === "all"}
+                onClick={() => setCategory("all")}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
+                  cat === "all"
+                    ? "bg-neon text-primary-foreground border-neon glow-neon"
+                    : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+                }`}
+              >
+                📋 הכל
+                <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
+              </button>
+              {categoryOrder.map((key) => {
+                const active = cat === key;
+                const count = countByCat.get(key) ?? 0;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setCategory(key)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
+                      active
+                        ? "bg-neon text-primary-foreground border-neon glow-neon"
+                        : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+                    }`}
+                  >
+                    {CATEGORY_EMOJI[key]} {categoryLabels[key]}
+                    <span className="opacity-70 tabular-nums mr-1">({count})</span>
+                  </button>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
+
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground text-sm">
