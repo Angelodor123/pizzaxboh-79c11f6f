@@ -14,6 +14,7 @@ interface Unit { id: string; name: string; sort_order: number; }
 export function UnitsPanel() {
   const [rows, setRows] = useState<Unit[]>([]);
   const [name, setName] = useState("");
+  const bulk = useBulkSelection();
 
   const load = async () => {
     const { data } = await supabase.from("measurement_units").select("*").order("sort_order").order("name");
@@ -52,17 +53,77 @@ export function UnitsPanel() {
           <Plus className="h-4 w-4" /> הוסף
         </button>
       </div>
+      {rows.length > 0 && (
+        <div className="mt-3 flex justify-end">
+          <button
+            onClick={() => bulk.toggleAll(rows.map((r) => r.id))}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+          </button>
+        </div>
+      )}
       <ul className="mt-4 space-y-2">
-        {rows.map((r) => (
-          <li key={r.id} className="flex items-center justify-between bg-card border border-border rounded-md px-3 py-2">
-            <span className="font-bold">{r.name}</span>
-            <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </li>
-        ))}
+        {rows.map((r) => {
+          const selected = bulk.isSelected(r.id);
+          return (
+            <li
+              key={r.id}
+              onClickCapture={(e) => {
+                if (bulk.selectionMode) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  bulk.toggle(r.id);
+                }
+              }}
+              className={`flex items-center justify-between bg-card border rounded-md px-3 py-2 transition ${
+                selected ? "border-neon ring-2 ring-neon/40" : "border-border"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {bulk.selectionMode && (
+                  <span className={`h-5 w-5 grid place-content-center rounded-full border-2 ${
+                    selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+                  }`}>{selected ? "✓" : ""}</span>
+                )}
+                <span className="font-bold">{r.name}</span>
+              </div>
+              {!bulk.selectionMode && (
+                <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </li>
+          );
+        })}
         {rows.length === 0 && <li className="text-center text-muted-foreground text-sm py-6">אין יחידות עדיין.</li>}
       </ul>
+
+      <BulkActionBar
+        count={bulk.count}
+        totalCount={rows.length}
+        allSelected={bulk.count === rows.length && rows.length > 0}
+        onClear={bulk.clear}
+        onSelectAll={() => bulk.toggleAll(rows.map((r) => r.id))}
+        actions={[
+          {
+            key: "delete",
+            label: "מחק",
+            icon: Trash2,
+            variant: "destructive",
+            confirm: "למחוק {count} יחידות מידה?",
+            onClick: async () => {
+              const ids = bulk.ids;
+              const { error } = await supabase.from("measurement_units").delete().in("id", ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`נמחקו ${ids.length} יחידות`);
+              bulk.clear();
+              void load();
+            },
+          },
+        ]}
+      />
     </section>
   );
 }
