@@ -748,11 +748,11 @@ function InvitationsPanel() {
                 className="flex items-center justify-between px-3 py-2 gap-2"
               >
                 <button
-                  onClick={() => revokeUser(u.id, u.role, u.email)}
-                  disabled={SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) || (u.role === "admin" && !isSuperAdmin)}
+                  onClick={() => revokeUser(u.id, u.role, u.user_id)}
+                  disabled={superAdminIds.has(u.user_id) || (u.role === "admin" && !isSuperAdmin)}
                   className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="הסר הרשאה"
-                  title={SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) ? "לא ניתן להסיר סופר-אדמין" : ""}
+                  title={superAdminIds.has(u.user_id) ? "לא ניתן להסיר סופר-אדמין" : ""}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -761,7 +761,7 @@ function InvitationsPanel() {
                     {u.email}
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                    {SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) && (
+                    {superAdminIds.has(u.user_id) && (
                       <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neon/15 text-neon border border-neon/40 whitespace-nowrap">
                         Super
                       </span>
