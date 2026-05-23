@@ -85,10 +85,8 @@ function AdminGate() {
   return <AdminPage />;
 }
 
-const SUPER_ADMIN_EMAILS_RO = new Set([
-  "dorbareket123@gmail.com",
-  "suntzov93@gmail.com",
-]);
+// Super-admin user IDs are fetched server-side via the list_super_admin_user_ids RPC,
+// avoiding hardcoding personal email addresses in the client bundle.
 
 const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   dishes: "🍕",
