@@ -346,9 +346,9 @@ export function ReplayTourButton() {
   return (
     <button
       onClick={() => window.dispatchEvent(new Event("pizzax:start-tour"))}
-      className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
+      className="fixed bottom-4 left-4 z-30 h-8 w-8 inline-flex items-center justify-center rounded-full border border-border/60 bg-card/40 backdrop-blur-sm text-foreground/50 hover:text-neon hover:border-neon/60 hover:bg-card/80 hover:opacity-100 opacity-50 transition-all"
       aria-label="הפעל סיור מודרך"
-      title="הפעל סיור מודרך"
+      title="הפעל סיור מודרך מחדש"
     >
       <HelpCircle className="h-4 w-4" />
     </button>
