@@ -343,14 +343,36 @@ export function GuidedTour() {
 }
 
 export function ReplayTourButton() {
+  const [expanded, setExpanded] = useState(true);
+
+  // Show expanded initially so users notice the button, then collapse to a
+  // discreet icon so it doesn't get in the way of the rest of the UI.
+  useEffect(() => {
+    const t = setTimeout(() => setExpanded(false), 4500);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <button
       onClick={() => window.dispatchEvent(new Event("pizzax:start-tour"))}
-      className="fixed bottom-4 left-4 z-30 h-8 w-8 inline-flex items-center justify-center rounded-full border border-border/60 bg-card/40 backdrop-blur-sm text-foreground/50 hover:text-neon hover:border-neon/60 hover:bg-card/80 hover:opacity-100 opacity-50 transition-all"
-      aria-label="הפעל סיור מודרך"
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+      onFocus={() => setExpanded(true)}
+      onBlur={() => setExpanded(false)}
+      className={`fixed bottom-4 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-neon/40 bg-card/90 backdrop-blur-md text-neon shadow-lg shadow-neon/10 hover:border-neon hover:bg-card hover:shadow-neon/30 transition-all duration-300 ${
+        expanded ? "h-10 px-3.5" : "h-10 w-10 justify-center px-0"
+      }`}
+      aria-label="הפעל סיור מודרך מחדש"
       title="הפעל סיור מודרך מחדש"
     >
-      <HelpCircle className="h-4 w-4" />
+      <HelpCircle className="h-4 w-4 shrink-0" />
+      <span
+        className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-300 ${
+          expanded ? "max-w-[140px] opacity-100" : "max-w-0 opacity-0"
+        }`}
+      >
+        איך זה עובד?
+      </span>
     </button>
   );
 }
