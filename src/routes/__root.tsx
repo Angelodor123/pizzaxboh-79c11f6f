@@ -196,6 +196,7 @@ function AuthedShell() {
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <CategoryDrawer />
             {showServiceToggle && <ServiceModeToggle />}
+            <ReplayTourButton />
           </div>
           {pathname !== "/" && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
