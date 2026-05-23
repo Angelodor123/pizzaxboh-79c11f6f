@@ -590,7 +590,7 @@ function InvitationsPanel() {
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const [{ data: i }, { data: r }] = await Promise.all([
+    const [{ data: i }, { data: r }, { data: s }] = await Promise.all([
       supabase
         .from("invitations")
         .select("id,email,role,created_at")
@@ -599,9 +599,11 @@ function InvitationsPanel() {
         .from("user_roles")
         .select("id,email,role,user_id")
         .order("created_at", { ascending: false }),
+      supabase.rpc("list_super_admin_user_ids"),
     ]);
     setInvites((i ?? []) as InvitationRow[]);
     setRoles((r ?? []) as RoleRow[]);
+    setSuperAdminIds(new Set(((s ?? []) as string[])));
   };
 
   useEffect(() => {
