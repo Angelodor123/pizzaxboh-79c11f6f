@@ -85,10 +85,8 @@ function AdminGate() {
   return <AdminPage />;
 }
 
-const SUPER_ADMIN_EMAILS_RO = new Set([
-  "dorbareket123@gmail.com",
-  "suntzov93@gmail.com",
-]);
+// Super-admin user IDs are fetched server-side via the list_super_admin_user_ids RPC,
+// avoiding hardcoding personal email addresses in the client bundle.
 
 const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   dishes: "🍕",
@@ -585,13 +583,14 @@ function InvitationsPanel() {
   const { isSuperAdmin, email: myEmail } = useAuth();
   const [invites, setInvites] = useState<InvitationRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [superAdminIds, setSuperAdminIds] = useState<Set<string>>(new Set());
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AppRole>("viewer");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const [{ data: i }, { data: r }] = await Promise.all([
+    const [{ data: i }, { data: r }, { data: s }] = await Promise.all([
       supabase
         .from("invitations")
         .select("id,email,role,created_at")
@@ -600,9 +599,11 @@ function InvitationsPanel() {
         .from("user_roles")
         .select("id,email,role,user_id")
         .order("created_at", { ascending: false }),
+      supabase.rpc("list_super_admin_user_ids"),
     ]);
     setInvites((i ?? []) as InvitationRow[]);
     setRoles((r ?? []) as RoleRow[]);
+    setSuperAdminIds(new Set(((s ?? []) as string[])));
   };
 
   useEffect(() => {
@@ -659,12 +660,12 @@ function InvitationsPanel() {
     await load();
   };
 
-  const revokeUser = async (id: string, userRole: AppRole, userEmail: string) => {
+  const revokeUser = async (id: string, userRole: AppRole, userId: string) => {
     if (userRole === "admin" && !isSuperAdmin) {
       setError("רק סופר-אדמין יכול להסיר מנהל");
       return;
     }
-    if (SUPER_ADMIN_EMAILS_RO.has(userEmail.toLowerCase())) {
+    if (superAdminIds.has(userId)) {
       setError("לא ניתן להסיר סופר-אדמין");
       return;
     }
@@ -747,11 +748,11 @@ function InvitationsPanel() {
                 className="flex items-center justify-between px-3 py-2 gap-2"
               >
                 <button
-                  onClick={() => revokeUser(u.id, u.role, u.email)}
-                  disabled={SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) || (u.role === "admin" && !isSuperAdmin)}
+                  onClick={() => revokeUser(u.id, u.role, u.user_id)}
+                  disabled={superAdminIds.has(u.user_id) || (u.role === "admin" && !isSuperAdmin)}
                   className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="הסר הרשאה"
-                  title={SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) ? "לא ניתן להסיר סופר-אדמין" : ""}
+                  title={superAdminIds.has(u.user_id) ? "לא ניתן להסיר סופר-אדמין" : ""}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -760,7 +761,7 @@ function InvitationsPanel() {
                     {u.email}
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                    {SUPER_ADMIN_EMAILS_RO.has(u.email.toLowerCase()) && (
+                    {superAdminIds.has(u.user_id) && (
                       <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neon/15 text-neon border border-neon/40 whitespace-nowrap">
                         Super
                       </span>
