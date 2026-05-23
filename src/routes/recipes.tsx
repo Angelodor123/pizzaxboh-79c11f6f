@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Trash2, FolderInput, CheckSquare } from "lucide-react";
+import { toast } from "sonner";
 import { RecipeCard } from "@/components/RecipeCard";
 import { useCookbookStore } from "@/lib/store";
 import { useUIStore } from "@/lib/ui-store";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
 import {
   inferMenuCategory,
@@ -12,6 +15,14 @@ import {
   menuCategoryOrder,
   type MenuCategory,
 } from "@/lib/menu-categories";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/recipes")({
   component: KitchenDashboard,
