@@ -99,11 +99,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       createdAt: new Date().toISOString(),
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
+    const branchId = await requireCurrentBranchId();
     await supabase.from("notebook_items").insert({
       list_key: list,
       text: clean,
       priority,
       created_by: user.id,
+      branch_id: branchId,
     });
   },
 

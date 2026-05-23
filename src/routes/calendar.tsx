@@ -840,7 +840,7 @@ function EventForm({
       return;
     }
     setSaving(true);
-    const payload = {
+    const basePayload = {
       title: title.trim(),
       category,
       event_date: isRecurring ? null : date,
@@ -852,9 +852,13 @@ function EventForm({
       notes: notes.trim() || null,
     };
 
-    const { error } = existing
-      ? await supabase.from("calendar_events").update(payload).eq("id", existing.id)
-      : await supabase.from("calendar_events").insert(payload);
+    let error;
+    if (existing) {
+      ({ error } = await supabase.from("calendar_events").update(basePayload).eq("id", existing.id));
+    } else {
+      const branchId = await requireCurrentBranchId();
+      ({ error } = await supabase.from("calendar_events").insert({ ...basePayload, branch_id: branchId }));
+    }
 
     setSaving(false);
     if (error) {
