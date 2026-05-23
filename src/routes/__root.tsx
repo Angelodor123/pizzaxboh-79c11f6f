@@ -156,8 +156,13 @@ function AuthedShell() {
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const showServiceToggle = pathname === "/recipes";
-  const showQuickBack = pathname !== "/recipes";
+  const isRecipesPage = pathname === "/recipes";
+  const showServiceToggle = isRecipesPage;
+  const showQuickBack = !isRecipesPage;
+  // Service Mode is a recipes-page concept — its visual indication should
+  // not bleed into other pages even if the flag is still on in state.
+  const serviceModeVisible = isServiceMode && isRecipesPage;
+
 
   // Register service worker once
   useEffect(() => {
