@@ -5,10 +5,12 @@ export type RecipeCategory =
   | "jams_creams"
   | "starters"
   | "spices"
+  | "croutons"
   | "desserts"
   | "pastas"
   | "authentic_pastas"
   | "salads";
+
 
 export interface Ingredient {
   name: string;
