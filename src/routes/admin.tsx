@@ -660,12 +660,12 @@ function InvitationsPanel() {
     await load();
   };
 
-  const revokeUser = async (id: string, userRole: AppRole, userEmail: string) => {
+  const revokeUser = async (id: string, userRole: AppRole, userId: string) => {
     if (userRole === "admin" && !isSuperAdmin) {
       setError("רק סופר-אדמין יכול להסיר מנהל");
       return;
     }
-    if (SUPER_ADMIN_EMAILS_RO.has(userEmail.toLowerCase())) {
+    if (superAdminIds.has(userId)) {
       setError("לא ניתן להסיר סופר-אדמין");
       return;
     }
