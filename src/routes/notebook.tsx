@@ -208,6 +208,17 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           >
             <Share2 className="h-4 w-4" />
           </button>
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={() => bulk.toggleAll(items.map((i) => i.id))}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-neon hover:border-neon transition px-2 py-1 rounded-md border border-border"
+              title="בחירה מרובה"
+            >
+              <CheckSquare className="h-3 w-3" />
+              {bulk.selectionMode ? "סיים" : "בחר"}
+            </button>
+          )}
           {doneCount > 0 && (
             <button
               type="button"
