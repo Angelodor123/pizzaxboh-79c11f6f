@@ -152,44 +152,88 @@ function KitchenDashboard() {
           role="tablist"
           aria-label="קטגוריות מהירות"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={cat === "all"}
-            onClick={() => setCategory("all")}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
-              cat === "all"
-                ? "bg-neon text-primary-foreground border-neon glow-neon"
-                : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
-            }`}
-          >
-            📋 הכל
-            <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
-          </button>
-          {categoryOrder.map((key) => {
-            const active = cat === key;
-            const count = countByCat.get(key) ?? 0;
-            if (count === 0) return null;
-            return (
+          {isDishesView ? (
+            <>
               <button
-                key={key}
                 type="button"
                 role="tab"
-                aria-selected={active}
-                onClick={() => setCategory(key)}
+                aria-selected={menuCat === "all"}
+                onClick={() => setMenuCat("all")}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
-                  active
+                  menuCat === "all"
                     ? "bg-neon text-primary-foreground border-neon glow-neon"
                     : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
                 }`}
               >
-                {CATEGORY_EMOJI[key]} {categoryLabels[key]}
-                <span className="opacity-70 tabular-nums mr-1">({count})</span>
+                🍽️ כל המנות
+                <span className="opacity-70 tabular-nums mr-1">({activeDishes.length})</span>
               </button>
-            );
-          })}
+              {menuCategoryOrder.map((key) => {
+                const count = menuCountByCat.get(key) ?? 0;
+                if (count === 0) return null;
+                const active = menuCat === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setMenuCat(key)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
+                      active
+                        ? "bg-neon text-primary-foreground border-neon glow-neon"
+                        : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+                    }`}
+                  >
+                    {menuCategoryEmoji[key]} {menuCategoryLabels[key]}
+                    <span className="opacity-70 tabular-nums mr-1">({count})</span>
+                  </button>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={cat === "all"}
+                onClick={() => setCategory("all")}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
+                  cat === "all"
+                    ? "bg-neon text-primary-foreground border-neon glow-neon"
+                    : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+                }`}
+              >
+                📋 הכל
+                <span className="opacity-70 tabular-nums mr-1">({activeRecipes.length})</span>
+              </button>
+              {categoryOrder.map((key) => {
+                const active = cat === key;
+                const count = countByCat.get(key) ?? 0;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setCategory(key)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition whitespace-nowrap ${
+                      active
+                        ? "bg-neon text-primary-foreground border-neon glow-neon"
+                        : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+                    }`}
+                  >
+                    {CATEGORY_EMOJI[key]} {categoryLabels[key]}
+                    <span className="opacity-70 tabular-nums mr-1">({count})</span>
+                  </button>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
+
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground text-sm">
