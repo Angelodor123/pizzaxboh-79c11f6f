@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { BulkActionBar } from "@/components/BulkActionBar";
@@ -293,7 +294,7 @@ function SupplierForm({
       return;
     }
     setSaving(true);
-    const payload = {
+    const basePayload = {
       name: name.trim().slice(0, 120),
       category: category.trim().slice(0, 60) || "כללי",
       delivery_weekdays: weekdays,
@@ -303,9 +304,13 @@ function SupplierForm({
       notes: notes.trim().slice(0, 2000) || null,
       active,
     };
-    const { error } = existing
-      ? await supabase.from("suppliers").update(payload).eq("id", existing.id)
-      : await supabase.from("suppliers").insert(payload);
+    let error;
+    if (existing) {
+      ({ error } = await supabase.from("suppliers").update(basePayload).eq("id", existing.id));
+    } else {
+      const branchId = await requireCurrentBranchId();
+      ({ error } = await supabase.from("suppliers").insert({ ...basePayload, branch_id: branchId }));
+    }
     setSaving(false);
     if (error) {
       toast.error("שמירה נכשלה: " + error.message);

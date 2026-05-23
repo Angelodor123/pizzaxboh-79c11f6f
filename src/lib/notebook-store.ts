@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
+import { requireCurrentBranchId } from "@/lib/current-branch";
 
 export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse";
 
@@ -99,11 +100,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       createdAt: new Date().toISOString(),
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
+    const branchId = await requireCurrentBranchId();
     await supabase.from("notebook_items").insert({
       list_key: list,
       text: clean,
       priority,
       created_by: user.id,
+      branch_id: branchId,
     });
   },
 
