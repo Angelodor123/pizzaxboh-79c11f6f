@@ -182,6 +182,7 @@ function OperationalDashboard() {
         {/* Daily Notebook */}
         <Link
           to="/notebook"
+          data-tour="card-notebook"
           className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center gap-2">
