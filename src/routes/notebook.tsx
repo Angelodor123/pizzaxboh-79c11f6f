@@ -277,10 +277,90 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
       ) : (
         <ul className="space-y-1.5">
           {items.map((it) => (
-            <NotebookRow key={it.id} item={it} listKey={cfg.key} />
+            <NotebookRow
+              key={it.id}
+              item={it}
+              listKey={cfg.key}
+              selectionMode={bulk.selectionMode}
+              selected={bulk.isSelected(it.id)}
+              onSelectToggle={() => bulk.toggle(it.id)}
+            />
           ))}
         </ul>
       )}
+
+      <BulkActionBar
+        count={bulk.count}
+        totalCount={items.length}
+        allSelected={bulk.count === items.length && items.length > 0}
+        onClear={bulk.clear}
+        onSelectAll={() => bulk.toggleAll(items.map((i) => i.id))}
+        actions={[
+          {
+            key: "done",
+            label: "סמן כבוצע",
+            icon: CheckCheck,
+            onClick: async () => {
+              const { error } = await supabase
+                .from("notebook_items")
+                .update({ done: true })
+                .in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`סומנו ${bulk.count} פריטים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+          {
+            key: "undone",
+            label: "החזר",
+            icon: RotateCcw,
+            onClick: async () => {
+              const { error } = await supabase
+                .from("notebook_items")
+                .update({ done: false })
+                .in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`הוחזרו ${bulk.count} פריטים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+          {
+            key: "urgent",
+            label: "סמן כדחוף",
+            icon: Flame,
+            onClick: async () => {
+              const { error } = await supabase
+                .from("notebook_items")
+                .update({ priority: "urgent" })
+                .in("id", bulk.ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`סומנו ${bulk.count} כדחופים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+          {
+            key: "delete",
+            label: "מחק",
+            icon: Trash2,
+            variant: "destructive",
+            confirm: "למחוק {count} פריטים?",
+            onClick: async () => {
+              const ids = bulk.ids;
+              const { error } = await supabase
+                .from("notebook_items")
+                .delete()
+                .in("id", ids);
+              if (error) { toast.error(error.message); return; }
+              toast.success(`נמחקו ${ids.length} פריטים`);
+              bulk.clear();
+              void refresh();
+            },
+          },
+        ]}
+      />
     </section>
   );
 }
