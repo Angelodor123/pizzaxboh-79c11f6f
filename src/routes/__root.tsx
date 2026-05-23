@@ -156,8 +156,13 @@ function AuthedShell() {
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const showServiceToggle = pathname === "/recipes";
-  const showQuickBack = pathname !== "/recipes";
+  const isRecipesPage = pathname === "/recipes";
+  const showServiceToggle = isRecipesPage;
+  const showQuickBack = !isRecipesPage;
+  // Service Mode is a recipes-page concept — its visual indication should
+  // not bleed into other pages even if the flag is still on in state.
+  const serviceModeVisible = isServiceMode && isRecipesPage;
+
 
   // Register service worker once
   useEffect(() => {
@@ -187,10 +192,11 @@ function AuthedShell() {
     <div className="min-h-screen flex flex-col">
       <header
         className={`sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 transition-colors ${
-          isServiceMode
+          serviceModeVisible
             ? "border-orange-500 shadow-[0_4px_24px_-4px_rgba(255,140,0,0.6)]"
             : "border-border"
         }`}
+
       >
         <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -235,7 +241,7 @@ function AuthedShell() {
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
             <span className="text-[12px] font-bold tracking-[0.3em] uppercase text-neon">
-              {isServiceMode ? "Service Mode" : "Back of House"}
+              {serviceModeVisible ? "Service Mode" : "Back of House"}
             </span>
           </Link>
         </div>
