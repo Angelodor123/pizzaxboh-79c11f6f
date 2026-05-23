@@ -2,6 +2,9 @@
 // Used to filter "dishes" (מנות) by their position on the customer-facing menu,
 // independent of the back-of-house recipe-book categories.
 
+import type { Recipe, RecipeCategory } from "./cookbook";
+
+
 export type MenuCategory =
   | "starters"
   | "pizza_tomato"
