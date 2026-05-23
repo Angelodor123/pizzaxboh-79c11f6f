@@ -40,6 +40,8 @@ const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   jams_creams: "🥘",
   starters: "🌽",
   spices: "🧂",
+  croutons: "🥖",
+
   desserts: "🍪",
   pastas: "🍝",
   authentic_pastas: "🇮🇹",
@@ -50,10 +52,12 @@ function KitchenDashboard() {
   const recipes = useCookbookStore((s) => s.recipes);
   const cat = useUIStore((s) => s.category);
   const setCategory = useUIStore((s) => s.setCategory);
+  const menuCat = useUIStore((s) => s.menuCategory);
+  const setMenuCat = useUIStore((s) => s.setMenuCategory);
   const [q, setQ] = useState("");
-  const [menuCat, setMenuCat] = useState<MenuCategory | "all">("all");
   const { role } = useAuth();
   const canEdit = role === "admin";
+
   const bulk = useBulkSelection();
   const [moveOpen, setMoveOpen] = useState(false);
 

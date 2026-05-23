@@ -5,10 +5,12 @@ export type RecipeCategory =
   | "jams_creams"
   | "starters"
   | "spices"
+  | "croutons"
   | "desserts"
   | "pastas"
   | "authentic_pastas"
   | "salads";
+
 
 export interface Ingredient {
   name: string;
@@ -48,11 +50,13 @@ export const categoryLabels: Record<RecipeCategory, string> = {
   jams_creams: "ריבות וקרמים",
   starters: "מנות ראשונות",
   spices: "תבלינים",
+  croutons: "קרוטונים ותוספות",
   desserts: "קינוחים",
   pastas: "פסטות",
   authentic_pastas: "פסטות אותנטיות",
   salads: "סלטים",
 };
+
 
 export type SpeedTier = "very_fast" | "fast" | "medium" | "slow" | "very_slow";
 
@@ -152,6 +156,8 @@ export const categoryOrder: RecipeCategory[] = [
   "jams_creams",
   "starters",
   "spices",
+  "croutons",
+
   "desserts",
   "pastas",
   "authentic_pastas",

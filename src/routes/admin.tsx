@@ -97,6 +97,8 @@ const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
   jams_creams: "🥘",
   starters: "🌽",
   spices: "🧂",
+  croutons: "🥖",
+
   desserts: "🍪",
   pastas: "🍝",
   authentic_pastas: "🇮🇹",
