@@ -224,13 +224,13 @@ function OperationalDashboard() {
 
       {/* Shortcut tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" />
+        <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
         <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="פנקס יומי" />
-        <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" />
-        <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" />
-        <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" />
+        <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
+        <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
+        <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
         {role === "admin" && (
-          <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" />
+          <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
         )}
       </div>
     </div>
@@ -242,15 +242,18 @@ function StatCard({
   value,
   to,
   highlight,
+  tourId,
 }: {
   label: string;
   value: number;
   to: string;
   highlight?: boolean;
+  tourId?: string;
 }) {
   return (
     <Link
       to={to}
+      data-tour={tourId}
       className={`rounded-xl border-2 p-4 text-right transition hover:border-neon ${
         highlight ? "border-neon glow-neon bg-neon/5" : "border-jungle/30 bg-jungle/5"
       }`}
