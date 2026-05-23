@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
+import { isMenuItem } from "@/lib/menu-categories";
+
 
 export const Route = createFileRoute("/")({
   component: OperationalDashboard,
