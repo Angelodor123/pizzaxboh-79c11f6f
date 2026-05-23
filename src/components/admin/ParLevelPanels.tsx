@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, Save, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Power, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { refreshOnboarding } from "@/components/PageOnboarding";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 
 const DAY_COLS = ["target_sun","target_mon","target_tue","target_wed","target_thu","target_fri","target_sat"] as const;
 const DAY_LABELS = ["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
