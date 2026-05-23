@@ -112,8 +112,10 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
   const clearDone = useNotebookStore((s) => s.clearDone);
+  const refresh = useNotebookStore((s) => s.refresh);
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
+  const bulk = useBulkSelection();
 
   const doneCount = items.filter((i) => i.done).length;
 
