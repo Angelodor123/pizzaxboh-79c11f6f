@@ -11,12 +11,14 @@ import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbo
 import {
   BACK_OF_HOUSE_CATEGORIES,
   isMenuItem,
+  MENU_ITEM_CATEGORIES,
   menuCategoryEmoji,
   menuCategoryLabels,
   menuCategoryOrder,
   recipeToMenuCategory,
   type MenuCategory,
 } from "@/lib/menu-categories";
+
 
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
