@@ -9,12 +9,15 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryOrder, type RecipeCategory } from "@/lib/cookbook";
 import {
-  inferMenuCategory,
+  BACK_OF_HOUSE_CATEGORIES,
+  isMenuItem,
   menuCategoryEmoji,
   menuCategoryLabels,
   menuCategoryOrder,
+  recipeToMenuCategory,
   type MenuCategory,
 } from "@/lib/menu-categories";
+
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
 import {
