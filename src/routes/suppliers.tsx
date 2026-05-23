@@ -32,6 +32,7 @@ function SuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
+  const bulk = useBulkSelection();
 
   useEffect(() => {
     let mounted = true;
