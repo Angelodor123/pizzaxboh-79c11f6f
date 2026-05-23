@@ -399,7 +399,7 @@ function SelectableRecipeCard({
           }}
           aria-pressed={selected}
           aria-label={selected ? "הסר מהבחירה" : "הוסף לבחירה"}
-          className={`absolute top-2 right-2 z-10 h-7 w-7 grid place-content-center rounded-full border-2 transition ${
+          className={`absolute top-2 left-2 z-10 h-7 w-7 grid place-content-center rounded-full border-2 transition ${
             selected
               ? "bg-neon border-neon text-primary-foreground"
               : "bg-card/80 border-border hover:border-neon"
