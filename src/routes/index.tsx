@@ -102,7 +102,7 @@ function OperationalDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6" data-tour="home-header">
         <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight text-foreground">
           {titleParts.length > 1 ? (
             <>
