@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
-import { CheckCircle2, AlertTriangle, Search, ScanLine, Plus } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Search, ScanLine, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { QuickAddItemModal } from "@/components/QuickAddItemModal";
+import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEditStockItemDialog";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 
