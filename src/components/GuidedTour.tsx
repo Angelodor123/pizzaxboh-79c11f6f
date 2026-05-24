@@ -204,8 +204,9 @@ export function GuidedTour() {
   const isFirst = index === 0;
 
   const finish = () => {
-    localStorage.setItem(storageKey, "1");
+    void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
     setOpen(false);
+    setShowDiscoveryBanner(false);
   };
 
   const next = () => {
