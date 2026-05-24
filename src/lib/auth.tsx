@@ -13,12 +13,14 @@ interface AuthState {
   assignedBranchId: string | null;
   tutorialVersion: number;
   completedTutorialSteps: string[];
+  tutorialCooldownUntil: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
   setTutorialVersion: (v: number) => Promise<void>;
   markTutorialStepComplete: (stepId: string) => Promise<void>;
   markTutorialStepsComplete: (stepIds: string[]) => Promise<void>;
+  snoozeTutorial: (days?: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -31,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [assignedBranchId, setAssignedBranchId] = useState<string | null>(null);
   const [tutorialVersion, setTutorialVersionState] = useState<number>(2);
   const [completedTutorialSteps, setCompletedTutorialSteps] = useState<string[]>([]);
+  const [tutorialCooldownUntil, setTutorialCooldownUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadRole = async (uid: string | undefined) => {
@@ -41,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAssignedBranchId(null);
       setTutorialVersionState(2);
       setCompletedTutorialSteps([]);
+      setTutorialCooldownUntil(null);
       return;
     }
     const [{ data: roleData }, { data: superData }, { data: roleRow }, { data: profile }] =
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("full_name, tutorial_version, completed_tutorial_steps")
+          .select("full_name, tutorial_version, completed_tutorial_steps, tutorial_cooldown_until")
           .eq("user_id", uid)
           .maybeSingle(),
       ]);
@@ -62,9 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(Boolean(superData));
     setAssignedBranchId((roleRow?.assigned_branch_id as string | null) ?? null);
     setFullName((profile?.full_name as string | null) ?? null);
-    const p = profile as { tutorial_version?: number; completed_tutorial_steps?: string[] } | null;
+    const p = profile as { tutorial_version?: number; completed_tutorial_steps?: string[]; tutorial_cooldown_until?: string | null } | null;
     setTutorialVersionState(typeof p?.tutorial_version === "number" ? p.tutorial_version : 0);
     setCompletedTutorialSteps(Array.isArray(p?.completed_tutorial_steps) ? p!.completed_tutorial_steps : []);
+    setTutorialCooldownUntil(p?.tutorial_cooldown_until ?? null);
+  };
+
+  const snoozeTutorial = async (days = 7) => {
+    const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    setTutorialCooldownUntil(until);
+    const uid = session?.user?.id;
+    if (!uid) return;
+    await supabase.from("profiles").update({ tutorial_cooldown_until: until }).eq("user_id", uid);
   };
 
   const setTutorialVersion = async (v: number) => {
@@ -131,12 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         assignedBranchId,
         tutorialVersion,
         completedTutorialSteps,
+        tutorialCooldownUntil,
         loading,
         signOut,
         refreshRole,
         setTutorialVersion,
         markTutorialStepComplete,
         markTutorialStepsComplete,
+        snoozeTutorial,
       }}
     >
       {children}

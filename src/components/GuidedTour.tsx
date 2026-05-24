@@ -143,9 +143,11 @@ export function GuidedTour() {
     loading,
     tutorialVersion,
     completedTutorialSteps,
+    tutorialCooldownUntil,
     setTutorialVersion,
     markTutorialStepComplete,
     markTutorialStepsComplete,
+    snoozeTutorial,
   } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
@@ -163,7 +165,7 @@ export function GuidedTour() {
   );
   const steps = mode === "master" ? masterSteps : pendingFeatureSteps;
 
-  // Auto-start logic
+  // Auto-start logic with 7-day cooldown failsafe
   useEffect(() => {
     if (loading) return;
     if (typeof window === "undefined") return;
@@ -178,12 +180,16 @@ export function GuidedTour() {
       }, 800);
       return () => clearTimeout(t);
     }
+    // Cooldown: abort silently if user asked to be reminded later
+    if (tutorialCooldownUntil && new Date(tutorialCooldownUntil).getTime() > Date.now()) {
+      return;
+    }
     // Returning user: any pending feature steps?
     if (pendingFeatureSteps.length > 0) {
       const t = setTimeout(() => setShowDiscoveryBanner(true), 1200);
       return () => clearTimeout(t);
     }
-  }, [loading, pathname, session, tutorialVersion, pendingFeatureSteps.length]);
+  }, [loading, pathname, session, tutorialVersion, pendingFeatureSteps.length, tutorialCooldownUntil]);
 
 
   // Listen for manual replay — always replay the full master tour
@@ -235,49 +241,56 @@ export function GuidedTour() {
     };
   }, [open, measure]);
 
-  // Render discovery banner for v1 users before they accept the mini-tour
+  // Feature-Discovery Modal — dark, centered, two clear actions
   if (!open && showDiscoveryBanner && typeof document !== "undefined") {
     return createPortal(
-      <div className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 sm:max-w-sm z-[9999] rounded-2xl border-2 border-neon/60 bg-card shadow-[0_0_30px_-8px_rgba(57,255,20,0.5)] p-4 animate-in fade-in-0 slide-in-from-bottom-4" dir="rtl">
-        <div className="flex items-start gap-3">
-          <div className="text-2xl shrink-0">🚀</div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-display text-base font-bold text-foreground leading-snug">
-              הוספנו כלים חדשים למערכת!
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in-0"
+        dir="rtl"
+      >
+        <div className="w-full max-w-md rounded-2xl border-2 border-neon/60 bg-card shadow-[0_0_50px_-8px_rgba(57,255,20,0.55)] p-6 animate-in zoom-in-95">
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="text-4xl">🚀</div>
+            <h3 className="font-display text-xl font-bold text-foreground leading-snug">
+              זיהינו כמה כלים חדשים במערכת! 🚀
+              <br />
+              בואו לסיור קצר
             </h3>
-            <p className="text-xs text-foreground/80 mt-1 leading-relaxed">
-              בואו לסיור קצר על הפיצ'רים החדשים — שמירה אוטומטית, צ'ק-ליסט משמרות וסטטוס בצקים.
+            <p className="text-sm text-foreground/75 leading-relaxed">
+              {pendingFeatureSteps.length === 1
+                ? "יש פיצ'ר חדש אחד שעוד לא הכרתם."
+                : `יש ${pendingFeatureSteps.length} פיצ'רים חדשים שעוד לא הכרתם.`}
             </p>
-            <div className="flex items-center gap-2 mt-3">
-              <button
-                onClick={() => {
-                  setShowDiscoveryBanner(false);
-                  setMode("discovery");
-                  setIndex(0);
-                  setOpen(true);
-                }}
-                className="rounded-md bg-neon px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition"
-              >
-                התחל סיור ←
-              </button>
-              <button
-                onClick={() => {
-                  // Mark all pending feature steps as complete so we don't re-prompt
-                  void markTutorialStepsComplete(pendingFeatureSteps.map((s) => s.id));
-                  setShowDiscoveryBanner(false);
-                }}
-                className="text-xs text-foreground/60 hover:text-foreground transition px-2"
-              >
-                לא תודה
-              </button>
+          </div>
 
-            </div>
+          <div className="flex flex-col gap-2 mt-6">
+            <button
+              onClick={() => {
+                setShowDiscoveryBanner(false);
+                setMode("discovery");
+                setIndex(0);
+                setOpen(true);
+              }}
+              className="w-full rounded-lg bg-[hsl(330,100%,55%)] hover:bg-[hsl(330,100%,60%)] px-4 py-3 text-sm font-bold text-white shadow-[0_0_20px_-4px_hsl(330,100%,55%)] transition"
+            >
+              התחל סיור ←
+            </button>
+            <button
+              onClick={() => {
+                void snoozeTutorial(7);
+                setShowDiscoveryBanner(false);
+              }}
+              className="w-full rounded-lg border border-border bg-background/60 hover:bg-background px-4 py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition"
+            >
+              אולי אחר כך
+            </button>
           </div>
         </div>
       </div>,
       document.body,
     );
   }
+
 
   if (!open || typeof document === "undefined") return null;
 

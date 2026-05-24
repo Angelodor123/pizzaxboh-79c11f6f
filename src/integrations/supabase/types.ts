@@ -639,6 +639,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           has_accepted_nda: boolean
+          tutorial_cooldown_until: string | null
           tutorial_version: number
           updated_at: string
           user_id: string
@@ -648,6 +649,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           has_accepted_nda?: boolean
+          tutorial_cooldown_until?: string | null
           tutorial_version?: number
           updated_at?: string
           user_id: string
@@ -657,6 +659,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           has_accepted_nda?: boolean
+          tutorial_cooldown_until?: string | null
           tutorial_version?: number
           updated_at?: string
           user_id?: string
