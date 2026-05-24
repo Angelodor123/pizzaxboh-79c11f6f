@@ -78,9 +78,10 @@ function CalendarPage() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const [ev, ov] = await Promise.all([
+      const [ev, ov, inv] = await Promise.all([
         supabase.from("calendar_events").select("*").order("event_date", { ascending: true }),
         supabase.from("calendar_event_overrides").select("*"),
+        supabase.from("invoices").select("supplier_id, document_date").eq("is_archived", false),
       ]);
       if (!mounted) return;
       if (ev.error || ov.error) {
@@ -88,6 +89,13 @@ function CalendarPage() {
       } else {
         setEvents((ev.data as CalendarEvent[]) ?? []);
         setOverrides((ov.data as EventOverride[]) ?? []);
+      }
+      if (!inv.error && inv.data) {
+        const keys = new Set<string>();
+        for (const r of inv.data as Array<{ supplier_id: string | null; document_date: string }>) {
+          if (r.supplier_id) keys.add(`${r.supplier_id}|${r.document_date}`);
+        }
+        setInvoiceKeys(keys);
       }
       setLoading(false);
     };
@@ -97,6 +105,7 @@ function CalendarPage() {
       .channel("calendar_events_rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "calendar_events" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "calendar_event_overrides" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => load())
       .subscribe();
 
     return () => {
