@@ -270,7 +270,7 @@ function KitchenDashboard() {
       </div>
 
       {canEdit && filtered.length > 0 && (
-        <div className="flex items-center justify-end gap-2 mb-3">
+        <div className="flex items-center justify-center gap-2 mb-3">
           <button
             type="button"
             onClick={() => bulk.toggleAll(filtered.map((r) => r.id))}
