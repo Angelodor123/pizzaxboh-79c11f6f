@@ -460,7 +460,7 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="bg-background/30">
+                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-gray-600 overflow-hidden shadow-sm">
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
