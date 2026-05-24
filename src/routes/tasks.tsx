@@ -464,21 +464,24 @@ function TasksPage() {
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
-                          className="w-full flex items-center justify-between gap-3 px-5 py-3 text-right hover:bg-card/40 transition"
+                          className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 text-right hover:bg-card/40 transition"
                         >
                           <ChevronDown
-                            className={`h-4 w-4 text-muted-foreground transition-transform ${isGroupOpen ? "rotate-180" : ""}`}
+                            className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isGroupOpen ? "rotate-180" : ""}`}
                           />
+                          {gPct === 100 && (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                          )}
                           <div className="flex-1 text-right min-w-0">
-                            <div className="text-sm font-bold truncate">
+                            <div className="text-sm font-bold leading-snug break-words">
                               {emoji ? `${emoji} ` : ""}
                               {g.name}
                             </div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-end gap-2">
-                              <span>
+                            <div className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-start gap-2">
+                              <span className="tabular-nums">
                                 {gDone}/{gTasks.length}
                               </span>
-                              <div className="w-16 h-1 rounded-full bg-card border border-border overflow-hidden">
+                              <div className="w-20 h-1 rounded-full bg-card border border-border overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${gPct === 100 ? "bg-emerald-400" : "bg-neon"}`}
                                   style={{ width: `${gPct}%` }}
@@ -486,10 +489,8 @@ function TasksPage() {
                               </div>
                             </div>
                           </div>
-                          {gPct === 100 && (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          )}
                         </button>
+
 
                         {isGroupOpen && (
                           <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-4">
