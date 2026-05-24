@@ -770,6 +770,16 @@ function InvitationsPanel() {
           <option value="viewer">צפייה בלבד</option>
           {isSuperAdmin && <option value="admin">ניהול</option>}
         </select>
+        <select
+          value={inviteBranch}
+          onChange={(e) => setInviteBranch(e.target.value)}
+          className="bg-input border border-border rounded-md px-3 py-2 text-right"
+        >
+          <option value="">— בחר סניף —</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
         <button
           onClick={invite}
           disabled={busy}
