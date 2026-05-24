@@ -245,6 +245,11 @@ function AdminPage() {
         <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={<Users className="h-4 w-4" />}>
           הרשאות
         </TabButton>
+        {isSuperAdmin && (
+          <TabButton active={tab === "branches"} onClick={() => setTab("branches")} icon={<Building2 className="h-4 w-4" />}>
+            סניפים
+          </TabButton>
+        )}
         <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
           תזכורות ספקים
         </TabButton>
