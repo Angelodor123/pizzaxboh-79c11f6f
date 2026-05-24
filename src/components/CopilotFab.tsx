@@ -377,17 +377,6 @@ export function CopilotFab() {
             )}
           </div>
 
-          {/* Quick actions */}
-          <div className="px-3 pb-2 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => void handleSend("תפעיל את המדריך")}
-              className="inline-flex items-center gap-1 rounded-full border border-[#ff5a3c]/40 bg-background/60 px-2.5 py-1 text-[11px] text-foreground hover:border-[#ff5a3c] transition"
-            >
-              <Sparkles className="h-3 w-3" />
-              הפעל את המדריך
-            </button>
-          </div>
 
           {/* Composer */}
           <div className="border-t border-border p-3 bg-card/80">
