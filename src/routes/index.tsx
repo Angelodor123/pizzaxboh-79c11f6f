@@ -243,7 +243,11 @@ function OperationalDashboard() {
         <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
         <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
         {role === "admin" && (
-          <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
+          <>
+            <ShortcutTile to="/orders" icon={<Truck className="h-5 w-5" />} label="📦 הזמנת סחורה" />
+            <ShortcutTile to="/invoices" icon={<ClipboardCheck className="h-5 w-5" />} label="📥 קליטת סחורה" />
+            <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
+          </>
         )}
       </div>
     </div>
