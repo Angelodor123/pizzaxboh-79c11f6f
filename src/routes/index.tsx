@@ -34,7 +34,7 @@ function todayIso() {
 
 function OperationalDashboard() {
   const { role } = useAuth();
-  
+
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
 
@@ -43,15 +43,14 @@ function OperationalDashboard() {
     (async () => {
       const { data } = await supabase
         .from("calendar_events")
-        .select("id,title,category,event_date,recurring_weekday,high_priority,supplier");
+        .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
+        .limit(200);
       if (mounted && data) setEvents(data as CalEvent[]);
     })();
     return () => {
       mounted = false;
     };
   }, []);
-
-
 
   const todayEvents = useMemo(() => {
     const iso = todayIso();
@@ -103,7 +102,7 @@ function OperationalDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6" data-tour="home-header">
-        <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight text-foreground">
+        <h1 className="font-display text-2xl sm:text-4xl font-bold leading-tight tracking-tight text-foreground">
           {titleParts.length > 1 ? (
             <>
               {titleParts[0]}
@@ -114,25 +113,23 @@ function OperationalDashboard() {
             homeTitle
           )}
         </h1>
-        <p className="text-foreground/80 mt-2 text-sm leading-relaxed">
-          {homeSubtitle} <span className="text-foreground/60">• {dateLabel}</span>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          {homeSubtitle} <span className="text-muted-foreground/80">• {dateLabel}</span>
         </p>
       </div>
 
-      {/* Weather widget */}
-      <div className="mb-6">
+      {/* Weather + EV grouped (related ambient widgets) */}
+      <div className="mb-4">
         <WeatherWidget title={weatherTitle} alertText={rainAlert} />
       </div>
-
-      {/* EV charging widget */}
       <div className="mb-6">
         <EvChargingWidget />
       </div>
 
       {/* Live operational telemetry */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <CurrentShiftProgressCard />
-        <DoughStatusCard />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 items-stretch">
+        <div className="h-full"><CurrentShiftProgressCard /></div>
+        <div className="h-full"><DoughStatusCard /></div>
       </div>
 
       {/* Quick Stats */}
@@ -147,17 +144,18 @@ function OperationalDashboard() {
         {/* Today's Schedule */}
         <Link
           to="/calendar"
+          aria-label="מעבר ללוח אירועים מלא"
           className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-neon" />
-              <h2 className="font-display text-lg font-bold">📅 לוח אירועים – היום</h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <CalendarDays className="h-5 w-5 text-neon shrink-0" />
+              <h2 className="font-display text-lg font-bold truncate">📅 לוח אירועים – היום</h2>
             </div>
-            <span className="text-xs text-foreground/70">{WEEKDAYS_HE[today.getDay()]}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{WEEKDAYS_HE[today.getDay()]}</span>
           </div>
           {todayEvents.length === 0 ? (
-            <p className="text-sm text-foreground/80">אין אירועים מתוזמנים להיום.</p>
+            <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
           ) : (
             <ul className="space-y-1.5">
               {todayEvents.slice(0, 4).map((e) => (
@@ -169,17 +167,17 @@ function OperationalDashboard() {
                 >
                   <span className="truncate">{e.title}</span>
                   {e.supplier && (
-                    <span className="text-[10px] text-foreground/70 shrink-0">{e.supplier}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
                   )}
                 </li>
               ))}
               {todayEvents.length > 4 && (
-                <li className="text-xs text-foreground/70">+ {todayEvents.length - 4} נוספים</li>
+                <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
               )}
             </ul>
           )}
           <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
-            פתח לוח מלא →
+            פתח לוח מלא ←
           </span>
         </Link>
 
@@ -187,11 +185,12 @@ function OperationalDashboard() {
         <Link
           to="/notebook"
           data-tour="card-notebook"
+          aria-label="מעבר לפנקס הערות ומשימות"
           className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
-          <div className="flex items-center gap-2">
-            <StickyNote className="h-5 w-5 text-neon" />
-            <h2 className="font-display text-lg font-bold">📝 פנקס הערות ומשימות</h2>
+          <div className="flex items-center gap-2 min-w-0">
+            <StickyNote className="h-5 w-5 text-neon shrink-0" />
+            <h2 className="font-display text-lg font-bold truncate">📝 פנקס הערות ומשימות</h2>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <NotebookMini label="משימות" value={openTasks} />
@@ -199,7 +198,7 @@ function OperationalDashboard() {
             <NotebookMini label="הזמנות" value={ordersCount} />
           </div>
           <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
-            פתח פנקס →
+            פתח פנקס ←
           </span>
         </Link>
       </div>
@@ -208,12 +207,13 @@ function OperationalDashboard() {
       {tomorrowDeliveries.length > 0 && (
         <Link
           to="/calendar"
+          aria-label={`תזכורת: מחר מגיעים ${tomorrowDeliveries.length} ספקים`}
           className="block mb-6 rounded-xl border-2 border-neon/40 hover:border-neon bg-neon/5 p-4 transition"
         >
           <div className="flex items-center gap-2 mb-2">
-            <Truck className="h-5 w-5 text-neon" />
-            <h2 className="font-display text-base font-bold">
-              🔔 תזכורת — מחר מגיעים {tomorrowDeliveries.length} ספקים
+            <Truck className="h-5 w-5 text-neon shrink-0" />
+            <h2 className="font-display text-base font-bold leading-snug">
+              <bdi>🔔 תזכורת • מחר מגיעים {tomorrowDeliveries.length} ספקים</bdi>
             </h2>
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -227,7 +227,7 @@ function OperationalDashboard() {
       )}
 
       {/* Shortcut tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
         <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
         <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" />
@@ -259,14 +259,15 @@ function StatCard({
     <Link
       to={to}
       data-tour={tourId}
-      className={`rounded-xl border-2 p-4 text-right transition hover:border-neon ${
+      aria-label={`${label}: ${value}`}
+      className={`rounded-xl border-2 p-4 min-h-24 flex flex-col justify-between text-right transition hover:border-neon ${
         highlight ? "border-neon glow-neon bg-neon/5" : "border-jungle/30 bg-jungle/5"
       }`}
     >
-      <div className="text-[10px] uppercase tracking-[0.2em] text-foreground/70 font-bold">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold leading-snug">
         {label}
       </div>
-      <div className="font-display text-3xl font-black text-neon tabular-nums mt-1">
+      <div className="font-display text-3xl font-black text-neon tabular-nums mt-1 leading-none">
         {value}
       </div>
     </Link>
@@ -279,7 +280,7 @@ function NotebookMini({ label, value }: { label: string; value: number }) {
       <div className="font-display text-xl font-black text-neon tabular-nums leading-none">
         {value}
       </div>
-      <div className="text-[10px] text-foreground/70 mt-1">{label}</div>
+      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
     </div>
   );
 }
@@ -299,10 +300,11 @@ function ShortcutTile({
     <Link
       to={to}
       data-tour={tourId}
-      className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition"
+      aria-label={label}
+      className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 min-h-24 flex flex-col items-center justify-center gap-2 text-center transition"
     >
       <div className="text-neon">{icon}</div>
-      <span className="text-sm font-bold">{label}</span>
+      <span className="text-sm font-bold leading-snug">{label}</span>
     </Link>
   );
 }
