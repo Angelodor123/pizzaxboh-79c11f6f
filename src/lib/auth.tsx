@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [assignedBranchId, setAssignedBranchId] = useState<string | null>(null);
   const [tutorialVersion, setTutorialVersionState] = useState<number>(2);
   const [completedTutorialSteps, setCompletedTutorialSteps] = useState<string[]>([]);
+  const [tutorialCooldownUntil, setTutorialCooldownUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadRole = async (uid: string | undefined) => {
