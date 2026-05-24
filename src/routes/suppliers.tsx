@@ -412,6 +412,51 @@ function SupplierForm({
         </Field>
 
         <div>
+          <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">לוגו הספק</span>
+          <div className="flex items-center gap-3">
+            <div className="h-16 w-16 rounded-lg border border-border bg-background/60 overflow-hidden grid place-content-center shrink-0">
+              {previewLogo ? (
+                <img src={previewLogo} alt="לוגו" className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleLogoUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon disabled:opacity-50 self-start"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {uploading ? "מעלה…" : logoUrl ? "החלף לוגו" : "העלה לוגו"}
+              </button>
+              {logoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl(null)}
+                  className="text-[11px] text-muted-foreground hover:text-destructive self-start"
+                >
+                  הסר לוגו מותאם
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+
+        <div>
           <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי חלוקה / הגעה</span>
           <div className="flex flex-wrap gap-1.5">
             {WEEKDAYS_HE.map((w, i) => {
