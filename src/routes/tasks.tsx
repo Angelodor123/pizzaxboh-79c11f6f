@@ -477,19 +477,19 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
+                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-border overflow-hidden shadow-sm mb-2">
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
                           aria-expanded={isGroupOpen}
                           aria-label={`${g.name} — ${gDone} מתוך ${gTasks.length}`}
-                          className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-accent/40 transition"
+                          className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-4 hover:bg-gray-800 transition"
                         >
                           <ChevronDown
                             className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isGroupOpen ? "rotate-180" : ""}`}
                           />
                           <div className="text-center min-w-0">
-                            <div className="text-sm font-bold leading-snug break-words flex items-center justify-center gap-1.5">
+                            <div className="text-sm font-bold leading-snug break-words flex items-center justify-center gap-1.5 text-foreground">
                               {gPct === 100 && (
                                 <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                               )}
@@ -500,7 +500,7 @@ function TasksPage() {
                             </div>
                             <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-center gap-2">
                               <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
-                              <div className="w-20 h-1 rounded-full bg-background border border-border overflow-hidden">
+                              <div className="w-20 h-1 rounded-full bg-background/60 border border-border overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${gPct === 100 ? "bg-success" : "bg-neon"}`}
                                   style={{ width: `${gPct}%` }}
@@ -510,6 +510,7 @@ function TasksPage() {
                           </div>
                           <span className="w-4" aria-hidden />
                         </button>
+
 
 
 
