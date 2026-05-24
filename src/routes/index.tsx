@@ -191,8 +191,8 @@ function OperationalDashboard() {
           className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
         >
           <div className="flex items-center gap-2">
-            <NotebookPen className="h-5 w-5 text-neon" />
-            <h2 className="font-display text-lg font-bold">📋 פנקס עבודה יומי</h2>
+            <StickyNote className="h-5 w-5 text-neon" />
+            <h2 className="font-display text-lg font-bold">📝 פנקס הערות ומשימות</h2>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <NotebookMini label="משימות" value={openTasks} />
