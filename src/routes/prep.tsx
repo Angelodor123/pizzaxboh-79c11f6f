@@ -3,9 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
-import { CheckCircle2, AlertTriangle, Search, Plus } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Search, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { QuickAddItemModal } from "@/components/QuickAddItemModal";
+import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEditStockItemDialog";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 
@@ -47,6 +48,7 @@ function PrepPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Item | null>(null);
   const wd = new Date().getDay();
   const targetCol = DAY_COLS[wd];
   const today = todayIso();
@@ -145,6 +147,8 @@ function PrepPage() {
               draft={draft}
               toPrep={toPrep}
               done={done}
+              showEdit={isSuperAdmin}
+              onEdit={() => setEditing(it)}
               onSwipeRight={() => { void persist(it.id, target, true); }}
               onSwipeLeft={() => { setDrafts((p) => ({ ...p, [it.id]: "" })); void persist(it.id, 0, false); }}
               onFocus={() => setDrafts((p) => ({ ...p, [it.id]: String(stock || "") }))}
@@ -169,6 +173,15 @@ function PrepPage() {
         branchId={getActiveBranchIdSync()}
         onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
       />
+
+      <QuickEditStockItemDialog
+        item={editing as unknown as StockItem | null}
+        kind="prep"
+        onClose={() => setEditing(null)}
+        onSaved={(upd) =>
+          setItems((prev) => prev.map((x) => (x.id === upd.id ? ({ ...x, ...upd } as Item) : x)))
+        }
+      />
     </div>
   );
 
@@ -177,6 +190,7 @@ function PrepPage() {
 interface RowProps {
   name: string; unit: string; target: number; stock: number; draft?: string;
   toPrep: number; done: boolean;
+  showEdit?: boolean; onEdit?: () => void;
   onSwipeRight: () => void; onSwipeLeft: () => void;
   onFocus: () => void; onChange: (v: string) => void; onBlur: () => void;
 }
@@ -198,7 +212,18 @@ function PrepRow(p: RowProps) {
           <span>{p.name}</span>
           {p.unit && <span className="text-xs text-muted-foreground">({p.unit})</span>}
         </div>
-        <div className="text-xs text-muted-foreground">יעד: <span className="font-bold text-foreground">{p.target}</span></div>
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-muted-foreground">יעד: <span className="font-bold text-foreground">{p.target}</span></div>
+          {p.showEdit && (
+            <button
+              onClick={p.onEdit}
+              aria-label="עריכת פריט"
+              className="text-muted-foreground hover:text-neon transition p-1 -m-1"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 items-center">
         <label className="text-xs text-muted-foreground">
