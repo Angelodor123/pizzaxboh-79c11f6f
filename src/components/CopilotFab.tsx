@@ -324,11 +324,12 @@ export function CopilotFab() {
             "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
             "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
             "flex flex-col overflow-hidden animate-scale-in",
-            "w-96 h-[500px] max-w-[90vw] max-h-[85dvh]",
+            // Mobile: bottom sheet that fills available width; Desktop: floating window
+            "left-2 right-2 sm:left-auto sm:right-4 sm:w-96",
+            "h-[min(500px,var(--copilot-h,85dvh))] sm:h-[500px] sm:max-h-[85dvh]",
           )}
           style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
-            right: "1rem",
+            bottom: "calc(var(--copilot-bottom, 5rem) + env(safe-area-inset-bottom, 0px))",
           }}
         >
           {/* Header */}
