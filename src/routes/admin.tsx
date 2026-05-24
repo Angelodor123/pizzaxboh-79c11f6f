@@ -36,6 +36,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
 import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
+import { BranchesPanel } from "@/components/admin/BranchesPanel";
+import { Building2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -51,6 +53,7 @@ interface InvitationRow {
   email: string;
   role: AppRole;
   created_at: string;
+  assigned_branch_id: string | null;
 }
 
 interface RoleRow {
@@ -58,6 +61,12 @@ interface RoleRow {
   email: string;
   role: AppRole;
   user_id: string;
+  assigned_branch_id: string | null;
+}
+
+interface BranchOption {
+  id: string;
+  name: string;
 }
 
 function AdminGate() {
@@ -221,7 +230,8 @@ function AdminPage() {
     }
   };
 
-  const [tab, setTab] = useState<"recipes" | "users" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
+  const { isSuperAdmin } = useAuth();
+  const [tab, setTab] = useState<"recipes" | "users" | "branches" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -242,6 +252,11 @@ function AdminPage() {
         <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={<Users className="h-4 w-4" />}>
           הרשאות
         </TabButton>
+        {isSuperAdmin && (
+          <TabButton active={tab === "branches"} onClick={() => setTab("branches")} icon={<Building2 className="h-4 w-4" />}>
+            סניפים
+          </TabButton>
+        )}
         <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
           תזכורות ספקים
         </TabButton>
@@ -263,6 +278,7 @@ function AdminPage() {
       </div>
 
       {tab === "users" && <InvitationsPanel />}
+      {tab === "branches" && isSuperAdmin && <BranchesPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
       {tab === "cms" && <ContentTextsPanel />}
       {tab === "onboarding" && <OnboardingPanel />}
@@ -584,26 +600,37 @@ function InvitationsPanel() {
   const [invites, setInvites] = useState<InvitationRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [superAdminIds, setSuperAdminIds] = useState<Set<string>>(new Set());
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [fullNames, setFullNames] = useState<Map<string, string>>(new Map());
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AppRole>("viewer");
+  const [inviteBranch, setInviteBranch] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const [{ data: i }, { data: r }, { data: s }] = await Promise.all([
+    const [{ data: i }, { data: r }, { data: s }, { data: b }, { data: p }] = await Promise.all([
       supabase
         .from("invitations")
-        .select("id,email,role,created_at")
+        .select("id,email,role,created_at,assigned_branch_id")
         .order("created_at", { ascending: false }),
       supabase
         .from("user_roles")
-        .select("id,email,role,user_id")
+        .select("id,email,role,user_id,assigned_branch_id")
         .order("created_at", { ascending: false }),
       supabase.rpc("list_super_admin_user_ids"),
+      supabase.from("branches").select("id,name").eq("active", true).order("name"),
+      supabase.rpc("list_user_profiles"),
     ]);
     setInvites((i ?? []) as InvitationRow[]);
     setRoles((r ?? []) as RoleRow[]);
     setSuperAdminIds(new Set(((s ?? []) as string[])));
+    setBranches((b ?? []) as BranchOption[]);
+    const m = new Map<string, string>();
+    ((p ?? []) as { user_id: string; full_name: string | null }[]).forEach((row) => {
+      if (row.full_name) m.set(row.user_id, row.full_name);
+    });
+    setFullNames(m);
   };
 
   useEffect(() => {
@@ -628,10 +655,17 @@ function InvitationsPanel() {
       setError("רק סופר-אדמין יכול להזמין מנהל חדש");
       return;
     }
+    if (role === "viewer" && !inviteBranch) {
+      setError("יש לבחור סניף עבור משתמש צפייה");
+      return;
+    }
     setBusy(true);
     const { error: e } = await supabase
       .from("invitations")
-      .upsert({ email: clean, role }, { onConflict: "email" });
+      .upsert(
+        { email: clean, role, assigned_branch_id: inviteBranch || null },
+        { onConflict: "email" },
+      );
     if (e) {
       setBusy(false);
       setError(e.message);
@@ -650,6 +684,20 @@ function InvitationsPanel() {
     }
     setBusy(false);
     setEmail("");
+    setInviteBranch("");
+    await load();
+  };
+
+  const updateUserBranch = async (id: string, branchId: string | null) => {
+    const { error: e } = await supabase
+      .from("user_roles")
+      .update({ assigned_branch_id: branchId })
+      .eq("id", id);
+    if (e) {
+      toast.error(e.message);
+      return;
+    }
+    toast.success("השיוך עודכן");
     await load();
   };
 
@@ -659,6 +707,7 @@ function InvitationsPanel() {
     if (e) { setError(e.message); return; }
     await load();
   };
+
 
   const revokeUser = async (id: string, userRole: AppRole, userId: string) => {
     if (userRole === "admin" && !isSuperAdmin) {
@@ -721,6 +770,16 @@ function InvitationsPanel() {
           <option value="viewer">צפייה בלבד</option>
           {isSuperAdmin && <option value="admin">ניהול</option>}
         </select>
+        <select
+          value={inviteBranch}
+          onChange={(e) => setInviteBranch(e.target.value)}
+          className="bg-input border border-border rounded-md px-3 py-2 text-right"
+        >
+          <option value="">— בחר סניף —</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
         <button
           onClick={invite}
           disabled={busy}
@@ -757,7 +816,12 @@ function InvitationsPanel() {
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="text-right flex-1 min-w-0 flex flex-col items-end gap-1">
-                  <div className="text-sm font-bold truncate w-full text-right" dir="ltr">
+                  {fullNames.get(u.user_id) && (
+                    <div className="text-sm font-bold truncate w-full text-right">
+                      {fullNames.get(u.user_id)}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground truncate w-full text-right" dir="ltr">
                     {u.email}
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap justify-end">
@@ -770,6 +834,18 @@ function InvitationsPanel() {
                       {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
                     </span>
                   </div>
+                  {isSuperAdmin && !superAdminIds.has(u.user_id) && (
+                    <select
+                      value={u.assigned_branch_id ?? ""}
+                      onChange={(e) => updateUserBranch(u.id, e.target.value || null)}
+                      className="bg-input border border-border rounded-md px-2 py-1 text-[11px] text-right mt-1"
+                    >
+                      <option value="">— ללא סניף —</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </li>
             ))}

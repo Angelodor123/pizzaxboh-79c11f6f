@@ -236,6 +236,7 @@ export type Database = {
       }
       invitations: {
         Row: {
+          assigned_branch_id: string | null
           created_at: string
           email: string
           id: string
@@ -243,6 +244,7 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
+          assigned_branch_id?: string | null
           created_at?: string
           email: string
           id?: string
@@ -250,6 +252,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
         }
         Update: {
+          assigned_branch_id?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -483,18 +486,21 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          full_name: string | null
           has_accepted_nda: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          full_name?: string | null
           has_accepted_nda?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          full_name?: string | null
           has_accepted_nda?: boolean
           updated_at?: string
           user_id?: string
@@ -836,6 +842,13 @@ export type Database = {
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       list_super_admin_user_ids: { Args: never; Returns: string[] }
+      list_user_profiles: {
+        Args: never
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       notebook_daily_reset: { Args: never; Returns: undefined }
     }
     Enums: {
