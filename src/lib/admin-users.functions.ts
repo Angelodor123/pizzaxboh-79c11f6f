@@ -30,7 +30,11 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     await assertSuperAdmin(context.userId);
 
     // Patch user_roles
-    const rolePatch: Record<string, unknown> = {};
+    const rolePatch: {
+      email?: string;
+      role?: "admin" | "viewer";
+      assigned_branch_id?: string | null;
+    } = {};
     if (data.email) rolePatch.email = data.email.toLowerCase();
     if (data.role) rolePatch.role = data.role;
     if (data.assignedBranchId !== undefined)
