@@ -64,7 +64,6 @@ export function QuickEditStockItemDialog({ item, kind, onClose, onSaved }: Props
   }, [item]);
 
   const open = !!item;
-  const table = kind === "prep" ? "prep_items" : "restock_items";
   const title = kind === "prep" ? "עריכת פריט הכנה" : "עריכת פריט השלמה";
 
   const handleSave = async () => {
