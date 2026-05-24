@@ -256,9 +256,11 @@ function AuthedShell() {
         </div>
       </header>
       <main className="flex-1">
+        <PageHeader />
         <PageOnboarding pageKey={pageKeyFromPath(pathname)} />
         <Outlet />
       </main>
+
       <GuidedTour />
       <ReplayTourButton />
       {showQuickBack && <QuickBackBubble />}
