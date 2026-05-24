@@ -171,22 +171,22 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
 
   return (
     <section className="rounded-2xl border border-border bg-card/80 backdrop-blur p-4 sm:p-5">
-      <header className="flex items-center justify-between gap-2 mb-3">
-        <div className="min-w-0">
-          <h2 className="font-display text-lg font-bold text-right">
+      <header className="mb-3">
+        <div className="text-center">
+          <h2 className="font-display text-lg font-bold">
             {cfg.emoji} {cfg.title}
           </h2>
-          <div className="text-[11px] text-muted-foreground mt-0.5 text-right tabular-nums">
-            {items.length} פריטים · {doneCount} הושלמו
+          <div className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
+            <bdi>{items.length}</bdi> פריטים · <bdi>{doneCount}</bdi> הושלמו
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="mt-3 flex items-center justify-center flex-wrap gap-1.5">
           <button
             type="button"
             onClick={shareWhatsApp}
             aria-label="שתף בוואטסאפ"
             title="שתף בוואטסאפ"
-            className="p-2 rounded-md border border-border hover:border-jungle hover:text-jungle text-muted-foreground transition"
+            className="p-2 rounded-md border border-border hover:border-jungle hover:text-jungle active:scale-95 text-muted-foreground transition min-h-11 min-w-11 inline-flex items-center justify-center"
           >
             <MessageCircle className="h-4 w-4" />
           </button>
@@ -195,7 +195,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             onClick={copyToClipboard}
             aria-label="העתק רשימה"
             title="העתק רשימה"
-            className="p-2 rounded-md border border-border hover:border-neon hover:text-neon text-muted-foreground transition"
+            className="p-2 rounded-md border border-border hover:border-neon hover:text-neon active:scale-95 text-muted-foreground transition min-h-11 min-w-11 inline-flex items-center justify-center"
           >
             <Copy className="h-4 w-4" />
           </button>
@@ -204,7 +204,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             onClick={nativeShare}
             aria-label="שתף"
             title="שתף"
-            className="p-2 rounded-md border border-border hover:border-neon hover:text-neon text-muted-foreground transition"
+            className="p-2 rounded-md border border-border hover:border-neon hover:text-neon active:scale-95 text-muted-foreground transition min-h-11 min-w-11 inline-flex items-center justify-center"
           >
             <Share2 className="h-4 w-4" />
           </button>
@@ -212,7 +212,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             <button
               type="button"
               onClick={() => bulk.toggleAll(items.map((i) => i.id))}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-neon hover:border-neon transition px-2 py-1 rounded-md border border-border"
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-neon hover:border-neon active:scale-95 transition px-2 py-1 rounded-md border border-border min-h-9"
               title="בחירה מרובה"
             >
               <CheckSquare className="h-3 w-3" />
@@ -223,7 +223,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             <button
               type="button"
               onClick={() => void clearDone(cfg.key)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-destructive transition px-2 py-1 rounded-md border border-border"
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-destructive active:scale-95 transition px-2 py-1 rounded-md border border-border min-h-9"
             >
               <Trash2 className="h-3 w-3" />
               נקה הושלמו
@@ -239,20 +239,22 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
         }}
         className="flex gap-2 mb-3"
       >
-        <button
-          type="submit"
-          aria-label="הוסף פריט"
-          disabled={!draft.trim()}
-          className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md bg-neon text-primary-foreground glow-neon disabled:opacity-40 disabled:glow-none"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={cfg.placeholder}
+          maxLength={500}
+          aria-label={`הוסף פריט ל${cfg.title}`}
+          className="flex-1 min-w-0 bg-input border border-border rounded-md px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
+          dir="rtl"
+        />
         <button
           type="button"
           onClick={() => setUrgent((u) => !u)}
           aria-pressed={urgent}
+          aria-label={urgent ? "בטל סימון דחוף" : "סמן כדחוף"}
           title={urgent ? "דחוף" : "סמן כדחוף"}
-          className={`shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border transition ${
+          className={`shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border transition active:scale-95 ${
             urgent
               ? "bg-neon/15 border-neon text-neon glow-neon"
               : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
@@ -260,15 +262,16 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
         >
           <Flame className="h-4 w-4" />
         </button>
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={cfg.placeholder}
-          maxLength={500}
-          className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
-          dir="rtl"
-        />
+        <button
+          type="submit"
+          aria-label="הוסף פריט"
+          disabled={!draft.trim()}
+          className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md bg-neon text-primary-foreground glow-neon disabled:opacity-40 disabled:glow-none active:scale-95 transition"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
       </form>
+
 
       {items.length === 0 ? (
         <p className="text-center text-xs text-muted-foreground py-6 border border-dashed border-border rounded-md">
