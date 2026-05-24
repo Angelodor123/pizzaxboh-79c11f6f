@@ -40,12 +40,12 @@ export function NdaGate({ children }: { children: React.ReactNode }) {
     setSubmitting(false);
   };
 
-  // Render app while we resolve; gate overlays only when explicitly false.
-  return (
-    <>
-      {children}
-      {accepted === false && (
-        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-md flex items-center justify-center px-4">
+  // Block content until NDA is decided AND accepted — onboarding banners and
+  // page content must NEVER appear behind the NDA modal.
+  if (session?.user?.id && accepted !== true) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center px-4">
+        {accepted === false && (
           <div className="max-w-lg w-full rounded-2xl border-2 border-neon bg-card p-6 glow-neon">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="h-6 w-6 text-neon" />
@@ -63,8 +63,11 @@ export function NdaGate({ children }: { children: React.ReactNode }) {
               {submitting ? "מאשר…" : "מאשר/ת"}
             </button>
           </div>
-        </div>
-      )}
-    </>
-  );
+        )}
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 }
+

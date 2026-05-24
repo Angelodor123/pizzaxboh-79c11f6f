@@ -14,6 +14,8 @@ import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { QuickBackBubble } from "@/components/QuickBackBubble";
 import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
+import { PageHeader } from "@/components/PageHeader";
+
 import { GuidedTour, ReplayTourButton } from "@/components/GuidedTour";
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
@@ -254,9 +256,11 @@ function AuthedShell() {
         </div>
       </header>
       <main className="flex-1">
+        <PageHeader />
         <PageOnboarding pageKey={pageKeyFromPath(pathname)} />
         <Outlet />
       </main>
+
       <GuidedTour />
       <ReplayTourButton />
       {showQuickBack && <QuickBackBubble />}
