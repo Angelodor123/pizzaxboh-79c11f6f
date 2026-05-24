@@ -80,19 +80,25 @@ export function CategoryDrawer() {
     openDishes,
     setDrawerOpen,
   } = useUIStore();
-  const { email, role, signOut } = useAuth();
+  const {
+    email,
+    role,
+    isSuperAdmin: effIsSuperAdmin,
+    realIsSuperAdmin,
+    simulatedRole,
+    setSimulatedRole,
+    signOut,
+  } = useAuth();
   const [recipesOpen, setRecipesOpen] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
 
-  // RBAC mapping. DB currently exposes `admin` and `viewer`; the menu spec
-  // calls these super_admin / employee, with a future `manager` slotting in
-  // between for logistics-only access.
-  // - admin       -> super_admin (all groups)
-  // - manager     -> manager     (groups A + B)  // reserved for future role
-  // - viewer/null -> employee    (group A only)
-  const roleStr = (role as string | null) ?? "";
-  const isSuperAdmin = roleStr === "admin" || roleStr === "super_admin";
-  const isManager = roleStr === "manager";
+  // Effective role mapping for menu visibility. Uses the *effective* values
+  // from useAuth() so "View As" simulation immediately rewires the menu.
+  // - admin role + super admin flag → super_admin (all groups)
+  // - admin role only               → manager     (groups A + B)
+  // - viewer / null                 → employee    (group A only)
+  const isSuperAdmin = effIsSuperAdmin;
+  const isManager = role === "admin" && !effIsSuperAdmin;
   const canSeeLogistics = isSuperAdmin || isManager;
   const canSeeManagement = isSuperAdmin;
   const isDishesView = category === "dishes";
@@ -313,23 +319,73 @@ export function CategoryDrawer() {
           )}
         </nav>
 
-        {/* Sticky footer: email + logout */}
-        <div className="sticky bottom-0 border-t border-zinc-800/60 bg-[#18181b] px-6 py-4 flex items-center justify-between gap-3">
-          {email && (
-            <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
-              {email}
+        {/* Sticky footer: View As (super admins only) + email + logout */}
+        <div className="sticky bottom-0 border-t border-zinc-800/60 bg-[#18181b]">
+          {realIsSuperAdmin && (
+            <div className="px-6 pt-3 pb-2 border-b border-zinc-800/40">
+              <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-zinc-500 mb-1.5 text-right">
+                תצוגת ממשק:
+              </div>
+              <div
+                role="group"
+                aria-label="תצוגת ממשק"
+                className="flex items-stretch rounded-md bg-zinc-800/50 border border-zinc-700/60 p-0.5 text-xs"
+                dir="rtl"
+              >
+                {(
+                  [
+                    { key: "super_admin", label: "סופר אדמין" },
+                    { key: "manager", label: "מנהל" },
+                    { key: "employee", label: "עובד" },
+                  ] as const
+                ).map((opt) => {
+                  const active =
+                    (simulatedRole ?? "super_admin") === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() =>
+                        setSimulatedRole(
+                          opt.key === "super_admin" ? null : opt.key,
+                        )
+                      }
+                      className={`flex-1 px-2 py-1.5 rounded-[5px] font-bold transition-colors ${
+                        active
+                          ? "bg-neon text-primary-foreground shadow-sm"
+                          : "text-zinc-300 hover:bg-zinc-700/60"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {simulatedRole && (
+                <div className="mt-1.5 text-[10px] text-neon/80 text-right">
+                  מצב סימולציה פעיל
+                </div>
+              )}
             </div>
           )}
-          <button
-            onClick={async () => {
-              close();
-              await signOut();
-            }}
-            className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
-          >
-            <LogOut className="h-4 w-4" />
-            התנתק
-          </button>
+          <div className="px-6 py-4 flex items-center justify-between gap-3">
+            {email && (
+              <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
+                {email}
+              </div>
+            )}
+            <button
+              onClick={async () => {
+                close();
+                await signOut();
+              }}
+              className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
+            >
+              <LogOut className="h-4 w-4" />
+              התנתק
+            </button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

@@ -3,13 +3,23 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "viewer";
+export type SimulatedRole = "super_admin" | "manager" | "employee";
 
 interface AuthState {
   session: Session | null;
   email: string | null;
   fullName: string | null;
+  /** Effective role (respects "View As" simulation when super admin). */
   role: AppRole | null;
+  /** Effective super-admin flag (respects simulation). */
   isSuperAdmin: boolean;
+  /** Real DB role, never overridden by simulation. */
+  realRole: AppRole | null;
+  /** Real DB super-admin flag, never overridden by simulation. */
+  realIsSuperAdmin: boolean;
+  /** Currently simulated role (active only when real user is super admin). */
+  simulatedRole: SimulatedRole | null;
+  setSimulatedRole: (r: SimulatedRole | null) => void;
   assignedBranchId: string | null;
   tutorialVersion: number;
   completedTutorialSteps: string[];
@@ -35,6 +45,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [completedTutorialSteps, setCompletedTutorialSteps] = useState<string[]>([]);
   const [tutorialCooldownUntil, setTutorialCooldownUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [simulatedRole, setSimulatedRoleState] = useState<SimulatedRole | null>(null);
+
+  // Hydrate simulated role from sessionStorage (only honored if real user is super admin).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const v = sessionStorage.getItem("pizzax-sim-role");
+    if (v === "super_admin" || v === "manager" || v === "employee") {
+      setSimulatedRoleState(v);
+    }
+  }, []);
+
+  const setSimulatedRole = (r: SimulatedRole | null) => {
+    setSimulatedRoleState(r);
+    if (typeof window !== "undefined") {
+      if (r) sessionStorage.setItem("pizzax-sim-role", r);
+      else sessionStorage.removeItem("pizzax-sim-role");
+    }
+  };
 
   const loadRole = async (uid: string | undefined) => {
     if (!uid) {
@@ -133,14 +162,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadRole(session?.user?.id);
   };
 
+  // Apply simulation only when the real user is super admin.
+  const sim = isSuperAdmin ? simulatedRole : null;
+  const effectiveRole: AppRole | null = sim
+    ? sim === "employee"
+      ? "viewer"
+      : "admin"
+    : role;
+  const effectiveIsSuperAdmin = sim ? sim === "super_admin" : isSuperAdmin;
+
   return (
     <AuthContext.Provider
       value={{
         session,
         email: session?.user?.email ?? null,
         fullName,
-        role,
-        isSuperAdmin,
+        role: effectiveRole,
+        isSuperAdmin: effectiveIsSuperAdmin,
+        realRole: role,
+        realIsSuperAdmin: isSuperAdmin,
+        simulatedRole: sim,
+        setSimulatedRole,
         assignedBranchId,
         tutorialVersion,
         completedTutorialSteps,
