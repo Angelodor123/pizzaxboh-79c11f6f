@@ -901,7 +901,12 @@ function InvitationsPanel() {
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="text-right flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate" dir="ltr">
+                  {inv.full_name && (
+                    <div className="text-sm font-bold truncate text-right">
+                      {inv.full_name}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground truncate" dir="ltr">
                     {inv.email}
                   </div>
                   <div className="text-[10px] text-neon font-bold">
