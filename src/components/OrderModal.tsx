@@ -65,7 +65,7 @@ export function OrderModal({ supplier, onClose }: Props) {
       await supabase.from("supplier_orders_history").insert({
         branch_id: branchId,
         supplier_id: supplier.id,
-        order_details: { rows, notes, message } as unknown as Record<string, unknown>,
+        order_details: JSON.parse(JSON.stringify({ rows, notes, message })),
       });
     } catch (e) {
       console.error("saveHistory failed", e);
