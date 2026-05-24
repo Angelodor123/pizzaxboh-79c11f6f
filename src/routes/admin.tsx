@@ -845,7 +845,7 @@ function InvitationsPanel() {
                       {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
                     </span>
                     {u.assigned_branch_id && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-success/15 text-success border border-success/40 whitespace-nowrap">
                         🏢 {branches.find((b) => b.id === u.assigned_branch_id)?.name ?? "—"}
                       </span>
                     )}
@@ -1167,7 +1167,7 @@ function SupplierRemindersPanel() {
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleRecipient(u.user_id)}
-                  className="h-4 w-4 accent-[oklch(0.65_0.31_5)] shrink-0"
+                  className="h-4 w-4 accent-[var(--neon)] shrink-0"
                 />
                 <div className="flex-1 text-right min-w-0">
                   <div className="text-sm font-bold truncate" dir="ltr">{u.email}</div>
