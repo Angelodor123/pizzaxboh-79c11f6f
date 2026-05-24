@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { NotebookPen, CalendarDays, ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
+import { CalendarDays, ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
 import { useCookbookStore } from "@/lib/store";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
