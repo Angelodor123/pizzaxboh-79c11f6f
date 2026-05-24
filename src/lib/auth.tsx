@@ -136,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshRole,
         setTutorialVersion,
         markTutorialStepComplete,
+        markTutorialStepsComplete,
       }}
     >
       {children}
