@@ -1015,22 +1015,22 @@ function EventForm({
         .input {
           width: 100%;
           min-height: 2.5rem;
-          background: hsl(var(--background));
-          border: 1.5px solid hsl(var(--border));
+          background: var(--background);
+          border: 1.5px solid var(--border);
           border-radius: 0.5rem;
           padding: 0.55rem 0.85rem;
           font-size: 0.95rem;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
           text-align: right;
           transition: border-color .15s, box-shadow .15s, background .15s;
         }
-        .input::placeholder { color: hsl(var(--muted-foreground) / 0.7); }
-        .input:hover { border-color: hsl(var(--neon, var(--primary)) / 0.5); }
+        .input::placeholder { color: color-mix(in oklab, var(--muted-foreground) 70%, transparent); }
+        .input:hover { border-color: color-mix(in oklab, var(--neon) 50%, transparent); }
         .input:focus {
           outline: none;
-          background: hsl(var(--card));
-          border-color: hsl(var(--neon, var(--primary)));
-          box-shadow: 0 0 0 3px hsl(var(--neon, var(--primary)) / 0.25);
+          background: var(--card);
+          border-color: var(--neon);
+          box-shadow: 0 0 0 3px color-mix(in oklab, var(--neon) 25%, transparent);
         }
       `}</style>
     </div>
