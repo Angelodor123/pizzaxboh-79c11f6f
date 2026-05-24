@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, BookOpen, Save, Loader2, CheckCircle2, CloudSnow } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, BookOpen, Loader2, CheckCircle2, CloudSnow } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -32,7 +32,6 @@ type LogState = {
   completed_by: string | null;
   completed_by_user_id: string | null;
   comments: string;
-  dirty: boolean;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
@@ -69,6 +68,39 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     prep_item_id: null,
   },
 ];
+
+// Map a group name to a contextual emoji prefix. Matches by exact or partial
+// name so renamed groups keep visual scanning intact.
+const GROUP_EMOJI_MAP: Array<{ match: RegExp; emoji: string }> = [
+  { match: /בקרת מלאי והעמדת סירים/, emoji: "📋" },
+  { match: /הכנות פס/, emoji: "🔪" },
+  { match: /הכנת רטבים|^רטבים$/, emoji: "🍅" },
+  { match: /מטבלים|דיפים/, emoji: "🥣" },
+  { match: /איולים/, emoji: "🧄" },
+  { match: /עלים|ירוקים/, emoji: "🥬" },
+  { match: /סקוויזרים.*מלוח|מלוח.*סקוויזר/, emoji: "🧂" },
+  { match: /סקוויזרים.*מתוק|מתוק.*סקוויזר/, emoji: "🍯" },
+  { match: /שקיות|מארזים|טייק/, emoji: "🛍️" },
+  { match: /תפעול|ארגון המטבח/, emoji: "📦" },
+  { match: /ספקים|לוגיסטיק|מחסן/, emoji: "🚚" },
+  { match: /ניקיון.*ציוד.*מכונ|מכונות|כיורים/, emoji: "🧽" },
+  { match: /ניקיון|תחזוק/, emoji: "🧹" },
+  { match: /פס הכנות|ניהול מלאי/, emoji: "🔄" },
+  { match: /מסעדה|ישיבת חוץ/, emoji: "🪑" },
+  { match: /אדמיניסטרצי|אשפה|סגירת משמרת/, emoji: "🗑️" },
+  { match: /יציאה|סגירה סופית|צ.?ק ליסט/, emoji: "🔒" },
+  { match: /הכנ/, emoji: "🍳" },
+  { match: /השלמ|סופר/, emoji: "🛒" },
+];
+
+function emojiForGroup(name: string): string {
+  // Already starts with emoji? Keep as-is.
+  if (/^\p{Extended_Pictographic}/u.test(name)) return "";
+  for (const { match, emoji } of GROUP_EMOJI_MAP) {
+    if (match.test(name)) return emoji;
+  }
+  return "📌";
+}
 
 function useSevereWeather() {
   const [severe, setSevere] = useState(false);
@@ -114,8 +146,10 @@ function TasksPage() {
   const [openShift, setOpenShift] = useState<string | null>(null);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
+
+  // Debounce timers per task id for comment autosave
+  const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
     if (!branchId) return;
@@ -138,7 +172,6 @@ function TasksPage() {
           completed_by: l.completed_by,
           completed_by_user_id: l.completed_by_user_id,
           comments: l.comments ?? "",
-          dirty: false,
         });
       });
       setLogs(map);
@@ -149,6 +182,14 @@ function TasksPage() {
       abort = true;
     };
   }, [branchId]);
+
+  // Cleanup any pending debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      commentTimers.current.forEach((t) => clearTimeout(t));
+      commentTimers.current.clear();
+    };
+  }, []);
 
   const allTasks = useMemo(() => {
     const list = [...tasks];
@@ -161,127 +202,124 @@ function TasksPage() {
     [allTasks, logs],
   );
 
-  const toggleTask = (taskId: string) => {
-    setLogs((m) => {
-      const next = new Map(m);
-      const prev = next.get(taskId);
-      const completed = !(prev?.completed ?? false);
-      next.set(taskId, {
-        completed,
-        completed_at: completed ? new Date().toISOString() : null,
-        completed_by: completed ? fullName : prev?.completed_by ?? null,
-        completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
-        comments: prev?.comments ?? "",
-        dirty: true,
-      });
-      return next;
-    });
-  };
-
-  const updateComment = (taskId: string, value: string) => {
-    if (value.length > 2000) value = value.slice(0, 2000);
-    setLogs((m) => {
-      const next = new Map(m);
-      const prev = next.get(taskId);
-      next.set(taskId, {
-        completed: prev?.completed ?? false,
-        completed_at: prev?.completed_at ?? null,
-        completed_by: prev?.completed_by ?? null,
-        completed_by_user_id: prev?.completed_by_user_id ?? null,
-        comments: value,
-        dirty: true,
-      });
-      return next;
-    });
-  };
-
   const groupsForShift = (shiftId: string) =>
     groups.filter((g) => g.shift_id === shiftId);
   const tasksForGroup = (groupId: string) =>
     allTasks.filter((t) => t.group_id === groupId);
 
-  const syncParLevels = async (changedTaskIds: string[]) => {
-    // Find groups whose every task is completed AND has a prep_item_id linked
-    const affectedGroupIds = new Set<string>();
-    changedTaskIds.forEach((tid) => {
-      const t = tasks.find((x) => x.id === tid);
-      if (t) affectedGroupIds.add(t.group_id);
-    });
-    for (const gid of affectedGroupIds) {
-      const groupTasks = tasks.filter((t) => t.group_id === gid);
-      if (groupTasks.length === 0) continue;
-      const allDone = groupTasks.every((t) => logs.get(t.id)?.completed);
-      if (!allDone) continue;
-      const linked = groupTasks.filter((t) => t.prep_item_id);
-      if (linked.length === 0) continue;
-      // For each linked prep item, set current_stock = today's target
-      const dow = new Date().getDay(); // 0..6 Sun..Sat
-      const targetCol = ["target_sun", "target_mon", "target_tue", "target_wed", "target_thu", "target_fri", "target_sat"][dow];
-      const { data: prepItems } = await supabase
-        .from("prep_items")
-        .select("*")
-        .in("id", linked.map((t) => t.prep_item_id as string));
-      if (!prepItems) continue;
-      const today = new Date().toISOString().slice(0, 10);
-      for (const pi of prepItems) {
-        const target = Number((pi as Record<string, unknown>)[targetCol]) || 0;
-        await supabase.from("prep_log").upsert(
-          {
-            prep_item_id: pi.id,
-            log_date: today,
-            current_stock: target,
-            completed: true,
-          },
-          { onConflict: "prep_item_id,log_date" },
-        );
-      }
+  const syncParLevelsForTask = async (taskId: string) => {
+    const t = tasks.find((x) => x.id === taskId);
+    if (!t) return;
+    const groupTasks = tasks.filter((x) => x.group_id === t.group_id);
+    if (groupTasks.length === 0) return;
+    const allDone = groupTasks.every((x) => logs.get(x.id)?.completed);
+    if (!allDone) return;
+    const linked = groupTasks.filter((x) => x.prep_item_id);
+    if (linked.length === 0) return;
+    const dow = new Date().getDay();
+    const targetCol = ["target_sun", "target_mon", "target_tue", "target_wed", "target_thu", "target_fri", "target_sat"][dow];
+    const { data: prepItems } = await supabase
+      .from("prep_items")
+      .select("*")
+      .in("id", linked.map((x) => x.prep_item_id as string));
+    if (!prepItems) return;
+    const today = new Date().toISOString().slice(0, 10);
+    for (const pi of prepItems) {
+      const target = Number((pi as Record<string, unknown>)[targetCol]) || 0;
+      await supabase.from("prep_log").upsert(
+        {
+          prep_item_id: pi.id,
+          log_date: today,
+          current_stock: target,
+          completed: true,
+        },
+        { onConflict: "prep_item_id,log_date" },
+      );
     }
   };
 
-  const save = async () => {
-    if (!branchId) return;
-    setSaving(true);
+  // Persist a single task's log row immediately.
+  const persistTask = async (taskId: string, state: LogState) => {
+    if (!branchId || taskId.startsWith("__virtual_")) return;
     try {
-      const dirtyTaskIds: string[] = [];
-      const rows = Array.from(logs.entries())
-        .filter(([tid, l]) => l.dirty && !tid.startsWith("__virtual_"))
-        .map(([tid, l]) => {
-          dirtyTaskIds.push(tid);
-          return {
-            branch_id: branchId,
-            task_id: tid,
-            log_date: logDate,
-            completed: l.completed,
-            completed_at: l.completed_at,
-            completed_by: l.completed_by,
-            completed_by_user_id: l.completed_by_user_id,
-            comments: l.comments,
-          };
-        });
-      await upsertLogs(rows);
-      // clear dirty flags
-      setLogs((m) => {
-        const next = new Map(m);
-        dirtyTaskIds.forEach((tid) => {
-          const cur = next.get(tid);
-          if (cur) next.set(tid, { ...cur, dirty: false });
-        });
-        return next;
-      });
-      await syncParLevels(dirtyTaskIds);
-      toast.success("השינויים נשמרו בהצלחה");
+      await upsertLogs([
+        {
+          branch_id: branchId,
+          task_id: taskId,
+          log_date: logDate,
+          completed: state.completed,
+          completed_at: state.completed_at,
+          completed_by: state.completed_by,
+          completed_by_user_id: state.completed_by_user_id,
+          comments: state.comments,
+        },
+      ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "שמירה נכשלה");
-    } finally {
-      setSaving(false);
     }
   };
 
-  const dirtyCount = Array.from(logs.values()).filter((l) => l.dirty).length;
+  const toggleTask = (taskId: string) => {
+    let nextState: LogState | null = null;
+    setLogs((m) => {
+      const next = new Map(m);
+      const prev = next.get(taskId);
+      const completed = !(prev?.completed ?? false);
+      nextState = {
+        completed,
+        completed_at: completed ? new Date().toISOString() : null,
+        completed_by: completed ? fullName : prev?.completed_by ?? null,
+        completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
+        comments: prev?.comments ?? "",
+      };
+      next.set(taskId, nextState);
+      return next;
+    });
+    // Optimistic: fire-and-forget persistence
+    if (nextState) {
+      void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
+    }
+  };
+
+  const updateComment = (taskId: string, value: string) => {
+    if (value.length > 2000) value = value.slice(0, 2000);
+    let nextState: LogState | null = null;
+    setLogs((m) => {
+      const next = new Map(m);
+      const prev = next.get(taskId);
+      nextState = {
+        completed: prev?.completed ?? false,
+        completed_at: prev?.completed_at ?? null,
+        completed_by: prev?.completed_by ?? null,
+        completed_by_user_id: prev?.completed_by_user_id ?? null,
+        comments: value,
+      };
+      next.set(taskId, nextState);
+      return next;
+    });
+    // Debounced save (750ms)
+    const existing = commentTimers.current.get(taskId);
+    if (existing) clearTimeout(existing);
+    const handle = setTimeout(() => {
+      commentTimers.current.delete(taskId);
+      if (nextState) void persistTask(taskId, nextState);
+    }, 750);
+    commentTimers.current.set(taskId, handle);
+  };
+
+  const flushComment = (taskId: string) => {
+    const existing = commentTimers.current.get(taskId);
+    if (existing) {
+      clearTimeout(existing);
+      commentTimers.current.delete(taskId);
+    }
+    const state = logs.get(taskId);
+    if (state) void persistTask(taskId, state);
+  };
+
   const total = allTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
-  // Combine real shifts with virtual winter shift when applicable
   const displayShifts: Array<{ id: string; name: string }> = [
     ...shifts.map((s) => ({ id: s.id, name: s.name })),
     ...(winter ? [{ id: VIRTUAL_WINTER_SHIFT_ID, name: "היערכות חורף" }] : []),
@@ -314,7 +352,7 @@ function TasksPage() {
   const openRecipe = recipeOpen ? recipes.find((r) => r.id === recipeOpen) : null;
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-32" dir="rtl">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-10" dir="rtl">
       {/* Sticky progress */}
       <div className="sticky top-20 sm:top-24 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/95 backdrop-blur border-b border-border">
         <div className="flex items-center justify-between gap-3">
@@ -374,6 +412,7 @@ function TasksPage() {
                       gTasks.length === 0
                         ? 0
                         : Math.round((gDone / gTasks.length) * 100);
+                    const emoji = emojiForGroup(g.name);
                     return (
                       <div key={g.id} className="bg-background/30">
                         <button
@@ -385,7 +424,10 @@ function TasksPage() {
                             className={`h-4 w-4 text-muted-foreground transition-transform ${isGroupOpen ? "rotate-180" : ""}`}
                           />
                           <div className="flex-1 text-right min-w-0">
-                            <div className="text-sm font-bold truncate">{g.name}</div>
+                            <div className="text-sm font-bold truncate">
+                              {emoji ? `${emoji} ` : ""}
+                              {g.name}
+                            </div>
                             <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-end gap-2">
                               <span>
                                 {gDone}/{gTasks.length}
@@ -404,7 +446,7 @@ function TasksPage() {
                         </button>
 
                         {isGroupOpen && (
-                          <ul className="border-t border-border/60 divide-y divide-border/60">
+                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-4">
                             {gTasks.map((t) => {
                               const log = logs.get(t.id);
                               const done = log?.completed ?? false;
@@ -416,14 +458,17 @@ function TasksPage() {
                                 ? recipes.find((r) => r.id === t.recipe_id)
                                 : null;
                               return (
-                                <li key={t.id} className="px-5 py-4 bg-background/40">
+                                <div
+                                  key={t.id}
+                                  className="rounded-xl bg-zinc-900/70 border border-pink-500/70 shadow-[0_0_8px_rgba(236,72,153,0.35)] px-4 py-3 transition hover:shadow-[0_0_14px_rgba(236,72,153,0.55)]"
+                                >
                                   <div className="flex items-start justify-between gap-3">
                                     <label className="flex items-start gap-3 flex-1 cursor-pointer min-w-0">
                                       <input
                                         type="checkbox"
                                         checked={done}
                                         onChange={() => toggleTask(t.id)}
-                                        className="mt-1 h-5 w-5 accent-[hsl(var(--neon))] shrink-0"
+                                        className="mt-1 h-5 w-5 accent-pink-500 shrink-0"
                                       />
                                       <div className="flex-1 min-w-0 text-right">
                                         <div
@@ -432,7 +477,7 @@ function TasksPage() {
                                           {t.name}
                                         </div>
                                         {stamp && (
-                                          <div className="text-[11px] text-neon mt-1">
+                                          <div className="text-[11px] text-pink-400 mt-1">
                                             {stamp}
                                           </div>
                                         )}
@@ -442,7 +487,7 @@ function TasksPage() {
                                       <button
                                         type="button"
                                         onClick={() => setRecipeOpen(recipe.id)}
-                                        className="p-1.5 rounded-md text-muted-foreground hover:text-neon hover:bg-card transition shrink-0"
+                                        className="p-1.5 rounded-md text-muted-foreground hover:text-pink-400 hover:bg-card transition shrink-0"
                                         aria-label="פתיחת מתכון"
                                         title="פתיחת מתכון"
                                       >
@@ -451,7 +496,7 @@ function TasksPage() {
                                     )}
                                   </div>
 
-                                  <div className="mt-2 pr-8">
+                                  <div className="mt-3 pr-8">
                                     <label className="block text-[10px] text-muted-foreground text-right mb-1">
                                       הוספת הערה למשימה
                                     </label>
@@ -460,24 +505,25 @@ function TasksPage() {
                                       onChange={(e) =>
                                         updateComment(t.id, e.target.value)
                                       }
+                                      onBlur={() => flushComment(t.id)}
                                       maxLength={2000}
                                       rows={2}
                                       placeholder="הערה אופציונלית…"
-                                      className="w-full bg-input border border-border rounded-md px-2 py-1.5 text-xs text-right resize-y"
+                                      className="w-full bg-zinc-950/60 border border-border focus:border-pink-500/60 focus:outline-none rounded-md px-2 py-1.5 text-xs text-right resize-y transition"
                                     />
                                     <div className="text-[10px] text-muted-foreground text-left mt-0.5">
                                       {(log?.comments ?? "").length}/2000
                                     </div>
                                   </div>
-                                </li>
+                                </div>
                               );
                             })}
                             {gTasks.length === 0 && (
-                              <li className="px-5 py-4 text-center text-xs text-muted-foreground">
+                              <div className="px-5 py-4 text-center text-xs text-muted-foreground">
                                 אין משימות בקבוצה זו.
-                              </li>
+                              </div>
                             )}
-                          </ul>
+                          </div>
                         )}
                       </div>
                     );
@@ -487,28 +533,6 @@ function TasksPage() {
             </div>
           );
         })}
-      </div>
-
-      {/* Persistent save button */}
-      <div className="fixed bottom-4 inset-x-0 z-40 px-4 flex justify-center pointer-events-none">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving || dirtyCount === 0}
-          className="pointer-events-auto inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-6 py-3 rounded-full glow-neon disabled:opacity-60 disabled:cursor-not-allowed transition shadow-2xl"
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          שמירת שינויים
-          {dirtyCount > 0 && (
-            <span className="bg-background/30 px-2 py-0.5 rounded-full text-[11px]">
-              {dirtyCount}
-            </span>
-          )}
-        </button>
       </div>
 
       {/* Recipe drawer */}
