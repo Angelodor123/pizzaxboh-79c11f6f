@@ -161,8 +161,17 @@ function PrepPage() {
           );
         })}
       </ul>
+
+      <QuickAddItemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        kind="prep"
+        branchId={getActiveBranchIdSync()}
+        onCreated={(row) => setItems((prev) => [...prev, row as Item])}
+      />
     </div>
   );
+
 }
 
 interface RowProps {
