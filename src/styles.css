@@ -71,6 +71,8 @@
   --info: oklch(0.72 0.14 235); /* sky/winter accent */
   --info-foreground: oklch(0.98 0 0);
   --success: oklch(0.72 0.17 155); /* emerald */
+}
+
 
 .dark {
   --background: oklch(0 0 0);
