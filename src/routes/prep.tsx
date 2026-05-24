@@ -212,7 +212,18 @@ function PrepRow(p: RowProps) {
           <span>{p.name}</span>
           {p.unit && <span className="text-xs text-muted-foreground">({p.unit})</span>}
         </div>
-        <div className="text-xs text-muted-foreground">יעד: <span className="font-bold text-foreground">{p.target}</span></div>
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-muted-foreground">יעד: <span className="font-bold text-foreground">{p.target}</span></div>
+          {p.showEdit && (
+            <button
+              onClick={p.onEdit}
+              aria-label="עריכת פריט"
+              className="text-muted-foreground hover:text-neon transition p-1 -m-1"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 items-center">
         <label className="text-xs text-muted-foreground">
