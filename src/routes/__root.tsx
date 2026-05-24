@@ -140,7 +140,9 @@ function RootComponent() {
       <AuthProvider>
         <AccessGate>
           <NdaGate>
-            <AuthedShell />
+            <BranchGate>
+              <AuthedShell />
+            </BranchGate>
           </NdaGate>
         </AccessGate>
       </AuthProvider>
