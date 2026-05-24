@@ -18,6 +18,7 @@ interface AuthState {
   refreshRole: () => Promise<void>;
   setTutorialVersion: (v: number) => Promise<void>;
   markTutorialStepComplete: (stepId: string) => Promise<void>;
+  markTutorialStepsComplete: (stepIds: string[]) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
