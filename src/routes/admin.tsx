@@ -600,26 +600,37 @@ function InvitationsPanel() {
   const [invites, setInvites] = useState<InvitationRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [superAdminIds, setSuperAdminIds] = useState<Set<string>>(new Set());
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [fullNames, setFullNames] = useState<Map<string, string>>(new Map());
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AppRole>("viewer");
+  const [inviteBranch, setInviteBranch] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const [{ data: i }, { data: r }, { data: s }] = await Promise.all([
+    const [{ data: i }, { data: r }, { data: s }, { data: b }, { data: p }] = await Promise.all([
       supabase
         .from("invitations")
-        .select("id,email,role,created_at")
+        .select("id,email,role,created_at,assigned_branch_id")
         .order("created_at", { ascending: false }),
       supabase
         .from("user_roles")
-        .select("id,email,role,user_id")
+        .select("id,email,role,user_id,assigned_branch_id")
         .order("created_at", { ascending: false }),
       supabase.rpc("list_super_admin_user_ids"),
+      supabase.from("branches").select("id,name").eq("active", true).order("name"),
+      supabase.rpc("list_user_profiles"),
     ]);
     setInvites((i ?? []) as InvitationRow[]);
     setRoles((r ?? []) as RoleRow[]);
     setSuperAdminIds(new Set(((s ?? []) as string[])));
+    setBranches((b ?? []) as BranchOption[]);
+    const m = new Map<string, string>();
+    ((p ?? []) as { user_id: string; full_name: string | null }[]).forEach((row) => {
+      if (row.full_name) m.set(row.user_id, row.full_name);
+    });
+    setFullNames(m);
   };
 
   useEffect(() => {
@@ -644,10 +655,17 @@ function InvitationsPanel() {
       setError("רק סופר-אדמין יכול להזמין מנהל חדש");
       return;
     }
+    if (role === "viewer" && !inviteBranch) {
+      setError("יש לבחור סניף עבור משתמש צפייה");
+      return;
+    }
     setBusy(true);
     const { error: e } = await supabase
       .from("invitations")
-      .upsert({ email: clean, role }, { onConflict: "email" });
+      .upsert(
+        { email: clean, role, assigned_branch_id: inviteBranch || null },
+        { onConflict: "email" },
+      );
     if (e) {
       setBusy(false);
       setError(e.message);
@@ -666,6 +684,20 @@ function InvitationsPanel() {
     }
     setBusy(false);
     setEmail("");
+    setInviteBranch("");
+    await load();
+  };
+
+  const updateUserBranch = async (id: string, branchId: string | null) => {
+    const { error: e } = await supabase
+      .from("user_roles")
+      .update({ assigned_branch_id: branchId })
+      .eq("id", id);
+    if (e) {
+      toast.error(e.message);
+      return;
+    }
+    toast.success("השיוך עודכן");
     await load();
   };
 
@@ -675,6 +707,7 @@ function InvitationsPanel() {
     if (e) { setError(e.message); return; }
     await load();
   };
+
 
   const revokeUser = async (id: string, userRole: AppRole, userId: string) => {
     if (userRole === "admin" && !isSuperAdmin) {
