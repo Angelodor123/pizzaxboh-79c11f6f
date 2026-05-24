@@ -21,6 +21,7 @@ import {
 } from "@/lib/tasks";
 import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
