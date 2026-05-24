@@ -255,8 +255,8 @@ function AuthedShell() {
 
       </header>
       <main className="flex-1">
-        <PageHeader />
-        <PageOnboarding pageKey={pageKeyFromPath(pathname)} />
+        <PageHeader isDishesView={isDishesView} />
+        <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
         <Outlet />
       </main>
 
