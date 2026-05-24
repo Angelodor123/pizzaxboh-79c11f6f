@@ -3,13 +3,23 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "viewer";
+export type SimulatedRole = "super_admin" | "manager" | "employee";
 
 interface AuthState {
   session: Session | null;
   email: string | null;
   fullName: string | null;
+  /** Effective role (respects "View As" simulation when super admin). */
   role: AppRole | null;
+  /** Effective super-admin flag (respects simulation). */
   isSuperAdmin: boolean;
+  /** Real DB role, never overridden by simulation. */
+  realRole: AppRole | null;
+  /** Real DB super-admin flag, never overridden by simulation. */
+  realIsSuperAdmin: boolean;
+  /** Currently simulated role (active only when real user is super admin). */
+  simulatedRole: SimulatedRole | null;
+  setSimulatedRole: (r: SimulatedRole | null) => void;
   assignedBranchId: string | null;
   tutorialVersion: number;
   completedTutorialSteps: string[];
