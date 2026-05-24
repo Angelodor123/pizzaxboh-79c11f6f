@@ -18,6 +18,7 @@ interface AuthState {
   refreshRole: () => Promise<void>;
   setTutorialVersion: (v: number) => Promise<void>;
   markTutorialStepComplete: (stepId: string) => Promise<void>;
+  markTutorialStepsComplete: (stepIds: string[]) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -73,20 +74,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.from("profiles").update({ tutorial_version: v }).eq("user_id", uid);
   };
 
-  const markTutorialStepComplete = async (stepId: string) => {
+  const markTutorialStepsComplete = async (stepIds: string[]) => {
+    if (!stepIds || stepIds.length === 0) return;
     let nextArr: string[] = [];
     setCompletedTutorialSteps((prev) => {
-      if (prev.includes(stepId)) {
-        nextArr = prev;
-        return prev;
-      }
-      nextArr = [...prev, stepId];
-      return nextArr;
+      const merged = Array.from(new Set([...prev, ...stepIds]));
+      nextArr = merged;
+      return merged;
     });
     const uid = session?.user?.id;
     if (!uid) return;
-    // Persist as the new full array (idempotent, avoids array_append race conditions)
     await supabase.from("profiles").update({ completed_tutorial_steps: nextArr }).eq("user_id", uid);
+  };
+
+  const markTutorialStepComplete = async (stepId: string) => {
+    await markTutorialStepsComplete([stepId]);
   };
 
 
@@ -134,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshRole,
         setTutorialVersion,
         markTutorialStepComplete,
+        markTutorialStepsComplete,
       }}
     >
       {children}

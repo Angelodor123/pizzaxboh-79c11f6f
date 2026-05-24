@@ -145,6 +145,7 @@ export function GuidedTour() {
     completedTutorialSteps,
     setTutorialVersion,
     markTutorialStepComplete,
+    markTutorialStepsComplete,
   } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
@@ -262,9 +263,7 @@ export function GuidedTour() {
               <button
                 onClick={() => {
                   // Mark all pending feature steps as complete so we don't re-prompt
-                  void Promise.all(
-                    pendingFeatureSteps.map((s) => markTutorialStepComplete(s.id)),
-                  );
+                  void markTutorialStepsComplete(pendingFeatureSteps.map((s) => s.id));
                   setShowDiscoveryBanner(false);
                 }}
                 className="text-xs text-foreground/60 hover:text-foreground transition px-2"
@@ -287,12 +286,14 @@ export function GuidedTour() {
   const isFirst = index === 0;
 
   const finish = () => {
-    // Mark current step + any remaining steps in this tour as complete
-    void Promise.all(steps.slice(index).map((s) => markTutorialStepComplete(s.id)));
+    // Mark current step + any remaining steps in this tour as complete (single DB write)
+    const remaining = steps.slice(index).map((s) => s.id);
+    const toMark = mode === "master"
+      ? Array.from(new Set([...remaining, ...ACTIVE_FEATURE_STEPS.map((s) => s.id)]))
+      : remaining;
+    void markTutorialStepsComplete(toMark);
     if (mode === "master") {
       void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
-      // Also mark active feature steps so master-tour users don't get the discovery banner
-      void Promise.all(ACTIVE_FEATURE_STEPS.map((s) => markTutorialStepComplete(s.id)));
     }
     setOpen(false);
     setShowDiscoveryBanner(false);
