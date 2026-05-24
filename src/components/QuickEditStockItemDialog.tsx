@@ -91,7 +91,10 @@ export function QuickEditStockItemDialog({ item, kind, onClose, onSaved }: Props
     if (kind === "restock") {
       patch.barcode = barcode.trim() || null;
     }
-    const { error } = await supabase.from(table).update(patch).eq("id", item.id);
+    const { error } =
+      kind === "prep"
+        ? await supabase.from("prep_items").update(patch as never).eq("id", item.id)
+        : await supabase.from("restock_items").update(patch as never).eq("id", item.id);
     setSaving(false);
     if (error) {
       toast.error(error.message);
