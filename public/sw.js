@@ -1,12 +1,54 @@
-// Pizza X Service Worker — minimal, for native notifications.
-// No caching strategy: HTML is always fetched fresh, no offline shell.
+// Pizza X Service Worker — notifications + minimal asset cache for PWA installability.
+
+const STATIC_CACHE = "pizzax-static-v1";
+const STATIC_ASSETS = ["/", "/manifest.json", "/pizza-x-logo.png"];
 
 self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(STATIC_CACHE).then((c) => c.addAll(STATIC_ASSETS)).catch(() => {})
+  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(self.clients.claim());
+  e.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then((keys) =>
+        Promise.all(keys.filter((k) => k !== STATIC_CACHE).map((k) => caches.delete(k)))
+      ),
+    ])
+  );
+});
+
+// Network-first for navigations (always fresh HTML), cache fallback when offline.
+// Cache-first for same-origin static assets.
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req).catch(() => caches.match("/").then((r) => r || Response.error()))
+    );
+    return;
+  }
+
+  if (/\.(?:png|jpg|jpeg|svg|webp|ico|woff2?|ttf|css|js)$/i.test(url.pathname)) {
+    event.respondWith(
+      caches.match(req).then(
+        (cached) =>
+          cached ||
+          fetch(req).then((res) => {
+            const copy = res.clone();
+            caches.open(STATIC_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+            return res;
+          })
+      )
+    );
+  }
 });
 
 // Allow page to ask SW to show a notification (works while SW is alive, even
