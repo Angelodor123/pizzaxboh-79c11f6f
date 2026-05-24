@@ -132,11 +132,19 @@ function OperationalDashboard() {
         <div className="h-full"><DoughStatusCard /></div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats — top row features the Shift Checklist prominently */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
+        <Link
+          to="/tasks"
+          data-tour="stat-tasks-top"
+          aria-label="פתח צ'ק-ליסט משמרות"
+          className="rounded-xl border-2 border-neon glow-neon bg-neon/10 p-4 min-h-24 flex flex-col items-center justify-center gap-1.5 text-center transition hover:bg-neon/15"
+        >
+          <ClipboardCheck className="h-6 w-6 text-neon" />
+          <span className="text-[11px] font-bold leading-tight text-neon">צ'ק-ליסט משמרות</span>
+        </Link>
         <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight tourId="stat-events-today" />
-        <StatCard label="פריטים לקנייה" value={shoppingCount} to="/notebook" />
       </div>
 
       {/* Quick Access Cards */}
