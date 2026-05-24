@@ -424,29 +424,14 @@ function NotebookRow({
           className={`shrink-0 grid place-content-center h-5 w-5 rounded-full border-2 ${
             selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
           }`}
+          aria-hidden
         >
           {selected ? "✓" : ""}
         </span>
       )}
-      <button
-        type="button"
-        onClick={() => void removeItem(listKey, item.id)}
-        aria-label="מחק"
-        className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive transition"
-      >
-        <X className="h-4 w-4" />
-      </button>
 
       {editing ? (
         <>
-          <button
-            type="button"
-            onClick={() => void saveEdit()}
-            aria-label="שמור"
-            className="shrink-0 p-1 rounded text-neon hover:text-neon transition"
-          >
-            <Check className="h-4 w-4" />
-          </button>
           <input
             autoFocus
             value={draft}
@@ -458,19 +443,20 @@ function NotebookRow({
             onBlur={() => void saveEdit()}
             maxLength={500}
             dir="rtl"
+            aria-label="ערוך פריט"
             className="flex-1 min-w-0 bg-input border border-neon/60 rounded-md px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60"
           />
+          <button
+            type="button"
+            onClick={() => void saveEdit()}
+            aria-label="שמור שינוי"
+            className="shrink-0 p-2 rounded text-neon hover:text-neon active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
+          >
+            <Check className="h-4 w-4" />
+          </button>
         </>
       ) : (
         <>
-          <button
-            type="button"
-            onClick={startEdit}
-            aria-label="ערוך"
-            className="shrink-0 p-1 rounded text-muted-foreground hover:text-neon transition"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
           <button
             type="button"
             onClick={() => void toggleItem(listKey, item.id)}
@@ -478,17 +464,8 @@ function NotebookRow({
               item.done ? "opacity-50" : ""
             }`}
             aria-pressed={item.done}
+            aria-label={item.done ? `החזר: ${item.text}` : `סמן כבוצע: ${item.text}`}
           >
-            <span
-              className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
-                item.done ? "line-through text-muted-foreground" : "text-foreground"
-              }`}
-            >
-              {item.priority === "urgent" && !item.done && (
-                <Flame className="h-3.5 w-3.5 text-neon shrink-0" />
-              )}
-              <span className="min-w-0 break-words">{item.text}</span>
-            </span>
             <span
               className={`shrink-0 grid place-content-center h-5 w-5 rounded border-2 transition ${
                 item.done ? "bg-neon border-neon" : "border-neon/50 hover:border-neon"
@@ -507,9 +484,40 @@ function NotebookRow({
                 </svg>
               )}
             </span>
+            <span
+              className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
+                item.done ? "line-through text-muted-foreground" : "text-foreground"
+              }`}
+            >
+              {item.priority === "urgent" && !item.done && (
+                <Flame className="h-3.5 w-3.5 text-neon shrink-0" aria-label="דחוף" />
+              )}
+              <span className="min-w-0 break-words">{item.text}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={startEdit}
+            aria-label={`ערוך: ${item.text}`}
+            className="shrink-0 p-2 rounded text-muted-foreground hover:text-neon active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`למחוק "${item.text}"?`)) {
+                void removeItem(listKey, item.id);
+              }
+            }}
+            aria-label={`מחק: ${item.text}`}
+            className="shrink-0 p-2 rounded text-muted-foreground hover:text-destructive active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
+          >
+            <X className="h-4 w-4" />
           </button>
         </>
       )}
     </li>
   );
 }
+
