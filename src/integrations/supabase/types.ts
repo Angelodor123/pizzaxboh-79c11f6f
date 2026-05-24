@@ -538,6 +538,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          completed_tutorial_steps: string[]
           created_at: string
           full_name: string | null
           has_accepted_nda: boolean
@@ -546,6 +547,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          completed_tutorial_steps?: string[]
           created_at?: string
           full_name?: string | null
           has_accepted_nda?: boolean
@@ -554,6 +556,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          completed_tutorial_steps?: string[]
           created_at?: string
           full_name?: string | null
           has_accepted_nda?: boolean
