@@ -311,6 +311,100 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          item_name: string
+          quantity: number
+          sort_order: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          item_name?: string
+          quantity?: number
+          sort_order?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          item_name?: string
+          quantity?: number
+          sort_order?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          document_date: string
+          id: string
+          image_url: string | null
+          invoice_number: string
+          notes: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          supplier_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          document_date?: string
+          id?: string
+          image_url?: string | null
+          invoice_number?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          supplier_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          document_date?: string
+          id?: string
+          image_url?: string | null
+          invoice_number?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          supplier_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measurement_units: {
         Row: {
           created_at: string
@@ -833,6 +927,7 @@ export type Database = {
           default_start_time: string | null
           delivery_weekdays: number[]
           id: string
+          logo_url: string | null
           name: string
           notes: string | null
           updated_at: string
@@ -848,6 +943,7 @@ export type Database = {
           default_start_time?: string | null
           delivery_weekdays?: number[]
           id?: string
+          logo_url?: string | null
           name: string
           notes?: string | null
           updated_at?: string
@@ -863,6 +959,7 @@ export type Database = {
           default_start_time?: string | null
           delivery_weekdays?: number[]
           id?: string
+          logo_url?: string | null
           name?: string
           notes?: string | null
           updated_at?: string
@@ -1039,6 +1136,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "viewer"
+      invoice_status: "pending_review" | "approved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1167,6 +1265,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "viewer"],
+      invoice_status: ["pending_review", "approved"],
     },
   },
 } as const
