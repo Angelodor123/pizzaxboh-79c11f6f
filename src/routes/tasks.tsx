@@ -441,13 +441,13 @@ function TasksPage() {
                 onClick={() => setOpenShift(isShiftOpen ? null : shift.id)}
                 aria-expanded={isShiftOpen}
                 aria-label={`${shift.name} — ${shiftDone} מתוך ${shiftTasks.length} משימות`}
-                className="w-full flex items-center justify-between gap-3 px-4 py-4 text-right hover:bg-card/60 transition"
+                className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-4 hover:bg-card/60 transition"
               >
                 <ChevronDown
                   className={`h-5 w-5 text-muted-foreground transition-transform shrink-0 ${isShiftOpen ? "rotate-180" : ""}`}
                 />
-                <div className="flex-1 text-right min-w-0">
-                  <div className="font-display text-lg font-bold flex items-center justify-end gap-2 leading-tight">
+                <div className="text-center min-w-0">
+                  <div className="font-display text-lg font-bold flex items-center justify-center gap-2 leading-tight">
                     {isVirtual && <CloudSnow className="h-5 w-5 text-info shrink-0" />}
                     <span className="truncate">{shift.name}</span>
                   </div>
@@ -455,7 +455,9 @@ function TasksPage() {
                     <bdi>{shiftDone}/{shiftTasks.length}</bdi> משימות
                   </div>
                 </div>
+                <span className="w-5" aria-hidden />
               </button>
+
 
               {isShiftOpen && (
                 <div className="p-3 sm:p-4 space-y-4 bg-background/20">
@@ -475,30 +477,34 @@ function TasksPage() {
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
                           aria-expanded={isGroupOpen}
                           aria-label={`${g.name} — ${gDone} מתוך ${gTasks.length}`}
-                          className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 text-right hover:bg-accent/40 transition"
+                          className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-accent/40 transition"
                         >
                           <ChevronDown
                             className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isGroupOpen ? "rotate-180" : ""}`}
                           />
-                          {gPct === 100 && (
-                            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                          )}
-                          <div className="flex-1 text-right min-w-0">
-                            <div className="text-sm font-bold leading-snug break-words">
-                              {emoji ? `${emoji} ` : ""}
-                              {g.name}
+                          <div className="text-center min-w-0">
+                            <div className="text-sm font-bold leading-snug break-words flex items-center justify-center gap-1.5">
+                              {gPct === 100 && (
+                                <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                              )}
+                              <span>
+                                {emoji ? `${emoji} ` : ""}
+                                {g.name}
+                              </span>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-end gap-2">
+                            <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-center gap-2">
+                              <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
                               <div className="w-20 h-1 rounded-full bg-background border border-border overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${gPct === 100 ? "bg-success" : "bg-neon"}`}
                                   style={{ width: `${gPct}%` }}
                                 />
                               </div>
-                              <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
                             </div>
                           </div>
+                          <span className="w-4" aria-hidden />
                         </button>
+
 
 
                         {isGroupOpen && (
