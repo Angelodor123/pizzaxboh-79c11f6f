@@ -41,6 +41,7 @@ function RestockPage() {
   const [query, setQuery] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Item | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const wd = new Date().getDay();
   const targetCol = DAY_COLS[wd];
