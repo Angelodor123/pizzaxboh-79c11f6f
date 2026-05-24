@@ -134,7 +134,7 @@ function KitchenDashboard() {
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-neon glow-neon"
             style={{
               background:
-                "radial-gradient(circle at center, oklch(var(--neon) / 0.18), transparent 70%)",
+                "radial-gradient(circle at center, color-mix(in oklab, var(--neon) 18%, transparent), transparent 70%)",
             }}
             aria-label={`${activeRecipes.length} מתכונים`}
           >
@@ -150,7 +150,7 @@ function KitchenDashboard() {
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-jungle"
               style={{
                 background:
-                  "radial-gradient(circle at center, oklch(var(--jungle) / 0.18), transparent 70%)",
+                  "radial-gradient(circle at center, color-mix(in oklab, var(--jungle) 18%, transparent), transparent 70%)",
               }}
               aria-label={`${activeDishes.length} מנות`}
             >
