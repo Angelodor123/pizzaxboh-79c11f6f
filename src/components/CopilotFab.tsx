@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useMotionValue } from "framer-motion";
-import { Loader2, Minus, Send, Sparkles } from "lucide-react";
+import { Loader2, Minus, Send } from "lucide-react";
 import { askCopilot } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
 import {
-  briefingToContext,
   fetchDailyBriefing,
   hasOpenedToday,
   markOpenedToday,
   randomGreeting,
 } from "@/lib/daily-briefing";
 import { cn } from "@/lib/utils";
+
 
 type Msg = { role: "user" | "model"; content: string };
 
