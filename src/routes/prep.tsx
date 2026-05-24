@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
-import { CheckCircle2, AlertTriangle, Search } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Search, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { QuickAddItemModal } from "@/components/QuickAddItemModal";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
+
 
 export const Route = createFileRoute("/prep")({
   component: PrepPage,
