@@ -4,8 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
-import { CheckCircle2, AlertTriangle, Search, ScanLine } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Search, ScanLine, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { QuickAddItemModal } from "@/components/QuickAddItemModal";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
+
 
 export const Route = createFileRoute("/restock")({
   component: RestockPage,
@@ -29,17 +32,19 @@ function todayIso() {
 }
 
 function RestockPage() {
-  const { session } = useAuth();
+  const { session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
   const [items, setItems] = useState<Item[]>([]);
   const [log, setLog] = useState<Record<string, LogRow>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const wd = new Date().getDay();
   const targetCol = DAY_COLS[wd];
   const today = todayIso();
+
 
   useEffect(() => {
     void (async () => {
@@ -119,7 +124,18 @@ function RestockPage() {
           <ScanLine className="h-5 w-5" />
           סריקת פריט
         </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon hover:opacity-90 whitespace-nowrap text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            הוספה
+          </button>
+        )}
       </div>
+
+
 
       <div className="text-[11px] text-muted-foreground/70 mb-2 px-1">
         טיפ: גרור ימינה ➜ סומן כהובא. גרור שמאלה ➜ איפוס.
@@ -168,9 +184,18 @@ function RestockPage() {
       </ul>
 
       <BarcodeScanner open={scanOpen} onClose={() => setScanOpen(false)} onResult={onScan} />
+
+      <QuickAddItemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        kind="restock"
+        branchId={getActiveBranchIdSync()}
+        onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
+      />
     </div>
   );
 }
+
 
 interface RowProps {
   inputRef: (el: HTMLInputElement | null) => void;

@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
-import { CheckCircle2, AlertTriangle, Search } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Search, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { QuickAddItemModal } from "@/components/QuickAddItemModal";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
+
 
 export const Route = createFileRoute("/prep")({
   component: PrepPage,
@@ -37,15 +40,17 @@ function todayIso() {
 }
 
 function PrepPage() {
-  const { session } = useAuth();
+  const { session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
   const [items, setItems] = useState<Item[]>([]);
   const [log, setLog] = useState<Record<string, LogRow>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
   const wd = new Date().getDay();
   const targetCol = DAY_COLS[wd];
   const today = todayIso();
+
 
   useEffect(() => {
     void (async () => {
@@ -91,15 +96,27 @@ function PrepPage() {
         </div>
       </div>
 
-      <div className="mb-3 relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="חיפוש פריט..."
-          className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm text-right"
-        />
+      <div className="mb-3 flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="חיפוש פריט..."
+            className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm text-right"
+          />
+        </div>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon hover:opacity-90 whitespace-nowrap text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            הוספה
+          </button>
+        )}
       </div>
+
 
       <div className="text-[11px] text-muted-foreground/70 mb-2 px-1">
         טיפ: גרור פריט ימינה ➜ השלמת 100%. גרור שמאלה ➜ איפוס.
@@ -144,8 +161,17 @@ function PrepPage() {
           );
         })}
       </ul>
+
+      <QuickAddItemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        kind="prep"
+        branchId={getActiveBranchIdSync()}
+        onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
+      />
     </div>
   );
+
 }
 
 interface RowProps {
