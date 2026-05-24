@@ -672,7 +672,7 @@ function InvitationsPanel() {
     const { error: e } = await supabase
       .from("invitations")
       .upsert(
-        { email: clean, role, assigned_branch_id: inviteBranch || null },
+        { email: clean, role, assigned_branch_id: inviteBranch || null, full_name: fullName.trim() || null },
         { onConflict: "email" },
       );
     if (e) {
@@ -693,6 +693,7 @@ function InvitationsPanel() {
     }
     setBusy(false);
     setEmail("");
+    setFullName("");
     setInviteBranch("");
     await load();
   };
