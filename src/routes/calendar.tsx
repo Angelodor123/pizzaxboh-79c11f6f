@@ -400,7 +400,50 @@ function WeekView({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
+      {/* Mobile: compact list */}
+      <ul className="sm:hidden divide-y divide-border rounded-xl border border-border bg-card/60 overflow-hidden">
+        {days.map((d, i) => {
+          const iso = toIsoDate(d);
+          const evs = eventsForDate(iso);
+          const isToday = iso === todayIso;
+          return (
+            <li key={iso} className={isToday ? "bg-neon/5" : ""}>
+              <details className="group">
+                <summary className="flex items-center justify-between gap-2 px-3 py-2.5 cursor-pointer list-none active:bg-muted/40">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className={`text-sm font-bold ${isToday ? "text-neon" : "text-foreground"}`}>
+                      {WEEKDAYS_HE[i]}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground tabular-nums">
+                      {d.getDate()}/{d.getMonth() + 1}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    {evs.length === 0 ? (
+                      <span className="text-[11px] text-muted-foreground/70">—</span>
+                    ) : (
+                      <span className="text-[11px] font-bold text-neon tabular-nums">
+                        {evs.length} {evs.length === 1 ? "אירוע" : "אירועים"}
+                      </span>
+                    )}
+                    <ChevronLeft className="h-4 w-4 text-muted-foreground transition group-open:-rotate-90" />
+                  </span>
+                </summary>
+                {evs.length > 0 && (
+                  <ul className="px-3 pb-3 space-y-1.5">
+                    {evs.map((e) => (
+                      <EventChip key={e.id + iso} ev={e} />
+                    ))}
+                  </ul>
+                )}
+              </details>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Desktop: 7-column grid */}
+      <div className="hidden sm:grid grid-cols-7 gap-2">
         {days.map((d, i) => {
           const iso = toIsoDate(d);
           const evs = eventsForDate(iso);
