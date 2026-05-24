@@ -53,9 +53,6 @@ function OperationalDashboard() {
     };
   }, []);
 
-  const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
-  const activeRecipes = useMemo(() => activeAll.filter((r) => !isMenuItem(r)), [activeAll]);
-  const activeDishes = useMemo(() => activeAll.filter((r) => isMenuItem(r)), [activeAll]);
 
 
   const todayEvents = useMemo(() => {
