@@ -199,6 +199,15 @@ function RestockPage() {
         branchId={getActiveBranchIdSync()}
         onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
       />
+
+      <QuickEditStockItemDialog
+        item={editing as unknown as StockItem | null}
+        kind="restock"
+        onClose={() => setEditing(null)}
+        onSaved={(upd) =>
+          setItems((prev) => prev.map((x) => (x.id === upd.id ? ({ ...x, ...upd } as Item) : x)))
+        }
+      />
     </div>
   );
 }
@@ -208,6 +217,7 @@ interface RowProps {
   inputRef: (el: HTMLInputElement | null) => void;
   name: string; unit: string; barcode: string | null; target: number; stock: number; draft?: string;
   toBring: number; done: boolean;
+  showEdit?: boolean; onEdit?: () => void;
   onSwipeRight: () => void; onSwipeLeft: () => void;
   onFocus: () => void; onChange: (v: string) => void; onBlur: () => void;
 }
