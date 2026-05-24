@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tutorial_cooldown_until TIMESTAMP WITH TIME ZONE;
