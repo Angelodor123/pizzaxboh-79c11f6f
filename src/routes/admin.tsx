@@ -36,6 +36,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
 import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
+import { BranchesPanel } from "@/components/admin/BranchesPanel";
+import { Building2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
