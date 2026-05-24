@@ -236,7 +236,7 @@ function AdminPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="mb-6">
+      <div className="mb-6 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
           Admin
         </div>
