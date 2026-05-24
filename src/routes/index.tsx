@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
-import { useCookbookStore } from "@/lib/store";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,6 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
-import { isMenuItem } from "@/lib/menu-categories";
 
 
 export const Route = createFileRoute("/")({
@@ -36,7 +34,7 @@ function todayIso() {
 
 function OperationalDashboard() {
   const { role } = useAuth();
-  const recipes = useCookbookStore((s) => s.recipes);
+  
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
 
@@ -53,9 +51,6 @@ function OperationalDashboard() {
     };
   }, []);
 
-  const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
-  const activeRecipes = useMemo(() => activeAll.filter((r) => !isMenuItem(r)), [activeAll]);
-  const activeDishes = useMemo(() => activeAll.filter((r) => isMenuItem(r)), [activeAll]);
 
 
   const todayEvents = useMemo(() => {
@@ -134,10 +129,14 @@ function OperationalDashboard() {
         <EvChargingWidget />
       </div>
 
+      {/* Live operational telemetry */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <CurrentShiftProgressCard />
+        <DoughStatusCard />
+      </div>
+
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <StatCard label="מתכונים פעילים" value={activeRecipes.length} to="/recipes" />
-        <StatCard label="מנות פעילות" value={activeDishes.length} to="/recipes" />
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
         <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight tourId="stat-events-today" />
         <StatCard label="פריטים לקנייה" value={shoppingCount} to="/notebook" />
@@ -226,12 +225,6 @@ function OperationalDashboard() {
           </ul>
         </Link>
       )}
-
-      {/* New: Dough + Current shift telemetry */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        <DoughStatusCard />
-        <CurrentShiftProgressCard />
-      </div>
 
       {/* Shortcut tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
