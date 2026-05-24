@@ -188,13 +188,13 @@ function PrepRow(p: RowProps) {
       {...swipe}
       className={`rounded-xl border-2 px-3 py-3 transition ${
         p.done
-          ? "bg-emerald-500/15 border-emerald-500/60"
+          ? "bg-success/15 border-success/60"
           : "bg-card border-border"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="font-bold flex items-center gap-2">
-          {p.done && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+          {p.done && <CheckCircle2 className="h-4 w-4 text-success" />}
           <span>{p.name}</span>
           {p.unit && <span className="text-xs text-muted-foreground">({p.unit})</span>}
         </div>
@@ -218,9 +218,9 @@ function PrepRow(p: RowProps) {
         <div className="text-center">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">להכנה</div>
           {p.done ? (
-            <div className="text-2xl font-bold text-emerald-400 mt-1">✓</div>
+            <div className="text-2xl font-bold text-success mt-1">✓</div>
           ) : (
-            <div className="mt-1 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 font-extrabold text-xl">
+            <div className="mt-1 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-brand/20 border border-amber-brand/60 text-amber-brand font-extrabold text-xl">
               <AlertTriangle className="h-4 w-4" />
               {p.toPrep}
             </div>
