@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
+import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 
 export const Route = createFileRoute("/orders")({
   component: OrdersPage,
@@ -21,37 +22,45 @@ interface Supplier {
 }
 
 function OrdersPage() {
-  const { role, loading: authLoading } = useAuth();
+  const { role, loading: authLoading, isSuperAdmin } = useAuth();
   const [list, setList] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Supplier | null>(null);
   const [monthCount, setMonthCount] = useState(0);
+  const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
+
+  useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
   useEffect(() => {
     if (role !== "admin") return;
     let mounted = true;
     const load = async () => {
-      const { data } = await supabase
+      setLoading(true);
+      let supplierQuery = supabase
         .from("suppliers")
         .select("id,name,category,contact,logo_url,active,is_archived")
         .eq("is_archived", false)
         .eq("active", true)
         .order("name");
+      if (isSuperAdmin && branchId) supplierQuery = supplierQuery.eq("branch_id", branchId);
+      const { data } = await supplierQuery;
       if (mounted) setList((data as Supplier[]) ?? []);
 
       const firstOfMonth = new Date();
       firstOfMonth.setDate(1);
       firstOfMonth.setHours(0, 0, 0, 0);
-      const { count } = await supabase
+      let historyQuery = supabase
         .from("supplier_orders_history")
         .select("id", { count: "exact", head: true })
         .gte("created_at", firstOfMonth.toISOString());
+      if (isSuperAdmin && branchId) historyQuery = historyQuery.eq("branch_id", branchId);
+      const { count } = await historyQuery;
       if (mounted) setMonthCount(count ?? 0);
       if (mounted) setLoading(false);
     };
     load();
     return () => { mounted = false; };
-  }, [role]);
+  }, [role, isSuperAdmin, branchId]);
 
   const grid = useMemo(() => list, [list]);
 

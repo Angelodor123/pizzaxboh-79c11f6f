@@ -55,6 +55,25 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
     return () => clearTimeout(id);
   }, [supplierId, invoiceNumber, totalAmount, docDate, items]);
 
+  // Cleanup blob URL on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showAnomaly) setShowAnomaly(false);
+        else onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, showAnomaly]);
+
   const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
   const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
 
