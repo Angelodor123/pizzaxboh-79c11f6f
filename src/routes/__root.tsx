@@ -27,6 +27,7 @@ import { useRecipesSync } from "@/lib/store";
 import { useNotebookRealtime } from "@/lib/notebook-store";
 import { useSiteTextsSync, useSiteText } from "@/lib/site-texts";
 import { useUIStore } from "@/lib/ui-store";
+import { MENU_ITEM_CATEGORIES } from "@/lib/menu-categories";
 import {
   ensureServiceWorker,
   notificationPermission,
@@ -160,14 +161,19 @@ function AuthedShell() {
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
   const isServiceMode = useUIStore((s) => s.isServiceMode);
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
+  const category = useUIStore((s) => s.category);
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const isRecipesPage = pathname === "/recipes";
-  const showServiceToggle = isRecipesPage;
+  const isDishesView =
+    isRecipesPage &&
+    (category === "dishes" ||
+      (category !== "all" && MENU_ITEM_CATEGORIES.includes(category)));
+  // Service Mode only applies to the back-of-house recipes view, not to the
+  // customer-facing dishes view on the same route.
+  const showServiceToggle = isRecipesPage && !isDishesView;
   const showQuickBack = !isRecipesPage;
-  // Service Mode is a recipes-page concept — its visual indication should
-  // not bleed into other pages even if the flag is still on in state.
-  const serviceModeVisible = isServiceMode && isRecipesPage;
+  const serviceModeVisible = isServiceMode && showServiceToggle;
 
 
   // Register service worker once
@@ -207,7 +213,6 @@ function AuthedShell() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
             <CategoryDrawer />
-            {showServiceToggle && <ServiceModeToggle />}
           </div>
 
           <Link
@@ -250,8 +255,8 @@ function AuthedShell() {
 
       </header>
       <main className="flex-1">
-        <PageHeader />
-        <PageOnboarding pageKey={pageKeyFromPath(pathname)} />
+        <PageHeader isDishesView={isDishesView} />
+        <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
         <Outlet />
       </main>
 

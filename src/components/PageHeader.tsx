@@ -8,6 +8,7 @@ interface PageMeta {
 const PAGE_META: Record<string, PageMeta> = {
   "/": { title: "מטבח Pizza X", subtitle: "Back of House — מרכז הבקרה התפעולי" },
   "/recipes": { title: "מתכונים", subtitle: "ספריית המתכונים הרשמית של Pizza X" },
+  "/dishes": { title: "מנות", subtitle: "תפריט המנות הפעיל של Pizza X" },
   "/prep": { title: "הכנות יומיות", subtitle: "מעקב משימות הכנה ומלאי פעיל" },
   "/restock": { title: "מילוי מלאי", subtitle: "ניהול מלאי מחסן ופריטים" },
   "/calendar": { title: "לוח שנה", subtitle: "אירועים, ספקים והגעות סחורה" },
@@ -17,10 +18,11 @@ const PAGE_META: Record<string, PageMeta> = {
   "/admin": { title: "ניהול", subtitle: "הגדרות מערכת, סניפים, משתמשים ותכנים" },
 };
 
-export function PageHeader() {
+export function PageHeader({ isDishesView = false }: { isDishesView?: boolean } = {}) {
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const meta = PAGE_META[pathname];
+  const key = isDishesView && pathname === "/recipes" ? "/dishes" : pathname;
+  const meta = PAGE_META[key];
   if (!meta) return null;
 
   return (
