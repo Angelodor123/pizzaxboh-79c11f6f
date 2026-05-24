@@ -261,7 +261,6 @@ function TasksPage() {
 
   const toggleTask = (taskId: string) => {
     let nextState: LogState | null = null;
-    let taskName = "";
     setLogs((m) => {
       const next = new Map(m);
       const prev = next.get(taskId);
@@ -277,10 +276,10 @@ function TasksPage() {
       return next;
     });
     const t = allTasks.find((x) => x.id === taskId);
-    taskName = t?.name ?? "";
+    const taskName = t?.name ?? "";
     // Optimistic: fire-and-forget persistence
-    if (nextState) {
-      const state = nextState;
+    const state: LogState | null = nextState;
+    if (state) {
       void persistTask(taskId, state).then(() => syncParLevelsForTask(taskId));
       if (state.completed && taskName) {
         void scanNotebookForMatch(taskName);
