@@ -265,7 +265,6 @@ function AuthedShell() {
       </main>
 
       <GuidedTour />
-      <ReplayTourButton />
       <CopilotFab />
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
