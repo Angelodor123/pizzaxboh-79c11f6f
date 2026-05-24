@@ -98,6 +98,33 @@ export function CopilotFab() {
     }
   }, [open]);
 
+  // Track visualViewport so the modal stays above the on-screen keyboard
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement;
+    const update = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      const isMobile = window.innerWidth < 640;
+      // On mobile when keyboard is up, dock just above keyboard with small gap
+      const bottom = kb > 0 ? `${kb + 8}px` : isMobile ? "5rem" : "5rem";
+      const avail = vv.height - (kb > 0 ? 16 : 96);
+      root.style.setProperty("--copilot-bottom", bottom);
+      root.style.setProperty("--copilot-h", `${Math.max(280, Math.min(560, avail))}px`);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      root.style.removeProperty("--copilot-bottom");
+      root.style.removeProperty("--copilot-h");
+    };
+  }, [open]);
+
+
   // Lock body scroll while chat is open
   useEffect(() => {
     if (!open) return;
@@ -324,11 +351,12 @@ export function CopilotFab() {
             "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
             "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
             "flex flex-col overflow-hidden animate-scale-in",
-            "w-96 h-[500px] max-w-[90vw] max-h-[85dvh]",
+            // Mobile: bottom sheet that fills available width; Desktop: floating window
+            "left-2 right-2 sm:left-auto sm:right-4 sm:w-96",
+            "h-[min(500px,var(--copilot-h,85dvh))] sm:h-[500px] sm:max-h-[85dvh]",
           )}
           style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
-            right: "1rem",
+            bottom: "calc(var(--copilot-bottom, 5rem) + env(safe-area-inset-bottom, 0px))",
           }}
         >
           {/* Header */}
