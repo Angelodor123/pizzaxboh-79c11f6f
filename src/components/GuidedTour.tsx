@@ -185,18 +185,20 @@ export function GuidedTour() {
   }, [loading, pathname, session, tutorialVersion, pendingFeatureSteps.length]);
 
 
-  // Listen for manual replay
+  // Listen for manual replay — always replay the full master tour
   useEffect(() => {
     const handler = () => {
       if (router.state.location.pathname !== "/") {
         router.navigate({ to: "/" });
       }
+      setMode("master");
       setIndex(0);
       setOpen(true);
     };
     window.addEventListener("pizzax:start-tour", handler);
     return () => window.removeEventListener("pizzax:start-tour", handler);
   }, [router]);
+
 
   const measure = useCallback(() => {
     if (!open) return;
