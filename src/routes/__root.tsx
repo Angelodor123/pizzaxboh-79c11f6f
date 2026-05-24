@@ -16,6 +16,8 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { GuidedTour, ReplayTourButton } from "@/components/GuidedTour";
 import { NdaGate } from "@/components/NdaGate";
+import { BranchGate } from "@/components/BranchGate";
+import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
