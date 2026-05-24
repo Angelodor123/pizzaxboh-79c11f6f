@@ -144,12 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         assignedBranchId,
         tutorialVersion,
         completedTutorialSteps,
+        tutorialCooldownUntil,
         loading,
         signOut,
         refreshRole,
         setTutorialVersion,
         markTutorialStepComplete,
         markTutorialStepsComplete,
+        snoozeTutorial,
       }}
     >
       {children}
