@@ -122,8 +122,8 @@ export function CategoryDrawer() {
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
-        <SheetHeader className="px-6 py-5 border-b border-zinc-800/60 text-right">
-          <SheetTitle className="font-display text-xl text-foreground">
+        <SheetHeader className="px-6 py-5 pl-14 border-b border-zinc-800/60 flex flex-row items-center justify-between gap-4 text-right space-y-0">
+          <SheetTitle className="font-display text-xl text-foreground flex-1 text-right">
             תפריט
           </SheetTitle>
         </SheetHeader>
