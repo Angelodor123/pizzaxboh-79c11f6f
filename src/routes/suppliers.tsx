@@ -25,6 +25,8 @@ interface Supplier {
   contact: string | null;
   notes: string | null;
   active: boolean;
+  logo_url: string | null;
+  is_archived: boolean;
 }
 
 function SuppliersPage() {
