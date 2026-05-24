@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
+import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 
 export const Route = createFileRoute("/invoices")({
   component: InvoicesPage,
