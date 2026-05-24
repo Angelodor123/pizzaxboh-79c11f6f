@@ -67,32 +67,32 @@ function SuppliersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6" dir="rtl">
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-            🚚 ניהול <span className="text-neon text-glow-neon">ספקים</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            ימי החלוקה מסונכרנים אוטומטית ללו״ז קבלת הסחורה בלוח.
-          </p>
-        </div>
+      <div className="mb-6 text-center">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          🚚 ניהול <span className="text-neon text-glow-neon">ספקים</span>
+        </h1>
+        <p className="hidden sm:block text-muted-foreground mt-2 text-sm">
+          ימי החלוקה מסונכרנים אוטומטית ללו״ז קבלת הסחורה בלוח.
+        </p>
         {canEdit && (
-          <button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-            className="shrink-0 inline-flex items-center gap-2 h-10 px-3 rounded-md bg-neon text-primary-foreground font-bold glow-neon"
-          >
-            <Plus className="h-4 w-4" />
-            ספק חדש
-          </button>
+          <div className="mt-3 flex items-center justify-center">
+            <button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-neon text-primary-foreground font-bold glow-neon active:scale-95 transition"
+            >
+              <Plus className="h-4 w-4" />
+              ספק חדש
+            </button>
+          </div>
         )}
       </div>
 
       {canEdit && list.length > 0 && (
-        <div className="flex items-center justify-end mb-3">
+        <div className="flex items-center justify-center mb-3">
           <button
             type="button"
             onClick={() => bulk.toggleAll(list.map((s) => s.id))}
@@ -125,9 +125,9 @@ function SuppliersPage() {
                 }
               }}
               className={`rounded-2xl border p-4 bg-card/80 backdrop-blur transition ${
-                s.active ? "border-emerald-500/60" : "border-border opacity-70"
+                s.active ? "border-success/60" : "border-border opacity-70"
               } ${selected ? "ring-2 ring-neon" : ""}`}
-              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
             >
               <div className="flex items-start justify-between gap-2">
                 {canEdit && bulk.selectionMode && (
@@ -144,7 +144,7 @@ function SuppliersPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-bold">
-                    <Truck className="h-4 w-4 text-emerald-400" />
+                    <Truck className="h-4 w-4 text-success" />
                     <span className="truncate">{s.name}</span>
                     <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
                       {s.category}
@@ -161,7 +161,7 @@ function SuppliersPage() {
                         key={i}
                         className={`text-[11px] font-bold rounded px-2 py-0.5 border ${
                           s.delivery_weekdays.includes(i)
-                            ? "bg-emerald-500/15 border-emerald-500/60 text-emerald-300"
+                            ? "bg-success/15 border-success/60 text-success"
                             : "border-border/40 text-muted-foreground/60"
                         }`}
                       >
@@ -362,7 +362,7 @@ function SupplierForm({
                   onClick={() => toggleDay(i)}
                   className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
                     on
-                      ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
+                      ? "bg-success/20 border-success text-success"
                       : "border-border text-foreground hover:border-neon"
                   }`}
                 >
@@ -393,7 +393,7 @@ function SupplierForm({
 
         <label className="flex items-center justify-end gap-2 text-sm cursor-pointer">
           <span>ספק פעיל (יוצר אירועים בלוח)</span>
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-[hsl(var(--neon))]" />
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-[var(--neon)]" />
         </label>
 
         <button
@@ -408,22 +408,22 @@ function SupplierForm({
           .sup-input {
             width: 100%;
             min-height: 2.5rem;
-            background: hsl(var(--background));
-            border: 1.5px solid hsl(var(--border));
+            background: var(--background);
+            border: 1.5px solid var(--border);
             border-radius: 0.5rem;
             padding: 0.55rem 0.85rem;
             font-size: 0.95rem;
-            color: hsl(var(--foreground));
+            color: var(--foreground);
             text-align: right;
             transition: border-color .15s, box-shadow .15s, background .15s;
           }
-          .sup-input::placeholder { color: hsl(var(--muted-foreground) / 0.7); }
-          .sup-input:hover { border-color: hsl(var(--neon, var(--primary)) / 0.5); }
+          .sup-input::placeholder { color: color-mix(in oklab, var(--muted-foreground) 70%, transparent); }
+          .sup-input:hover { border-color: color-mix(in oklab, var(--neon) 50%, transparent); }
           .sup-input:focus {
             outline: none;
-            background: hsl(var(--card));
-            border-color: hsl(var(--neon, var(--primary)));
-            box-shadow: 0 0 0 3px hsl(var(--neon, var(--primary)) / 0.25);
+            background: var(--card);
+            border-color: var(--neon);
+            box-shadow: 0 0 0 3px color-mix(in oklab, var(--neon) 25%, transparent);
           }
         `}</style>
       </form>
