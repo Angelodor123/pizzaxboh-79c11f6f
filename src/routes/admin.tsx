@@ -284,7 +284,12 @@ function AdminPage() {
         </TabButton>
       </div>
 
-      {tab === "users" && <InvitationsPanel />}
+      {tab === "users" && (
+        <div className="space-y-6">
+          <InvitationsPanel />
+          {isSuperAdmin && <SuperAdminUsersPanel />}
+        </div>
+      )}
       {tab === "branches" && isSuperAdmin && <BranchesPanel />}
       {tab === "tasks" && isSuperAdmin && <TasksPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
