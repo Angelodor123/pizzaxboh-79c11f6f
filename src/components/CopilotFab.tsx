@@ -278,9 +278,9 @@ export function CopilotFab() {
             right: "1rem",
           }}
         >
-          <div className="relative bg-gradient-to-br from-[#ff5a3c] to-[#b91c1c] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_8px_24px_-4px_rgba(255,90,60,0.6)] whitespace-nowrap">
+          <div className="relative bg-gradient-to-br from-[#ff3d8a] to-[#c4006a] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_8px_24px_-4px_rgba(255,61,138,0.6)] whitespace-nowrap">
             תדריך יומי ממתין לך! 👇
-            <span className="absolute -bottom-1.5 right-6 w-3 h-3 bg-[#b91c1c] rotate-45" />
+            <span className="absolute -bottom-1.5 right-6 w-3 h-3 bg-[#c4006a] rotate-45" />
           </div>
         </div>
       )}
@@ -319,8 +319,8 @@ export function CopilotFab() {
         >
           {showDailyCta && (
             <>
-              <span className="absolute inset-0 rounded-full ring-2 ring-[#ff5a3c] animate-ping pointer-events-none" />
-              <span className="absolute inset-[-4px] rounded-full ring-2 ring-[#ff5a3c]/40 animate-pulse pointer-events-none" />
+              <span className="absolute inset-0 rounded-full ring-2 ring-[#ff3d8a] animate-ping pointer-events-none" />
+              <span className="absolute inset-[-4px] rounded-full ring-2 ring-[#ff3d8a]/40 animate-pulse pointer-events-none" />
             </>
           )}
           <button
@@ -348,8 +348,8 @@ export function CopilotFab() {
           aria-modal="false"
           aria-label="ג'וני - מנהל התפעול הדיגיטלי"
           className={cn(
-            "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
-            "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
+            "fixed z-50 bg-card border border-[#ff3d8a]/40 text-foreground rounded-2xl",
+            "shadow-[0_20px_60px_-10px_rgba(255,61,138,0.45)]",
             "flex flex-col overflow-hidden animate-scale-in",
             // Mobile: bottom sheet that fills available width; Desktop: floating window
             "left-2 right-2 sm:left-auto sm:right-4 sm:w-96",
@@ -360,7 +360,7 @@ export function CopilotFab() {
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-gradient-to-l from-[#1a0e0a] to-card">
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-gradient-to-l from-[#1a0a14] to-card">
             <div className="flex items-center gap-2 min-w-0">
               <CopilotMascot className="h-9 w-9 shrink-0" />
               <div className="min-w-0">
@@ -375,7 +375,7 @@ export function CopilotFab() {
               onClick={() => setOpen(false)}
               aria-label="מזער"
               title="מזער"
-              className="h-8 w-8 rounded-md border border-border hover:border-[#ff5a3c]/60 inline-flex items-center justify-center"
+              className="h-8 w-8 rounded-md border border-border hover:border-[#ff3d8a]/60 inline-flex items-center justify-center"
             >
               <Minus className="h-4 w-4" />
             </button>
@@ -434,7 +434,7 @@ export function CopilotFab() {
                 }}
                 rows={1}
                 placeholder="שאל את ג'וני..."
-                className="flex-1 resize-none rounded-xl bg-background border border-border focus:border-[#ff5a3c] focus:ring-1 focus:ring-[#ff5a3c]/40 outline-none px-3 py-2 text-sm max-h-32"
+                className="flex-1 resize-none rounded-xl bg-background border border-border focus:border-[#ff3d8a] focus:ring-1 focus:ring-[#ff3d8a]/40 outline-none px-3 py-2 text-sm max-h-32"
                 disabled={loading}
               />
               <button
@@ -442,7 +442,7 @@ export function CopilotFab() {
                 onClick={() => void handleSend()}
                 disabled={loading || !input.trim()}
                 aria-label="שלח"
-                className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-[#ff5a3c] to-[#b91c1c] text-white inline-flex items-center justify-center disabled:opacity-40 hover:brightness-110 transition"
+                className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-[#ff3d8a] to-[#c4006a] text-white inline-flex items-center justify-center disabled:opacity-40 hover:brightness-110 transition"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
