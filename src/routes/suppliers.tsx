@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare, Archive, ArchiveRestore, Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
+import { resolveSupplierLogo } from "@/lib/supplier-logos";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
@@ -24,6 +25,8 @@ interface Supplier {
   contact: string | null;
   notes: string | null;
   active: boolean;
+  logo_url: string | null;
+  is_archived: boolean;
 }
 
 function SuppliersPage() {
@@ -33,6 +36,7 @@ function SuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const bulk = useBulkSelection();
 
   useEffect(() => {
@@ -58,11 +62,14 @@ function SuppliersPage() {
     };
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("למחוק את הספק? כל אירועי הסחורה האוטומטיים שלו יימחקו מהלוח.")) return;
-    const { error } = await supabase.from("suppliers").delete().eq("id", id);
-    if (error) toast.error("שגיאה במחיקה");
-    else toast.success("הספק נמחק");
+  const visible = list.filter((s) => (showArchived ? s.is_archived : !s.is_archived));
+
+  const handleArchive = async (s: Supplier) => {
+    const next = !s.is_archived;
+    if (!confirm(next ? `להעביר את "${s.name}" לארכיון? אירועי הסחורה האוטומטיים יוסרו מהלוח.` : `לשחזר את "${s.name}" מהארכיון?`)) return;
+    const { error } = await supabase.from("suppliers").update({ is_archived: next }).eq("id", s.id);
+    if (error) toast.error("שגיאה: " + error.message);
+    else toast.success(next ? "הספק הועבר לארכיון" : "הספק שוחזר");
   };
 
   return (
@@ -92,28 +99,39 @@ function SuppliersPage() {
       </div>
 
       {canEdit && list.length > 0 && (
-        <div className="flex items-center justify-center mb-3">
+        <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
           <button
             type="button"
-            onClick={() => bulk.toggleAll(list.map((s) => s.id))}
+            onClick={() => bulk.toggleAll(visible.map((s) => s.id))}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
           >
             <CheckSquare className="h-3.5 w-3.5" />
             {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-bold transition ${
+              showArchived ? "border-amber-brand text-amber-brand" : "border-border hover:border-neon hover:text-neon"
+            }`}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            {showArchived ? "חזרה לפעילים" : `ארכיון (${list.filter((s) => s.is_archived).length})`}
           </button>
         </div>
       )}
 
       {loading ? (
         <div className="text-center text-muted-foreground py-12">טוען…</div>
-      ) : list.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="text-center text-muted-foreground py-12 rounded-2xl border border-border bg-card/60">
-          אין ספקים עדיין
+          {showArchived ? "אין ספקים בארכיון" : "אין ספקים עדיין"}
         </div>
       ) : (
         <ul className="space-y-3">
-          {list.map((s) => {
+          {visible.map((s) => {
             const selected = bulk.isSelected(s.id);
+            const logo = resolveSupplierLogo(s.name, s.logo_url);
             return (
             <li
               key={s.id}
@@ -125,9 +143,9 @@ function SuppliersPage() {
                 }
               }}
               className={`rounded-2xl border p-4 bg-card/80 backdrop-blur transition ${
-                s.active ? "border-success/60" : "border-border opacity-70"
+                s.is_archived ? "border-border opacity-60" : s.active ? "border-success/60" : "border-border opacity-70"
               } ${selected ? "ring-2 ring-neon" : ""}`}
-              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
+              style={s.active && !s.is_archived ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
             >
               <div className="flex items-start justify-between gap-2">
                 {canEdit && bulk.selectionMode && (
@@ -142,14 +160,26 @@ function SuppliersPage() {
                     {selected ? "✓" : ""}
                   </button>
                 )}
+                <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden border border-border bg-background/60 grid place-content-center">
+                  {logo ? (
+                    <img src={logo} alt={s.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 font-bold">
+                  <div className="flex items-center gap-2 font-bold flex-wrap">
                     <Truck className="h-4 w-4 text-success" />
                     <span className="truncate">{s.name}</span>
                     <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
                       {s.category}
                     </span>
-                    {!s.active && (
+                    {s.is_archived && (
+                      <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
+                        בארכיון
+                      </span>
+                    )}
+                    {!s.active && !s.is_archived && (
                       <span className="text-[10px] font-bold text-muted-foreground border border-border rounded px-1.5 py-0.5">
                         לא פעיל
                       </span>
@@ -191,11 +221,12 @@ function SuppliersPage() {
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(s.id)}
-                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
-                      aria-label="מחק"
+                      onClick={() => handleArchive(s)}
+                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-amber-brand hover:border-amber-brand"
+                      aria-label={s.is_archived ? "שחזר" : "העבר לארכיון"}
+                      title={s.is_archived ? "שחזר מהארכיון" : "העבר לארכיון"}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {s.is_archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                     </button>
                   </div>
                 )}
@@ -205,6 +236,7 @@ function SuppliersPage() {
           })}
         </ul>
       )}
+
 
       {canEdit && (
         <BulkActionBar
@@ -237,16 +269,16 @@ function SuppliersPage() {
               },
             },
             {
-              key: "delete",
-              label: "מחק",
-              icon: Trash2,
+              key: "archive",
+              label: "ארכיון",
+              icon: Archive,
               variant: "destructive",
-              confirm: "למחוק {count} ספקים? כל אירועי הסחורה האוטומטיים שלהם יימחקו מהלוח.",
+              confirm: "להעביר {count} ספקים לארכיון? אירועי הסחורה האוטומטיים שלהם יוסרו מהלוח.",
               onClick: async () => {
                 const ids = bulk.ids;
-                const { error } = await supabase.from("suppliers").delete().in("id", ids);
+                const { error } = await supabase.from("suppliers").update({ is_archived: true }).in("id", ids);
                 if (error) return toast.error(error.message);
-                toast.success(`נמחקו ${ids.length} ספקים`);
+                toast.success(`${ids.length} ספקים הועברו לארכיון`);
                 bulk.clear();
               },
             },
@@ -282,10 +314,38 @@ function SupplierForm({
   const [contact, setContact] = useState(existing?.contact ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [active, setActive] = useState(existing?.active ?? true);
+  const [logoUrl, setLogoUrl] = useState<string | null>(existing?.logo_url ?? null);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const previewLogo = logoUrl || resolveSupplierLogo(name, null);
 
   const toggleDay = (i: number) =>
     setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+
+  const handleLogoUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("יש לבחור קובץ תמונה");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("גודל מקסימלי: 2MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("supplier-logos").upload(path, file, { upsert: false });
+    if (upErr) {
+      setUploading(false);
+      toast.error("העלאה נכשלה: " + upErr.message);
+      return;
+    }
+    const { data } = supabase.storage.from("supplier-logos").getPublicUrl(path);
+    setLogoUrl(data.publicUrl);
+    setUploading(false);
+    toast.success("הלוגו הועלה");
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,6 +363,7 @@ function SupplierForm({
       contact: contact.trim().slice(0, 200) || null,
       notes: notes.trim().slice(0, 2000) || null,
       active,
+      logo_url: logoUrl,
     };
     let error;
     if (existing) {
@@ -349,6 +410,51 @@ function SupplierForm({
         <Field label="קטגוריה (לדוגמה: ירקות, בשר, יבש)">
           <input value={category} onChange={(e) => setCategory(e.target.value)} className="sup-input" maxLength={60} dir="rtl" />
         </Field>
+
+        <div>
+          <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">לוגו הספק</span>
+          <div className="flex items-center gap-3">
+            <div className="h-16 w-16 rounded-lg border border-border bg-background/60 overflow-hidden grid place-content-center shrink-0">
+              {previewLogo ? (
+                <img src={previewLogo} alt="לוגו" className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleLogoUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon disabled:opacity-50 self-start"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {uploading ? "מעלה…" : logoUrl ? "החלף לוגו" : "העלה לוגו"}
+              </button>
+              {logoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl(null)}
+                  className="text-[11px] text-muted-foreground hover:text-destructive self-start"
+                >
+                  הסר לוגו מותאם
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
 
         <div>
           <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי חלוקה / הגעה</span>

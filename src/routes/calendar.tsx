@@ -41,7 +41,7 @@ interface EventOverride {
 
 // Effective event = base event + per-instance override fields for that date.
 // Returns null if the instance is canceled.
-type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string };
+type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string; _missingInvoice?: boolean };
 
 const WEEKDAYS_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const MONTHS_HE = [
@@ -61,6 +61,7 @@ function CalendarPage() {
   const canEdit = role === "admin";
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [overrides, setOverrides] = useState<EventOverride[]>([]);
+  const [invoiceKeys, setInvoiceKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(() => {
@@ -77,9 +78,10 @@ function CalendarPage() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const [ev, ov] = await Promise.all([
+      const [ev, ov, inv] = await Promise.all([
         supabase.from("calendar_events").select("*").order("event_date", { ascending: true }),
         supabase.from("calendar_event_overrides").select("*"),
+        supabase.from("invoices").select("supplier_id, document_date").eq("is_archived", false),
       ]);
       if (!mounted) return;
       if (ev.error || ov.error) {
@@ -87,6 +89,13 @@ function CalendarPage() {
       } else {
         setEvents((ev.data as CalendarEvent[]) ?? []);
         setOverrides((ov.data as EventOverride[]) ?? []);
+      }
+      if (!inv.error && inv.data) {
+        const keys = new Set<string>();
+        for (const r of inv.data as Array<{ supplier_id: string | null; document_date: string }>) {
+          if (r.supplier_id) keys.add(`${r.supplier_id}|${r.document_date}`);
+        }
+        setInvoiceKeys(keys);
       }
       setLoading(false);
     };
@@ -96,6 +105,7 @@ function CalendarPage() {
       .channel("calendar_events_rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "calendar_events" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "calendar_event_overrides" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => load())
       .subscribe();
 
     return () => {
@@ -105,6 +115,19 @@ function CalendarPage() {
   }, []);
 
   // Get events for a given date (one-off + recurring weekly), with per-instance overrides applied.
+  const todayIsoMemo = toIsoDate(new Date());
+  const annotateMissing = (e: EffectiveEvent): EffectiveEvent => {
+    if (
+      e.category === "delivery" &&
+      e.supplier_id &&
+      e._occurrenceDate &&
+      e._occurrenceDate <= todayIsoMemo &&
+      !invoiceKeys.has(`${e.supplier_id}|${e._occurrenceDate}`)
+    ) {
+      return { ...e, _missingInvoice: true };
+    }
+    return e;
+  };
   const eventsForDate = (isoDate: string): EffectiveEvent[] => {
     const d = new Date(isoDate + "T00:00:00");
     const wd = d.getDay();
@@ -115,11 +138,11 @@ function CalendarPage() {
     for (const e of matched) {
       const ov = overrides.find((o) => o.event_id === e.id && o.override_date === isoDate);
       if (!ov) {
-        out.push({ ...e, _occurrenceDate: isoDate });
+        out.push(annotateMissing({ ...e, _occurrenceDate: isoDate }));
         continue;
       }
       if (ov.deleted) continue;
-      out.push({
+      out.push(annotateMissing({
         ...e,
         title: ov.title ?? e.title,
         start_time: ov.start_time ?? e.start_time,
@@ -129,7 +152,7 @@ function CalendarPage() {
         _overrideId: ov.id,
         _isOverride: true,
         _occurrenceDate: isoDate,
-      });
+      }));
     }
     return out;
   };
@@ -481,23 +504,29 @@ function WeekView({
 function EventChip({ ev }: { ev: EffectiveEvent }) {
   const Icon = ev.category === "delivery" ? Truck : Sparkles;
   const isAuto = !!ev.is_auto;
+  const missing = !!ev._missingInvoice;
   return (
     <li
       className={`rounded-md px-2 py-1.5 border text-[11px] leading-tight ${
-        ev.high_priority
+        missing
+          ? "border-destructive bg-destructive/15 animate-pulse"
+          : ev.high_priority
           ? "border-destructive/60 bg-destructive/10"
           : isAuto
           ? "bg-success/5"
           : ev.category === "delivery"
           ? "border-neon/40 bg-neon/5"
           : "border-border bg-background/40"
-      } ${isAuto ? "border-success/70" : ""}`}
-      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : undefined}
+      } ${isAuto && !missing ? "border-success/70" : ""}`}
+      style={isAuto && !missing ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : missing ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--destructive)" } : undefined}
     >
       <div className="flex items-center gap-1 font-bold">
-        {ev.high_priority && <AlertTriangle className="h-3 w-3 text-destructive" />}
-        <Icon className={`h-3 w-3 ${isAuto ? "text-success" : "text-neon"}`} />
+        {(missing || ev.high_priority) && <AlertTriangle className={`h-3 w-3 ${missing ? "text-destructive" : "text-destructive"}`} />}
+        <Icon className={`h-3 w-3 ${missing ? "text-destructive" : isAuto ? "text-success" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
+        {missing && (
+          <span className="text-[9px] text-destructive border border-destructive/60 rounded px-1 shrink-0">⚠️ חסרה חשבונית</span>
+        )}
         {ev._isOverride && (
           <span className="text-[9px] text-amber-brand border border-amber-brand/60 rounded px-1">שונה</span>
         )}

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_supplier_calendar_events() FROM PUBLIC, anon, authenticated;
