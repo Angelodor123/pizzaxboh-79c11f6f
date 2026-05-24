@@ -4,31 +4,36 @@ import { ClipboardCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 
-// Determines current active shift purely by Asia/Jerusalem local hour:
-//   - 05:00–15:59 → morning
-//   - 16:00–22:59 → evening
-//   - else        → closing
+// Determines current active shift by Asia/Jerusalem local time:
+//   - Morning: 09:00–16:59
+//   - Evening: 17:00–01:59 (Sun–Thu nights), 17:00–03:59 on Friday night
+//   - Closing: any other hour
 function currentShiftFilter(now: Date): {
   label: string;
   matcher: (name: string) => boolean;
 } {
-  const hour = Number(
-    new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      hour12: false,
-      timeZone: "Asia/Jerusalem",
-    }).format(now),
-  );
-  if (hour >= 5 && hour < 16) {
-    return { label: "משמרת בוקר", matcher: (n) => /בוקר/.test(n) };
-  }
-  if (hour >= 16 && hour < 23) {
-    return { label: "משמרת ערב", matcher: (n) => /ערב/.test(n) };
-  }
-  return {
-    label: "סגירת משמרת",
-    matcher: (n) => /סגירה|יציאה/.test(n),
-  };
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    weekday: "short",
+    hour12: false,
+    timeZone: "Asia/Jerusalem",
+  }).formatToParts(now);
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const wdStr = parts.find((p) => p.type === "weekday")?.value ?? "Sun";
+  const wdMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const weekday = wdMap[wdStr] ?? 0;
+
+  const morning = { label: "משמרת בוקר", matcher: (n: string) => /בוקר/.test(n) };
+  const evening = { label: "משמרת ערב", matcher: (n: string) => /ערב|לילה/.test(n) };
+  const closing = { label: "סגירת משמרת", matcher: (n: string) => /סגירה|יציאה/.test(n) };
+
+  if (hour >= 9 && hour < 17) return morning;
+  if (hour >= 17) return evening;
+  // hour < 9 → after-midnight; previous day's evening may still own us
+  const prevWeekday = (weekday + 6) % 7;
+  const cutoff = prevWeekday === 5 ? 4 : 2; // Friday night → 04:00, else 02:00
+  if (hour < cutoff) return evening;
+  return closing;
 }
 
 export function CurrentShiftProgressCard() {
