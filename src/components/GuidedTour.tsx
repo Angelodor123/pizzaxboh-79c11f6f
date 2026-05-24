@@ -5,12 +5,14 @@ import { useAuth } from "@/lib/auth";
 import { HelpCircle, X, ChevronLeft } from "lucide-react";
 
 interface TourStep {
+  id: string;
   selector: string;
   title: string;
   body: string;
 }
 
 const COMMON_INTRO: TourStep = {
+  id: "step_intro_v1",
   selector: '[data-tour="home-header"]',
   title: "ברוכים הבאים ל-Pizza X 🍕",
   body: "זה מרכז השליטה התפעולי של המטבח. אקח אותך לסיור קצר כדי שתכיר את האזורים החשובים.",
@@ -19,26 +21,31 @@ const COMMON_INTRO: TourStep = {
 const STAFF_STEPS: TourStep[] = [
   COMMON_INTRO,
   {
+    id: "step_staff_events_v1",
     selector: '[data-tour="stat-events-today"]',
     title: "אירועים להיום",
     body: "כאן רואים כמה אירועים מתוכננים להיום — אספקות, אירועים מיוחדים ומשימות עם עדיפות גבוהה.",
   },
   {
+    id: "step_staff_notebook_v1",
     selector: '[data-tour="card-notebook"]',
     title: "פנקס עבודה יומי",
     body: "ריכוז של כל המשימות, רשימת הקניות וההזמנות הפתוחות שלך — לחיצה כאן פותחת את הפנקס המלא.",
   },
   {
+    id: "step_staff_prep_v1",
     selector: '[data-tour="tile-prep"]',
     title: "הכנות יומיות",
     body: "צ׳ק־ליסט של מה צריך להכין היום במטבח. החלקה ימינה על פריט מסמנת אותו כהושלם.",
   },
   {
+    id: "step_staff_restock_v1",
     selector: '[data-tour="tile-restock"]',
     title: "השלמות מהמחסן",
     body: "מה צריך להביא מהמחסן היום. אפשר לסרוק ברקודים של פריטים ולסמן השלמה במחוות החלקה.",
   },
   {
+    id: "step_staff_recipes_v1",
     selector: '[data-tour="tile-recipes"]',
     title: "כל המתכונים",
     body: "ספריית המתכונים והמנות, כולל מחשבון כמויות חי לכל מתכון.",
@@ -48,26 +55,31 @@ const STAFF_STEPS: TourStep[] = [
 const ADMIN_STEPS: TourStep[] = [
   COMMON_INTRO,
   {
+    id: "step_admin_overview_v1",
     selector: '[data-tour="stat-events-today"]',
     title: "תמונת מצב יומית",
     body: "כרטיסי הנתונים בראש הדף מציגים סטטוס מהיר — מתכונים פעילים, משימות פתוחות ואירועים להיום.",
   },
   {
+    id: "step_admin_notebook_v1",
     selector: '[data-tour="card-notebook"]',
     title: "פנקס העבודה",
     body: "כאן הצוות מנהל משימות, קניות והזמנות יומיות. מצוין למעקב תפעולי שוטף.",
   },
   {
+    id: "step_admin_suppliers_v1",
     selector: '[data-tour="tile-suppliers"]',
     title: "ניהול ספקים",
     body: "פרטי קשר, ימי אספקה והערות עבור כל הספקים — מרוכז במקום אחד.",
   },
   {
+    id: "step_admin_recipes_v1",
     selector: '[data-tour="tile-recipes"]',
     title: "מתכונים ותפריט",
     body: "עריכת מתכונים, מנות, מרכיבים והעלויות. כל שינוי משתקף מיד אצל הצוות.",
   },
   {
+    id: "step_admin_panel_v1",
     selector: '[data-tour="tile-admin"]',
     title: "מערכת הניהול",
     body: "מרכז הבקרה לאדמין: יחידות מידה, הכנות, השלמות, הסברי דפים, ניהול משתמשים ועוד.",
@@ -77,78 +89,101 @@ const ADMIN_STEPS: TourStep[] = [
 const GUEST_STEPS: TourStep[] = [
   COMMON_INTRO,
   {
+    id: "step_guest_overview_v1",
     selector: '[data-tour="stat-events-today"]',
     title: "סקירה מהירה",
     body: "כרטיסי הסטטוס בראש הדף נותנים לך תמונת מצב מיידית של כל מה שקורה היום.",
   },
   {
+    id: "step_guest_notebook_v1",
     selector: '[data-tour="card-notebook"]',
     title: "פנקס עבודה",
     body: "המשימות, הקניות וההזמנות של הצוות — מרוכזים במקום אחד.",
   },
   {
+    id: "step_guest_recipes_v1",
     selector: '[data-tour="tile-recipes"]',
     title: "ספריית המתכונים",
     body: "כל המתכונים והמנות עם מחשבוני כמויות מתקדמים.",
   },
 ];
 
-// Version 2 — "Feature Discovery" mini-tour for existing users
-const V2_DISCOVERY_STEPS: TourStep[] = [
+// ============================================================
+// ACTIVE FEATURE-DISCOVERY STEPS
+// To add a new feature tour later: append a step with a new unique ID.
+// Existing users will automatically see only the new ones.
+// ============================================================
+const ACTIVE_FEATURE_STEPS: TourStep[] = [
   {
-    selector: '[data-tour="stat-tasks-top"], [data-tour="tile-tasks"]',
-    title: "צ'ק-ליסט משמרות חדש 🎯",
-    body: "מערכת המשימות החדשה! כל הרוטינות במקום אחד עם שמירה אוטומטית ותיעוד מבצע.",
+    id: "step_shift_checklist_v2",
+    selector: '[data-tour="tile-tasks"], [data-tour="stat-tasks-top"]',
+    title: "צ'ק-ליסט משמרות",
+    body: "מערכת המשימות החדשה! כל רוטינות הבוקר, הערב וצ'ק-ליסט הסגירה במקום אחד, כולל שמירה אוטומטית ותיעוד ביצוע.",
   },
   {
+    id: "step_dough_status_v2",
     selector: '[data-tour="dough-status"]',
-    title: "סטטוס בצקים בקליק 🍕",
-    body: "עדכון בצקים בקליק: לחצו כאן כדי לעדכן מלאי מגשים מוכנים שמתעדכן אוטומטית בכל המערכת.",
+    title: "ניהול מלאי בצקים",
+    body: "עדכון מהיר: לחצו על הכרטיסייה הזו כדי לעדכן במיידי את כמות מגשי הבצק המוכנים, הנתון יסתנכרן אוטומטית בכל המערכת.",
   },
   {
+    id: "step_notepad_sync_v2",
     selector: '[data-tour="card-notebook"]',
-    title: "אוטומציה חכמה 🤖",
-    body: "המערכת תציע לכם לסגור משימות בפנקס באופן אוטומטי בהתבסס על הביצועים שלכם בצ'ק-ליסט.",
+    title: "סנכרון משימות חכם",
+    body: "מעכשיו, כשאתם מסמנים משימת משמרת כבוצעה, המערכת תסרוק את הפנקס הכללי ותציע לכם לסגור משימות תואמות באופן אוטומטי.",
   },
 ];
 
 const CURRENT_TUTORIAL_VERSION = 2;
 
 export function GuidedTour() {
-  const { session, role, loading, tutorialVersion, setTutorialVersion } = useAuth();
+  const {
+    session,
+    role,
+    loading,
+    tutorialVersion,
+    completedTutorialSteps,
+    setTutorialVersion,
+    markTutorialStepComplete,
+  } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [showDiscoveryBanner, setShowDiscoveryBanner] = useState(false);
+  const [mode, setMode] = useState<"master" | "discovery">("discovery");
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const isDiscovery = tutorialVersion === 1;
   const masterSteps = role === "admin" ? ADMIN_STEPS : session ? STAFF_STEPS : GUEST_STEPS;
-  const steps = isDiscovery ? V2_DISCOVERY_STEPS : masterSteps;
+  // Filter active feature steps against what the user already completed
+  const pendingFeatureSteps = ACTIVE_FEATURE_STEPS.filter(
+    (s) => !completedTutorialSteps.includes(s.id),
+  );
+  const steps = mode === "master" ? masterSteps : pendingFeatureSteps;
 
-  // Auto-start logic based on tutorial_version
+  // Auto-start logic
   useEffect(() => {
     if (loading) return;
     if (typeof window === "undefined") return;
     if (pathname !== "/") return;
-    if (!session) return; // anonymous users handled separately
-    if (tutorialVersion >= CURRENT_TUTORIAL_VERSION) return;
+    if (!session) return;
     if (tutorialVersion === 0) {
       // New user — run full master tour
       const t = setTimeout(() => {
+        setMode("master");
         setIndex(0);
         setOpen(true);
       }, 800);
       return () => clearTimeout(t);
     }
-    if (tutorialVersion === 1) {
-      // Existing user — show feature discovery banner first
+    // Returning user: any pending feature steps?
+    if (pendingFeatureSteps.length > 0) {
       const t = setTimeout(() => setShowDiscoveryBanner(true), 1200);
       return () => clearTimeout(t);
     }
-  }, [loading, pathname, session, tutorialVersion]);
+  }, [loading, pathname, session, tutorialVersion, pendingFeatureSteps.length]);
+
 
   // Listen for manual replay
   useEffect(() => {
