@@ -28,29 +28,37 @@ function fmtIls(n: number) {
 }
 
 function InvoicesPage() {
-  const { role, loading: authLoading } = useAuth();
+  const { role, loading: authLoading, isSuperAdmin } = useAuth();
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [supplierMap, setSupplierMap] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
+
+  useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
   const load = useCallback(async () => {
-    const [s, i] = await Promise.all([
-      supabase.from("suppliers").select("id,name").eq("is_archived", false).eq("active", true).order("name"),
-      supabase
-        .from("invoices")
-        .select("id,document_date,invoice_number,total_amount,status,supplier_id,is_archived,created_at")
-        .eq("is_archived", false)
-        .order("document_date", { ascending: false })
-        .limit(200),
-    ]);
+    setLoading(true);
+    let supplierQuery = supabase.from("suppliers").select("id,name").eq("is_archived", false).eq("active", true).order("name");
+    let invoiceQuery = supabase
+      .from("invoices")
+      .select("id,document_date,invoice_number,total_amount,status,supplier_id,is_archived,created_at")
+      .eq("is_archived", false)
+      .order("document_date", { ascending: false })
+      .limit(200);
+    // Super-admins see every branch via RLS; scope by the active branch switcher selection
+    if (isSuperAdmin && branchId) {
+      supplierQuery = supplierQuery.eq("branch_id", branchId);
+      invoiceQuery = invoiceQuery.eq("branch_id", branchId);
+    }
+    const [s, i] = await Promise.all([supplierQuery, invoiceQuery]);
     const sList = (s.data as SupplierOpt[]) ?? [];
     setSuppliers(sList);
     setSupplierMap(Object.fromEntries(sList.map((x) => [x.id, x.name])));
     setRows((i.data as InvoiceRow[]) ?? []);
     setLoading(false);
-  }, []);
+  }, [isSuperAdmin, branchId]);
 
   useEffect(() => {
     if (role !== "admin") return;
