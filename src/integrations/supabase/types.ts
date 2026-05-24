@@ -289,6 +289,7 @@ export type Database = {
           assigned_branch_id: string | null
           created_at: string
           email: string
+          full_name: string | null
           id: string
           invited_by: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -297,6 +298,7 @@ export type Database = {
           assigned_branch_id?: string | null
           created_at?: string
           email: string
+          full_name?: string | null
           id?: string
           invited_by?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -305,6 +307,7 @@ export type Database = {
           assigned_branch_id?: string | null
           created_at?: string
           email?: string
+          full_name?: string | null
           id?: string
           invited_by?: string | null
           role?: Database["public"]["Enums"]["app_role"]

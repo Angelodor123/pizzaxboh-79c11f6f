@@ -55,6 +55,7 @@ interface InvitationRow {
   role: AppRole;
   created_at: string;
   assigned_branch_id: string | null;
+  full_name: string | null;
 }
 
 interface RoleRow {
@@ -610,6 +611,7 @@ function InvitationsPanel() {
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [fullNames, setFullNames] = useState<Map<string, string>>(new Map());
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<AppRole>("viewer");
   const [inviteBranch, setInviteBranch] = useState<string>("");
   const [busy, setBusy] = useState(false);
@@ -619,7 +621,7 @@ function InvitationsPanel() {
     const [{ data: i }, { data: r }, { data: s }, { data: b }, { data: p }] = await Promise.all([
       supabase
         .from("invitations")
-        .select("id,email,role,created_at,assigned_branch_id")
+        .select("id,email,role,created_at,assigned_branch_id,full_name")
         .order("created_at", { ascending: false }),
       supabase
         .from("user_roles")
@@ -670,7 +672,7 @@ function InvitationsPanel() {
     const { error: e } = await supabase
       .from("invitations")
       .upsert(
-        { email: clean, role, assigned_branch_id: inviteBranch || null },
+        { email: clean, role, assigned_branch_id: inviteBranch || null, full_name: fullName.trim() || null },
         { onConflict: "email" },
       );
     if (e) {
@@ -691,6 +693,7 @@ function InvitationsPanel() {
     }
     setBusy(false);
     setEmail("");
+    setFullName("");
     setInviteBranch("");
     await load();
   };
@@ -765,6 +768,13 @@ function InvitationsPanel() {
       )}
 
       <div className="flex flex-col sm:flex-row-reverse gap-2 mb-4">
+        <input
+          type="text"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="שם מלא"
+          className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-right"
+        />
         <input
           type="email"
           dir="ltr"
@@ -891,7 +901,12 @@ function InvitationsPanel() {
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="text-right flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate" dir="ltr">
+                  {inv.full_name && (
+                    <div className="text-sm font-bold truncate text-right">
+                      {inv.full_name}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground truncate" dir="ltr">
                     {inv.email}
                   </div>
                   <div className="text-[10px] text-neon font-bold">
