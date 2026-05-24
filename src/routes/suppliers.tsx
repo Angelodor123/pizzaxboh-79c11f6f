@@ -269,16 +269,16 @@ function SuppliersPage() {
               },
             },
             {
-              key: "delete",
-              label: "מחק",
-              icon: Trash2,
+              key: "archive",
+              label: "ארכיון",
+              icon: Archive,
               variant: "destructive",
-              confirm: "למחוק {count} ספקים? כל אירועי הסחורה האוטומטיים שלהם יימחקו מהלוח.",
+              confirm: "להעביר {count} ספקים לארכיון? אירועי הסחורה האוטומטיים שלהם יוסרו מהלוח.",
               onClick: async () => {
                 const ids = bulk.ids;
-                const { error } = await supabase.from("suppliers").delete().in("id", ids);
+                const { error } = await supabase.from("suppliers").update({ is_archived: true }).in("id", ids);
                 if (error) return toast.error(error.message);
-                toast.success(`נמחקו ${ids.length} ספקים`);
+                toast.success(`${ids.length} ספקים הועברו לארכיון`);
                 bulk.clear();
               },
             },
