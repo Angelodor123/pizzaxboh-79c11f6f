@@ -184,16 +184,16 @@ export function EvChargingWidget() {
         anyExpired ? "border-neon glow-neon" : "border-jungle/30"
       }`}
     >
-      <header className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <BatteryCharging className="h-5 w-5 text-neon" />
-          <h2 className="font-display text-lg font-bold">⚡ ניהול טעינת רכבים</h2>
+      <header className="mb-4 text-center">
+        <div className="inline-flex items-center justify-center gap-2">
+          <BatteryCharging className="h-5 w-5 text-neon" aria-hidden />
+          <h2 className="font-display text-lg font-bold">ניהול טעינת רכבים</h2>
         </div>
         {anyExpired && (
-          <span className="inline-flex items-center gap-1 text-xs font-bold text-neon">
+          <div className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-neon">
             <Bell className="h-4 w-4" />
-            החלף עכשיו!
-          </span>
+            יש רכב להחלפה!
+          </div>
         )}
       </header>
 
@@ -208,22 +208,31 @@ export function EvChargingWidget() {
             const isExpired = cd.expired && v.status === "בטעינה";
             const isCharging = v.status === "בטעינה" && !isExpired;
             const hasIssue = !!v.issue_note;
+            const battery = batteryDraft[v.id] ?? String(v.battery_pct);
+            const batteryNum = Number(battery) || 0;
+            const batteryColor =
+              batteryNum >= 70
+                ? "text-success"
+                : batteryNum >= 30
+                  ? "text-amber-brand"
+                  : "text-destructive";
             return (
               <li
                 key={v.id}
-                className={`rounded-xl border bg-background/40 p-3 flex flex-col gap-2 transition ${
+                className={`rounded-xl border bg-background/40 overflow-hidden flex flex-col transition ${
                   isExpired
                     ? "border-neon glow-neon"
                     : isCharging
-                    ? "ev-charging"
-                    : hasIssue
-                    ? "border-destructive/60"
-                    : "border-border"
+                      ? "ev-charging"
+                      : hasIssue
+                        ? "border-destructive/60"
+                        : "border-border"
                 }`}
               >
-                <div className="relative z-10 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Car className="h-4 w-4 text-foreground/70 shrink-0" />
+                {/* Header: car name centered, status pill below */}
+                <div className="relative px-3 pt-3 pb-2 text-center border-b border-border/40">
+                  <div className="inline-flex items-center gap-1.5 max-w-full">
+                    <Car className="h-4 w-4 text-foreground/70 shrink-0" aria-hidden />
                     <span className="font-bold text-sm truncate">{v.name}</span>
                     {isCharging && (
                       <Zap
@@ -232,25 +241,27 @@ export function EvChargingWidget() {
                       />
                     )}
                   </div>
-                  <span
-                    className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusClasses(
-                      v.status,
-                    )}`}
-                  >
-                    {isCharging ? "⚡ בטעינה" : v.status}
-                  </span>
+                  <div className="mt-1.5">
+                    <span
+                      className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusClasses(
+                        v.status,
+                      )}`}
+                    >
+                      {isCharging ? "⚡ בטעינה" : v.status}
+                    </span>
+                  </div>
                 </div>
 
                 {hasIssue && (
-                  <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5">
+                  <div className="mx-3 mt-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5">
                     <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-destructive font-medium flex-1 break-words">
+                    <p className="text-[11px] text-destructive font-medium flex-1 break-words text-right">
                       {v.issue_note}
                     </p>
                     <button
                       type="button"
                       onClick={() => clearIssue(v.id)}
-                      className="text-destructive/70 hover:text-destructive shrink-0"
+                      className="text-destructive/70 hover:text-destructive active:scale-95 shrink-0"
                       aria-label="סמן כתוקן"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -258,17 +269,15 @@ export function EvChargingWidget() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    אחוז סוללה נוכחי
-                  </span>
-                  <div className="flex items-center gap-1">
+                {/* Battery big display */}
+                <div className="px-3 pt-3 flex items-center justify-center gap-3">
+                  <div className="flex items-baseline gap-0.5 font-display tabular-nums" dir="ltr">
                     <input
                       type="number"
                       inputMode="numeric"
                       min={0}
                       max={100}
-                      value={batteryDraft[v.id] ?? String(v.battery_pct)}
+                      value={battery}
                       onFocus={(e) => {
                         setBatteryDraft((d) => ({ ...d, [v.id]: String(v.battery_pct) }));
                         e.currentTarget.select();
@@ -289,26 +298,61 @@ export function EvChargingWidget() {
                         );
                         void update(v.id, { battery_pct: n });
                       }}
-                      className="w-16 bg-input border border-border rounded px-2 py-1 text-center font-display text-lg font-black text-neon tabular-nums focus:outline-none focus:ring-2 focus:ring-neon"
-                      aria-label={`סוללה ${v.name}`}
+                      className={`w-[3.2ch] bg-transparent border-0 p-0 text-center text-3xl font-black ${batteryColor} focus:outline-none focus:ring-0`}
+                      aria-label={`אחוז סוללה ${v.name}`}
                     />
-                    <span className="font-display text-lg font-black text-neon">%</span>
+                    <span className={`text-xl font-black ${batteryColor}`}>%</span>
                   </div>
                 </div>
+                <div className="px-3 -mt-0.5 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
+                  סוללה נוכחית
+                </div>
 
-                <div className="text-xs text-foreground/80 flex items-center justify-between">
-                  <span>זמן להחלפה:</span>
-                  <span className={`font-bold tabular-nums ${isExpired ? "text-neon" : ""}`}>
+                {/* Countdown */}
+                <div className="px-3 mt-2.5 flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">זמן להחלפה</span>
+                  <span
+                    className={`font-bold tabular-nums ${isExpired ? "text-neon" : "text-foreground/90"}`}
+                    dir="ltr"
+                  >
                     {cd.text}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5">
+                {/* Action grid: charge presets in a row */}
+                <div className="px-3 pt-3 grid grid-cols-4 gap-1.5">
+                  {[
+                    { label: "2ש׳", mins: 120 },
+                    { label: "3ש׳", mins: 180 },
+                    { label: "4ש׳", mins: 240 },
+                  ].map((p) => (
+                    <button
+                      key={p.mins}
+                      type="button"
+                      onClick={() => startCharge(v.id, p.mins)}
+                      aria-label={`התחל טעינה ${p.label}`}
+                      className="inline-flex items-center justify-center gap-1 text-[11px] px-1 py-1.5 rounded-md border border-neon/40 text-neon hover:bg-neon/10 active:scale-95 transition min-h-9"
+                    >
+                      <Plug className="h-3 w-3" /> {p.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => openCustomCharge(v.id)}
+                    aria-label="זמן טעינה מותאם"
+                    className="inline-flex items-center justify-center gap-1 text-[11px] px-1 py-1.5 rounded-md border border-neon/70 bg-neon/10 text-neon font-bold hover:bg-neon/20 active:scale-95 transition min-h-9"
+                  >
+                    מותאם
+                  </button>
+                </div>
+
+                {/* Secondary row: status, issue, disconnect */}
+                <div className="px-3 py-3 mt-1.5 grid grid-cols-[1fr_auto_auto] gap-1.5 items-center border-t border-border/40">
                   <select
                     value={v.status}
                     onChange={(e) => void update(v.id, { status: e.target.value as EvStatus })}
-                    className="text-[11px] bg-input border border-border rounded px-1.5 py-1"
-                    aria-label="סטטוס"
+                    className="text-[11px] bg-input border border-border rounded-md px-2 py-1.5 min-h-9 focus:outline-none focus:ring-2 focus:ring-neon/40"
+                    aria-label={`סטטוס ${v.name}`}
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
@@ -318,52 +362,29 @@ export function EvChargingWidget() {
                   </select>
                   <button
                     type="button"
-                    onClick={() => startCharge(v.id, 120)}
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
-                  >
-                    <Plug className="h-3 w-3" /> 2 ש׳
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => startCharge(v.id, 180)}
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
-                  >
-                    <Plug className="h-3 w-3" /> 3 ש׳
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => startCharge(v.id, 240)}
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/40 text-neon hover:bg-neon/10"
-                  >
-                    <Plug className="h-3 w-3" /> 4 ש׳
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openCustomCharge(v.id)}
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-neon/60 text-neon font-bold hover:bg-neon/10"
-                  >
-                    <Plug className="h-3 w-3" /> מותאם
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => openIssueDialog(v.id, v.issue_note)}
-                    className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border font-bold transition ${
+                    aria-label={hasIssue ? "ערוך תקלה" : "דווח תקלה"}
+                    title={hasIssue ? "ערוך תקלה" : "דווח תקלה"}
+                    className={`inline-flex items-center justify-center p-2 rounded-md border transition active:scale-95 min-h-9 min-w-9 ${
                       hasIssue
                         ? "border-destructive bg-destructive/15 text-destructive"
                         : "border-amber-brand/50 text-amber-brand hover:bg-amber-brand/10"
                     }`}
                   >
-                    <AlertTriangle className="h-3 w-3" />
-                    {hasIssue ? "ערוך תקלה" : "דווח תקלה"}
+                    <AlertTriangle className="h-4 w-4" />
                   </button>
-                  {(v.status === "בטעינה" || v.swap_at) && (
+                  {(v.status === "בטעינה" || v.swap_at) ? (
                     <button
                       type="button"
                       onClick={() => void update(v.id, { status: "ממתין", swap_at: null })}
-                      className="text-[11px] px-2 py-1 rounded border border-border text-muted-foreground hover:text-destructive"
+                      aria-label="נתק טעינה"
+                      title="נתק"
+                      className="inline-flex items-center justify-center p-2 rounded-md border border-border text-muted-foreground hover:text-destructive hover:border-destructive/60 active:scale-95 transition min-h-9 min-w-9"
                     >
-                      נתק
+                      <X className="h-4 w-4" />
                     </button>
+                  ) : (
+                    <span className="w-9" aria-hidden />
                   )}
                 </div>
               </li>
@@ -371,6 +392,7 @@ export function EvChargingWidget() {
           })}
         </ul>
       )}
+
 
       {/* Custom charge time dialog */}
       <Dialog open={!!timeDialogId} onOpenChange={(o) => !o && setTimeDialogId(null)}>
