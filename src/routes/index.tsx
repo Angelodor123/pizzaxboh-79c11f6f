@@ -33,7 +33,7 @@ function todayIso() {
 }
 
 function OperationalDashboard() {
-  const { role } = useAuth();
+  const { role, isSuperAdmin } = useAuth();
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -234,22 +234,49 @@ function OperationalDashboard() {
         </Link>
       )}
 
-      {/* Shortcut tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
-        <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
-        <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" />
-        <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
-        <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
-        <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
-        {role === "admin" && (
+      {/* Categorized shortcut sections (RBAC) */}
+      {(() => {
+        const effectiveRole = isSuperAdmin
+          ? "super_admin"
+          : role === "admin"
+            ? "manager"
+            : "employee";
+        const canLogistics = effectiveRole === "manager" || effectiveRole === "super_admin";
+        const canManagement = effectiveRole === "super_admin";
+
+        return (
           <>
-            <ShortcutTile to="/orders" icon={<Truck className="h-5 w-5" />} label="📦 הזמנת סחורה" />
-            <ShortcutTile to="/invoices" icon={<ClipboardCheck className="h-5 w-5" />} label="📥 קליטת סחורה" />
-            <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
+            <SectionHeader>מטבח ותפעול</SectionHeader>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
+              <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
+              <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
+              <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" />
+            </div>
+
+            {canLogistics && (
+              <>
+                <SectionHeader>לוגיסטיקה ומלאי</SectionHeader>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <ShortcutTile to="/invoices" icon={<ClipboardCheck className="h-5 w-5" />} label="קליטת סחורה" />
+                  <ShortcutTile to="/orders" icon={<Truck className="h-5 w-5" />} label="הזמנת סחורה" />
+                  <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
+                  <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
+                </div>
+              </>
+            )}
+
+            {canManagement && (
+              <>
+                <SectionHeader>הנהלה</SectionHeader>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
+                </div>
+              </>
+            )}
           </>
-        )}
-      </div>
+        );
+      })()}
     </div>
   );
 }
@@ -294,6 +321,14 @@ function NotebookMini({ label, value }: { label: string; value: number }) {
       </div>
       <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
     </div>
+  );
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-zinc-400 text-sm font-bold mb-3 mt-6 border-b border-zinc-800/50 pb-1">
+      {children}
+    </h2>
   );
 }
 

@@ -93,7 +93,19 @@ export function CopilotFab() {
   }, [messages, loading]);
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 50);
+    if (open && typeof window !== "undefined" && window.innerWidth >= 768) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  // Lock body scroll while chat is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -312,7 +324,7 @@ export function CopilotFab() {
             "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
             "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
             "flex flex-col overflow-hidden animate-scale-in",
-            "w-96 h-[500px] max-w-[90vw] max-h-[80vh]",
+            "w-96 h-[500px] max-w-[90vw] max-h-[85dvh]",
           )}
           style={{
             bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
@@ -342,7 +354,7 @@ export function CopilotFab() {
           </div>
 
           {/* Messages */}
-          <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+          <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-3">
             {messages.map((m, i) => (
               <div
                 key={i}
@@ -379,7 +391,7 @@ export function CopilotFab() {
 
 
           {/* Composer */}
-          <div className="border-t border-border p-3 bg-card/80">
+          <div className="shrink-0 border-t border-border p-3 bg-card/80">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
