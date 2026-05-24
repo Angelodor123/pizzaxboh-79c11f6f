@@ -6,7 +6,7 @@ interface PageMeta {
 }
 
 const PAGE_META: Record<string, PageMeta> = {
-  "/": { title: "מטבח Pizza X", subtitle: "Back of House — מרכז הבקרה התפעולי" },
+  
   "/recipes": { title: "מתכונים", subtitle: "ספריית המתכונים הרשמית של Pizza X" },
   "/dishes": { title: "מנות", subtitle: "תפריט המנות הפעיל של Pizza X" },
   "/prep": { title: "הכנות יומיות", subtitle: "מעקב משימות הכנה ומלאי פעיל" },
