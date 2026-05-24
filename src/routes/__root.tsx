@@ -155,6 +155,17 @@ function RootComponent() {
   );
 }
 
+// Routes restricted by effective role. "super_admin" → super admin only;
+// "manager" → admin role required (manager or super admin).
+const RESTRICTED_ROUTES: Record<string, "manager" | "super_admin"> = {
+  "/admin": "super_admin",
+  "/suppliers": "super_admin",
+  "/orders": "manager",
+  "/invoices": "manager",
+  "/calendar": "manager",
+  "/restock": "manager",
+};
+
 function AuthedShell() {
   useRecipesSync();
   useNotebookRealtime();
@@ -165,6 +176,21 @@ function AuthedShell() {
   const category = useUIStore((s) => s.category);
   const router = useRouter();
   const pathname = router.state.location.pathname;
+  const { role: effRole, isSuperAdmin: effSuper, loading: authLoading } = useAuth();
+
+  // Strict route guard — runs whenever pathname or effective role changes.
+  // This is what makes "View As → Employee" immediately kick a super admin
+  // off /suppliers, /admin, etc.
+  useEffect(() => {
+    if (authLoading) return;
+    const need = RESTRICTED_ROUTES[pathname];
+    if (!need) return;
+    const isAdminRole = effRole === "admin";
+    const allowed = need === "super_admin" ? effSuper : isAdminRole;
+    if (!allowed) {
+      router.navigate({ to: "/" });
+    }
+  }, [pathname, effRole, effSuper, authLoading, router]);
   const isRecipesPage = pathname === "/recipes";
   const isDishesView =
     isRecipesPage &&
