@@ -167,7 +167,7 @@ function PrepPage() {
         onClose={() => setAddOpen(false)}
         kind="prep"
         branchId={getActiveBranchIdSync()}
-        onCreated={(row) => setItems((prev) => [...prev, row as Item])}
+        onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
       />
     </div>
   );
