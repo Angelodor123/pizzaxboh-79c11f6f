@@ -361,6 +361,7 @@ export type Database = {
           id: string
           image_url: string | null
           invoice_number: string
+          is_archived: boolean
           notes: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           supplier_id: string | null
@@ -375,6 +376,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           invoice_number?: string
+          is_archived?: boolean
           notes?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           supplier_id?: string | null
@@ -389,6 +391,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           invoice_number?: string
+          is_archived?: boolean
           notes?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           supplier_id?: string | null
@@ -915,6 +918,33 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_orders_history: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          order_details: Json
+          supplier_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          order_details?: Json
+          supplier_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          order_details?: Json
+          supplier_id?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           active: boolean
@@ -927,6 +957,7 @@ export type Database = {
           default_start_time: string | null
           delivery_weekdays: number[]
           id: string
+          is_archived: boolean
           logo_url: string | null
           name: string
           notes: string | null
@@ -943,6 +974,7 @@ export type Database = {
           default_start_time?: string | null
           delivery_weekdays?: number[]
           id?: string
+          is_archived?: boolean
           logo_url?: string | null
           name: string
           notes?: string | null
@@ -959,6 +991,7 @@ export type Database = {
           default_start_time?: string | null
           delivery_weekdays?: number[]
           id?: string
+          is_archived?: boolean
           logo_url?: string | null
           name?: string
           notes?: string | null
