@@ -171,6 +171,8 @@ function RestockPage() {
               draft={draft}
               toBring={toBring}
               done={done}
+              showEdit={isSuperAdmin}
+              onEdit={() => setEditing(it)}
               onSwipeRight={() => { void persist(it.id, target, true); }}
               onSwipeLeft={() => { setDrafts((p) => ({ ...p, [it.id]: "" })); void persist(it.id, 0, false); }}
               onFocus={() => setDrafts((p) => ({ ...p, [it.id]: String(stock || "") }))}
