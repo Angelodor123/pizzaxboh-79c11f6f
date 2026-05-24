@@ -190,6 +190,7 @@ function PrepPage() {
 interface RowProps {
   name: string; unit: string; target: number; stock: number; draft?: string;
   toPrep: number; done: boolean;
+  showEdit?: boolean; onEdit?: () => void;
   onSwipeRight: () => void; onSwipeLeft: () => void;
   onFocus: () => void; onChange: (v: string) => void; onBlur: () => void;
 }
