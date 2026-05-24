@@ -340,6 +340,7 @@ export type Database = {
           created_by: string | null
           done: boolean
           id: string
+          is_urgent: boolean
           list_key: string
           priority: string
           sort_order: number
@@ -353,6 +354,7 @@ export type Database = {
           created_by?: string | null
           done?: boolean
           id?: string
+          is_urgent?: boolean
           list_key: string
           priority?: string
           sort_order?: number
@@ -366,6 +368,7 @@ export type Database = {
           created_by?: string | null
           done?: boolean
           id?: string
+          is_urgent?: boolean
           list_key?: string
           priority?: string
           sort_order?: number
@@ -538,6 +541,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           has_accepted_nda: boolean
+          tutorial_version: number
           updated_at: string
           user_id: string
         }
@@ -545,6 +549,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           has_accepted_nda?: boolean
+          tutorial_version?: number
           updated_at?: string
           user_id: string
         }
@@ -552,6 +557,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           has_accepted_nda?: boolean
+          tutorial_version?: number
           updated_at?: string
           user_id?: string
         }
@@ -1008,6 +1014,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      daily_task_logs_reset: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
