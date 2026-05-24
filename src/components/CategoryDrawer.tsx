@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays, Truck, Home, ChefHat, UtensilsCrossed } from "lucide-react";
+import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays, Truck, Home, ChefHat, UtensilsCrossed, ListChecks } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -209,6 +209,14 @@ export function CategoryDrawer() {
 
             <li>
               <div className="mx-6 my-2 h-px bg-border/60" />
+              <Link
+                to="/tasks"
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+              >
+                <span className="flex-1 text-right">✅ משימות יומיות</span>
+                <ListChecks className="h-5 w-5" />
+              </Link>
               <Link
                 to="/notebook"
                 onClick={() => setDrawerOpen(false)}

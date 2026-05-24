@@ -37,7 +37,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
 import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
 import { BranchesPanel } from "@/components/admin/BranchesPanel";
-import { Building2 } from "lucide-react";
+import { TasksPanel } from "@/components/admin/TasksPanel";
+import { Building2, ListChecks } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -231,7 +232,7 @@ function AdminPage() {
   };
 
   const { isSuperAdmin } = useAuth();
-  const [tab, setTab] = useState<"recipes" | "users" | "branches" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
+  const [tab, setTab] = useState<"recipes" | "users" | "branches" | "tasks" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -257,6 +258,11 @@ function AdminPage() {
             סניפים
           </TabButton>
         )}
+        {isSuperAdmin && (
+          <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")} icon={<ListChecks className="h-4 w-4" />}>
+            משימות קבועות
+          </TabButton>
+        )}
         <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
           תזכורות ספקים
         </TabButton>
@@ -279,6 +285,7 @@ function AdminPage() {
 
       {tab === "users" && <InvitationsPanel />}
       {tab === "branches" && isSuperAdmin && <BranchesPanel />}
+      {tab === "tasks" && isSuperAdmin && <TasksPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
       {tab === "cms" && <ContentTextsPanel />}
       {tab === "onboarding" && <OnboardingPanel />}
@@ -689,16 +696,20 @@ function InvitationsPanel() {
   };
 
   const updateUserBranch = async (id: string, branchId: string | null) => {
+    // Optimistic update so the dropdown + branch name re-render instantly
+    setRoles((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, assigned_branch_id: branchId } : r)),
+    );
     const { error: e } = await supabase
       .from("user_roles")
       .update({ assigned_branch_id: branchId })
       .eq("id", id);
     if (e) {
       toast.error(e.message);
+      await load();
       return;
     }
     toast.success("השיוך עודכן");
-    await load();
   };
 
   const revokeInvite = async (id: string) => {
@@ -833,6 +844,11 @@ function InvitationsPanel() {
                     <span className="text-[10px] text-neon font-bold whitespace-nowrap">
                       {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
                     </span>
+                    {u.assigned_branch_id && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
+                        🏢 {branches.find((b) => b.id === u.assigned_branch_id)?.name ?? "—"}
+                      </span>
+                    )}
                   </div>
                   {isSuperAdmin && !superAdminIds.has(u.user_id) && (
                     <select
