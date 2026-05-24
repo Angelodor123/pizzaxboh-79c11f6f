@@ -261,6 +261,7 @@ function TasksPage() {
 
   const toggleTask = (taskId: string) => {
     let nextState: LogState | null = null;
+    let taskName = "";
     setLogs((m) => {
       const next = new Map(m);
       const prev = next.get(taskId);
@@ -275,9 +276,60 @@ function TasksPage() {
       next.set(taskId, nextState);
       return next;
     });
+    const t = allTasks.find((x) => x.id === taskId);
+    taskName = t?.name ?? "";
     // Optimistic: fire-and-forget persistence
     if (nextState) {
-      void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
+      const state = nextState;
+      void persistTask(taskId, state).then(() => syncParLevelsForTask(taskId));
+      if (state.completed && taskName) {
+        void scanNotebookForMatch(taskName);
+      }
+    }
+  };
+
+  // Lightweight keyword matching against active notebook tasks.
+  const scanNotebookForMatch = async (taskName: string) => {
+    const stop = new Set([
+      "של", "את", "על", "עם", "אל", "כל", "זה", "זו", "או", "גם",
+      "ל", "מ", "ב", "ה", "ו", "ש",
+    ]);
+    const words = taskName
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length >= 3 && !stop.has(w));
+    if (words.length === 0) return;
+    try {
+      const { data } = await supabase
+        .from("notebook_items")
+        .select("id,text,list_key,done,archived_at")
+        .is("archived_at", null)
+        .eq("done", false)
+        .eq("list_key", "tasks");
+      const rows = (data ?? []) as Array<{ id: string; text: string }>;
+      const match = rows.find((r) => words.some((w) => r.text.includes(w)));
+      if (!match) return;
+      toast(`נמצאה משימה תואמת בפנקס: ${match.text}`, {
+        description: "לסמן כבוצעה?",
+        action: {
+          label: "סמן כבוצע",
+          onClick: async () => {
+            const { error } = await supabase
+              .from("notebook_items")
+              .update({ done: true })
+              .eq("id", match.id);
+            if (error) {
+              toast.error("עדכון פנקס נכשל");
+            } else {
+              toast.success("המשימה בפנקס סומנה כבוצעה");
+            }
+          },
+        },
+        duration: 8000,
+      });
+    } catch {
+      /* noop */
     }
   };
 
