@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAssignedBranchId(null);
       setTutorialVersionState(2);
       setCompletedTutorialSteps([]);
+      setTutorialCooldownUntil(null);
       return;
     }
     const [{ data: roleData }, { data: superData }, { data: roleRow }, { data: profile }] =
