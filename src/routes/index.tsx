@@ -227,10 +227,17 @@ function OperationalDashboard() {
         </Link>
       )}
 
+      {/* New: Dough + Current shift telemetry */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <DoughStatusCard />
+        <CurrentShiftProgressCard />
+      </div>
+
       {/* Shortcut tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
         <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
-        <ShortcutTile to="/notebook" icon={<ListChecks className="h-5 w-5" />} label="פנקס יומי" />
+        <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" />
         <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
         <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
         <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
