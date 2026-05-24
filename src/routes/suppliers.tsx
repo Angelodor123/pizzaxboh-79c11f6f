@@ -67,32 +67,32 @@ function SuppliersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6" dir="rtl">
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-            🚚 ניהול <span className="text-neon text-glow-neon">ספקים</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            ימי החלוקה מסונכרנים אוטומטית ללו״ז קבלת הסחורה בלוח.
-          </p>
-        </div>
+      <div className="mb-6 text-center">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          🚚 ניהול <span className="text-neon text-glow-neon">ספקים</span>
+        </h1>
+        <p className="hidden sm:block text-muted-foreground mt-2 text-sm">
+          ימי החלוקה מסונכרנים אוטומטית ללו״ז קבלת הסחורה בלוח.
+        </p>
         {canEdit && (
-          <button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-            className="shrink-0 inline-flex items-center gap-2 h-10 px-3 rounded-md bg-neon text-primary-foreground font-bold glow-neon"
-          >
-            <Plus className="h-4 w-4" />
-            ספק חדש
-          </button>
+          <div className="mt-3 flex items-center justify-center">
+            <button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-neon text-primary-foreground font-bold glow-neon active:scale-95 transition"
+            >
+              <Plus className="h-4 w-4" />
+              ספק חדש
+            </button>
+          </div>
         )}
       </div>
 
       {canEdit && list.length > 0 && (
-        <div className="flex items-center justify-end mb-3">
+        <div className="flex items-center justify-center mb-3">
           <button
             type="button"
             onClick={() => bulk.toggleAll(list.map((s) => s.id))}
