@@ -393,7 +393,7 @@ function SupplierForm({
 
         <label className="flex items-center justify-end gap-2 text-sm cursor-pointer">
           <span>ספק פעיל (יוצר אירועים בלוח)</span>
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-[hsl(var(--neon))]" />
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-[var(--neon)]" />
         </label>
 
         <button
