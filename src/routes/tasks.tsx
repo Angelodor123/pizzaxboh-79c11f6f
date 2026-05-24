@@ -149,6 +149,7 @@ function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Debounce timers per task id for comment autosave
   const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
