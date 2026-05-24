@@ -16,7 +16,7 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
 
-import { GuidedTour, ReplayTourButton } from "@/components/GuidedTour";
+import { GuidedTour } from "@/components/GuidedTour";
 import { CopilotFab } from "@/components/CopilotFab";
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
