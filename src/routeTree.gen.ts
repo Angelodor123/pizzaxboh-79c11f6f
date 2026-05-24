@@ -14,7 +14,9 @@ import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as RestockRouteImport } from './routes/restock'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PrepRouteImport } from './routes/prep'
+import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotebookRouteImport } from './routes/notebook'
+import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -45,9 +47,19 @@ const PrepRoute = PrepRouteImport.update({
   path: '/prep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotebookRoute = NotebookRouteImport.update({
   id: '/notebook',
   path: '/notebook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesRoute = InvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuideRoute = GuideRouteImport.update({
@@ -76,7 +88,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
+  '/invoices': typeof InvoicesRoute
   '/notebook': typeof NotebookRoute
+  '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
@@ -88,7 +102,9 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
+  '/invoices': typeof InvoicesRoute
   '/notebook': typeof NotebookRoute
+  '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
@@ -101,7 +117,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
+  '/invoices': typeof InvoicesRoute
   '/notebook': typeof NotebookRoute
+  '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
@@ -115,7 +133,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/guide'
+    | '/invoices'
     | '/notebook'
+    | '/orders'
     | '/prep'
     | '/recipes'
     | '/restock'
@@ -127,7 +147,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/guide'
+    | '/invoices'
     | '/notebook'
+    | '/orders'
     | '/prep'
     | '/recipes'
     | '/restock'
@@ -139,7 +161,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/guide'
+    | '/invoices'
     | '/notebook'
+    | '/orders'
     | '/prep'
     | '/recipes'
     | '/restock'
@@ -152,7 +176,9 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
+  InvoicesRoute: typeof InvoicesRoute
   NotebookRoute: typeof NotebookRoute
+  OrdersRoute: typeof OrdersRoute
   PrepRoute: typeof PrepRoute
   RecipesRoute: typeof RecipesRoute
   RestockRoute: typeof RestockRoute
@@ -197,11 +223,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notebook': {
       id: '/notebook'
       path: '/notebook'
       fullPath: '/notebook'
       preLoaderRoute: typeof NotebookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices': {
+      id: '/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof InvoicesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guide': {
@@ -240,7 +280,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
+  InvoicesRoute: InvoicesRoute,
   NotebookRoute: NotebookRoute,
+  OrdersRoute: OrdersRoute,
   PrepRoute: PrepRoute,
   RecipesRoute: RecipesRoute,
   RestockRoute: RestockRoute,
@@ -250,3 +292,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
