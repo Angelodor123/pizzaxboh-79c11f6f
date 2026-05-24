@@ -769,6 +769,13 @@ function InvitationsPanel() {
 
       <div className="flex flex-col sm:flex-row-reverse gap-2 mb-4">
         <input
+          type="text"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="שם מלא"
+          className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-right"
+        />
+        <input
           type="email"
           dir="ltr"
           value={email}
