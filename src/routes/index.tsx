@@ -34,7 +34,7 @@ function todayIso() {
 
 function OperationalDashboard() {
   const { role } = useAuth();
-  const recipes = useCookbookStore((s) => s.recipes);
+  
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
 
