@@ -16,6 +16,8 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { GuidedTour, ReplayTourButton } from "@/components/GuidedTour";
 import { NdaGate } from "@/components/NdaGate";
+import { BranchGate } from "@/components/BranchGate";
+import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
@@ -138,7 +140,9 @@ function RootComponent() {
       <AuthProvider>
         <AccessGate>
           <NdaGate>
-            <AuthedShell />
+            <BranchGate>
+              <AuthedShell />
+            </BranchGate>
           </NdaGate>
         </AccessGate>
       </AuthProvider>
@@ -201,6 +205,7 @@ function AuthedShell() {
         <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <CategoryDrawer />
+            <BranchSwitcher />
             {showServiceToggle && <ServiceModeToggle />}
           </div>
           {pathname !== "/" && (
