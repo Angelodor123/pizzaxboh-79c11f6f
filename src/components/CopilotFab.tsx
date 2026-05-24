@@ -98,6 +98,33 @@ export function CopilotFab() {
     }
   }, [open]);
 
+  // Track visualViewport so the modal stays above the on-screen keyboard
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement;
+    const update = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      const isMobile = window.innerWidth < 640;
+      // On mobile when keyboard is up, dock just above keyboard with small gap
+      const bottom = kb > 0 ? `${kb + 8}px` : isMobile ? "5rem" : "5rem";
+      const avail = vv.height - (kb > 0 ? 16 : 96);
+      root.style.setProperty("--copilot-bottom", bottom);
+      root.style.setProperty("--copilot-h", `${Math.max(280, Math.min(560, avail))}px`);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      root.style.removeProperty("--copilot-bottom");
+      root.style.removeProperty("--copilot-h");
+    };
+  }, [open]);
+
+
   // Lock body scroll while chat is open
   useEffect(() => {
     if (!open) return;
