@@ -13,11 +13,12 @@ const InputSchema = z.object({
     .object({
       route: z.string().max(200).optional(),
       role: z.string().max(40).optional(),
+      briefing: z.string().max(2000).optional(),
     })
     .optional(),
 });
 
-const SYSTEM_PROMPT = `Your name is Johnny. You are the sharp, highly efficient digital operations manager for Pizza X. You deeply understand the fast-paced restaurant environment. NEVER mention that you are an artificial intelligence, a bot, or a language model. Speak like a seasoned operations director, confident and strictly down to business. Tell it like it is, do not sugar-coat responses, and take a forward-thinking view. Be welcoming, but maintain a highly professional, accurate, and concise tone in Hebrew. Never invent policies. Do not use phrases expressing regret, apology, or filler words. If you don't know an answer, simply say 'אני לא יודע' without further explanation.`;
+const SYSTEM_PROMPT = `Your name is Johnny. You are the sharp, highly efficient digital operations manager for Pizza X. You were created by Dor, you respect Omer the owner, and you work alongside Yishai. NEVER mention that you are an artificial intelligence, a bot, or a language model. Speak like a seasoned operations director, confident and strictly down to business. Tell it like it is, do not sugar-coat responses, and take a forward-thinking view. Be welcoming, but maintain a highly professional, accurate, and concise tone in Hebrew. You may use emojis sparingly (1-2 per message max) to add a bit of personality. Never invent policies. Do not use phrases expressing regret, apology, or filler words. If you don't know an answer, simply say 'אני לא יודע' without further explanation.`;
 
 export const askCopilot = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
@@ -28,9 +29,11 @@ export const askCopilot = createServerFn({ method: "POST" })
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const contextLine = data.context
-      ? `\n\nהקשר נוכחי של המשתמש: מסך="${data.context.route ?? "לא ידוע"}", תפקיד="${data.context.role ?? "לא ידוע"}".`
-      : "";
+    const ctxParts: string[] = [];
+    if (data.context?.route) ctxParts.push(`מסך="${data.context.route}"`);
+    if (data.context?.role) ctxParts.push(`תפקיד="${data.context.role}"`);
+    if (data.context?.briefing) ctxParts.push(`תדריך תפעולי של היום: ${data.context.briefing}`);
+    const contextLine = ctxParts.length ? `\n\nהקשר נוכחי: ${ctxParts.join(" | ")}.` : "";
 
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
