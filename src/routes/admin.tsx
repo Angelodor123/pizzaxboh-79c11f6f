@@ -53,6 +53,7 @@ interface InvitationRow {
   email: string;
   role: AppRole;
   created_at: string;
+  assigned_branch_id: string | null;
 }
 
 interface RoleRow {
@@ -60,6 +61,12 @@ interface RoleRow {
   email: string;
   role: AppRole;
   user_id: string;
+  assigned_branch_id: string | null;
+}
+
+interface BranchOption {
+  id: string;
+  name: string;
 }
 
 function AdminGate() {
