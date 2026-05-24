@@ -147,6 +147,7 @@ function TasksPage() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
+  const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
 
   // Debounce timers per task id for comment autosave
   const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -274,6 +275,11 @@ function TasksPage() {
       next.set(taskId, nextState);
       return next;
     });
+    // Trigger neon pulse only on completion (not uncheck)
+    if (completed) {
+      setPulsingTaskId(taskId);
+      setTimeout(() => setPulsingTaskId((cur) => (cur === taskId ? null : cur)), 650);
+    }
     const t = allTasks.find((x) => x.id === taskId);
     const taskName = t?.name ?? "";
     void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
@@ -471,19 +477,19 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
+                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-border overflow-hidden shadow-sm mb-2">
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
                           aria-expanded={isGroupOpen}
                           aria-label={`${g.name} — ${gDone} מתוך ${gTasks.length}`}
-                          className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-accent/40 transition"
+                          className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-4 hover:bg-gray-800 transition"
                         >
                           <ChevronDown
                             className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isGroupOpen ? "rotate-180" : ""}`}
                           />
                           <div className="text-center min-w-0">
-                            <div className="text-sm font-bold leading-snug break-words flex items-center justify-center gap-1.5">
+                            <div className="text-sm font-bold leading-snug break-words flex items-center justify-center gap-1.5 text-foreground">
                               {gPct === 100 && (
                                 <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                               )}
@@ -494,7 +500,7 @@ function TasksPage() {
                             </div>
                             <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-center gap-2">
                               <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
-                              <div className="w-20 h-1 rounded-full bg-background border border-border overflow-hidden">
+                              <div className="w-20 h-1 rounded-full bg-background/60 border border-border overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${gPct === 100 ? "bg-success" : "bg-neon"}`}
                                   style={{ width: `${gPct}%` }}
@@ -507,11 +513,13 @@ function TasksPage() {
 
 
 
+
                         {isGroupOpen && (
-                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3">
+                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
                             {gTasks.map((t) => {
                               const log = logs.get(t.id);
                               const done = log?.completed ?? false;
+                              const isPulsing = pulsingTaskId === t.id;
                               const stamp =
                                 done && log?.completed_at
                                   ? formatStamp(log.completed_by, log.completed_at)
@@ -522,11 +530,11 @@ function TasksPage() {
                               return (
                                 <div
                                   key={t.id}
-                                  className={`rounded-xl border px-4 py-3 transition ${
+                                  className={`rounded-xl border p-4 transition-all duration-300 ${
                                     done
                                       ? "bg-card/40 border-border"
-                                      : "bg-card border-primary/40 hover:border-primary/70 hover:shadow-[0_0_14px_oklch(0.65_0.31_5/0.35)]"
-                                  }`}
+                                      : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
+                                  } ${isPulsing ? "neon-pulse-card" : ""}`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <label className="flex items-start gap-3 flex-1 cursor-pointer min-w-0">
@@ -535,16 +543,18 @@ function TasksPage() {
                                         checked={done}
                                         onChange={() => toggleTask(t.id)}
                                         aria-label={`סמן כבוצע: ${t.name}`}
-                                        className="mt-0.5 h-5 w-5 accent-primary shrink-0"
+                                        className={`mt-0.5 h-5 w-5 shrink-0 transition-all duration-200 ${
+                                          done ? "accent-[#39FF14]" : "accent-primary"
+                                        } ${isPulsing ? "neon-check" : ""}`}
                                       />
                                       <div className="flex-1 min-w-0 text-right">
                                         <div
-                                          className={`text-sm font-bold leading-snug ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
+                                          className={`text-sm font-bold leading-snug transition-all duration-300 ${done ? "line-through text-gray-500" : "text-foreground"}`}
                                         >
                                           {t.name}
                                         </div>
                                         {stamp && (
-                                          <div className="text-[11px] text-primary mt-1 leading-snug">
+                                          <div className="text-[11px] text-primary/90 mt-1 leading-snug">
                                             {stamp}
                                           </div>
                                         )}

@@ -11,9 +11,11 @@ interface AuthState {
   role: AppRole | null;
   isSuperAdmin: boolean;
   assignedBranchId: string | null;
+  tutorialVersion: number;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
+  setTutorialVersion: (v: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [fullName, setFullName] = useState<string | null>(null);
   const [assignedBranchId, setAssignedBranchId] = useState<string | null>(null);
+  const [tutorialVersion, setTutorialVersionState] = useState<number>(2);
   const [loading, setLoading] = useState(true);
 
   const loadRole = async (uid: string | undefined) => {
@@ -32,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSuperAdmin(false);
       setFullName(null);
       setAssignedBranchId(null);
+      setTutorialVersionState(2);
       return;
     }
     const [{ data: roleData }, { data: superData }, { data: roleRow }, { data: profile }] =
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, tutorial_version")
           .eq("user_id", uid)
           .maybeSingle(),
       ]);
@@ -53,6 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(Boolean(superData));
     setAssignedBranchId((roleRow?.assigned_branch_id as string | null) ?? null);
     setFullName((profile?.full_name as string | null) ?? null);
+    setTutorialVersionState(
+      typeof (profile as { tutorial_version?: number } | null)?.tutorial_version === "number"
+        ? (profile as { tutorial_version: number }).tutorial_version
+        : 0,
+    );
+  };
+
+  const setTutorialVersion = async (v: number) => {
+    setTutorialVersionState(v);
+    const uid = session?.user?.id;
+    if (!uid) return;
+    await supabase.from("profiles").update({ tutorial_version: v }).eq("user_id", uid);
   };
 
   useEffect(() => {
@@ -92,9 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         isSuperAdmin,
         assignedBranchId,
+        tutorialVersion,
         loading,
         signOut,
         refreshRole,
+        setTutorialVersion,
       }}
     >
       {children}

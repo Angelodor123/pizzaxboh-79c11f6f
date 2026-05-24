@@ -87,6 +87,7 @@ export function DoughStatusCard() {
       <button
         type="button"
         onClick={openModal}
+        data-tour="dough-status"
         className="text-right rounded-xl border-2 border-amber-500/40 hover:border-amber-400 bg-amber-500/5 p-4 transition flex flex-col gap-1 w-full"
         aria-label="עדכון סטטוס בצקים"
       >

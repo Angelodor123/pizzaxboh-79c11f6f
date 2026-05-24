@@ -173,4 +173,25 @@
     0%, 100% { transform: scale(1); opacity: 0.85; }
     50%      { transform: scale(1.18); opacity: 1; }
   }
+
+  /* Neon Pulse — completion feedback for task cards & checkbox */
+  .neon-pulse-card {
+    animation: neon-pulse-card 0.6s ease-out 1;
+  }
+  @keyframes neon-pulse-card {
+    0%   { box-shadow: 0 0 0 0 oklch(0.65 0.31 5 / 0.0), 0 0 0 1px oklch(0.65 0.31 5 / 0.4); }
+    40%  { box-shadow: 0 0 28px 6px oklch(0.65 0.31 5 / 0.55), 0 0 0 2px oklch(0.65 0.31 5 / 0.9); }
+    100% { box-shadow: 0 0 0 0 oklch(0.65 0.31 5 / 0.0), 0 0 0 1px oklch(0.65 0.31 5 / 0.4); }
+  }
+
+  .neon-check {
+    animation: neon-check 0.35s ease-out 1;
+    color: #39FF14 !important;
+    filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.85));
+  }
+  @keyframes neon-check {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.28); }
+    100% { transform: scale(1); }
+  }
 }

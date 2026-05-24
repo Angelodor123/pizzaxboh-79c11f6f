@@ -93,35 +93,62 @@ const GUEST_STEPS: TourStep[] = [
   },
 ];
 
-function getStorageKey(uid: string | null, role: string | null) {
-  return `pizzax-tour-v1::${uid ?? "guest"}::${role ?? "none"}`;
-}
+// Version 2 — "Feature Discovery" mini-tour for existing users
+const V2_DISCOVERY_STEPS: TourStep[] = [
+  {
+    selector: '[data-tour="stat-tasks-top"], [data-tour="tile-tasks"]',
+    title: "צ'ק-ליסט משמרות חדש 🎯",
+    body: "מערכת המשימות החדשה! כל הרוטינות במקום אחד עם שמירה אוטומטית ותיעוד מבצע.",
+  },
+  {
+    selector: '[data-tour="dough-status"]',
+    title: "סטטוס בצקים בקליק 🍕",
+    body: "עדכון בצקים בקליק: לחצו כאן כדי לעדכן מלאי מגשים מוכנים שמתעדכן אוטומטית בכל המערכת.",
+  },
+  {
+    selector: '[data-tour="card-notebook"]',
+    title: "אוטומציה חכמה 🤖",
+    body: "המערכת תציע לכם לסגור משימות בפנקס באופן אוטומטי בהתבסס על הביצועים שלכם בצ'ק-ליסט.",
+  },
+];
+
+const CURRENT_TUTORIAL_VERSION = 2;
 
 export function GuidedTour() {
-  const { session, role, loading } = useAuth();
+  const { session, role, loading, tutorialVersion, setTutorialVersion } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [showDiscoveryBanner, setShowDiscoveryBanner] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const uid = session?.user?.id ?? null;
-  const steps = role === "admin" ? ADMIN_STEPS : session ? STAFF_STEPS : GUEST_STEPS;
-  const storageKey = getStorageKey(uid, role);
+  const isDiscovery = tutorialVersion === 1;
+  const masterSteps = role === "admin" ? ADMIN_STEPS : session ? STAFF_STEPS : GUEST_STEPS;
+  const steps = isDiscovery ? V2_DISCOVERY_STEPS : masterSteps;
 
-  // Auto-start once per user/role
+  // Auto-start logic based on tutorial_version
   useEffect(() => {
     if (loading) return;
     if (typeof window === "undefined") return;
     if (pathname !== "/") return;
-    if (localStorage.getItem(storageKey)) return;
-    const t = setTimeout(() => {
-      setIndex(0);
-      setOpen(true);
-    }, 800);
-    return () => clearTimeout(t);
-  }, [loading, storageKey, pathname]);
+    if (!session) return; // anonymous users handled separately
+    if (tutorialVersion >= CURRENT_TUTORIAL_VERSION) return;
+    if (tutorialVersion === 0) {
+      // New user — run full master tour
+      const t = setTimeout(() => {
+        setIndex(0);
+        setOpen(true);
+      }, 800);
+      return () => clearTimeout(t);
+    }
+    if (tutorialVersion === 1) {
+      // Existing user — show feature discovery banner first
+      const t = setTimeout(() => setShowDiscoveryBanner(true), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [loading, pathname, session, tutorialVersion]);
 
   // Listen for manual replay
   useEffect(() => {
@@ -170,6 +197,47 @@ export function GuidedTour() {
     };
   }, [open, measure]);
 
+  // Render discovery banner for v1 users before they accept the mini-tour
+  if (!open && showDiscoveryBanner && typeof document !== "undefined") {
+    return createPortal(
+      <div className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 sm:max-w-sm z-[9999] rounded-2xl border-2 border-neon/60 bg-card shadow-[0_0_30px_-8px_rgba(57,255,20,0.5)] p-4 animate-in fade-in-0 slide-in-from-bottom-4" dir="rtl">
+        <div className="flex items-start gap-3">
+          <div className="text-2xl shrink-0">🚀</div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display text-base font-bold text-foreground leading-snug">
+              הוספנו כלים חדשים למערכת!
+            </h3>
+            <p className="text-xs text-foreground/80 mt-1 leading-relaxed">
+              בואו לסיור קצר על הפיצ'רים החדשים — שמירה אוטומטית, צ'ק-ליסט משמרות וסטטוס בצקים.
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => {
+                  setShowDiscoveryBanner(false);
+                  setIndex(0);
+                  setOpen(true);
+                }}
+                className="rounded-md bg-neon px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition"
+              >
+                התחל סיור ←
+              </button>
+              <button
+                onClick={() => {
+                  void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
+                  setShowDiscoveryBanner(false);
+                }}
+                className="text-xs text-foreground/60 hover:text-foreground transition px-2"
+              >
+                לא תודה
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
   if (!open || typeof document === "undefined") return null;
 
   const step = steps[index];
@@ -177,8 +245,9 @@ export function GuidedTour() {
   const isFirst = index === 0;
 
   const finish = () => {
-    localStorage.setItem(storageKey, "1");
+    void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
     setOpen(false);
+    setShowDiscoveryBanner(false);
   };
 
   const next = () => {
