@@ -46,6 +46,13 @@ export function OrderModal({ supplier, onClose }: Props) {
     return () => clearTimeout(id);
   }, [rows, notes, supplier.id]);
 
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const message = compileOrderMessage(rows, notes);
   const hasContent = rows.some((r) => r.name.trim() && r.qty.trim());
 
