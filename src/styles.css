@@ -37,6 +37,7 @@
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Heebo", system-ui, sans-serif;
 }
@@ -71,6 +72,7 @@
   --info: oklch(0.72 0.14 235); /* sky/winter accent */
   --info-foreground: oklch(0.98 0 0);
   --success: oklch(0.72 0.17 155); /* emerald */
+  --success-foreground: oklch(0.15 0.04 155);
 }
 
 

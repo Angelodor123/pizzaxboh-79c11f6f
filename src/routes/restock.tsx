@@ -97,7 +97,7 @@ function RestockPage() {
 
   return (
     <div dir="rtl" className="max-w-3xl mx-auto px-4 py-4">
-      <div className="mb-4">
+      <div className="mb-4 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Restock</div>
         <h1 className="font-display text-3xl font-bold mt-1">
           השלמות <span className="text-neon text-glow-neon">מהמחסן</span>
@@ -108,29 +108,32 @@ function RestockPage() {
       </div>
 
       <div className="mb-3 flex gap-2">
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="חיפוש פריט או ברקוד..."
+            aria-label="חיפוש פריט או ברקוד"
             className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm text-right"
           />
         </div>
         <button
           onClick={() => setScanOpen(true)}
-          className="inline-flex items-center gap-2 bg-emerald-500 text-black font-bold px-4 py-2 rounded-md shadow-[0_4px_20px_-4px_rgba(16,185,129,0.6)] hover:opacity-90"
+          aria-label="סריקת פריט"
+          className="inline-flex shrink-0 items-center gap-1.5 bg-success text-success-foreground font-bold px-3 py-2 rounded-md shadow-[0_4px_20px_-4px_color-mix(in_oklab,var(--success)_50%,transparent)] hover:opacity-90 active:scale-95 transition"
         >
           <ScanLine className="h-5 w-5" />
-          סריקת פריט
+          <span className="hidden sm:inline">סריקה</span>
         </button>
         {isSuperAdmin && (
           <button
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon hover:opacity-90 whitespace-nowrap text-sm"
+            aria-label="הוספת פריט"
+            className="inline-flex shrink-0 items-center gap-1 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon hover:opacity-90 active:scale-95 transition whitespace-nowrap text-sm"
           >
             <Plus className="h-4 w-4" />
-            הוספה
+            <span className="hidden sm:inline">הוספה</span>
           </button>
         )}
       </div>
@@ -211,12 +214,12 @@ function RestockRow(p: RowProps) {
     <li
       {...swipe}
       className={`rounded-xl border-2 px-3 py-3 transition ${
-        p.done ? "bg-emerald-500/15 border-emerald-500/60" : "bg-card border-border"
+        p.done ? "bg-success/15 border-success/60" : "bg-card border-border"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="font-bold flex items-center gap-2">
-          {p.done && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+          {p.done && <CheckCircle2 className="h-4 w-4 text-success" />}
           <span>{p.name}</span>
           {p.unit && <span className="text-xs text-muted-foreground">({p.unit})</span>}
         </div>
@@ -243,9 +246,9 @@ function RestockRow(p: RowProps) {
         <div className="text-center">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">להביא</div>
           {p.done ? (
-            <div className="text-2xl font-bold text-emerald-400 mt-1">✓</div>
+            <div className="text-2xl font-bold text-success mt-1">✓</div>
           ) : (
-            <div className="mt-1 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 font-extrabold text-xl">
+            <div className="mt-1 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-brand/20 border border-amber-brand/60 text-amber-brand font-extrabold text-xl">
               <AlertTriangle className="h-4 w-4" />
               {p.toBring}
             </div>
