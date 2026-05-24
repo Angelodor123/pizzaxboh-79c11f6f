@@ -121,67 +121,63 @@ function KitchenDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5">
-      <div className="mb-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
-              Mise en Place
-            </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-              מערכת <span className="text-neon text-glow-neon">הכנות</span>
-            </h1>
-          </div>
+      <div className="mb-5 text-center">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
+          Mise en Place
+        </div>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          מערכת <span className="text-neon text-glow-neon">הכנות</span>
+        </h1>
 
-          <div className="shrink-0 flex items-center gap-2">
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <div
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-neon glow-neon"
+            style={{
+              background:
+                "radial-gradient(circle at center, oklch(var(--neon) / 0.18), transparent 70%)",
+            }}
+            aria-label={`${activeRecipes.length} מתכונים`}
+          >
+            <span className="font-display font-black text-base text-neon tabular-nums leading-none">
+              {activeRecipes.length}
+            </span>
+            <span className="text-[10px] font-bold tracking-[0.1em] text-neon">
+              מתכונים
+            </span>
+          </div>
+          {cat !== "all" && (
             <div
-              className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-neon glow-neon"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-jungle"
               style={{
                 background:
-                  "radial-gradient(circle at center, rgba(255,20,147,0.18), transparent 70%)",
+                  "radial-gradient(circle at center, oklch(var(--jungle) / 0.18), transparent 70%)",
               }}
-              aria-label={`${activeRecipes.length} מתכונים`}
+              aria-label={`${activeDishes.length} מנות`}
             >
-              <span className="font-display font-black text-3xl text-neon text-glow-neon tabular-nums leading-none">
-                {activeRecipes.length}
+              <span className="font-display font-black text-base text-jungle tabular-nums leading-none">
+                {activeDishes.length}
               </span>
-              <span className="text-[10px] font-bold tracking-[0.1em] text-neon mt-1">
-                מתכונים
+              <span className="text-[10px] font-bold tracking-[0.1em] text-jungle">
+                מנות
               </span>
             </div>
-            {cat !== "all" && (
-              <div
-                className="flex flex-col items-center justify-center h-20 w-20 rounded-full border-2 border-jungle"
-                style={{
-                  background:
-                    "radial-gradient(circle at center, rgba(34,197,94,0.18), transparent 70%)",
-                }}
-                aria-label={`${activeDishes.length} מנות`}
-              >
-                <span className="font-display font-black text-3xl text-jungle tabular-nums leading-none">
-                  {activeDishes.length}
-                </span>
-                <span className="text-[10px] font-bold tracking-[0.1em] text-jungle mt-1">
-                  מנות
-                </span>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-          ברוכים הבאים למרכז הקולינרי של פיצה X. כאן תמצאו את כל המתכונים,
-          הטכניקות והדיוקים שהופכים אותנו למי שאנחנו. עבדו לפי הסדר, הקפידו על
-          הכמויות, וזכרו – הדיוק הוא המרכיב הכי חשוב במנה.
+        <p className="hidden sm:block text-muted-foreground mt-3 text-sm leading-relaxed">
+          ברוכים הבאים למרכז הקולינרי של פיצה X. עבדו לפי הסדר, הקפידו על הכמויות
+          – הדיוק הוא המרכיב הכי חשוב.
         </p>
       </div>
 
-      <div className="sticky top-24 z-30 -mx-4 px-4 py-3 bg-background/90 backdrop-blur border-b border-border mb-6 space-y-3">
+      <div className="sticky top-16 sm:top-20 z-30 -mx-4 px-4 py-3 bg-background/90 backdrop-blur border-b border-border mb-4 space-y-3">
         <div className="relative">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="חיפוש מתכון..."
+            aria-label="חיפוש מתכון"
             className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
           />
         </div>
