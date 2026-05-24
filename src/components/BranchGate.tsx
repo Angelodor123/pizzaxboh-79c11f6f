@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, Check } from "lucide-react";
+import { Building2, LogOut, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import {
@@ -47,56 +47,110 @@ export function useActiveBranch() {
 }
 
 export function BranchGate({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
-  const { branches, loading } = useBranches();
+  const { session, isSuperAdmin, assignedBranchId, fullName, signOut, loading: authLoading } =
+    useAuth();
+  const { branches, loading: branchesLoading } = useBranches();
   const activeId = useActiveBranch();
 
-  // Auto-select if only one branch exists
+  // Branch Staff: auto-set their assigned branch
   useEffect(() => {
-    if (!activeId && branches.length === 1) {
-      setActiveBranchId(branches[0].id);
+    if (!session?.user?.id) return;
+    if (isSuperAdmin) return;
+    if (assignedBranchId && activeId !== assignedBranchId) {
+      setActiveBranchId(assignedBranchId);
     }
-  }, [activeId, branches]);
+  }, [session?.user?.id, isSuperAdmin, assignedBranchId, activeId]);
 
-  // No session yet — nothing to gate
   if (!session?.user?.id) return <>{children}</>;
-  if (loading) return null;
+  if (authLoading || branchesLoading) return null;
 
+  // Branch Staff with no branch assigned → fallback screen
+  if (!isSuperAdmin && !assignedBranchId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div className="max-w-md space-y-4 rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
+          <ShieldAlert className="mx-auto h-10 w-10 text-orange-500" />
+          <h1 className="text-xl font-bold">לא שויכת לסניף</h1>
+          <p className="text-sm text-muted-foreground">
+            המשתמש שלך טרם שויך לסניף. פנה להנהלה.
+          </p>
+          {fullName && (
+            <p className="text-xs text-muted-foreground">{fullName}</p>
+          )}
+          <button
+            onClick={signOut}
+            className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm hover:bg-background transition"
+          >
+            <LogOut className="h-4 w-4" /> התנתק
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Branch Staff with branch assigned → pass through (effect synced activeId)
+  if (!isSuperAdmin) {
+    if (!activeId) return null;
+    return <>{children}</>;
+  }
+
+  // Super Admin → must explicitly pick a branch (selection grid)
   if (activeId) return <>{children}</>;
 
   if (branches.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
-        <div className="max-w-md space-y-3">
+        <div className="max-w-md space-y-3 rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
           <Building2 className="mx-auto h-10 w-10 text-neon" />
           <h1 className="text-xl font-bold">לא הוגדרו סניפים</h1>
-          <p className="text-sm text-muted-foreground">פנה להנהלה כדי להוסיף סניף.</p>
+          <p className="text-sm text-muted-foreground">
+            צור את הסניף הראשון מתוך עמוד הניהול.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card/80 p-6 backdrop-blur space-y-5">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
+      <div className="w-full max-w-2xl space-y-8">
         <div className="text-center space-y-2">
-          <Building2 className="mx-auto h-10 w-10 text-neon" />
-          <h1 className="text-xl font-bold">בחר סניף</h1>
+          <div className="inline-flex items-center gap-2 rounded-full border border-neon/40 bg-neon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-neon">
+            Super Admin
+          </div>
+          <h1 className="font-display text-3xl font-bold">
+            בחר <span className="text-neon text-glow-neon">סניף</span>
+          </h1>
           <p className="text-sm text-muted-foreground">
-            כדי להמשיך, בחר את הסניף שבו אתה עובד כעת.
+            {fullName ? `שלום ${fullName}, ` : ""}איזה סניף אתה רוצה לנהל כעת?
           </p>
         </div>
-        <div className="space-y-2">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {branches.map((b) => (
             <button
               key={b.id}
               onClick={() => setActiveBranchId(b.id)}
-              className="w-full rounded-lg border border-border bg-background/60 px-4 py-3 text-right font-semibold hover:border-neon hover:text-neon transition flex items-center justify-between"
+              className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card/60 p-6 text-right transition hover:border-neon hover:shadow-[0_0_24px_-4px_rgba(255,20,147,0.6)]"
             >
-              <span>{b.name}</span>
-              <Check className="h-4 w-4 opacity-0" />
+              <div className="flex items-center justify-between">
+                <Building2 className="h-8 w-8 text-neon opacity-80 group-hover:opacity-100 transition" />
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-neon transition">
+                  כניסה →
+                </div>
+              </div>
+              <div className="mt-6 text-xl font-bold text-foreground">{b.name}</div>
             </button>
           ))}
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            onClick={signOut}
+            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+          >
+            <LogOut className="h-3 w-3" /> התנתק
+          </button>
         </div>
       </div>
     </div>
