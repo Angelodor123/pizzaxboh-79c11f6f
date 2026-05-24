@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useMotionValue } from "framer-motion";
-import { Loader2, Minus, Send, Sparkles } from "lucide-react";
+import { Loader2, Minus, Send } from "lucide-react";
 import { askCopilot } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
 import {
-  briefingToContext,
   fetchDailyBriefing,
   hasOpenedToday,
   markOpenedToday,
   randomGreeting,
 } from "@/lib/daily-briefing";
 import { cn } from "@/lib/utils";
+
 
 type Msg = { role: "user" | "model"; content: string };
 
@@ -114,38 +114,66 @@ export function CopilotFab() {
         return;
       }
 
-      // First open today — fetch operational briefing and ask Johnny to compose a custom greeting
-      setLoading(true);
+      // First open today — compose the briefing greeting LOCALLY so Johnny
+      // never opens with "אני לא יודע" (the AI fallback) before the user
+      // has even said a word.
+      const hour = new Date().getHours();
+      const timeGreeting =
+        hour >= 5 && hour < 12
+          ? "בוקר טוב"
+          : hour >= 12 && hour < 18
+            ? "צהריים טובים"
+            : "ערב טוב";
+
+      // Show an immediate, friendly opener so the chat is never empty.
+      setMessages([
+        {
+          role: "model",
+          content: `${timeGreeting}, ג'וני כאן. מושך תדריך יומי... ⏳`,
+        },
+      ]);
+
       try {
         const briefing = await fetchDailyBriefing();
-        const briefingText = briefingToContext(briefing);
-        const hour = new Date().getHours();
-        const timeGreeting =
-          hour >= 5 && hour < 12
-            ? "בוקר טוב"
-            : hour >= 12 && hour < 18
-              ? "צהריים טובים"
-              : "ערב טוב";
-        const prompt = `פתח את התשובה במדויק בפורמט: "${timeGreeting}, ג'וני כאן. היום ${briefing.weekdayHebrew}..." והמשך עם סיכום קצר ומותאם אישית של הפוקוס התפעולי של היום לצוות Pizza X בעברית בלבד, על בסיס הנתונים שקיבלת בהקשר. סיים בהצעת פעולה ראשונה לבצע. שמור על טון מקצועי, חד וענייני, עם 1-2 אימוג'ים. אל תזכיר שאתה בינה מלאכותית.`;
-        const res = await ask({
-          data: {
-            messages: [{ role: "user", content: prompt }],
-            context: {
-              route: router.state.location.pathname,
-              role: isSuperAdmin ? "super_admin" : role ?? "guest",
-              briefing: briefingText,
-            },
-          },
-        });
-        setMessages([{ role: "model", content: res.reply }]);
+        const lines: string[] = [
+          `${timeGreeting}, ג'וני כאן. היום ${briefing.weekdayHebrew}.`,
+        ];
+
+        if (briefing.suppliers.length) {
+          lines.push(
+            `🚚 ספקים אמורים להגיע היום: ${briefing.suppliers.join(", ")}. תוודאו שמישהו פנוי לקלוט.`,
+          );
+        } else {
+          lines.push("🚚 אין הגעות ספקים מתוכננות להיום.");
+        }
+
+        if (briefing.events.length) {
+          const evTxt = briefing.events
+            .map(
+              (e) =>
+                `${e.title}${e.time ? ` (${e.time.slice(0, 5)})` : ""}${e.highPriority ? " ⚠️" : ""}`,
+            )
+            .join("; ");
+          lines.push(`📅 על הפרק: ${evTxt}.`);
+        } else {
+          lines.push("📅 אין אירועים מיוחדים בלוח.");
+        }
+
+        lines.push("מה צריך לקדם קודם? 💬");
+
+        setMessages([{ role: "model", content: lines.join("\n") }]);
       } catch {
-        setMessages([{ role: "model", content: randomGreeting() }]);
-      } finally {
-        setLoading(false);
+        setMessages([
+          {
+            role: "model",
+            content: `${timeGreeting}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬`,
+          },
+        ]);
       }
     },
-    [ask, isSuperAdmin, role, router.state.location.pathname],
+    [],
   );
+
 
   const handleFabClick = useCallback(() => {
     if (draggedRef.current) {
@@ -349,17 +377,6 @@ export function CopilotFab() {
             )}
           </div>
 
-          {/* Quick actions */}
-          <div className="px-3 pb-2 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => void handleSend("תפעיל את המדריך")}
-              className="inline-flex items-center gap-1 rounded-full border border-[#ff5a3c]/40 bg-background/60 px-2.5 py-1 text-[11px] text-foreground hover:border-[#ff5a3c] transition"
-            >
-              <Sparkles className="h-3 w-3" />
-              הפעל את המדריך
-            </button>
-          </div>
 
           {/* Composer */}
           <div className="border-t border-border p-3 bg-card/80">
