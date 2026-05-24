@@ -170,7 +170,7 @@ function SuppliersPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-bold flex-wrap">
                     <Truck className="h-4 w-4 text-success" />
-                    <span className="truncate">{s.name}</span>
+                    <span className="break-words whitespace-normal text-center line-clamp-2">{s.name}</span>
                     <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
                       {s.category}
                     </span>

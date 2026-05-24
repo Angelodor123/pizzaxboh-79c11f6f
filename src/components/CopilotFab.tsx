@@ -114,12 +114,19 @@ export function CopilotFab() {
         return;
       }
 
-      // First open today — fetch operational briefing and ask Johnny to compose a custom morning greeting
+      // First open today — fetch operational briefing and ask Johnny to compose a custom greeting
       setLoading(true);
       try {
         const briefing = await fetchDailyBriefing();
         const briefingText = briefingToContext(briefing);
-        const prompt = `הפק בוקר טוב קצר ומותאם אישית לצוות Pizza X בעברית בלבד. הזדהה כג'וני, סכם את הפוקוס התפעולי של היום על בסיס הנתונים שקיבלת, והצע פעולה ראשונה לבצע. שמור על טון מקצועי, חד וענייני, עם 1-2 אימוג'ים. אל תזכיר שאתה בינה מלאכותית.`;
+        const hour = new Date().getHours();
+        const timeGreeting =
+          hour >= 5 && hour < 12
+            ? "בוקר טוב"
+            : hour >= 12 && hour < 18
+              ? "צהריים טובים"
+              : "ערב טוב";
+        const prompt = `פתח את התשובה במדויק בפורמט: "${timeGreeting}, ג'וני כאן. היום ${briefing.weekdayHebrew}..." והמשך עם סיכום קצר ומותאם אישית של הפוקוס התפעולי של היום לצוות Pizza X בעברית בלבד, על בסיס הנתונים שקיבלת בהקשר. סיים בהצעת פעולה ראשונה לבצע. שמור על טון מקצועי, חד וענייני, עם 1-2 אימוג'ים. אל תזכיר שאתה בינה מלאכותית.`;
         const res = await ask({
           data: {
             messages: [{ role: "user", content: prompt }],
