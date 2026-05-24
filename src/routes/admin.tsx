@@ -621,7 +621,7 @@ function InvitationsPanel() {
     const [{ data: i }, { data: r }, { data: s }, { data: b }, { data: p }] = await Promise.all([
       supabase
         .from("invitations")
-        .select("id,email,role,created_at,assigned_branch_id")
+        .select("id,email,role,created_at,assigned_branch_id,full_name")
         .order("created_at", { ascending: false }),
       supabase
         .from("user_roles")
