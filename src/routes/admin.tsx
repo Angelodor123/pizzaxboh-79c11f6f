@@ -611,6 +611,7 @@ function InvitationsPanel() {
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [fullNames, setFullNames] = useState<Map<string, string>>(new Map());
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<AppRole>("viewer");
   const [inviteBranch, setInviteBranch] = useState<string>("");
   const [busy, setBusy] = useState(false);
