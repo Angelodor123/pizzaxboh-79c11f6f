@@ -53,7 +53,7 @@ function Row({
         : "text-neon";
   return (
     <li className="flex justify-between items-center gap-3 text-sm border-b border-border/50 pb-2">
-      <span style={{ color: "#F4F4F4" }} className="flex-1 min-w-0 break-words">
+      <span className="flex-1 min-w-0 break-words">
         {label}
       </span>
       <span className={`font-bold tabular-nums shrink-0 ${cls}`}>{value}</span>
@@ -96,14 +96,14 @@ function GuidePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="mb-6">
+      <div className="mb-6 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-amber-brand font-bold">
           Pro Standards
         </div>
         <h1 className="font-display text-4xl font-bold mt-1">
           מדריך <span className="text-neon text-glow-neon">מקצועי</span>
         </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
+        <p className="hidden sm:block text-muted-foreground mt-2 text-sm">
           סטנדרטים מחייבים — זמנים, חום, מרקמים וטכניקות, ישירות מספר המתכונים.
         </p>
       </div>
@@ -155,7 +155,7 @@ function GuidePage() {
                 key={r.id}
                 className="border-b border-border/50 pb-2"
               >
-                <div className="text-sm font-bold" style={{ color: "#F4F4F4" }}>
+                <div className="text-sm font-bold" >
                   {r.nameHebrew}
                 </div>
                 <div className="text-xs text-amber-brand mt-1">
