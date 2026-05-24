@@ -271,6 +271,7 @@ function AdminPage() {
       </div>
 
       {tab === "users" && <InvitationsPanel />}
+      {tab === "branches" && isSuperAdmin && <BranchesPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
       {tab === "cms" && <ContentTextsPanel />}
       {tab === "onboarding" && <OnboardingPanel />}
