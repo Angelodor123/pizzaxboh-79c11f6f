@@ -65,9 +65,9 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
   }
   for (const k of Object.keys(out) as NotebookListKey[]) {
     out[k].sort((a, b) => {
-      // urgent first, then newest
+      // urgent first, then alphabetical (Hebrew A-Z)
       if (a.priority !== b.priority) return a.priority === "urgent" ? -1 : 1;
-      return a.createdAt < b.createdAt ? 1 : -1;
+      return a.text.localeCompare(b.text, "he");
     });
   }
   return out;

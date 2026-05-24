@@ -260,24 +260,70 @@ function TasksPage() {
   };
 
   const toggleTask = (taskId: string) => {
-    let nextState: LogState | null = null;
+    const prev = logs.get(taskId);
+    const completed = !(prev?.completed ?? false);
+    const nextState: LogState = {
+      completed,
+      completed_at: completed ? new Date().toISOString() : null,
+      completed_by: completed ? fullName : prev?.completed_by ?? null,
+      completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
+      comments: prev?.comments ?? "",
+    };
     setLogs((m) => {
       const next = new Map(m);
-      const prev = next.get(taskId);
-      const completed = !(prev?.completed ?? false);
-      nextState = {
-        completed,
-        completed_at: completed ? new Date().toISOString() : null,
-        completed_by: completed ? fullName : prev?.completed_by ?? null,
-        completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
-        comments: prev?.comments ?? "",
-      };
       next.set(taskId, nextState);
       return next;
     });
-    // Optimistic: fire-and-forget persistence
-    if (nextState) {
-      void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
+    const t = allTasks.find((x) => x.id === taskId);
+    const taskName = t?.name ?? "";
+    void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
+    if (nextState.completed && taskName) {
+      void scanNotebookForMatch(taskName);
+    }
+  };
+
+  // Lightweight keyword matching against active notebook tasks.
+  const scanNotebookForMatch = async (taskName: string) => {
+    const stop = new Set([
+      "של", "את", "על", "עם", "אל", "כל", "זה", "זו", "או", "גם",
+      "ל", "מ", "ב", "ה", "ו", "ש",
+    ]);
+    const words = taskName
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length >= 3 && !stop.has(w));
+    if (words.length === 0) return;
+    try {
+      const { data } = await supabase
+        .from("notebook_items")
+        .select("id,text,list_key,done,archived_at")
+        .is("archived_at", null)
+        .eq("done", false)
+        .eq("list_key", "tasks");
+      const rows = (data ?? []) as Array<{ id: string; text: string }>;
+      const match = rows.find((r) => words.some((w) => r.text.includes(w)));
+      if (!match) return;
+      toast(`נמצאה משימה תואמת בפנקס: ${match.text}`, {
+        description: "לסמן כבוצעה?",
+        action: {
+          label: "סמן כבוצע",
+          onClick: async () => {
+            const { error } = await supabase
+              .from("notebook_items")
+              .update({ done: true })
+              .eq("id", match.id);
+            if (error) {
+              toast.error("עדכון פנקס נכשל");
+            } else {
+              toast.success("המשימה בפנקס סומנה כבוצעה");
+            }
+          },
+        },
+        duration: 8000,
+      });
+    } catch {
+      /* noop */
     }
   };
 
@@ -403,7 +449,7 @@ function TasksPage() {
               </button>
 
               {isShiftOpen && (
-                <div className="border-t border-border divide-y divide-border">
+                <div className="p-3 sm:p-4 space-y-4 bg-background/20">
                   {shiftGroups.map((g) => {
                     const isGroupOpen = openGroup === g.id;
                     const gTasks = tasksForGroup(g.id);
@@ -414,7 +460,7 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="bg-background/30">
+                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-gray-600 overflow-hidden shadow-sm">
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
