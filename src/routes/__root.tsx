@@ -27,6 +27,7 @@ import { useRecipesSync } from "@/lib/store";
 import { useNotebookRealtime } from "@/lib/notebook-store";
 import { useSiteTextsSync, useSiteText } from "@/lib/site-texts";
 import { useUIStore } from "@/lib/ui-store";
+import { MENU_ITEM_CATEGORIES } from "@/lib/menu-categories";
 import {
   ensureServiceWorker,
   notificationPermission,
