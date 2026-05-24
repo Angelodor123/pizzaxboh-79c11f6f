@@ -145,6 +145,7 @@ export function GuidedTour() {
     completedTutorialSteps,
     setTutorialVersion,
     markTutorialStepComplete,
+    markTutorialStepsComplete,
   } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
