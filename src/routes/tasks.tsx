@@ -133,7 +133,7 @@ function useSevereWeather() {
 }
 
 function TasksPage() {
-  const { fullName, session } = useAuth();
+  const { fullName, session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
   const branchId = useActiveBranch();
   const recipes = useCookbookStore((s) => s.recipes);
