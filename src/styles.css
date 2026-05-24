@@ -109,6 +109,12 @@
   .bg-jungle { background-color: var(--jungle); }
   .text-amber-brand { color: var(--amber-brand); }
   .bg-amber-brand { background-color: var(--amber-brand); }
+  .text-info { color: var(--info); }
+  .bg-info { background-color: var(--info); }
+  .border-info { border-color: var(--info); }
+  .text-success { color: var(--success); }
+  .bg-success { background-color: var(--success); }
+
 
   .glow-neon {
     box-shadow: 0 0 0 1px oklch(0.65 0.31 5 / 0.5), 0 0 30px oklch(0.65 0.31 5 / 0.35);
