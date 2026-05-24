@@ -263,9 +263,7 @@ export function GuidedTour() {
               <button
                 onClick={() => {
                   // Mark all pending feature steps as complete so we don't re-prompt
-                  void Promise.all(
-                    pendingFeatureSteps.map((s) => markTutorialStepComplete(s.id)),
-                  );
+                  void markTutorialStepsComplete(pendingFeatureSteps.map((s) => s.id));
                   setShowDiscoveryBanner(false);
                 }}
                 className="text-xs text-foreground/60 hover:text-foreground transition px-2"
