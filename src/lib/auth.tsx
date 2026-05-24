@@ -128,10 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin,
         assignedBranchId,
         tutorialVersion,
+        completedTutorialSteps,
         loading,
         signOut,
         refreshRole,
         setTutorialVersion,
+        markTutorialStepComplete,
       }}
     >
       {children}
