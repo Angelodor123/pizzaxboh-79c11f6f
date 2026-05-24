@@ -324,7 +324,7 @@ export function CopilotFab() {
             "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
             "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
             "flex flex-col overflow-hidden animate-scale-in",
-            "w-96 h-[500px] max-w-[90vw] max-h-[80vh]",
+            "w-96 h-[500px] max-w-[90vw] max-h-[85dvh]",
           )}
           style={{
             bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
