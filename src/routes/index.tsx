@@ -134,10 +134,14 @@ function OperationalDashboard() {
         <EvChargingWidget />
       </div>
 
+      {/* Live operational telemetry */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <CurrentShiftProgressCard />
+        <DoughStatusCard />
+      </div>
+
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <StatCard label="מתכונים פעילים" value={activeRecipes.length} to="/recipes" />
-        <StatCard label="מנות פעילות" value={activeDishes.length} to="/recipes" />
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
         <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight tourId="stat-events-today" />
         <StatCard label="פריטים לקנייה" value={shoppingCount} to="/notebook" />
