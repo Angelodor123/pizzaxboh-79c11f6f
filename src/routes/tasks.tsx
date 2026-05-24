@@ -441,13 +441,13 @@ function TasksPage() {
                 onClick={() => setOpenShift(isShiftOpen ? null : shift.id)}
                 aria-expanded={isShiftOpen}
                 aria-label={`${shift.name} — ${shiftDone} מתוך ${shiftTasks.length} משימות`}
-                className="w-full flex items-center justify-between gap-3 px-4 py-4 text-right hover:bg-card/60 transition"
+                className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-4 hover:bg-card/60 transition"
               >
                 <ChevronDown
                   className={`h-5 w-5 text-muted-foreground transition-transform shrink-0 ${isShiftOpen ? "rotate-180" : ""}`}
                 />
-                <div className="flex-1 text-right min-w-0">
-                  <div className="font-display text-lg font-bold flex items-center justify-end gap-2 leading-tight">
+                <div className="text-center min-w-0">
+                  <div className="font-display text-lg font-bold flex items-center justify-center gap-2 leading-tight">
                     {isVirtual && <CloudSnow className="h-5 w-5 text-info shrink-0" />}
                     <span className="truncate">{shift.name}</span>
                   </div>
@@ -455,7 +455,9 @@ function TasksPage() {
                     <bdi>{shiftDone}/{shiftTasks.length}</bdi> משימות
                   </div>
                 </div>
+                <span className="w-5" aria-hidden />
               </button>
+
 
               {isShiftOpen && (
                 <div className="p-3 sm:p-4 space-y-4 bg-background/20">
