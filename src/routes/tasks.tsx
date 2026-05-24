@@ -401,18 +401,25 @@ function TasksPage() {
     <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-10" dir="rtl">
       {/* Sticky progress */}
       <div className="sticky top-20 sm:top-24 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/95 backdrop-blur border-b border-border">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-muted-foreground">משימות יומיות</div>
-          <div className="font-display text-sm font-bold">
-            <span className="text-neon text-glow-neon">{completedCount}</span>
-            <span className="text-muted-foreground">/{total}</span>{" "}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-xs text-muted-foreground shrink-0">משימות יומיות</div>
+          <div className="font-display text-sm font-bold flex items-baseline gap-1.5">
+            <bdi className="tabular-nums">
+              <span className="text-neon text-glow-neon">{completedCount}</span>
+              <span className="text-muted-foreground">/{total}</span>
+            </bdi>
             <span className="text-foreground">משימות הושלמו</span>
           </div>
         </div>
         <div className="mt-2 h-2 rounded-full bg-card border border-border overflow-hidden">
           <div
             className="h-full bg-neon transition-all duration-500"
-            style={{ width: `${pct}%`, boxShadow: "0 0 12px hsl(var(--neon))" }}
+            style={{ width: `${pct}%`, boxShadow: "0 0 12px var(--neon)" }}
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`התקדמות יומית: ${pct} אחוז`}
           />
         </div>
       </div>
@@ -427,23 +434,25 @@ function TasksPage() {
           return (
             <div
               key={shift.id}
-              className={`border rounded-lg overflow-hidden ${isVirtual ? "border-sky-500/50 bg-sky-500/5" : "border-border bg-card/40"}`}
+              className={`border rounded-lg overflow-hidden ${isVirtual ? "border-info/50 bg-info/5" : "border-border bg-card/40"}`}
             >
               <button
                 type="button"
                 onClick={() => setOpenShift(isShiftOpen ? null : shift.id)}
+                aria-expanded={isShiftOpen}
+                aria-label={`${shift.name} — ${shiftDone} מתוך ${shiftTasks.length} משימות`}
                 className="w-full flex items-center justify-between gap-3 px-4 py-4 text-right hover:bg-card/60 transition"
               >
                 <ChevronDown
-                  className={`h-5 w-5 text-muted-foreground transition-transform ${isShiftOpen ? "rotate-180" : ""}`}
+                  className={`h-5 w-5 text-muted-foreground transition-transform shrink-0 ${isShiftOpen ? "rotate-180" : ""}`}
                 />
-                <div className="flex-1 text-right">
-                  <div className="font-display text-lg font-bold flex items-center justify-end gap-2">
-                    {isVirtual && <CloudSnow className="h-5 w-5 text-sky-400" />}
-                    {shift.name}
+                <div className="flex-1 text-right min-w-0">
+                  <div className="font-display text-lg font-bold flex items-center justify-end gap-2 leading-tight">
+                    {isVirtual && <CloudSnow className="h-5 w-5 text-info shrink-0" />}
+                    <span className="truncate">{shift.name}</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    {shiftDone}/{shiftTasks.length} משימות
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">
+                    <bdi>{shiftDone}/{shiftTasks.length}</bdi> משימות
                   </div>
                 </div>
               </button>
@@ -460,40 +469,40 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-gray-600 overflow-hidden shadow-sm">
+                      <div key={g.id} className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
-                          className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 text-right hover:bg-card/40 transition"
+                          aria-expanded={isGroupOpen}
+                          aria-label={`${g.name} — ${gDone} מתוך ${gTasks.length}`}
+                          className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 text-right hover:bg-accent/40 transition"
                         >
                           <ChevronDown
                             className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isGroupOpen ? "rotate-180" : ""}`}
                           />
                           {gPct === 100 && (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                           )}
                           <div className="flex-1 text-right min-w-0">
                             <div className="text-sm font-bold leading-snug break-words">
                               {emoji ? `${emoji} ` : ""}
                               {g.name}
                             </div>
-                            <div className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-start gap-2">
-                              <span className="tabular-nums">
-                                {gDone}/{gTasks.length}
-                              </span>
-                              <div className="w-20 h-1 rounded-full bg-card border border-border overflow-hidden">
+                            <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-end gap-2">
+                              <div className="w-20 h-1 rounded-full bg-background border border-border overflow-hidden">
                                 <div
-                                  className={`h-full transition-all ${gPct === 100 ? "bg-emerald-400" : "bg-neon"}`}
+                                  className={`h-full transition-all ${gPct === 100 ? "bg-success" : "bg-neon"}`}
                                   style={{ width: `${gPct}%` }}
                                 />
                               </div>
+                              <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
                             </div>
                           </div>
                         </button>
 
 
                         {isGroupOpen && (
-                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-4">
+                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3">
                             {gTasks.map((t) => {
                               const log = logs.get(t.id);
                               const done = log?.completed ?? false;
@@ -507,7 +516,11 @@ function TasksPage() {
                               return (
                                 <div
                                   key={t.id}
-                                  className="rounded-xl bg-zinc-900/70 border border-pink-500/70 shadow-[0_0_8px_rgba(236,72,153,0.35)] px-4 py-3 transition hover:shadow-[0_0_14px_rgba(236,72,153,0.55)]"
+                                  className={`rounded-xl border px-4 py-3 transition ${
+                                    done
+                                      ? "bg-card/40 border-border"
+                                      : "bg-card border-primary/40 hover:border-primary/70 hover:shadow-[0_0_14px_oklch(0.65_0.31_5/0.35)]"
+                                  }`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <label className="flex items-start gap-3 flex-1 cursor-pointer min-w-0">
@@ -515,16 +528,17 @@ function TasksPage() {
                                         type="checkbox"
                                         checked={done}
                                         onChange={() => toggleTask(t.id)}
-                                        className="mt-1 h-5 w-5 accent-pink-500 shrink-0"
+                                        aria-label={`סמן כבוצע: ${t.name}`}
+                                        className="mt-0.5 h-5 w-5 accent-primary shrink-0"
                                       />
                                       <div className="flex-1 min-w-0 text-right">
                                         <div
-                                          className={`text-sm font-bold ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
+                                          className={`text-sm font-bold leading-snug ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
                                         >
                                           {t.name}
                                         </div>
                                         {stamp && (
-                                          <div className="text-[11px] text-pink-400 mt-1">
+                                          <div className="text-[11px] text-primary mt-1 leading-snug">
                                             {stamp}
                                           </div>
                                         )}
@@ -534,8 +548,8 @@ function TasksPage() {
                                       <button
                                         type="button"
                                         onClick={() => setRecipeOpen(recipe.id)}
-                                        className="p-1.5 rounded-md text-muted-foreground hover:text-pink-400 hover:bg-card transition shrink-0"
-                                        aria-label="פתיחת מתכון"
+                                        className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition shrink-0"
+                                        aria-label={`פתיחת מתכון: ${recipe.nameHebrew ?? t.name}`}
                                         title="פתיחת מתכון"
                                       >
                                         <BookOpen className="h-4 w-4" />
@@ -543,11 +557,15 @@ function TasksPage() {
                                     )}
                                   </div>
 
-                                  <div className="mt-3 pr-8">
-                                    <label className="block text-[10px] text-muted-foreground text-right mb-1">
+                                  <div className="mt-3">
+                                    <label
+                                      htmlFor={`note-${t.id}`}
+                                      className="block text-[11px] text-muted-foreground text-right mb-1"
+                                    >
                                       הוספת הערה למשימה
                                     </label>
                                     <textarea
+                                      id={`note-${t.id}`}
                                       value={log?.comments ?? ""}
                                       onChange={(e) =>
                                         updateComment(t.id, e.target.value)
@@ -556,9 +574,9 @@ function TasksPage() {
                                       maxLength={2000}
                                       rows={2}
                                       placeholder="הערה אופציונלית…"
-                                      className="w-full bg-zinc-950/60 border border-border focus:border-pink-500/60 focus:outline-none rounded-md px-2 py-1.5 text-xs text-right resize-y transition"
+                                      className="w-full bg-background/60 border border-border focus:border-primary/60 focus:outline-none rounded-md px-2 py-1.5 text-xs text-right resize-y transition"
                                     />
-                                    <div className="text-[10px] text-muted-foreground text-left mt-0.5">
+                                    <div className="text-[10px] text-muted-foreground text-end mt-0.5 tabular-nums" dir="ltr">
                                       {(log?.comments ?? "").length}/2000
                                     </div>
                                   </div>
@@ -581,6 +599,7 @@ function TasksPage() {
           );
         })}
       </div>
+
 
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>

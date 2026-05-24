@@ -34,6 +34,9 @@
   --color-amber-brand: var(--amber-brand);
   --color-neon: var(--neon);
   --color-neon-soft: var(--neon-soft);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Heebo", system-ui, sans-serif;
 }
@@ -65,7 +68,11 @@
   --amber-brand: oklch(0.62 0.14 55); /* #D2691E */
   --neon: oklch(0.65 0.31 5);
   --neon-soft: oklch(0.72 0.25 8); /* #FF69B4 */
+  --info: oklch(0.72 0.14 235); /* sky/winter accent */
+  --info-foreground: oklch(0.98 0 0);
+  --success: oklch(0.72 0.17 155); /* emerald */
 }
+
 
 .dark {
   --background: oklch(0 0 0);
@@ -102,6 +109,12 @@
   .bg-jungle { background-color: var(--jungle); }
   .text-amber-brand { color: var(--amber-brand); }
   .bg-amber-brand { background-color: var(--amber-brand); }
+  .text-info { color: var(--info); }
+  .bg-info { background-color: var(--info); }
+  .border-info { border-color: var(--info); }
+  .text-success { color: var(--success); }
+  .bg-success { background-color: var(--success); }
+
 
   .glow-neon {
     box-shadow: 0 0 0 1px oklch(0.65 0.31 5 / 0.5), 0 0 30px oklch(0.65 0.31 5 / 0.35);
