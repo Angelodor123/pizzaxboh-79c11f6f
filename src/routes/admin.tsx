@@ -696,16 +696,20 @@ function InvitationsPanel() {
   };
 
   const updateUserBranch = async (id: string, branchId: string | null) => {
+    // Optimistic update so the dropdown + branch name re-render instantly
+    setRoles((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, assigned_branch_id: branchId } : r)),
+    );
     const { error: e } = await supabase
       .from("user_roles")
       .update({ assigned_branch_id: branchId })
       .eq("id", id);
     if (e) {
       toast.error(e.message);
+      await load();
       return;
     }
     toast.success("השיוך עודכן");
-    await load();
   };
 
   const revokeInvite = async (id: string) => {
