@@ -232,7 +232,7 @@ function AdminPage() {
   };
 
   const { isSuperAdmin } = useAuth();
-  const [tab, setTab] = useState<"recipes" | "users" | "branches" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
+  const [tab, setTab] = useState<"recipes" | "users" | "branches" | "tasks" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
