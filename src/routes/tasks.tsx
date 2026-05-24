@@ -219,13 +219,12 @@ function TasksPage() {
       const targetCol = ["target_sun", "target_mon", "target_tue", "target_wed", "target_thu", "target_fri", "target_sat"][dow];
       const { data: prepItems } = await supabase
         .from("prep_items")
-        .select(`id,${targetCol}`)
+        .select("*")
         .in("id", linked.map((t) => t.prep_item_id as string));
       if (!prepItems) continue;
       const today = new Date().toISOString().slice(0, 10);
       for (const pi of prepItems) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const target = Number((pi as any)[targetCol]) || 0;
+        const target = Number((pi as Record<string, unknown>)[targetCol]) || 0;
         await supabase.from("prep_log").upsert(
           {
             prep_item_id: pi.id,
