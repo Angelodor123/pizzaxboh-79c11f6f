@@ -816,7 +816,12 @@ function InvitationsPanel() {
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="text-right flex-1 min-w-0 flex flex-col items-end gap-1">
-                  <div className="text-sm font-bold truncate w-full text-right" dir="ltr">
+                  {fullNames.get(u.user_id) && (
+                    <div className="text-sm font-bold truncate w-full text-right">
+                      {fullNames.get(u.user_id)}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground truncate w-full text-right" dir="ltr">
                     {u.email}
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap justify-end">
@@ -829,6 +834,18 @@ function InvitationsPanel() {
                       {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
                     </span>
                   </div>
+                  {isSuperAdmin && !superAdminIds.has(u.user_id) && (
+                    <select
+                      value={u.assigned_branch_id ?? ""}
+                      onChange={(e) => updateUserBranch(u.id, e.target.value || null)}
+                      className="bg-input border border-border rounded-md px-2 py-1 text-[11px] text-right mt-1"
+                    >
+                      <option value="">— ללא סניף —</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </li>
             ))}
