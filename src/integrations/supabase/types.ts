@@ -1114,6 +1114,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_active: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -1122,6 +1123,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          is_active?: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -1130,6 +1132,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
@@ -1163,6 +1166,21 @@ export type Database = {
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       list_super_admin_user_ids: { Args: never; Returns: string[] }
+      list_user_directory: {
+        Args: never
+        Returns: {
+          assigned_branch_id: string
+          created_at: string
+          email: string
+          full_name: string
+          is_active: boolean
+          kind: string
+          role: Database["public"]["Enums"]["app_role"]
+          row_id: string
+          status: string
+          user_id: string
+        }[]
+      }
       list_user_profiles: {
         Args: never
         Returns: {
