@@ -12,10 +12,12 @@ interface AuthState {
   isSuperAdmin: boolean;
   assignedBranchId: string | null;
   tutorialVersion: number;
+  completedTutorialSteps: string[];
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
   setTutorialVersion: (v: number) => Promise<void>;
+  markTutorialStepComplete: (stepId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
