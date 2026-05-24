@@ -125,9 +125,9 @@ function SuppliersPage() {
                 }
               }}
               className={`rounded-2xl border p-4 bg-card/80 backdrop-blur transition ${
-                s.active ? "border-emerald-500/60" : "border-border opacity-70"
+                s.active ? "border-success/60" : "border-border opacity-70"
               } ${selected ? "ring-2 ring-neon" : ""}`}
-              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
             >
               <div className="flex items-start justify-between gap-2">
                 {canEdit && bulk.selectionMode && (
@@ -144,7 +144,7 @@ function SuppliersPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-bold">
-                    <Truck className="h-4 w-4 text-emerald-400" />
+                    <Truck className="h-4 w-4 text-success" />
                     <span className="truncate">{s.name}</span>
                     <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
                       {s.category}
@@ -161,7 +161,7 @@ function SuppliersPage() {
                         key={i}
                         className={`text-[11px] font-bold rounded px-2 py-0.5 border ${
                           s.delivery_weekdays.includes(i)
-                            ? "bg-emerald-500/15 border-emerald-500/60 text-emerald-300"
+                            ? "bg-success/15 border-success/60 text-success"
                             : "border-border/40 text-muted-foreground/60"
                         }`}
                       >
