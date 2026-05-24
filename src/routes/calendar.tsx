@@ -61,6 +61,7 @@ function CalendarPage() {
   const canEdit = role === "admin";
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [overrides, setOverrides] = useState<EventOverride[]>([]);
+  const [invoiceKeys, setInvoiceKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(() => {
