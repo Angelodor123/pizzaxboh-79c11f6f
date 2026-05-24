@@ -187,6 +187,56 @@ export type Database = {
           },
         ]
       }
+      daily_task_logs: {
+        Row: {
+          branch_id: string
+          comments: string | null
+          completed: boolean
+          completed_at: string | null
+          completed_by: string | null
+          completed_by_user_id: string | null
+          created_at: string
+          id: string
+          log_date: string
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          comments?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          completed_by_user_id?: string | null
+          created_at?: string
+          id?: string
+          log_date?: string
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          comments?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          completed_by_user_id?: string | null
+          created_at?: string
+          id?: string
+          log_date?: string
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_task_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ev_vehicles: {
         Row: {
           battery_pct: number
@@ -702,6 +752,36 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          active: boolean
+          branch_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          branch_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_texts: {
         Row: {
           created_at: string
@@ -788,6 +868,101 @@ export type Database = {
           },
         ]
       }
+      task_groups: {
+        Row: {
+          active: boolean
+          branch_id: string
+          created_at: string
+          id: string
+          name: string
+          shift_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          branch_id: string
+          created_at?: string
+          id?: string
+          name: string
+          shift_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          shift_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_groups_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          active: boolean
+          branch_id: string
+          created_at: string
+          group_id: string
+          id: string
+          name: string
+          prep_item_id: string | null
+          recipe_id: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          branch_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          name: string
+          prep_item_id?: string | null
+          recipe_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          name?: string
+          prep_item_id?: string | null
+          recipe_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "task_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_prep_item_id_fkey"
+            columns: ["prep_item_id"]
+            isOneToOne: false
+            referencedRelation: "prep_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_branch_id: string | null
@@ -850,6 +1025,7 @@ export type Database = {
         }[]
       }
       notebook_daily_reset: { Args: never; Returns: undefined }
+      operational_today: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "viewer"
