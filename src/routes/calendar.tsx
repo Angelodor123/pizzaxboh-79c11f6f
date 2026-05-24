@@ -115,6 +115,19 @@ function CalendarPage() {
   }, []);
 
   // Get events for a given date (one-off + recurring weekly), with per-instance overrides applied.
+  const todayIsoMemo = toIsoDate(new Date());
+  const annotateMissing = (e: EffectiveEvent): EffectiveEvent => {
+    if (
+      e.category === "delivery" &&
+      e.supplier_id &&
+      e._occurrenceDate &&
+      e._occurrenceDate <= todayIsoMemo &&
+      !invoiceKeys.has(`${e.supplier_id}|${e._occurrenceDate}`)
+    ) {
+      return { ...e, _missingInvoice: true };
+    }
+    return e;
+  };
   const eventsForDate = (isoDate: string): EffectiveEvent[] => {
     const d = new Date(isoDate + "T00:00:00");
     const wd = d.getDay();
@@ -125,11 +138,11 @@ function CalendarPage() {
     for (const e of matched) {
       const ov = overrides.find((o) => o.event_id === e.id && o.override_date === isoDate);
       if (!ov) {
-        out.push({ ...e, _occurrenceDate: isoDate });
+        out.push(annotateMissing({ ...e, _occurrenceDate: isoDate }));
         continue;
       }
       if (ov.deleted) continue;
-      out.push({
+      out.push(annotateMissing({
         ...e,
         title: ov.title ?? e.title,
         start_time: ov.start_time ?? e.start_time,
@@ -139,7 +152,7 @@ function CalendarPage() {
         _overrideId: ov.id,
         _isOverride: true,
         _occurrenceDate: isoDate,
-      });
+      }));
     }
     return out;
   };
