@@ -93,35 +93,62 @@ const GUEST_STEPS: TourStep[] = [
   },
 ];
 
-function getStorageKey(uid: string | null, role: string | null) {
-  return `pizzax-tour-v1::${uid ?? "guest"}::${role ?? "none"}`;
-}
+// Version 2 — "Feature Discovery" mini-tour for existing users
+const V2_DISCOVERY_STEPS: TourStep[] = [
+  {
+    selector: '[data-tour="stat-tasks-top"], [data-tour="tile-tasks"]',
+    title: "צ'ק-ליסט משמרות חדש 🎯",
+    body: "מערכת המשימות החדשה! כל הרוטינות במקום אחד עם שמירה אוטומטית ותיעוד מבצע.",
+  },
+  {
+    selector: '[data-tour="dough-status"]',
+    title: "סטטוס בצקים בקליק 🍕",
+    body: "עדכון בצקים בקליק: לחצו כאן כדי לעדכן מלאי מגשים מוכנים שמתעדכן אוטומטית בכל המערכת.",
+  },
+  {
+    selector: '[data-tour="card-notebook"]',
+    title: "אוטומציה חכמה 🤖",
+    body: "המערכת תציע לכם לסגור משימות בפנקס באופן אוטומטי בהתבסס על הביצועים שלכם בצ'ק-ליסט.",
+  },
+];
+
+const CURRENT_TUTORIAL_VERSION = 2;
 
 export function GuidedTour() {
-  const { session, role, loading } = useAuth();
+  const { session, role, loading, tutorialVersion, setTutorialVersion } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [showDiscoveryBanner, setShowDiscoveryBanner] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const uid = session?.user?.id ?? null;
-  const steps = role === "admin" ? ADMIN_STEPS : session ? STAFF_STEPS : GUEST_STEPS;
-  const storageKey = getStorageKey(uid, role);
+  const isDiscovery = tutorialVersion === 1;
+  const masterSteps = role === "admin" ? ADMIN_STEPS : session ? STAFF_STEPS : GUEST_STEPS;
+  const steps = isDiscovery ? V2_DISCOVERY_STEPS : masterSteps;
 
-  // Auto-start once per user/role
+  // Auto-start logic based on tutorial_version
   useEffect(() => {
     if (loading) return;
     if (typeof window === "undefined") return;
     if (pathname !== "/") return;
-    if (localStorage.getItem(storageKey)) return;
-    const t = setTimeout(() => {
-      setIndex(0);
-      setOpen(true);
-    }, 800);
-    return () => clearTimeout(t);
-  }, [loading, storageKey, pathname]);
+    if (!session) return; // anonymous users handled separately
+    if (tutorialVersion >= CURRENT_TUTORIAL_VERSION) return;
+    if (tutorialVersion === 0) {
+      // New user — run full master tour
+      const t = setTimeout(() => {
+        setIndex(0);
+        setOpen(true);
+      }, 800);
+      return () => clearTimeout(t);
+    }
+    if (tutorialVersion === 1) {
+      // Existing user — show feature discovery banner first
+      const t = setTimeout(() => setShowDiscoveryBanner(true), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [loading, pathname, session, tutorialVersion]);
 
   // Listen for manual replay
   useEffect(() => {
