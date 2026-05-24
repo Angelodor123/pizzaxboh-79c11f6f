@@ -251,6 +251,7 @@ export function GuidedTour() {
               <button
                 onClick={() => {
                   setShowDiscoveryBanner(false);
+                  setMode("discovery");
                   setIndex(0);
                   setOpen(true);
                 }}
@@ -260,13 +261,17 @@ export function GuidedTour() {
               </button>
               <button
                 onClick={() => {
-                  void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
+                  // Mark all pending feature steps as complete so we don't re-prompt
+                  void Promise.all(
+                    pendingFeatureSteps.map((s) => markTutorialStepComplete(s.id)),
+                  );
                   setShowDiscoveryBanner(false);
                 }}
                 className="text-xs text-foreground/60 hover:text-foreground transition px-2"
               >
                 לא תודה
               </button>
+
             </div>
           </div>
         </div>
