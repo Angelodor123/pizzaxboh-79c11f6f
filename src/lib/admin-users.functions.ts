@@ -153,7 +153,12 @@ export const adminUpdateInvitation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => UpdateInviteInput.parse(input))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      full_name?: string | null;
+      email?: string;
+      role?: "admin" | "viewer";
+      assigned_branch_id?: string | null;
+    } = {};
     if (data.fullName !== undefined) patch.full_name = data.fullName;
     if (data.email) patch.email = data.email.toLowerCase();
     if (data.role) patch.role = data.role;
