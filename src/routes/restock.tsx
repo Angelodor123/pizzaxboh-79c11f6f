@@ -184,9 +184,18 @@ function RestockPage() {
       </ul>
 
       <BarcodeScanner open={scanOpen} onClose={() => setScanOpen(false)} onResult={onScan} />
+
+      <QuickAddItemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        kind="restock"
+        branchId={getActiveBranchIdSync()}
+        onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
+      />
     </div>
   );
 }
+
 
 interface RowProps {
   inputRef: (el: HTMLInputElement | null) => void;
