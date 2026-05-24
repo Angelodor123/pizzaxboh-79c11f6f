@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [fullName, setFullName] = useState<string | null>(null);
   const [assignedBranchId, setAssignedBranchId] = useState<string | null>(null);
   const [tutorialVersion, setTutorialVersionState] = useState<number>(2);
+  const [completedTutorialSteps, setCompletedTutorialSteps] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadRole = async (uid: string | undefined) => {
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFullName(null);
       setAssignedBranchId(null);
       setTutorialVersionState(2);
+      setCompletedTutorialSteps([]);
       return;
     }
     const [{ data: roleData }, { data: superData }, { data: roleRow }, { data: profile }] =
@@ -51,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("full_name, tutorial_version")
+          .select("full_name, tutorial_version, completed_tutorial_steps")
           .eq("user_id", uid)
           .maybeSingle(),
       ]);
@@ -59,11 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(Boolean(superData));
     setAssignedBranchId((roleRow?.assigned_branch_id as string | null) ?? null);
     setFullName((profile?.full_name as string | null) ?? null);
-    setTutorialVersionState(
-      typeof (profile as { tutorial_version?: number } | null)?.tutorial_version === "number"
-        ? (profile as { tutorial_version: number }).tutorial_version
-        : 0,
-    );
+    const p = profile as { tutorial_version?: number; completed_tutorial_steps?: string[] } | null;
+    setTutorialVersionState(typeof p?.tutorial_version === "number" ? p.tutorial_version : 0);
+    setCompletedTutorialSteps(Array.isArray(p?.completed_tutorial_steps) ? p!.completed_tutorial_steps : []);
   };
 
   const setTutorialVersion = async (v: number) => {
@@ -72,6 +72,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!uid) return;
     await supabase.from("profiles").update({ tutorial_version: v }).eq("user_id", uid);
   };
+
+  const markTutorialStepComplete = async (stepId: string) => {
+    let nextArr: string[] = [];
+    setCompletedTutorialSteps((prev) => {
+      if (prev.includes(stepId)) {
+        nextArr = prev;
+        return prev;
+      }
+      nextArr = [...prev, stepId];
+      return nextArr;
+    });
+    const uid = session?.user?.id;
+    if (!uid) return;
+    // Persist as the new full array (idempotent, avoids array_append race conditions)
+    await supabase.from("profiles").update({ completed_tutorial_steps: nextArr }).eq("user_id", uid);
+  };
+
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
