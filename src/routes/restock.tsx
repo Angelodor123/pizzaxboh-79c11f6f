@@ -32,17 +32,19 @@ function todayIso() {
 }
 
 function RestockPage() {
-  const { session } = useAuth();
+  const { session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
   const [items, setItems] = useState<Item[]>([]);
   const [log, setLog] = useState<Record<string, LogRow>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const wd = new Date().getDay();
   const targetCol = DAY_COLS[wd];
   const today = todayIso();
+
 
   useEffect(() => {
     void (async () => {
