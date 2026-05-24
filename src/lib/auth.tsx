@@ -162,14 +162,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadRole(session?.user?.id);
   };
 
+  // Apply simulation only when the real user is super admin.
+  const sim = isSuperAdmin ? simulatedRole : null;
+  const effectiveRole: AppRole | null = sim
+    ? sim === "employee"
+      ? "viewer"
+      : "admin"
+    : role;
+  const effectiveIsSuperAdmin = sim ? sim === "super_admin" : isSuperAdmin;
+
   return (
     <AuthContext.Provider
       value={{
         session,
         email: session?.user?.email ?? null,
         fullName,
-        role,
-        isSuperAdmin,
+        role: effectiveRole,
+        isSuperAdmin: effectiveIsSuperAdmin,
+        realRole: role,
+        realIsSuperAdmin: isSuperAdmin,
+        simulatedRole: sim,
+        setSimulatedRole,
         assignedBranchId,
         tutorialVersion,
         completedTutorialSteps,
