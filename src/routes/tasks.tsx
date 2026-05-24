@@ -515,10 +515,11 @@ function TasksPage() {
 
 
                         {isGroupOpen && (
-                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3">
+                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
                             {gTasks.map((t) => {
                               const log = logs.get(t.id);
                               const done = log?.completed ?? false;
+                              const isPulsing = pulsingTaskId === t.id;
                               const stamp =
                                 done && log?.completed_at
                                   ? formatStamp(log.completed_by, log.completed_at)
@@ -529,11 +530,11 @@ function TasksPage() {
                               return (
                                 <div
                                   key={t.id}
-                                  className={`rounded-xl border px-4 py-3 transition ${
+                                  className={`rounded-xl border p-4 transition-all duration-300 ${
                                     done
                                       ? "bg-card/40 border-border"
-                                      : "bg-card border-primary/40 hover:border-primary/70 hover:shadow-[0_0_14px_oklch(0.65_0.31_5/0.35)]"
-                                  }`}
+                                      : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
+                                  } ${isPulsing ? "neon-pulse-card" : ""}`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <label className="flex items-start gap-3 flex-1 cursor-pointer min-w-0">
@@ -542,16 +543,18 @@ function TasksPage() {
                                         checked={done}
                                         onChange={() => toggleTask(t.id)}
                                         aria-label={`סמן כבוצע: ${t.name}`}
-                                        className="mt-0.5 h-5 w-5 accent-primary shrink-0"
+                                        className={`mt-0.5 h-5 w-5 shrink-0 transition-all duration-200 ${
+                                          done ? "accent-[#39FF14]" : "accent-primary"
+                                        } ${isPulsing ? "neon-check" : ""}`}
                                       />
                                       <div className="flex-1 min-w-0 text-right">
                                         <div
-                                          className={`text-sm font-bold leading-snug ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
+                                          className={`text-sm font-bold leading-snug transition-all duration-300 ${done ? "line-through text-gray-500" : "text-foreground"}`}
                                         >
                                           {t.name}
                                         </div>
                                         {stamp && (
-                                          <div className="text-[11px] text-primary mt-1 leading-snug">
+                                          <div className="text-[11px] text-primary/90 mt-1 leading-snug">
                                             {stamp}
                                           </div>
                                         )}
