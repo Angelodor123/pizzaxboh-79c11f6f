@@ -144,7 +144,7 @@ function OperationalDashboard() {
           <ClipboardCheck className="h-6 w-6 text-neon" />
           <span className="text-[11px] font-bold leading-tight text-neon">צ'ק-ליסט משמרות</span>
         </Link>
-        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" highlight tourId="stat-events-today" />
+        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" tourId="stat-events-today" />
       </div>
 
       {/* Quick Access Cards */}
@@ -300,7 +300,7 @@ function StatCard({
       data-tour={tourId}
       aria-label={`${label}: ${value}`}
       className={`rounded-xl border-2 p-4 min-h-24 flex flex-col justify-between text-right transition hover:border-neon ${
-        highlight ? "border-neon glow-neon bg-neon/5" : "border-jungle/30 bg-jungle/5"
+        highlight ? "border-neon glow-neon bg-neon/5" : "border-zinc-800 bg-zinc-900/40"
       }`}
     >
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold leading-snug">
