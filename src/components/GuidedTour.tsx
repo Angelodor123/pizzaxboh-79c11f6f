@@ -287,16 +287,25 @@ export function GuidedTour() {
   const isFirst = index === 0;
 
   const finish = () => {
-    void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
+    // Mark current step + any remaining steps in this tour as complete
+    void Promise.all(steps.slice(index).map((s) => markTutorialStepComplete(s.id)));
+    if (mode === "master") {
+      void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
+      // Also mark active feature steps so master-tour users don't get the discovery banner
+      void Promise.all(ACTIVE_FEATURE_STEPS.map((s) => markTutorialStepComplete(s.id)));
+    }
     setOpen(false);
     setShowDiscoveryBanner(false);
   };
 
   const next = () => {
+    // Optimistically mark this step as complete
+    void markTutorialStepComplete(step.id);
     if (isLast) finish();
     else setIndex((i) => i + 1);
   };
   const prev = () => setIndex((i) => Math.max(0, i - 1));
+
 
   const pad = 8;
   const spotlight = rect
