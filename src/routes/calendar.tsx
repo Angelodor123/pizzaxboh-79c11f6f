@@ -444,19 +444,19 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
         ev.high_priority
           ? "border-destructive/60 bg-destructive/10"
           : isAuto
-          ? "bg-emerald-500/5"
+          ? "bg-success/5"
           : ev.category === "delivery"
           ? "border-neon/40 bg-neon/5"
           : "border-border bg-background/40"
-      } ${isAuto ? "border-emerald-500/70" : ""}`}
-      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+      } ${isAuto ? "border-success/70" : ""}`}
+      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : undefined}
     >
       <div className="flex items-center gap-1 font-bold">
         {ev.high_priority && <AlertTriangle className="h-3 w-3 text-destructive" />}
-        <Icon className={`h-3 w-3 ${isAuto ? "text-emerald-400" : "text-neon"}`} />
+        <Icon className={`h-3 w-3 ${isAuto ? "text-success" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
         {ev._isOverride && (
-          <span className="text-[9px] text-amber-400 border border-amber-500/40 rounded px-1">שונה</span>
+          <span className="text-[9px] text-amber-brand border border-amber-brand/60 rounded px-1">שונה</span>
         )}
       </div>
       {(ev.start_time || ev.supplier) && (
@@ -519,17 +519,17 @@ function DayDetails({
                   ev.high_priority
                     ? "border-destructive/60 bg-destructive/5"
                     : isAuto
-                    ? "border-emerald-500/70 bg-emerald-500/5"
+                    ? "border-success/70 bg-success/5"
                     : "border-border bg-background/40"
                 }`}
-                style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+                style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 font-bold flex-wrap">
                       {ev.high_priority && <AlertTriangle className="h-4 w-4 text-destructive" />}
                       {ev.category === "delivery" ? (
-                        <Truck className={`h-4 w-4 ${isAuto ? "text-emerald-400" : "text-neon"}`} />
+                        <Truck className={`h-4 w-4 ${isAuto ? "text-success" : "text-neon"}`} />
                       ) : (
                         <Sparkles className="h-4 w-4 text-neon" />
                       )}
@@ -540,12 +540,12 @@ function DayDetails({
                         </span>
                       )}
                       {isAuto && (
-                        <span className="text-[10px] font-bold text-emerald-300 border border-emerald-500/60 rounded px-1.5 py-0.5">
+                        <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
                           ספק
                         </span>
                       )}
                       {ev._isOverride && (
-                        <span className="text-[10px] font-bold text-amber-300 border border-amber-500/60 rounded px-1.5 py-0.5">
+                        <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
                           שונה ליום זה
                         </span>
                       )}
@@ -734,8 +734,8 @@ function InstanceOverrideForm({
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-md bg-card border border-emerald-500/60 rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
-        style={{ borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" }}
+        className="w-full max-w-md bg-card border border-success/60 rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
+        style={{ borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" }}
       >
         <div className="flex items-center justify-between">
           <div>
@@ -751,7 +751,7 @@ function InstanceOverrideForm({
           </button>
         </div>
 
-        <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/40 rounded p-2">
+        <p className="text-[11px] text-amber-brand bg-amber-brand/15 border border-amber-brand/60 rounded p-2">
           השינוי כאן יחול רק על {label}. פרופיל הספק / המאסטר לא ישתנה.
         </p>
 
@@ -776,7 +776,7 @@ function InstanceOverrideForm({
             type="checkbox"
             checked={highPriority}
             onChange={(e) => setHighPriority(e.target.checked)}
-            className="accent-[hsl(var(--destructive))]"
+            className="accent-[var(--destructive)]"
           />
         </label>
 
@@ -932,7 +932,7 @@ function EventForm({
             type="checkbox"
             checked={isRecurring}
             onChange={(e) => setIsRecurring(e.target.checked)}
-            className="accent-[hsl(var(--neon))]"
+            className="accent-[var(--neon)]"
           />
         </label>
 
@@ -987,7 +987,7 @@ function EventForm({
             type="checkbox"
             checked={highPriority}
             onChange={(e) => setHighPriority(e.target.checked)}
-            className="accent-[hsl(var(--destructive))]"
+            className="accent-[var(--destructive)]"
           />
         </label>
 
