@@ -108,9 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         isSuperAdmin,
         assignedBranchId,
+        tutorialVersion,
         loading,
         signOut,
         refreshRole,
+        setTutorialVersion,
       }}
     >
       {children}
