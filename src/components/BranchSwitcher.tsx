@@ -23,14 +23,15 @@ export function BranchSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="h-9 inline-flex items-center gap-1.5 rounded-md border border-border bg-card/60 px-2.5 text-xs font-semibold text-foreground hover:text-neon hover:border-neon/60 transition"
+          className="h-9 inline-flex items-center gap-1.5 rounded-md border border-border bg-card/60 px-2 sm:px-2.5 text-xs font-semibold text-foreground hover:text-neon hover:border-neon/60 transition"
           aria-label="החלפת סניף"
-          title="החלפת סניף"
+          title={active?.name ?? "החלפת סניף"}
         >
-          <Building2 className="h-3.5 w-3.5" />
-          <span className="max-w-[90px] truncate">{active?.name ?? "סניף"}</span>
+          <Building2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="hidden sm:inline max-w-[90px] truncate">{active?.name ?? "סניף"}</span>
         </button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>החלפת סניף</DropdownMenuLabel>
         <DropdownMenuSeparator />
