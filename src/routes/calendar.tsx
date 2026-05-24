@@ -504,23 +504,29 @@ function WeekView({
 function EventChip({ ev }: { ev: EffectiveEvent }) {
   const Icon = ev.category === "delivery" ? Truck : Sparkles;
   const isAuto = !!ev.is_auto;
+  const missing = !!ev._missingInvoice;
   return (
     <li
       className={`rounded-md px-2 py-1.5 border text-[11px] leading-tight ${
-        ev.high_priority
+        missing
+          ? "border-destructive bg-destructive/15 animate-pulse"
+          : ev.high_priority
           ? "border-destructive/60 bg-destructive/10"
           : isAuto
           ? "bg-success/5"
           : ev.category === "delivery"
           ? "border-neon/40 bg-neon/5"
           : "border-border bg-background/40"
-      } ${isAuto ? "border-success/70" : ""}`}
-      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : undefined}
+      } ${isAuto && !missing ? "border-success/70" : ""}`}
+      style={isAuto && !missing ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : missing ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--destructive)" } : undefined}
     >
       <div className="flex items-center gap-1 font-bold">
-        {ev.high_priority && <AlertTriangle className="h-3 w-3 text-destructive" />}
-        <Icon className={`h-3 w-3 ${isAuto ? "text-success" : "text-neon"}`} />
+        {(missing || ev.high_priority) && <AlertTriangle className={`h-3 w-3 ${missing ? "text-destructive" : "text-destructive"}`} />}
+        <Icon className={`h-3 w-3 ${missing ? "text-destructive" : isAuto ? "text-success" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
+        {missing && (
+          <span className="text-[9px] text-destructive border border-destructive/60 rounded px-1 shrink-0">⚠️ חסרה חשבונית</span>
+        )}
         {ev._isOverride && (
           <span className="text-[9px] text-amber-brand border border-amber-brand/60 rounded px-1">שונה</span>
         )}
