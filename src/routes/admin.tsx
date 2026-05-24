@@ -285,6 +285,7 @@ function AdminPage() {
 
       {tab === "users" && <InvitationsPanel />}
       {tab === "branches" && isSuperAdmin && <BranchesPanel />}
+      {tab === "tasks" && isSuperAdmin && <TasksPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
       {tab === "cms" && <ContentTextsPanel />}
       {tab === "onboarding" && <OnboardingPanel />}
