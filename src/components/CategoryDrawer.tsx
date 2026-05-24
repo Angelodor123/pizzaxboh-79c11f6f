@@ -319,23 +319,73 @@ export function CategoryDrawer() {
           )}
         </nav>
 
-        {/* Sticky footer: email + logout */}
-        <div className="sticky bottom-0 border-t border-zinc-800/60 bg-[#18181b] px-6 py-4 flex items-center justify-between gap-3">
-          {email && (
-            <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
-              {email}
+        {/* Sticky footer: View As (super admins only) + email + logout */}
+        <div className="sticky bottom-0 border-t border-zinc-800/60 bg-[#18181b]">
+          {realIsSuperAdmin && (
+            <div className="px-6 pt-3 pb-2 border-b border-zinc-800/40">
+              <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-zinc-500 mb-1.5 text-right">
+                תצוגת ממשק:
+              </div>
+              <div
+                role="group"
+                aria-label="תצוגת ממשק"
+                className="flex items-stretch rounded-md bg-zinc-800/50 border border-zinc-700/60 p-0.5 text-xs"
+                dir="rtl"
+              >
+                {(
+                  [
+                    { key: "super_admin", label: "סופר אדמין" },
+                    { key: "manager", label: "מנהל" },
+                    { key: "employee", label: "עובד" },
+                  ] as const
+                ).map((opt) => {
+                  const active =
+                    (simulatedRole ?? "super_admin") === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() =>
+                        setSimulatedRole(
+                          opt.key === "super_admin" ? null : opt.key,
+                        )
+                      }
+                      className={`flex-1 px-2 py-1.5 rounded-[5px] font-bold transition-colors ${
+                        active
+                          ? "bg-neon text-primary-foreground shadow-sm"
+                          : "text-zinc-300 hover:bg-zinc-700/60"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {simulatedRole && (
+                <div className="mt-1.5 text-[10px] text-neon/80 text-right">
+                  מצב סימולציה פעיל
+                </div>
+              )}
             </div>
           )}
-          <button
-            onClick={async () => {
-              close();
-              await signOut();
-            }}
-            className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
-          >
-            <LogOut className="h-4 w-4" />
-            התנתק
-          </button>
+          <div className="px-6 py-4 flex items-center justify-between gap-3">
+            {email && (
+              <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
+                {email}
+              </div>
+            )}
+            <button
+              onClick={async () => {
+                close();
+                await signOut();
+              }}
+              className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
+            >
+              <LogOut className="h-4 w-4" />
+              התנתק
+            </button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
