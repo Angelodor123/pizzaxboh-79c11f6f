@@ -844,6 +844,11 @@ function InvitationsPanel() {
                     <span className="text-[10px] text-neon font-bold whitespace-nowrap">
                       {u.role === "admin" ? "ניהול" : "צפייה בלבד"}
                     </span>
+                    {u.assigned_branch_id && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
+                        🏢 {branches.find((b) => b.id === u.assigned_branch_id)?.name ?? "—"}
+                      </span>
+                    )}
                   </div>
                   {isSuperAdmin && !superAdminIds.has(u.user_id) && (
                     <select
