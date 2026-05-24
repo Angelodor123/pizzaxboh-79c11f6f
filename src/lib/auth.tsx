@@ -46,6 +46,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tutorialCooldownUntil, setTutorialCooldownUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [simulatedRole, setSimulatedRoleState] = useState<SimulatedRole | null>(null);
+
+  // Hydrate simulated role from sessionStorage (only honored if real user is super admin).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const v = sessionStorage.getItem("pizzax-sim-role");
+    if (v === "super_admin" || v === "manager" || v === "employee") {
+      setSimulatedRoleState(v);
+    }
+  }, []);
+
+  const setSimulatedRole = (r: SimulatedRole | null) => {
+    setSimulatedRoleState(r);
+    if (typeof window !== "undefined") {
+      if (r) sessionStorage.setItem("pizzax-sim-role", r);
+      else sessionStorage.removeItem("pizzax-sim-role");
+    }
+  };
+
   const loadRole = async (uid: string | undefined) => {
     if (!uid) {
       setRole(null);
