@@ -33,7 +33,7 @@ function todayIso() {
 }
 
 function OperationalDashboard() {
-  const { role } = useAuth();
+  const { role, isSuperAdmin } = useAuth();
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
