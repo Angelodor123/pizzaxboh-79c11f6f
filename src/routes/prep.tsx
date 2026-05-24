@@ -48,6 +48,7 @@ function PrepPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Item | null>(null);
   const wd = new Date().getDay();
   const targetCol = DAY_COLS[wd];
   const today = todayIso();
