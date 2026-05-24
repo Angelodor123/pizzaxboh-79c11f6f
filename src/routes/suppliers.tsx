@@ -36,6 +36,7 @@ function SuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const bulk = useBulkSelection();
 
   useEffect(() => {
@@ -61,11 +62,14 @@ function SuppliersPage() {
     };
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("למחוק את הספק? כל אירועי הסחורה האוטומטיים שלו יימחקו מהלוח.")) return;
-    const { error } = await supabase.from("suppliers").delete().eq("id", id);
-    if (error) toast.error("שגיאה במחיקה");
-    else toast.success("הספק נמחק");
+  const visible = list.filter((s) => (showArchived ? s.is_archived : !s.is_archived));
+
+  const handleArchive = async (s: Supplier) => {
+    const next = !s.is_archived;
+    if (!confirm(next ? `להעביר את "${s.name}" לארכיון? אירועי הסחורה האוטומטיים יוסרו מהלוח.` : `לשחזר את "${s.name}" מהארכיון?`)) return;
+    const { error } = await supabase.from("suppliers").update({ is_archived: next }).eq("id", s.id);
+    if (error) toast.error("שגיאה: " + error.message);
+    else toast.success(next ? "הספק הועבר לארכיון" : "הספק שוחזר");
   };
 
   return (
