@@ -314,10 +314,38 @@ function SupplierForm({
   const [contact, setContact] = useState(existing?.contact ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [active, setActive] = useState(existing?.active ?? true);
+  const [logoUrl, setLogoUrl] = useState<string | null>(existing?.logo_url ?? null);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const previewLogo = logoUrl || resolveSupplierLogo(name, null);
 
   const toggleDay = (i: number) =>
     setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+
+  const handleLogoUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("יש לבחור קובץ תמונה");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("גודל מקסימלי: 2MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("supplier-logos").upload(path, file, { upsert: false });
+    if (upErr) {
+      setUploading(false);
+      toast.error("העלאה נכשלה: " + upErr.message);
+      return;
+    }
+    const { data } = supabase.storage.from("supplier-logos").getPublicUrl(path);
+    setLogoUrl(data.publicUrl);
+    setUploading(false);
+    toast.success("הלוגו הועלה");
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -335,6 +363,7 @@ function SupplierForm({
       contact: contact.trim().slice(0, 200) || null,
       notes: notes.trim().slice(0, 2000) || null,
       active,
+      logo_url: logoUrl,
     };
     let error;
     if (existing) {
