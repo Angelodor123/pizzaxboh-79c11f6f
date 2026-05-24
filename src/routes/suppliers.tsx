@@ -362,7 +362,7 @@ function SupplierForm({
                   onClick={() => toggleDay(i)}
                   className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
                     on
-                      ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
+                      ? "bg-success/20 border-success text-success"
                       : "border-border text-foreground hover:border-neon"
                   }`}
                 >
