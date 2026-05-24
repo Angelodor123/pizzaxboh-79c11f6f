@@ -204,12 +204,8 @@ function AuthedShell() {
         }`}
 
       >
-        <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <CategoryDrawer />
-            {showServiceToggle && <ServiceModeToggle />}
-          </div>
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <BranchSwitcher />
             {pathname !== "/" && (
               <>
@@ -229,7 +225,7 @@ function AuthedShell() {
                 </button>
                 <Link
                   to="/"
-                  className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
+                  className="h-9 w-9 hidden sm:inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
                   aria-label="דף הבית"
                   title="דף הבית"
                 >
@@ -240,20 +236,25 @@ function AuthedShell() {
           </div>
           <Link
             to="/"
-            className="flex flex-col items-center gap-1"
+            className="flex flex-col items-center gap-1 min-w-0"
             aria-label="Pizza X — בית"
           >
             <img
               src={pizzaXLogo}
               alt="Pizza X"
-              className="h-[60px] sm:h-[72px] w-auto object-contain"
+              className="h-12 sm:h-[72px] w-auto object-contain"
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
-            <span className="text-[12px] font-bold tracking-[0.3em] uppercase text-neon">
+            <span className="text-[10px] sm:text-[12px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
               {serviceModeVisible ? "Service Mode" : "Back of House"}
             </span>
           </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            {showServiceToggle && <ServiceModeToggle />}
+            <CategoryDrawer />
+          </div>
         </div>
+
       </header>
       <main className="flex-1">
         <PageHeader />
