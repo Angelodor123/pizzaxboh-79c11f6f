@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { pizzaXCookbook, type Recipe, type RecipeCategory, type Ingredient, type SpiceBag } from "./cookbook";
 import { supabase } from "@/integrations/supabase/client";
+import { requireCurrentBranchId } from "@/lib/current-branch";
 
 export interface IngredientPrice {
   name: string;
@@ -121,9 +122,10 @@ export const useCookbookStore = create<RecipesState>((set, get) => ({
   addRecipe: async (r) => {
     const row = recipeToRow(r);
     const sortOrder = (get().recipes.length + 1) * 10 + 1000;
+    const branch_id = await requireCurrentBranchId();
     const { data, error } = await supabase
       .from("recipes")
-      .insert({ ...row, sort_order: sortOrder } as never)
+      .insert({ ...row, sort_order: sortOrder, branch_id } as never)
       .select()
       .single();
     if (error) throw error;

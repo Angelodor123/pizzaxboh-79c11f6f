@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Pencil, Save, X, Power, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { requireCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
 import { refreshOnboarding } from "@/components/PageOnboarding";
 import { BulkActionBar } from "@/components/BulkActionBar";
@@ -164,7 +165,8 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
       const { error } = await supabase.from(table).update(payload).eq("id", id);
       if (error) { toast.error(error.message); return; }
     } else {
-      const { error } = await supabase.from(table).insert(payload);
+      const branch_id = await requireCurrentBranchId();
+      const { error } = await supabase.from(table).insert({ ...payload, branch_id });
       if (error) { toast.error(error.message); return; }
     }
     setEditing(null); toast.success("נשמר"); void load();
