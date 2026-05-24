@@ -286,12 +286,14 @@ export function GuidedTour() {
   const isFirst = index === 0;
 
   const finish = () => {
-    // Mark current step + any remaining steps in this tour as complete
-    void Promise.all(steps.slice(index).map((s) => markTutorialStepComplete(s.id)));
+    // Mark current step + any remaining steps in this tour as complete (single DB write)
+    const remaining = steps.slice(index).map((s) => s.id);
+    const toMark = mode === "master"
+      ? Array.from(new Set([...remaining, ...ACTIVE_FEATURE_STEPS.map((s) => s.id)]))
+      : remaining;
+    void markTutorialStepsComplete(toMark);
     if (mode === "master") {
       void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
-      // Also mark active feature steps so master-tour users don't get the discovery banner
-      void Promise.all(ACTIVE_FEATURE_STEPS.map((s) => markTutorialStepComplete(s.id)));
     }
     setOpen(false);
     setShowDiscoveryBanner(false);
