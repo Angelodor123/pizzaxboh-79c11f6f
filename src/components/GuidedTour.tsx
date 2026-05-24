@@ -143,9 +143,11 @@ export function GuidedTour() {
     loading,
     tutorialVersion,
     completedTutorialSteps,
+    tutorialCooldownUntil,
     setTutorialVersion,
     markTutorialStepComplete,
     markTutorialStepsComplete,
+    snoozeTutorial,
   } = useAuth();
   const router = useRouter();
   const pathname = router.state.location.pathname;
@@ -163,7 +165,7 @@ export function GuidedTour() {
   );
   const steps = mode === "master" ? masterSteps : pendingFeatureSteps;
 
-  // Auto-start logic
+  // Auto-start logic with 7-day cooldown failsafe
   useEffect(() => {
     if (loading) return;
     if (typeof window === "undefined") return;
@@ -178,12 +180,16 @@ export function GuidedTour() {
       }, 800);
       return () => clearTimeout(t);
     }
+    // Cooldown: abort silently if user asked to be reminded later
+    if (tutorialCooldownUntil && new Date(tutorialCooldownUntil).getTime() > Date.now()) {
+      return;
+    }
     // Returning user: any pending feature steps?
     if (pendingFeatureSteps.length > 0) {
       const t = setTimeout(() => setShowDiscoveryBanner(true), 1200);
       return () => clearTimeout(t);
     }
-  }, [loading, pathname, session, tutorialVersion, pendingFeatureSteps.length]);
+  }, [loading, pathname, session, tutorialVersion, pendingFeatureSteps.length, tutorialCooldownUntil]);
 
 
   // Listen for manual replay — always replay the full master tour
