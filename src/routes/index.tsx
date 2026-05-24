@@ -324,6 +324,14 @@ function NotebookMini({ label, value }: { label: string; value: number }) {
   );
 }
 
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-zinc-400 text-sm font-bold mb-3 mt-6 border-b border-zinc-800/50 pb-1">
+      {children}
+    </h2>
+  );
+}
+
 function ShortcutTile({
   to,
   icon,
