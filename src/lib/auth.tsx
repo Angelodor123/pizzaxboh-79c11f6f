@@ -13,12 +13,14 @@ interface AuthState {
   assignedBranchId: string | null;
   tutorialVersion: number;
   completedTutorialSteps: string[];
+  tutorialCooldownUntil: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
   setTutorialVersion: (v: number) => Promise<void>;
   markTutorialStepComplete: (stepId: string) => Promise<void>;
   markTutorialStepsComplete: (stepIds: string[]) => Promise<void>;
+  snoozeTutorial: (days?: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
