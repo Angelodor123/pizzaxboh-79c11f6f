@@ -258,6 +258,11 @@ function AdminPage() {
             סניפים
           </TabButton>
         )}
+        {isSuperAdmin && (
+          <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")} icon={<ListChecks className="h-4 w-4" />}>
+            משימות קבועות
+          </TabButton>
+        )}
         <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
           תזכורות ספקים
         </TabButton>
