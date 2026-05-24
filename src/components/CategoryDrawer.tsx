@@ -80,19 +80,25 @@ export function CategoryDrawer() {
     openDishes,
     setDrawerOpen,
   } = useUIStore();
-  const { email, role, signOut } = useAuth();
+  const {
+    email,
+    role,
+    isSuperAdmin: effIsSuperAdmin,
+    realIsSuperAdmin,
+    simulatedRole,
+    setSimulatedRole,
+    signOut,
+  } = useAuth();
   const [recipesOpen, setRecipesOpen] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
 
-  // RBAC mapping. DB currently exposes `admin` and `viewer`; the menu spec
-  // calls these super_admin / employee, with a future `manager` slotting in
-  // between for logistics-only access.
-  // - admin       -> super_admin (all groups)
-  // - manager     -> manager     (groups A + B)  // reserved for future role
-  // - viewer/null -> employee    (group A only)
-  const roleStr = (role as string | null) ?? "";
-  const isSuperAdmin = roleStr === "admin" || roleStr === "super_admin";
-  const isManager = roleStr === "manager";
+  // Effective role mapping for menu visibility. Uses the *effective* values
+  // from useAuth() so "View As" simulation immediately rewires the menu.
+  // - admin role + super admin flag → super_admin (all groups)
+  // - admin role only               → manager     (groups A + B)
+  // - viewer / null                 → employee    (group A only)
+  const isSuperAdmin = effIsSuperAdmin;
+  const isManager = role === "admin" && !effIsSuperAdmin;
   const canSeeLogistics = isSuperAdmin || isManager;
   const canSeeManagement = isSuperAdmin;
   const isDishesView = category === "dishes";
