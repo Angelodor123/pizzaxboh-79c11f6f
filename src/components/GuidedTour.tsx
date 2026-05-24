@@ -197,6 +197,47 @@ export function GuidedTour() {
     };
   }, [open, measure]);
 
+  // Render discovery banner for v1 users before they accept the mini-tour
+  if (!open && showDiscoveryBanner && typeof document !== "undefined") {
+    return createPortal(
+      <div className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 sm:max-w-sm z-[9999] rounded-2xl border-2 border-neon/60 bg-card shadow-[0_0_30px_-8px_rgba(57,255,20,0.5)] p-4 animate-in fade-in-0 slide-in-from-bottom-4" dir="rtl">
+        <div className="flex items-start gap-3">
+          <div className="text-2xl shrink-0">🚀</div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display text-base font-bold text-foreground leading-snug">
+              הוספנו כלים חדשים למערכת!
+            </h3>
+            <p className="text-xs text-foreground/80 mt-1 leading-relaxed">
+              בואו לסיור קצר על הפיצ'רים החדשים — שמירה אוטומטית, צ'ק-ליסט משמרות וסטטוס בצקים.
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => {
+                  setShowDiscoveryBanner(false);
+                  setIndex(0);
+                  setOpen(true);
+                }}
+                className="rounded-md bg-neon px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition"
+              >
+                התחל סיור ←
+              </button>
+              <button
+                onClick={() => {
+                  void setTutorialVersion(CURRENT_TUTORIAL_VERSION);
+                  setShowDiscoveryBanner(false);
+                }}
+                className="text-xs text-foreground/60 hover:text-foreground transition px-2"
+              >
+                לא תודה
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
   if (!open || typeof document === "undefined") return null;
 
   const step = steps[index];
