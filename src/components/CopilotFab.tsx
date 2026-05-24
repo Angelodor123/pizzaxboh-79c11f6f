@@ -6,15 +6,16 @@ import { Loader2, Minus, Send, Sparkles } from "lucide-react";
 import { askCopilot } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
+import {
+  briefingToContext,
+  fetchDailyBriefing,
+  hasOpenedToday,
+  markOpenedToday,
+  randomGreeting,
+} from "@/lib/daily-briefing";
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "model"; content: string };
-
-const GREETING: Msg = {
-  role: "model",
-  content:
-    "שלום, אני ג'וני, מנהל התפעול הדיגיטלי של Pizza X. אני כאן כדי לוודא שהעבודה מתקתקת. צריכים עזרה עם נהלים, המערכת או קליטת סחורות? דברו אליי.",
-};
 
 const TUTORIAL_PATTERNS = [
   /תפעיל\s*את\s*המדריך/,
@@ -38,33 +39,34 @@ const MARGIN = 16;
 
 export function CopilotFab() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([GREETING]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showDailyCta, setShowDailyCta] = useState(false);
   const ask = useServerFn(askCopilot);
   const router = useRouter();
   const { role, isSuperAdmin } = useAuth();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const draggedRef = useRef(false);
+  const initializedRef = useRef(false);
 
-  // Position (bottom-right by default), persisted to keep user's last spot
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
 
+  // Show daily briefing CTA if user hasn't opened today
+  useEffect(() => {
+    if (!hasOpenedToday()) setShowDailyCta(true);
+  }, []);
+
   useEffect(() => {
     const compute = () => {
-      const safeBottom = parseInt(
-        getComputedStyle(document.documentElement).getPropertyValue("--sab") || "0",
-        10,
-      ) || 0;
       const w = window.innerWidth;
       const h = window.innerHeight;
-      // We place FAB anchored bottom-right via style; drag offsets from there.
       setBounds({
         left: -(w - FAB_SIZE - MARGIN * 2),
-        top: -(h - FAB_SIZE - MARGIN * 2 - safeBottom),
+        top: -(h - FAB_SIZE - MARGIN * 2),
         right: 0,
         bottom: 0,
       });
@@ -102,13 +104,53 @@ export function CopilotFab() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const initSession = useCallback(
+    async (firstToday: boolean) => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+
+      if (!firstToday) {
+        setMessages([{ role: "model", content: randomGreeting() }]);
+        return;
+      }
+
+      // First open today — fetch operational briefing and ask Johnny to compose a custom morning greeting
+      setLoading(true);
+      try {
+        const briefing = await fetchDailyBriefing();
+        const briefingText = briefingToContext(briefing);
+        const prompt = `הפק בוקר טוב קצר ומותאם אישית לצוות Pizza X בעברית בלבד. הזדהה כג'וני, סכם את הפוקוס התפעולי של היום על בסיס הנתונים שקיבלת, והצע פעולה ראשונה לבצע. שמור על טון מקצועי, חד וענייני, עם 1-2 אימוג'ים. אל תזכיר שאתה בינה מלאכותית.`;
+        const res = await ask({
+          data: {
+            messages: [{ role: "user", content: prompt }],
+            context: {
+              route: router.state.location.pathname,
+              role: isSuperAdmin ? "super_admin" : role ?? "guest",
+              briefing: briefingText,
+            },
+          },
+        });
+        setMessages([{ role: "model", content: res.reply }]);
+      } catch {
+        setMessages([{ role: "model", content: randomGreeting() }]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [ask, isSuperAdmin, role, router.state.location.pathname],
+  );
+
   const handleFabClick = useCallback(() => {
     if (draggedRef.current) {
       draggedRef.current = false;
       return;
     }
+    const firstToday = !hasOpenedToday();
+    markOpenedToday();
+    setShowDailyCta(false);
     setOpen(true);
-  }, []);
+    void initSession(firstToday);
+  }, [initSession]);
 
   async function handleSend(textOverride?: string) {
     const text = (textOverride ?? input).trim();
@@ -120,10 +162,7 @@ export function CopilotFab() {
     if (isTutorialIntent(text)) {
       setMessages((m) => [
         ...m,
-        {
-          role: "model",
-          content: "בוודאי. פותח עבורך את המדריך המודרך כעת.",
-        },
+        { role: "model", content: "בוודאי. פותח עבורך את המדריך המודרך כעת." },
       ]);
       setOpen(false);
       setTimeout(triggerTutorial, 250);
@@ -134,7 +173,7 @@ export function CopilotFab() {
     try {
       const res = await ask({
         data: {
-          messages: next.filter((m) => m !== GREETING).slice(-20),
+          messages: next.slice(-20),
           context: {
             route: router.state.location.pathname,
             role: isSuperAdmin ? "super_admin" : role ?? "guest",
@@ -154,48 +193,78 @@ export function CopilotFab() {
 
   return (
     <>
+      {/* Daily briefing tooltip — only when user hasn't opened today */}
+      {showDailyCta && !open && (
+        <div
+          dir="rtl"
+          aria-hidden="true"
+          className="fixed z-50 pointer-events-none animate-fade-in"
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
+            right: "1rem",
+          }}
+        >
+          <div className="relative bg-gradient-to-br from-[#ff5a3c] to-[#b91c1c] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_8px_24px_-4px_rgba(255,90,60,0.6)] whitespace-nowrap">
+            תדריך יומי ממתין לך! 👇
+            <span className="absolute -bottom-1.5 right-6 w-3 h-3 bg-[#b91c1c] rotate-45" />
+          </div>
+        </div>
+      )}
+
       {/* Draggable FAB anchored bottom-right */}
-      <motion.button
-        type="button"
-        drag
-        dragMomentum={false}
-        dragElastic={0}
-        dragConstraints={bounds}
+      <div
+        className="fixed z-50"
         style={{
-          x,
-          y,
           bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
           right: "1rem",
         }}
-        onDragStart={() => {
-          draggedRef.current = true;
-        }}
-        onDragEnd={() => {
-          try {
-            localStorage.setItem(
-              "pizzax-copilot-pos",
-              JSON.stringify({ x: x.get(), y: y.get() }),
-            );
-          } catch {
-            /* noop */
-          }
-          // Reset slightly later so click handler can read it
-          setTimeout(() => {
-            draggedRef.current = false;
-          }, 50);
-        }}
-        onClick={handleFabClick}
-        aria-label="פתח את ג'וני, מנהל התפעול הדיגיטלי"
-        className={cn(
-          "fixed z-50 h-14 w-14 rounded-full touch-none cursor-grab active:cursor-grabbing",
-          "bg-gradient-to-br from-[#1a0e0a] to-black border-2 border-[#ff5a3c]/60",
-          "shadow-[0_8px_24px_-4px_rgba(255,90,60,0.55)]",
-          "flex items-center justify-center hover:scale-105 active:scale-95 transition-transform",
-          open && "opacity-0 pointer-events-none",
-        )}
       >
-        <CopilotMascot className="h-10 w-10" />
-      </motion.button>
+        <motion.div
+          drag
+          dragMomentum={false}
+          dragElastic={0}
+          dragConstraints={bounds}
+          style={{ x, y }}
+          onDragStart={() => {
+            draggedRef.current = true;
+          }}
+          onDragEnd={() => {
+            try {
+              localStorage.setItem(
+                "pizzax-copilot-pos",
+                JSON.stringify({ x: x.get(), y: y.get() }),
+              );
+            } catch {
+              /* noop */
+            }
+            setTimeout(() => {
+              draggedRef.current = false;
+            }, 50);
+          }}
+          className={cn("relative touch-none", open && "opacity-0 pointer-events-none")}
+        >
+          {showDailyCta && (
+            <>
+              <span className="absolute inset-0 rounded-full ring-2 ring-[#ff5a3c] animate-ping pointer-events-none" />
+              <span className="absolute inset-[-4px] rounded-full ring-2 ring-[#ff5a3c]/40 animate-pulse pointer-events-none" />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={handleFabClick}
+            aria-label="פתח את ג'וני, מנהל התפעול הדיגיטלי"
+            className={cn(
+              "relative h-14 w-14 rounded-full cursor-grab active:cursor-grabbing",
+              "bg-gradient-to-br from-[#1a0e0a] to-black border-2 border-[#ff5a3c]/60",
+              "shadow-[0_8px_24px_-4px_rgba(255,90,60,0.55)]",
+              "flex items-center justify-center hover:scale-105 active:scale-95 transition-transform",
+              showDailyCta && "animate-bounce",
+            )}
+          >
+            <CopilotMascot className="h-10 w-10" />
+          </button>
+        </motion.div>
+      </div>
 
       {/* Chat window — sized, not fullscreen */}
       {open && (
@@ -207,7 +276,7 @@ export function CopilotFab() {
           className={cn(
             "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
             "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
-            "flex flex-col overflow-hidden",
+            "flex flex-col overflow-hidden animate-scale-in",
             "w-96 h-[500px] max-w-[90vw] max-h-[80vh]",
           )}
           style={{
