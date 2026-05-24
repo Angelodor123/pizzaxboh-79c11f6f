@@ -137,29 +137,29 @@ function CalendarPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6" dir="rtl">
       {/* Header */}
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
-            BOH Calendar
-          </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
-            📅 לוח <span className="text-neon text-glow-neon">אירועים וסחורות</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            לו״ז קבלת סחורה שבועי, אירועים מיוחדים והערות. סנכרון בזמן אמת.
-          </p>
+      <div className="mb-6 text-center">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
+          BOH Calendar
         </div>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          📅 לוח <span className="text-neon text-glow-neon">אירועים וסחורות</span>
+        </h1>
+        <p className="hidden sm:block text-muted-foreground mt-2 text-sm">
+          לו״ז קבלת סחורה שבועי, אירועים מיוחדים והערות. סנכרון בזמן אמת.
+        </p>
         {canEdit && (
-          <button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-            className="shrink-0 inline-flex items-center gap-2 h-10 px-3 rounded-md bg-neon text-primary-foreground font-bold glow-neon"
-          >
-            <Plus className="h-4 w-4" />
-            הוסף
-          </button>
+          <div className="mt-3 flex items-center justify-center">
+            <button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-neon text-primary-foreground font-bold glow-neon active:scale-95 transition"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף אירוע
+            </button>
+          </div>
         )}
       </div>
 
@@ -444,19 +444,19 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
         ev.high_priority
           ? "border-destructive/60 bg-destructive/10"
           : isAuto
-          ? "bg-emerald-500/5"
+          ? "bg-success/5"
           : ev.category === "delivery"
           ? "border-neon/40 bg-neon/5"
           : "border-border bg-background/40"
-      } ${isAuto ? "border-emerald-500/70" : ""}`}
-      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+      } ${isAuto ? "border-success/70" : ""}`}
+      style={isAuto ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : undefined}
     >
       <div className="flex items-center gap-1 font-bold">
         {ev.high_priority && <AlertTriangle className="h-3 w-3 text-destructive" />}
-        <Icon className={`h-3 w-3 ${isAuto ? "text-emerald-400" : "text-neon"}`} />
+        <Icon className={`h-3 w-3 ${isAuto ? "text-success" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
         {ev._isOverride && (
-          <span className="text-[9px] text-amber-400 border border-amber-500/40 rounded px-1">שונה</span>
+          <span className="text-[9px] text-amber-brand border border-amber-brand/60 rounded px-1">שונה</span>
         )}
       </div>
       {(ev.start_time || ev.supplier) && (
@@ -519,17 +519,17 @@ function DayDetails({
                   ev.high_priority
                     ? "border-destructive/60 bg-destructive/5"
                     : isAuto
-                    ? "border-emerald-500/70 bg-emerald-500/5"
+                    ? "border-success/70 bg-success/5"
                     : "border-border bg-background/40"
                 }`}
-                style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" } : undefined}
+                style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 font-bold flex-wrap">
                       {ev.high_priority && <AlertTriangle className="h-4 w-4 text-destructive" />}
                       {ev.category === "delivery" ? (
-                        <Truck className={`h-4 w-4 ${isAuto ? "text-emerald-400" : "text-neon"}`} />
+                        <Truck className={`h-4 w-4 ${isAuto ? "text-success" : "text-neon"}`} />
                       ) : (
                         <Sparkles className="h-4 w-4 text-neon" />
                       )}
@@ -540,12 +540,12 @@ function DayDetails({
                         </span>
                       )}
                       {isAuto && (
-                        <span className="text-[10px] font-bold text-emerald-300 border border-emerald-500/60 rounded px-1.5 py-0.5">
+                        <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
                           ספק
                         </span>
                       )}
                       {ev._isOverride && (
-                        <span className="text-[10px] font-bold text-amber-300 border border-amber-500/60 rounded px-1.5 py-0.5">
+                        <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
                           שונה ליום זה
                         </span>
                       )}
@@ -734,8 +734,8 @@ function InstanceOverrideForm({
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-md bg-card border border-emerald-500/60 rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
-        style={{ borderInlineStartWidth: 4, borderInlineStartColor: "rgb(16 185 129)" }}
+        className="w-full max-w-md bg-card border border-success/60 rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
+        style={{ borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" }}
       >
         <div className="flex items-center justify-between">
           <div>
@@ -751,7 +751,7 @@ function InstanceOverrideForm({
           </button>
         </div>
 
-        <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/40 rounded p-2">
+        <p className="text-[11px] text-amber-brand bg-amber-brand/15 border border-amber-brand/60 rounded p-2">
           השינוי כאן יחול רק על {label}. פרופיל הספק / המאסטר לא ישתנה.
         </p>
 
@@ -776,7 +776,7 @@ function InstanceOverrideForm({
             type="checkbox"
             checked={highPriority}
             onChange={(e) => setHighPriority(e.target.checked)}
-            className="accent-[hsl(var(--destructive))]"
+            className="accent-[var(--destructive)]"
           />
         </label>
 
@@ -932,7 +932,7 @@ function EventForm({
             type="checkbox"
             checked={isRecurring}
             onChange={(e) => setIsRecurring(e.target.checked)}
-            className="accent-[hsl(var(--neon))]"
+            className="accent-[var(--neon)]"
           />
         </label>
 
@@ -987,7 +987,7 @@ function EventForm({
             type="checkbox"
             checked={highPriority}
             onChange={(e) => setHighPriority(e.target.checked)}
-            className="accent-[hsl(var(--destructive))]"
+            className="accent-[var(--destructive)]"
           />
         </label>
 
@@ -1015,22 +1015,22 @@ function EventForm({
         .input {
           width: 100%;
           min-height: 2.5rem;
-          background: hsl(var(--background));
-          border: 1.5px solid hsl(var(--border));
+          background: var(--background);
+          border: 1.5px solid var(--border);
           border-radius: 0.5rem;
           padding: 0.55rem 0.85rem;
           font-size: 0.95rem;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
           text-align: right;
           transition: border-color .15s, box-shadow .15s, background .15s;
         }
-        .input::placeholder { color: hsl(var(--muted-foreground) / 0.7); }
-        .input:hover { border-color: hsl(var(--neon, var(--primary)) / 0.5); }
+        .input::placeholder { color: color-mix(in oklab, var(--muted-foreground) 70%, transparent); }
+        .input:hover { border-color: color-mix(in oklab, var(--neon) 50%, transparent); }
         .input:focus {
           outline: none;
-          background: hsl(var(--card));
-          border-color: hsl(var(--neon, var(--primary)));
-          box-shadow: 0 0 0 3px hsl(var(--neon, var(--primary)) / 0.25);
+          background: var(--card);
+          border-color: var(--neon);
+          box-shadow: 0 0 0 3px color-mix(in oklab, var(--neon) 25%, transparent);
         }
       `}</style>
     </div>
