@@ -1,74 +1,86 @@
-# Plan: Daily To-Do Module + Ecosystem Upgrades
+# Comprehensive Supplier & Invoice Ecosystem
 
-This is a large scope. I'll execute it in phases. After each phase the app will be in a working state.
+This is a large, multi-area build. Breaking it into clean phases. Access throughout is restricted to **Admin + Super Admin** only.
 
-## Phase 1 — Database Foundation
-Tables `shifts`, `task_groups`, `tasks`, `daily_task_logs` already exist (verified in schema). I will:
-- Add `comments` column already exists ✅, `completed_at` exists ✅, `completed_by_user_id` exists ✅
-- Add `is_urgent` boolean to `notebook_items` for two-tier sort
-- Add `tutorial_version` integer to `profiles` (default 0)
-- Add `ready_trays` integer to a new singleton key in `app_settings` (or use existing `prep_items` "בצקים" row)
-- Create pg_cron job to archive `daily_task_logs` daily at 05:00 Asia/Jerusalem (move to history table or just rely on `log_date = operational_today()`)
-- RLS: branch-scoped policies on all task tables
+## Phase 1 — Database (single migration)
 
-## Phase 2 — Admin Panel Bug Fix
-Fix branch name not updating instantly in user management table — invalidate React Query cache for `branches` + `user_roles` on mutation success.
+Alter / add the following:
 
-## Phase 3 — Dashboard Refactor
-In `src/routes/index.tsx` (or wherever dashboard lives):
-- Rename "פנקס יומי" → "פנקס הערות ומשימות"
-- Add "צ'ק-ליסט משמרות" quick button → `/checklist`
-- Add "סטטוס בצקים" card — modal updates `prep_items` row where name=בצקים, `current_stock` for today's `prep_log`
-- Add "סטטוס משמרת נוכחית" progress card (computed from `daily_task_logs` for current shift)
+**`suppliers`** — add columns:
+- `contact_phone` (text) — for WhatsApp links
+- `delivery_days` (text[]) — `['Sunday','Tuesday',...]` (mirrors existing `delivery_weekdays`; we'll keep both in sync for calendar)
+- `is_archived` (boolean, default false)
 
-## Phase 4 — To-Do List Module (`/checklist`)
-New route with:
-- Shift selector tabs (morning/evening/closing)
-- Accordion per `task_group` with dark `bg-gray-800/80` header
-- Each task = card with neon-pink border, checkbox, comments textarea
-- Optimistic auto-save on check (mutation to `daily_task_logs`)
-- Debounced 750ms auto-save on comments
-- Neon Pulse animation on completion (scale-125 → neon green glow #39FF14, border pulse, strikethrough)
-- Audit stamp "בוצע על ידי X בתאריך Y בשעה Z"
-- Respect manual `sort_order` (no alphabetical)
-- Info icon next to tasks linked to recipes → slide-out drawer
-- Toast keyword sync with notebook items on completion
+**`supplier_orders_history`** — new table:
+- `id, branch_id, supplier_id, order_details jsonb, created_by, created_at`
+- RLS: Admin read/insert within own branch (super admin all)
 
-## Phase 5 — Smart Versioned Tutorial
-- Migrate `has_seen_tutorial` → `tutorial_version` (int)
-- v0 → full master tour, sets to 2 on finish
-- v1 → "Feature Discovery" banner → mini tour (3 steps) → sets to 2
-- v2 → silent
+**`invoices`** — add:
+- `is_archived` (boolean, default false)
 
-## Phase 6 — Email Invitation Redesign
-The invite email is sent via Supabase Auth. I'll customize the auth-email-hook with a dark-mode RTL React Email template, embed logo from public storage bucket, neon-pink CTA.
+**`invoice_items`** — already exists, no change.
 
-## Phase 7 — Global Sort Logic
-- Suppliers/users/warehouse: `ORDER BY name ASC` (Hebrew collation)
-- Notebook: `ORDER BY is_urgent DESC, text ASC`
-- Tasks: keep `sort_order` (no change)
+**Seed data** — Insert the 10 default suppliers (מרינה, געש, בנדיקט, צח, פסטטריה, ישראקו, החברה המרכזית, פרש פסטה, Ristretto, אנשי הזית) into every existing active branch, with `logo_url` pointing to bundled assets and matching `delivery_days`.
 
-## Phase 8 — Seed Data
-Insert all shifts, task_groups, and tasks for "סניף מודיעין" via insert tool.
+**Logos** — Copy 9 uploaded logos into `src/assets/suppliers/` and import; seed `logo_url` with the imported asset paths (resolved at build time).
 
-## Phase 9 — Ecosystem Extras
-- Notepad keyword match toast on task completion
-- Recipe drawer
-- Weather-triggered task group (defer — needs weather API key; will stub or ask)
+## Phase 2 — Supplier Selection Hub (`/orders`)
+
+New route `src/routes/orders.tsx`:
+- Admin/super-admin gate (redirect viewers).
+- Header + "סה״כ הזמנות החודש" mini-stat.
+- Logo grid: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6`, identical card sizes, logo in `h-32 w-full flex items-center justify-center p-4 bg-zinc-800/50` box with `object-contain max-h-full max-w-full`, name + category centered below, hover scale + neon-green glow.
+- Click → opens **OrderModal**.
+
+## Phase 3 — Order Modal + WhatsApp
+
+New `src/components/OrderModal.tsx`:
+- Dynamic row builder: שם מוצר, כמות, "הוסף שורה", delete row.
+- "הערות להזמנה" textarea.
+- **localStorage persistence** keyed by `order:{supplierId}` — restored on open, cleared on success.
+- Compiles the exact Hebrew template (numbered list, omit הערות line when empty).
+- **Primary** (WhatsApp green): writes to `supplier_orders_history`, opens `https://wa.me/{phone}?text=...` in new tab. Button disables + spinner during submit.
+- **Secondary**: copy to clipboard + toast "ההזמנה הועתקה בהצלחה".
+
+## Phase 4 — Goods Receiving (`/invoices`)
+
+New route `src/routes/invoices.tsx`:
+- Admin/super-admin gate.
+- **Financial banner**: "סה״כ הוצאות ספקים (חודש נוכחי)" — sum of `total_amount` for non-archived invoices in current calendar month, large high-contrast typography.
+- Table: תאריך, ספק, מס׳ חשבונית, סכום, סטטוס, פעולות (archive).
+- Neon pink "קליטת חשבונית חדשה" button → opens split-view modal.
+
+New `src/components/InvoiceIntakeModal.tsx`:
+- **Left**: image viewer w/ pan & zoom (lightweight CSS transform on wheel/drag), CSS scanning animation overlay during upload.
+- **Right**: supplier dropdown, invoice_number, סכום כולל (required), תאריך חשבונית (required), repeating items table.
+- Submit button disabled until required fields valid.
+- localStorage persistence; double-submit prevention.
+- **Financial anomaly check**: before submit, query avg total for that supplier — if entered > 5× avg OR > 15,000₪, show confirmation modal "שים לב: הסכום שהוזן גבוה מהרגיל" with אישור / חזור לעריכה.
+- Upload to `invoice-images` bucket → insert `invoices` + `invoice_items`.
+
+## Phase 5 — Admin CRUD for Suppliers
+
+Extend `src/routes/suppliers.tsx` (or add `SuppliersAdminPanel` section) for super-admin:
+- Add/Edit form: name, category, contact_phone, file dropzone for logo (uploads to a new `supplier-logos` bucket), day checkboxes ש-ש mapped to both `delivery_days` and `delivery_weekdays`.
+- "Delete" → soft delete (`is_archived = true`). Archived suppliers hidden from grid + calendar.
+
+## Phase 6 — Calendar Failsafe
+
+Update `src/routes/calendar.tsx`:
+- Existing supplier delivery events already auto-sync via DB trigger. Augment the rendered event block:
+  - Default: 🚚 קבלת סחורה: {Supplier} — {Category}
+  - For events with date ≤ today: query `invoices` for matching `supplier_id` on that operational date. If missing → render pulsing red `bg-red-500/10 border border-red-500/40` block with "⚠️ חסרה חשבונית". If present → success styling.
+
+## Phase 7 — Dashboard quick access
+
+Add two buttons to `src/routes/index.tsx` quick-access section (admin only): **הזמנת סחורה** → `/orders`, **קליטת סחורה** → `/invoices`.
+
+## Technical Notes
+- All inserts respect `branch_id` via existing `current_user_branch_id()` helper.
+- RTL preserved via existing `dir="rtl"` root.
+- All buttons have spinner + disabled state during async ops.
+- Reusable `useLocalStorageForm` hook for form persistence.
 
 ---
 
-## Technical Notes
-- Stack: TanStack Start + Supabase, RTL, dark theme already in place
-- All mutations use TanStack Query with optimistic updates
-- All colors via design tokens in `src/styles.css` — I'll add `--neon-pink`, `--neon-green` if not present
-- pg_cron for daily reset (already used for notebook_daily_reset)
-
-## Open Questions Before Starting
-1. **Logo for email** — please attach the Pizza X logo image (or confirm I should use an existing one in `src/assets/`).
-2. **Weather API** — should I skip the weather-triggered task group for now, or do you have a weather API key (OpenWeatherMap, etc.)?
-3. **Email infrastructure** — the system invitation currently uses Supabase's default auth email. To customize with full branding, I need to set up an email domain (sender like `notify@yourdomain.com`). Do you want to set that up now, or should I just update the in-app invite acceptance screen for now and defer the email itself?
-
-This is ~6-9 hours of focused work. I'll execute phases 1-5 + 7 + 8 in this session if you approve. Phase 6 depends on Q1+Q3 above. Phase 9 weather depends on Q2.
-
-Ready to proceed?
+This is roughly **1 migration + 2 new routes + 4 new components + edits to 3 existing files**. Shall I proceed?
