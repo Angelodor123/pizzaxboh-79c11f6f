@@ -231,12 +231,6 @@ function OperationalDashboard() {
         </Link>
       )}
 
-      {/* New: Dough + Current shift telemetry */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        <DoughStatusCard />
-        <CurrentShiftProgressCard />
-      </div>
-
       {/* Shortcut tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
