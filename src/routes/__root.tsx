@@ -17,6 +17,7 @@ import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
 
 import { GuidedTour, ReplayTourButton } from "@/components/GuidedTour";
+import { CopilotFab } from "@/components/CopilotFab";
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
@@ -254,7 +255,10 @@ function AuthedShell() {
         </div>
 
       </header>
-      <main className="flex-1">
+      <main
+        className="flex-1"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
+      >
         <PageHeader isDishesView={isDishesView} />
         <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
         <Outlet />
@@ -262,6 +266,7 @@ function AuthedShell() {
 
       <GuidedTour />
       <ReplayTourButton />
+      <CopilotFab />
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">
