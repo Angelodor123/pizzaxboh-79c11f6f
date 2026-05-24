@@ -35,6 +35,13 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
+import {
+  adminUpdateUser,
+  adminSuspendUser,
+  adminReactivateUser,
+  adminRevokeInvitation,
+  adminUpdateInvitation,
+} from "@/lib/admin-users.functions";
 import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
 import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
@@ -284,7 +291,12 @@ function AdminPage() {
         </TabButton>
       </div>
 
-      {tab === "users" && <InvitationsPanel />}
+      {tab === "users" && (
+        <div className="space-y-6">
+          <InvitationsPanel />
+          {isSuperAdmin && <SuperAdminUsersPanel />}
+        </div>
+      )}
       {tab === "branches" && isSuperAdmin && <BranchesPanel />}
       {tab === "tasks" && isSuperAdmin && <TasksPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
@@ -1328,6 +1340,506 @@ function ContentTextsPanel() {
           </ul>
         </div>
       ))}
+    </section>
+  );
+}
+
+// ============================================================
+// Super Admin Users Panel — full CRUD/Lifecycle directory
+// ============================================================
+
+type DirectoryStatus = "invited" | "active" | "suspended";
+
+interface DirectoryRow {
+  kind: "user" | "invite";
+  row_id: string;
+  user_id: string | null;
+  email: string;
+  full_name: string | null;
+  role: AppRole;
+  assigned_branch_id: string | null;
+  is_active: boolean;
+  status: DirectoryStatus;
+  created_at: string;
+}
+
+interface EditState {
+  row: DirectoryRow;
+  fullName: string;
+  email: string;
+  role: AppRole;
+  branchId: string;
+}
+
+interface ConfirmState {
+  title: string;
+  body: string;
+  confirmLabel: string;
+  destructive?: boolean;
+  onConfirm: () => Promise<void> | void;
+}
+
+function StatusBadge({ status }: { status: DirectoryStatus }) {
+  const map: Record<DirectoryStatus, { label: string; cls: string }> = {
+    invited: {
+      label: "הזמנה ממתינה",
+      cls: "bg-amber-500/15 text-amber-400 border-amber-500/40",
+    },
+    active: {
+      label: "פעיל",
+      cls: "bg-success/15 text-success border-success/40",
+    },
+    suspended: {
+      label: "מושבת",
+      cls: "bg-destructive/15 text-destructive border-destructive/40",
+    },
+  };
+  const m = map[status];
+  return (
+    <span
+      className={`text-[10px] font-bold px-2 py-0.5 rounded border ${m.cls} whitespace-nowrap`}
+    >
+      {m.label}
+    </span>
+  );
+}
+
+function SuperAdminUsersPanel() {
+  const [rows, setRows] = useState<DirectoryRow[]>([]);
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [superAdminIds, setSuperAdminIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | DirectoryStatus>("all");
+  const [editing, setEditing] = useState<EditState | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
+  const [working, setWorking] = useState(false);
+
+  const updateUserFn = useServerFn(adminUpdateUser);
+  const suspendFn = useServerFn(adminSuspendUser);
+  const reactivateFn = useServerFn(adminReactivateUser);
+  const revokeInviteFn = useServerFn(adminRevokeInvitation);
+  const updateInviteFn = useServerFn(adminUpdateInvitation);
+  const sendInvite = useServerFn(sendInvitationEmail);
+
+  const load = async () => {
+    setLoading(true);
+    const [{ data: dir }, { data: b }, { data: s }] = await Promise.all([
+      supabase.rpc("list_user_directory"),
+      supabase.from("branches").select("id,name").eq("active", true).order("name"),
+      supabase.rpc("list_super_admin_user_ids"),
+    ]);
+    setRows(((dir ?? []) as DirectoryRow[]).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    ));
+    setBranches((b ?? []) as BranchOption[]);
+    setSuperAdminIds(new Set(((s ?? []) as string[])));
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const branchName = (id: string | null) =>
+    id ? branches.find((b) => b.id === id)?.name ?? "—" : "—";
+
+  const visibleRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        r.email.toLowerCase().includes(q) ||
+        (r.full_name ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [rows, query, statusFilter]);
+
+  const openEdit = (row: DirectoryRow) => {
+    setEditing({
+      row,
+      fullName: row.full_name ?? "",
+      email: row.email,
+      role: row.role,
+      branchId: row.assigned_branch_id ?? "",
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    const e = editing;
+    const cleanEmail = e.email.trim().toLowerCase();
+    const cleanName = e.fullName.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast.error("כתובת אימייל לא תקינה");
+      return;
+    }
+    if (cleanName.length === 0) {
+      toast.error("שם מלא הוא שדה חובה");
+      return;
+    }
+    setWorking(true);
+    try {
+      if (e.row.kind === "invite") {
+        await updateInviteFn({
+          data: {
+            invitationId: e.row.row_id,
+            fullName: cleanName,
+            email: cleanEmail,
+            role: e.role,
+            assignedBranchId: e.branchId || null,
+          },
+        });
+      } else {
+        await updateUserFn({
+          data: {
+            roleId: e.row.row_id,
+            userId: e.row.user_id!,
+            fullName: cleanName,
+            email: cleanEmail,
+            role: e.role,
+            assignedBranchId: e.branchId || null,
+          },
+        });
+      }
+      toast.success("הפרטים עודכנו");
+      setEditing(null);
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שגיאה בעדכון");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const runConfirm = (state: ConfirmState) => setConfirm(state);
+
+  const handleSuspend = (row: DirectoryRow) => {
+    runConfirm({
+      title: "השבתת חשבון",
+      body: `האם אתה בטוח שברצונך להשבית את ${row.full_name ?? row.email}? הגישה תיחסם מיידית בכל המכשירים. הנתונים ההיסטוריים יישמרו.`,
+      confirmLabel: "השבת חשבון",
+      destructive: true,
+      onConfirm: async () => {
+        await suspendFn({
+          data: { roleId: row.row_id, userId: row.user_id! },
+        });
+        toast.success("החשבון הושבת והגישה נחסמה");
+        await load();
+      },
+    });
+  };
+
+  const handleReactivate = (row: DirectoryRow) => {
+    runConfirm({
+      title: "הפעלה מחדש",
+      body: `להחזיר את ${row.full_name ?? row.email} למצב פעיל?`,
+      confirmLabel: "הפעל",
+      onConfirm: async () => {
+        await reactivateFn({ data: { roleId: row.row_id } });
+        toast.success("החשבון הופעל מחדש");
+        await load();
+      },
+    });
+  };
+
+  const handleRevokeInvite = (row: DirectoryRow) => {
+    runConfirm({
+      title: "ביטול הזמנה",
+      body: `לבטל את ההזמנה של ${row.email}? קישור ההרשמה יפסיק לפעול.`,
+      confirmLabel: "בטל הזמנה",
+      destructive: true,
+      onConfirm: async () => {
+        await revokeInviteFn({ data: { invitationId: row.row_id } });
+        toast.success("ההזמנה בוטלה בהצלחה");
+        await load();
+      },
+    });
+  };
+
+  const handleResendInvite = async (row: DirectoryRow) => {
+    try {
+      await sendInvite({
+        data: {
+          to: row.email,
+          role: row.role,
+          appUrl: window.location.origin,
+        },
+      });
+      toast.success(`ההזמנה נשלחה מחדש ל-${row.email}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שליחה נכשלה");
+    }
+  };
+
+  const confirmConfirm = async () => {
+    if (!confirm) return;
+    setWorking(true);
+    try {
+      await confirm.onConfirm();
+      setConfirm(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שגיאה");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  return (
+    <section className="border border-border rounded-md p-5 bg-card/40">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neon text-primary-foreground">
+            Super Admin
+          </span>
+          <h2 className="font-display text-xl font-bold">
+            ניהול <span className="text-neon text-glow-neon">משתמשים מלא</span>
+          </h2>
+        </div>
+        <span className="text-[11px] text-muted-foreground">
+          {visibleRows.length} / {rows.length}
+        </span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row-reverse gap-2 mb-4">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="חיפוש שם או מייל…"
+          className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-right"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="bg-input border border-border rounded-md px-3 py-2 text-right"
+        >
+          <option value="all">כל הסטטוסים</option>
+          <option value="active">פעיל</option>
+          <option value="invited">הזמנה ממתינה</option>
+          <option value="suspended">מושבת</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="text-center text-xs text-muted-foreground py-8">טוען…</p>
+      ) : visibleRows.length === 0 ? (
+        <p className="text-center text-xs text-muted-foreground py-8">
+          לא נמצאו משתמשים
+        </p>
+      ) : (
+        <ul className="border border-border rounded-md divide-y divide-border">
+          {visibleRows.map((row) => {
+            const isSuper = row.user_id ? superAdminIds.has(row.user_id) : false;
+            return (
+              <li key={`${row.kind}-${row.row_id}`} className="p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="text-right flex-1 min-w-0">
+                    <div className="flex items-center gap-2 justify-end flex-wrap">
+                      <StatusBadge status={row.status} />
+                      {isSuper && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neon/15 text-neon border border-neon/40">
+                          Super
+                        </span>
+                      )}
+                      <span className="text-sm font-bold truncate">
+                        {row.full_name ?? "—"}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1" dir="ltr">
+                      {row.email}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap justify-end text-[10px]">
+                      <span className="text-neon font-bold">
+                        {row.role === "admin" ? "מנהל" : "צפייה בלבד"}
+                      </span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-foreground">
+                        🏢 {branchName(row.assigned_branch_id)}
+                      </span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-muted-foreground">
+                        נוסף {formatRelative(row.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  <button
+                    onClick={() => openEdit(row)}
+                    disabled={isSuper}
+                    className="text-[11px] px-2.5 py-1 rounded-md border border-border bg-input hover:bg-card text-foreground disabled:opacity-30 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                    title={isSuper ? "לא ניתן לערוך סופר-אדמין" : "ערוך פרטים"}
+                  >
+                    <Pencil className="h-3 w-3" /> ערוך
+                  </button>
+
+                  {row.kind === "invite" && (
+                    <>
+                      <button
+                        onClick={() => handleResendInvite(row)}
+                        className="text-[11px] px-2.5 py-1 rounded-md border border-neon/40 bg-neon/10 hover:bg-neon/20 text-neon inline-flex items-center gap-1"
+                      >
+                        <Bell className="h-3 w-3" /> שלח שוב
+                      </button>
+                      <button
+                        onClick={() => handleRevokeInvite(row)}
+                        className="text-[11px] px-2.5 py-1 rounded-md border border-destructive/40 bg-destructive/10 hover:bg-destructive/20 text-destructive inline-flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" /> בטל הזמנה
+                      </button>
+                    </>
+                  )}
+
+                  {row.kind === "user" && row.status === "active" && !isSuper && (
+                    <button
+                      onClick={() => handleSuspend(row)}
+                      className="text-[11px] px-2.5 py-1 rounded-md border border-destructive/40 bg-destructive/10 hover:bg-destructive/20 text-destructive inline-flex items-center gap-1"
+                    >
+                      <ShieldAlert className="h-3 w-3" /> השבת
+                    </button>
+                  )}
+
+                  {row.kind === "user" && row.status === "suspended" && (
+                    <button
+                      onClick={() => handleReactivate(row)}
+                      className="text-[11px] px-2.5 py-1 rounded-md border border-success/40 bg-success/10 hover:bg-success/20 text-success inline-flex items-center gap-1"
+                    >
+                      <Check className="h-3 w-3" /> הפעל מחדש
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {/* Edit Modal */}
+      {editing && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-lg w-full max-w-md p-5 space-y-4 text-right">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setEditing(null)}
+                className="p-1 rounded-md hover:bg-background"
+                aria-label="סגור"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <h3 className="font-display text-lg font-bold">עריכת משתמש</h3>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">שם מלא</label>
+              <input
+                type="text"
+                value={editing.fullName}
+                onChange={(e) =>
+                  setEditing({ ...editing, fullName: e.target.value })
+                }
+                className="w-full bg-input border border-border rounded-md px-3 py-2 text-right"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">דוא״ל</label>
+              <input
+                type="email"
+                dir="ltr"
+                value={editing.email}
+                onChange={(e) =>
+                  setEditing({ ...editing, email: e.target.value })
+                }
+                className="w-full bg-input border border-border rounded-md px-3 py-2 text-left"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">תפקיד</label>
+              <select
+                value={editing.role}
+                onChange={(e) =>
+                  setEditing({ ...editing, role: e.target.value as AppRole })
+                }
+                className="w-full bg-input border border-border rounded-md px-3 py-2 text-right"
+              >
+                <option value="viewer">צפייה בלבד</option>
+                <option value="admin">מנהל</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">סניף משויך</label>
+              <select
+                value={editing.branchId}
+                onChange={(e) =>
+                  setEditing({ ...editing, branchId: e.target.value })
+                }
+                className="w-full bg-input border border-border rounded-md px-3 py-2 text-right"
+              >
+                <option value="">— ללא סניף —</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setEditing(null)}
+                className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-background"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={working}
+                className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {working ? "שומר…" : "שמור שינויים"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirm && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-lg w-full max-w-sm p-5 space-y-4 text-right">
+            <h3 className="font-display text-lg font-bold">{confirm.title}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {confirm.body}
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setConfirm(null)}
+                disabled={working}
+                className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-background disabled:opacity-50"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={confirmConfirm}
+                disabled={working}
+                className={`px-4 py-2 rounded-md font-bold disabled:opacity-50 ${
+                  confirm.destructive
+                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    : "bg-neon text-primary-foreground glow-neon"
+                }`}
+              >
+                {working ? "מעבד…" : confirm.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
