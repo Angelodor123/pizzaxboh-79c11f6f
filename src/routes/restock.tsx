@@ -124,7 +124,18 @@ function RestockPage() {
           <ScanLine className="h-5 w-5" />
           סריקת פריט
         </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon hover:opacity-90 whitespace-nowrap text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            הוספה
+          </button>
+        )}
       </div>
+
+
 
       <div className="text-[11px] text-muted-foreground/70 mb-2 px-1">
         טיפ: גרור ימינה ➜ סומן כהובא. גרור שמאלה ➜ איפוס.
