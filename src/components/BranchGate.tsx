@@ -51,10 +51,6 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
   const { branches, loading } = useBranches();
   const activeId = useActiveBranch();
 
-  // No session yet — nothing to gate
-  if (!session?.user?.id) return <>{children}</>;
-  if (loading) return null;
-
   // Auto-select if only one branch exists
   useEffect(() => {
     if (!activeId && branches.length === 1) {
@@ -62,7 +58,12 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
     }
   }, [activeId, branches]);
 
+  // No session yet — nothing to gate
+  if (!session?.user?.id) return <>{children}</>;
+  if (loading) return null;
+
   if (activeId) return <>{children}</>;
+
   if (branches.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
