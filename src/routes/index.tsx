@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
-import { useCookbookStore } from "@/lib/store";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,6 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
-import { isMenuItem } from "@/lib/menu-categories";
 
 
 export const Route = createFileRoute("/")({
