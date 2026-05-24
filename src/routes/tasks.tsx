@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, BookOpen, Loader2, CheckCircle2, CloudSnow } from "lucide-react";
+import { ChevronDown, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
