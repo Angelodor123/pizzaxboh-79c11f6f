@@ -213,7 +213,6 @@ function AuthedShell() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
             <CategoryDrawer />
-            {showServiceToggle && <ServiceModeToggle />}
           </div>
 
           <Link
