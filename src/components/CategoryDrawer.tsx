@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Settings, LogOut, ChevronDown, NotebookPen, CalendarDays, Truck, Home, ChefHat, UtensilsCrossed, ListChecks } from "lucide-react";
+import {
+  Menu,
+  Settings,
+  LogOut,
+  ChevronDown,
+  NotebookPen,
+  CalendarDays,
+  Truck,
+  Home,
+  ChefHat,
+  UtensilsCrossed,
+  ListChecks,
+  Package,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -47,15 +60,43 @@ const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
     label: menuCategoryLabels[key],
   }));
 
+// Shared item classes for consistent padding + modern hover.
+const itemClass =
+  "flex items-center justify-end gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
+
+const groupLabelClass =
+  "text-zinc-500 text-xs font-bold mb-2 px-4 pt-3 uppercase tracking-wider text-right";
+
+function GroupDivider() {
+  return <div className="border-t border-zinc-800/50 mx-2 my-2" />;
+}
 
 export function CategoryDrawer() {
-  const { category, menuCategory, drawerOpen, setCategory, openDishes, setDrawerOpen } = useUIStore();
+  const {
+    category,
+    menuCategory,
+    drawerOpen,
+    setCategory,
+    openDishes,
+    setDrawerOpen,
+  } = useUIStore();
   const { email, role, signOut } = useAuth();
   const [recipesOpen, setRecipesOpen] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
-  const isSuperAdmin = role === "admin";
-  const isDishesView = category === "dishes";
 
+  // RBAC mapping. DB currently exposes `admin` and `viewer`; the menu spec
+  // calls these super_admin / employee, with a future `manager` slotting in
+  // between for logistics-only access.
+  // - admin       -> super_admin (all groups)
+  // - manager     -> manager     (groups A + B)  // reserved for future role
+  // - viewer/null -> employee    (group A only)
+  const roleStr = (role as string | null) ?? "";
+  const isSuperAdmin = roleStr === "admin" || roleStr === "super_admin";
+  const isManager = roleStr === "manager";
+  const canSeeLogistics = isSuperAdmin || isManager;
+  const canSeeManagement = isSuperAdmin;
+  const isDishesView = category === "dishes";
+  const close = () => setDrawerOpen(false);
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -69,24 +110,38 @@ export function CategoryDrawer() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="bg-[#1A1A1A] border-l border-border w-[88%] sm:w-80 p-0 flex flex-col"
+        className="bg-[#18181b] border-l border-zinc-800/60 w-[88%] sm:w-80 p-0 flex flex-col"
+        style={{
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
       >
-        <SheetHeader className="px-6 py-5 border-b border-border text-right">
+        <SheetHeader className="px-6 py-5 border-b border-zinc-800/60 text-right">
           <SheetTitle className="font-display text-xl text-foreground">
             תפריט
           </SheetTitle>
         </SheetHeader>
 
-        <nav className="flex-1 overflow-y-auto py-3">
+        <nav className="flex-1 overflow-y-auto py-2">
+          {/* ───── Group A: מטבח ותפעול ───── */}
+          <div className={groupLabelClass}>מטבח ותפעול</div>
           <ul className="flex flex-col">
             <li>
-              <Link
-                to="/"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-              >
+              <Link to="/" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">🏠 דף הבית</span>
                 <Home className="h-5 w-5" />
+              </Link>
+            </li>
+            <li>
+              <Link to="/tasks" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">✅ משימות יומיות</span>
+                <ListChecks className="h-5 w-5" />
+              </Link>
+            </li>
+            <li>
+              <Link to="/notebook" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
+                <NotebookPen className="h-5 w-5" />
               </Link>
             </li>
 
@@ -95,26 +150,25 @@ export function CategoryDrawer() {
                 type="button"
                 onClick={() => setDishesOpen((o) => !o)}
                 aria-expanded={dishesOpen}
-                className={`w-full flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold transition ${
-                  isDishesView
-                    ? "bg-neon/10 text-neon"
-                    : "text-foreground hover:bg-card hover:text-neon"
+                className={`w-full ${itemClass} ${
+                  isDishesView ? "bg-neon/10 text-neon" : ""
                 }`}
               >
                 <ChevronDown
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${dishesOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${
+                    dishesOpen ? "rotate-180" : ""
+                  }`}
                 />
                 <span className="flex-1 text-right">🍽️ תפריט המנות</span>
                 <UtensilsCrossed className="h-5 w-5" />
               </button>
-
               {dishesOpen && (
-                <ul className="bg-background/40 border-y border-border">
+                <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
                   <li>
                     <Link
                       to="/recipes"
                       onClick={() => openDishes("all")}
-                      className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
+                      className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
                         isDishesView && menuCategory === "all"
                           ? "bg-neon/10 text-neon border-neon"
                           : "text-foreground border-transparent hover:text-neon"
@@ -130,7 +184,7 @@ export function CategoryDrawer() {
                         <Link
                           to="/recipes"
                           onClick={() => openDishes(it.key)}
-                          className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
+                          className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
                             active
                               ? "bg-neon/10 text-neon border-neon"
                               : "text-foreground border-transparent hover:text-neon"
@@ -152,25 +206,26 @@ export function CategoryDrawer() {
                 type="button"
                 onClick={() => setRecipesOpen((o) => !o)}
                 aria-expanded={recipesOpen}
-                className="w-full flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
+                className={`w-full ${itemClass}`}
               >
                 <ChevronDown
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${recipesOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${
+                    recipesOpen ? "rotate-180" : ""
+                  }`}
                 />
-                <span className="flex-1 text-right">📋 כל המתכונים</span>
+                <span className="flex-1 text-right">📖 ספר מתכונים</span>
                 <ChefHat className="h-5 w-5" />
               </button>
-
               {recipesOpen && (
-                <ul className="bg-background/40 border-y border-border">
+                <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
                   <li>
                     <Link
                       to="/recipes"
                       onClick={() => {
                         setCategory("all");
-                        setDrawerOpen(false);
+                        close();
                       }}
-                      className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
+                      className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
                         category === "all"
                           ? "bg-neon/10 text-neon border-neon"
                           : "text-foreground border-transparent hover:text-neon"
@@ -187,9 +242,9 @@ export function CategoryDrawer() {
                           to="/recipes"
                           onClick={() => {
                             setCategory(it.key);
-                            setDrawerOpen(false);
+                            close();
                           }}
-                          className={`flex items-center justify-end gap-3 px-8 py-4 text-base font-bold border-r-4 transition ${
+                          className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
                             active
                               ? "bg-neon/10 text-neon border-neon"
                               : "text-foreground border-transparent hover:text-neon"
@@ -205,61 +260,61 @@ export function CategoryDrawer() {
                 </ul>
               )}
             </li>
-
-
-            <li>
-              <div className="mx-6 my-2 h-px bg-border/60" />
-              <Link
-                to="/tasks"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-              >
-                <span className="flex-1 text-right">✅ משימות יומיות</span>
-                <ListChecks className="h-5 w-5" />
-              </Link>
-              <Link
-                to="/notebook"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-              >
-                <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
-                <NotebookPen className="h-5 w-5" />
-              </Link>
-              <Link
-                to="/calendar"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-              >
-                <span className="flex-1 text-right">📅 לוח אירועים וסחורות</span>
-                <CalendarDays className="h-5 w-5" />
-              </Link>
-              <Link
-                to="/suppliers"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-              >
-                <span className="flex-1 text-right">🚚 ניהול ספקים</span>
-                <Truck className="h-5 w-5" />
-              </Link>
-            </li>
-
-            {isSuperAdmin && (
-              <li>
-                <div className="mx-6 my-2 h-px bg-border/60" />
-                <Link
-                  to="/admin"
-                  onClick={() => setDrawerOpen(false)}
-                  className="flex items-center justify-end gap-3 px-6 py-5 text-lg font-bold text-foreground hover:bg-card hover:text-neon transition"
-                >
-                  <span className="flex-1 text-right">מערכת ניהול</span>
-                  <Settings className="h-5 w-5" />
-                </Link>
-              </li>
-            )}
           </ul>
+
+          {/* ───── Group B: לוגיסטיקה ───── */}
+          {canSeeLogistics && (
+            <>
+              <GroupDivider />
+              <div className={groupLabelClass}>לוגיסטיקה</div>
+              <ul className="flex flex-col">
+                <li>
+                  <Link to="/orders" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">
+                      📦 הזמנות וקבלת סחורה
+                    </span>
+                    <Package className="h-5 w-5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/calendar" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">
+                      📅 לוח אירועים וסחורות
+                    </span>
+                    <CalendarDays className="h-5 w-5" />
+                  </Link>
+                </li>
+              </ul>
+            </>
+          )}
+
+          {/* ───── Group C: הנהלה ───── */}
+          {canSeeManagement && (
+            <>
+              <GroupDivider />
+              <div className={groupLabelClass}>הנהלה</div>
+              <ul className="flex flex-col">
+                <li>
+                  <Link to="/suppliers" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">🚚 ניהול ספקים</span>
+                    <Truck className="h-5 w-5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/admin" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">
+                      ⚙️ הגדרות מערכת וצוות
+                    </span>
+                    <Settings className="h-5 w-5" />
+                  </Link>
+                </li>
+              </ul>
+            </>
+          )}
         </nav>
 
-        <div className="border-t border-border px-6 py-5 flex items-center justify-between gap-3">
+        {/* Sticky footer: email + logout */}
+        <div className="sticky bottom-0 border-t border-zinc-800/60 bg-[#18181b] px-6 py-4 flex items-center justify-between gap-3">
           {email && (
             <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
               {email}
@@ -267,7 +322,7 @@ export function CategoryDrawer() {
           )}
           <button
             onClick={async () => {
-              setDrawerOpen(false);
+              close();
               await signOut();
             }}
             className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
