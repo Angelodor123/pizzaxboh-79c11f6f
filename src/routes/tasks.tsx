@@ -260,30 +260,25 @@ function TasksPage() {
   };
 
   const toggleTask = (taskId: string) => {
-    let nextState: LogState | null = null;
+    const prev = logs.get(taskId);
+    const completed = !(prev?.completed ?? false);
+    const nextState: LogState = {
+      completed,
+      completed_at: completed ? new Date().toISOString() : null,
+      completed_by: completed ? fullName : prev?.completed_by ?? null,
+      completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
+      comments: prev?.comments ?? "",
+    };
     setLogs((m) => {
       const next = new Map(m);
-      const prev = next.get(taskId);
-      const completed = !(prev?.completed ?? false);
-      nextState = {
-        completed,
-        completed_at: completed ? new Date().toISOString() : null,
-        completed_by: completed ? fullName : prev?.completed_by ?? null,
-        completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
-        comments: prev?.comments ?? "",
-      };
       next.set(taskId, nextState);
       return next;
     });
     const t = allTasks.find((x) => x.id === taskId);
     const taskName = t?.name ?? "";
-    // Optimistic: fire-and-forget persistence
-    const state: LogState | null = nextState;
-    if (state) {
-      void persistTask(taskId, state).then(() => syncParLevelsForTask(taskId));
-      if (state.completed && taskName) {
-        void scanNotebookForMatch(taskName);
-      }
+    void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
+    if (nextState.completed && taskName) {
+      void scanNotebookForMatch(taskName);
     }
   };
 
