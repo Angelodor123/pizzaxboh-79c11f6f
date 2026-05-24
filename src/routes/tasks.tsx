@@ -573,6 +573,17 @@ function TasksPage() {
                                         <BookOpen className="h-4 w-4" />
                                       </button>
                                     )}
+                                    {isSuperAdmin && !t.id.startsWith("__virtual_") && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingTask(t)}
+                                        className="p-1.5 rounded-md text-muted-foreground hover:text-neon hover:bg-accent transition shrink-0"
+                                        aria-label={`עריכת משימה: ${t.name}`}
+                                        title="עריכה מהירה"
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </button>
+                                    )}
                                   </div>
 
                                   <div className="mt-3">
