@@ -161,14 +161,19 @@ function AuthedShell() {
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
   const isServiceMode = useUIStore((s) => s.isServiceMode);
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
+  const category = useUIStore((s) => s.category);
   const router = useRouter();
   const pathname = router.state.location.pathname;
   const isRecipesPage = pathname === "/recipes";
-  const showServiceToggle = isRecipesPage;
+  const isDishesView =
+    isRecipesPage &&
+    (category === "dishes" ||
+      (category !== "all" && MENU_ITEM_CATEGORIES.includes(category)));
+  // Service Mode only applies to the back-of-house recipes view, not to the
+  // customer-facing dishes view on the same route.
+  const showServiceToggle = isRecipesPage && !isDishesView;
   const showQuickBack = !isRecipesPage;
-  // Service Mode is a recipes-page concept — its visual indication should
-  // not bleed into other pages even if the flag is still on in state.
-  const serviceModeVisible = isServiceMode && isRecipesPage;
+  const serviceModeVisible = isServiceMode && showServiceToggle;
 
 
   // Register service worker once
