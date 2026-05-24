@@ -50,7 +50,7 @@ function RestockPage() {
     void (async () => {
       const { data: it } = await supabase
         .from("restock_items").select("*").eq("active", true)
-        .order("sort_order").order("name");
+        .order("name", { ascending: true });
       setItems((it ?? []) as Item[]);
       const { data: lg } = await supabase
         .from("restock_log").select("restock_item_id,current_stock,completed").eq("log_date", today);
