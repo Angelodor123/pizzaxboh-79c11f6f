@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, X } from "lucide-react";
+import { motion, useMotionValue } from "framer-motion";
+import { Loader2, Minus, Send, Sparkles } from "lucide-react";
 import { askCopilot } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
@@ -11,8 +12,29 @@ type Msg = { role: "user" | "model"; content: string };
 
 const GREETING: Msg = {
   role: "model",
-  content: "כאן העוזר התפעולי של Pizza X. כיצד אוכל לסייע?",
+  content:
+    "שלום, אני ג'וני, מנהל התפעול הדיגיטלי. אני כאן כדי לעזור עם נהלי העבודה, המערכת וקליטת הסחורות. מה אפשר לעשות בשבילכם היום?",
 };
+
+const TUTORIAL_PATTERNS = [
+  /תפעיל\s*את\s*המדריך/,
+  /הפעל\s*את\s*המדריך/,
+  /איך\s*משתמשים\s*במערכת/,
+  /^\s*עזרה\s*$/,
+  /הראה\s*לי\s*את\s*המדריך/,
+  /סיור\s*מודרך/,
+];
+
+function isTutorialIntent(text: string) {
+  return TUTORIAL_PATTERNS.some((re) => re.test(text));
+}
+
+function triggerTutorial() {
+  window.dispatchEvent(new Event("pizzax:start-tour"));
+}
+
+const FAB_SIZE = 56;
+const MARGIN = 16;
 
 export function CopilotFab() {
   const [open, setOpen] = useState(false);
@@ -24,6 +46,45 @@ export function CopilotFab() {
   const { role, isSuperAdmin } = useAuth();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const draggedRef = useRef(false);
+
+  // Position (bottom-right by default), persisted to keep user's last spot
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
+
+  useEffect(() => {
+    const compute = () => {
+      const safeBottom = parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue("--sab") || "0",
+        10,
+      ) || 0;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      // We place FAB anchored bottom-right via style; drag offsets from there.
+      setBounds({
+        left: -(w - FAB_SIZE - MARGIN * 2),
+        top: -(h - FAB_SIZE - MARGIN * 2 - safeBottom),
+        right: 0,
+        bottom: 0,
+      });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("pizzax-copilot-pos") || "null");
+      if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
+        x.set(saved.x);
+        y.set(saved.y);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [x, y]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -41,12 +102,34 @@ export function CopilotFab() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  async function handleSend() {
-    const text = input.trim();
+  const handleFabClick = useCallback(() => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    setOpen(true);
+  }, []);
+
+  async function handleSend(textOverride?: string) {
+    const text = (textOverride ?? input).trim();
     if (!text || loading) return;
     const next: Msg[] = [...messages, { role: "user", content: text }];
     setMessages(next);
     setInput("");
+
+    if (isTutorialIntent(text)) {
+      setMessages((m) => [
+        ...m,
+        {
+          role: "model",
+          content: "בוודאי. פותח עבורך את המדריך המודרך כעת.",
+        },
+      ]);
+      setOpen(false);
+      setTimeout(triggerTutorial, 250);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await ask({
@@ -71,134 +154,173 @@ export function CopilotFab() {
 
   return (
     <>
-      {/* FAB */}
-      <button
+      {/* Draggable FAB anchored bottom-right */}
+      <motion.button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="פתח את העוזר של Pizza X"
+        drag
+        dragMomentum={false}
+        dragElastic={0}
+        dragConstraints={bounds}
+        style={{
+          x,
+          y,
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+          right: "1rem",
+        }}
+        onDragStart={() => {
+          draggedRef.current = true;
+        }}
+        onDragEnd={() => {
+          try {
+            localStorage.setItem(
+              "pizzax-copilot-pos",
+              JSON.stringify({ x: x.get(), y: y.get() }),
+            );
+          } catch {
+            /* noop */
+          }
+          // Reset slightly later so click handler can read it
+          setTimeout(() => {
+            draggedRef.current = false;
+          }, 50);
+        }}
+        onClick={handleFabClick}
+        aria-label="פתח את ג'וני, מנהל התפעול הדיגיטלי"
         className={cn(
-          "fixed bottom-4 left-4 z-[60] h-14 w-14 rounded-full",
+          "fixed z-50 h-14 w-14 rounded-full touch-none cursor-grab active:cursor-grabbing",
           "bg-gradient-to-br from-[#1a0e0a] to-black border-2 border-[#ff5a3c]/60",
           "shadow-[0_8px_24px_-4px_rgba(255,90,60,0.55)]",
-          "flex items-center justify-center transition hover:scale-105 active:scale-95",
-          "pb-[env(safe-area-inset-bottom)]"
+          "flex items-center justify-center hover:scale-105 active:scale-95 transition-transform",
+          open && "opacity-0 pointer-events-none",
         )}
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
       >
         <CopilotMascot className="h-10 w-10" />
-      </button>
+      </motion.button>
 
-      {/* Backdrop */}
+      {/* Chat window — sized, not fullscreen */}
       {open && (
-        <button
-          aria-label="סגור"
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm"
-        />
-      )}
-
-      {/* Drawer */}
-      <div
-        dir="rtl"
-        role="dialog"
-        aria-modal="true"
-        aria-label="העוזר התפעולי של Pizza X"
-        className={cn(
-          "fixed z-[80] bg-card border border-[#ff5a3c]/40 text-foreground",
-          "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
-          "flex flex-col transition-all duration-200",
-          "right-0 left-0 bottom-0 rounded-t-2xl h-[80vh]",
-          "sm:right-4 sm:left-auto sm:bottom-20 sm:w-[400px] sm:h-[600px] sm:rounded-2xl",
-          open ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
-        )}
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-gradient-to-l from-[#1a0e0a] to-card rounded-t-2xl">
-          <div className="flex items-center gap-2 min-w-0">
-            <CopilotMascot className="h-9 w-9 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm font-bold tracking-wide truncate">Pizza X Copilot</p>
-              <p className="text-[11px] text-muted-foreground truncate">העוזר התפעולי</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="סגור"
-            className="h-8 w-8 rounded-md border border-border hover:border-[#ff5a3c]/60 inline-flex items-center justify-center"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex gap-2 items-start",
-                m.role === "user" ? "flex-row-reverse" : "flex-row"
-              )}
-            >
-              {m.role === "model" && (
-                <CopilotMascot className="h-7 w-7 shrink-0 mt-0.5" />
-              )}
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-tr-sm"
-                    : "bg-secondary text-foreground rounded-tl-sm border border-border"
-                )}
-              >
-                {m.content}
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex gap-2 items-start">
-              <CopilotMascot className="h-7 w-7 shrink-0 mt-0.5" />
-              <div className="bg-secondary border border-border rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-muted-foreground inline-flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                חושב...
-              </div>
-            </div>
+        <div
+          dir="rtl"
+          role="dialog"
+          aria-modal="false"
+          aria-label="ג'וני - מנהל התפעול הדיגיטלי"
+          className={cn(
+            "fixed z-50 bg-card border border-[#ff5a3c]/40 text-foreground rounded-2xl",
+            "shadow-[0_20px_60px_-10px_rgba(255,90,60,0.45)]",
+            "flex flex-col overflow-hidden",
+            "w-96 h-[500px] max-w-[90vw] max-h-[80vh]",
           )}
-        </div>
-
-        {/* Composer */}
-        <div className="border-t border-border p-3 bg-card/80">
-          <div className="flex items-end gap-2">
-            <textarea
-              ref={inputRef}
-              dir="rtl"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void handleSend();
-                }
-              }}
-              rows={1}
-              placeholder="שאל את העוזר..."
-              className="flex-1 resize-none rounded-xl bg-background border border-border focus:border-[#ff5a3c] focus:ring-1 focus:ring-[#ff5a3c]/40 outline-none px-3 py-2 text-sm max-h-32"
-              disabled={loading}
-            />
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
+            right: "1rem",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-gradient-to-l from-[#1a0e0a] to-card">
+            <div className="flex items-center gap-2 min-w-0">
+              <CopilotMascot className="h-9 w-9 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold tracking-wide truncate">ג'וני</p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  מנהל התפעול הדיגיטלי
+                </p>
+              </div>
+            </div>
             <button
               type="button"
-              onClick={() => void handleSend()}
-              disabled={loading || !input.trim()}
-              aria-label="שלח"
-              className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-[#ff5a3c] to-[#b91c1c] text-white inline-flex items-center justify-center disabled:opacity-40 hover:brightness-110 transition"
+              onClick={() => setOpen(false)}
+              aria-label="מזער"
+              title="מזער"
+              className="h-8 w-8 rounded-md border border-border hover:border-[#ff5a3c]/60 inline-flex items-center justify-center"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rotate-180" />}
+              <Minus className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Messages */}
+          <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "flex gap-2 items-start",
+                  m.role === "user" ? "flex-row-reverse" : "flex-row",
+                )}
+              >
+                {m.role === "model" && (
+                  <CopilotMascot className="h-7 w-7 shrink-0 mt-0.5" />
+                )}
+                <div
+                  className={cn(
+                    "max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-tr-sm"
+                      : "bg-secondary text-foreground rounded-tl-sm border border-border",
+                  )}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex gap-2 items-start">
+                <CopilotMascot className="h-7 w-7 shrink-0 mt-0.5" />
+                <div className="bg-secondary border border-border rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-muted-foreground inline-flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  חושב...
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick actions */}
+          <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => void handleSend("תפעיל את המדריך")}
+              className="inline-flex items-center gap-1 rounded-full border border-[#ff5a3c]/40 bg-background/60 px-2.5 py-1 text-[11px] text-foreground hover:border-[#ff5a3c] transition"
+            >
+              <Sparkles className="h-3 w-3" />
+              הפעל את המדריך
+            </button>
+          </div>
+
+          {/* Composer */}
+          <div className="border-t border-border p-3 bg-card/80">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                dir="rtl"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSend();
+                  }
+                }}
+                rows={1}
+                placeholder="שאל את ג'וני..."
+                className="flex-1 resize-none rounded-xl bg-background border border-border focus:border-[#ff5a3c] focus:ring-1 focus:ring-[#ff5a3c]/40 outline-none px-3 py-2 text-sm max-h-32"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => void handleSend()}
+                disabled={loading || !input.trim()}
+                aria-label="שלח"
+                className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-[#ff5a3c] to-[#b91c1c] text-white inline-flex items-center justify-center disabled:opacity-40 hover:brightness-110 transition"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 rotate-180" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
