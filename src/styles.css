@@ -68,7 +68,9 @@
   --amber-brand: oklch(0.62 0.14 55); /* #D2691E */
   --neon: oklch(0.65 0.31 5);
   --neon-soft: oklch(0.72 0.25 8); /* #FF69B4 */
-}
+  --info: oklch(0.72 0.14 235); /* sky/winter accent */
+  --info-foreground: oklch(0.98 0 0);
+  --success: oklch(0.72 0.17 155); /* emerald */
 
 .dark {
   --background: oklch(0 0 0);
