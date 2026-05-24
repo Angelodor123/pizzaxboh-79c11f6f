@@ -275,6 +275,11 @@ function TasksPage() {
       next.set(taskId, nextState);
       return next;
     });
+    // Trigger neon pulse only on completion (not uncheck)
+    if (completed) {
+      setPulsingTaskId(taskId);
+      setTimeout(() => setPulsingTaskId((cur) => (cur === taskId ? null : cur)), 650);
+    }
     const t = allTasks.find((x) => x.id === taskId);
     const taskName = t?.name ?? "";
     void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
