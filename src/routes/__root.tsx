@@ -205,6 +205,7 @@ function AuthedShell() {
         <div className="relative max-w-7xl mx-auto px-4 h-24 flex items-center justify-center">
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <CategoryDrawer />
+            <BranchSwitcher />
             {showServiceToggle && <ServiceModeToggle />}
           </div>
           {pathname !== "/" && (
