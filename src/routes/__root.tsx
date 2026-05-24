@@ -205,35 +205,11 @@ function AuthedShell() {
 
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <BranchSwitcher />
-            {pathname !== "/" && (
-              <>
-                <button
-                  onClick={() => {
-                    if (typeof window !== "undefined" && window.history.length > 1) {
-                      window.history.back();
-                    } else {
-                      router.navigate({ to: "/" });
-                    }
-                  }}
-                  className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
-                  aria-label="חזרה"
-                  title="חזרה"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <Link
-                  to="/"
-                  className="h-9 w-9 hidden sm:inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
-                  aria-label="דף הבית"
-                  title="דף הבית"
-                >
-                  <Home className="h-4 w-4" />
-                </Link>
-              </>
-            )}
+          <div className="flex items-center gap-2 shrink-0">
+            <CategoryDrawer />
+            {showServiceToggle && <ServiceModeToggle />}
           </div>
+
           <Link
             to="/"
             className="flex flex-col items-center gap-1 min-w-0"
