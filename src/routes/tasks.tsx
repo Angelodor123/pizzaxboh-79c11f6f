@@ -449,7 +449,7 @@ function TasksPage() {
               </button>
 
               {isShiftOpen && (
-                <div className="border-t border-border divide-y divide-border">
+                <div className="p-3 sm:p-4 space-y-4 bg-background/20">
                   {shiftGroups.map((g) => {
                     const isGroupOpen = openGroup === g.id;
                     const gTasks = tasksForGroup(g.id);
