@@ -630,6 +630,16 @@ function TasksPage() {
       </div>
 
 
+      {/* Super-admin quick edit */}
+      <QuickEditTaskDialog
+        task={editingTask}
+        branchId={branchId}
+        onClose={() => setEditingTask(null)}
+        onSaved={(updated) =>
+          setTasks((prev) => prev.map((x) => (x.id === updated.id ? updated : x)))
+        }
+      />
+
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>
         <SheetContent
