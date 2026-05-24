@@ -99,28 +99,39 @@ function SuppliersPage() {
       </div>
 
       {canEdit && list.length > 0 && (
-        <div className="flex items-center justify-center mb-3">
+        <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
           <button
             type="button"
-            onClick={() => bulk.toggleAll(list.map((s) => s.id))}
+            onClick={() => bulk.toggleAll(visible.map((s) => s.id))}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
           >
             <CheckSquare className="h-3.5 w-3.5" />
             {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-bold transition ${
+              showArchived ? "border-amber-brand text-amber-brand" : "border-border hover:border-neon hover:text-neon"
+            }`}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            {showArchived ? "חזרה לפעילים" : `ארכיון (${list.filter((s) => s.is_archived).length})`}
           </button>
         </div>
       )}
 
       {loading ? (
         <div className="text-center text-muted-foreground py-12">טוען…</div>
-      ) : list.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="text-center text-muted-foreground py-12 rounded-2xl border border-border bg-card/60">
-          אין ספקים עדיין
+          {showArchived ? "אין ספקים בארכיון" : "אין ספקים עדיין"}
         </div>
       ) : (
         <ul className="space-y-3">
-          {list.map((s) => {
+          {visible.map((s) => {
             const selected = bulk.isSelected(s.id);
+            const logo = resolveSupplierLogo(s.name, s.logo_url);
             return (
             <li
               key={s.id}
@@ -132,9 +143,9 @@ function SuppliersPage() {
                 }
               }}
               className={`rounded-2xl border p-4 bg-card/80 backdrop-blur transition ${
-                s.active ? "border-success/60" : "border-border opacity-70"
+                s.is_archived ? "border-border opacity-60" : s.active ? "border-success/60" : "border-border opacity-70"
               } ${selected ? "ring-2 ring-neon" : ""}`}
-              style={s.active ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
+              style={s.active && !s.is_archived ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
             >
               <div className="flex items-start justify-between gap-2">
                 {canEdit && bulk.selectionMode && (
@@ -149,14 +160,26 @@ function SuppliersPage() {
                     {selected ? "✓" : ""}
                   </button>
                 )}
+                <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden border border-border bg-background/60 grid place-content-center">
+                  {logo ? (
+                    <img src={logo} alt={s.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 font-bold">
+                  <div className="flex items-center gap-2 font-bold flex-wrap">
                     <Truck className="h-4 w-4 text-success" />
                     <span className="truncate">{s.name}</span>
                     <span className="text-[10px] font-bold text-neon border border-neon/40 rounded px-1.5 py-0.5">
                       {s.category}
                     </span>
-                    {!s.active && (
+                    {s.is_archived && (
+                      <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
+                        בארכיון
+                      </span>
+                    )}
+                    {!s.active && !s.is_archived && (
                       <span className="text-[10px] font-bold text-muted-foreground border border-border rounded px-1.5 py-0.5">
                         לא פעיל
                       </span>
@@ -198,11 +221,12 @@ function SuppliersPage() {
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(s.id)}
-                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
-                      aria-label="מחק"
+                      onClick={() => handleArchive(s)}
+                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-amber-brand hover:border-amber-brand"
+                      aria-label={s.is_archived ? "שחזר" : "העבר לארכיון"}
+                      title={s.is_archived ? "שחזר מהארכיון" : "העבר לארכיון"}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {s.is_archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                     </button>
                   </div>
                 )}
@@ -212,6 +236,7 @@ function SuppliersPage() {
           })}
         </ul>
       )}
+
 
       {canEdit && (
         <BulkActionBar
