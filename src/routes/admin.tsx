@@ -55,6 +55,7 @@ interface InvitationRow {
   role: AppRole;
   created_at: string;
   assigned_branch_id: string | null;
+  full_name: string | null;
 }
 
 interface RoleRow {
