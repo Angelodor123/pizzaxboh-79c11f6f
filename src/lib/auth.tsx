@@ -11,9 +11,11 @@ interface AuthState {
   role: AppRole | null;
   isSuperAdmin: boolean;
   assignedBranchId: string | null;
+  tutorialVersion: number;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
+  setTutorialVersion: (v: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
