@@ -147,6 +147,8 @@ function PrepPage() {
               draft={draft}
               toPrep={toPrep}
               done={done}
+              showEdit={isSuperAdmin}
+              onEdit={() => setEditing(it)}
               onSwipeRight={() => { void persist(it.id, target, true); }}
               onSwipeLeft={() => { setDrafts((p) => ({ ...p, [it.id]: "" })); void persist(it.id, 0, false); }}
               onFocus={() => setDrafts((p) => ({ ...p, [it.id]: String(stock || "") }))}
@@ -170,6 +172,15 @@ function PrepPage() {
         kind="prep"
         branchId={getActiveBranchIdSync()}
         onCreated={(row) => setItems((prev) => [...prev, row as unknown as Item])}
+      />
+
+      <QuickEditStockItemDialog
+        item={editing as unknown as StockItem | null}
+        kind="prep"
+        onClose={() => setEditing(null)}
+        onSaved={(upd) =>
+          setItems((prev) => prev.map((x) => (x.id === upd.id ? ({ ...x, ...upd } as Item) : x)))
+        }
       />
     </div>
   );
