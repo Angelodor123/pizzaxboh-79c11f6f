@@ -53,7 +53,7 @@ function Row({
         : "text-neon";
   return (
     <li className="flex justify-between items-center gap-3 text-sm border-b border-border/50 pb-2">
-      <span style={{ color: "#F4F4F4" }} className="flex-1 min-w-0 break-words">
+      <span className="flex-1 min-w-0 break-words">
         {label}
       </span>
       <span className={`font-bold tabular-nums shrink-0 ${cls}`}>{value}</span>
@@ -155,7 +155,7 @@ function GuidePage() {
                 key={r.id}
                 className="border-b border-border/50 pb-2"
               >
-                <div className="text-sm font-bold" style={{ color: "#F4F4F4" }}>
+                <div className="text-sm font-bold" >
                   {r.nameHebrew}
                 </div>
                 <div className="text-xs text-amber-brand mt-1">
