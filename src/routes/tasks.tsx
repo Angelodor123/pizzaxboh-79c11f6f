@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, BookOpen, Loader2, CheckCircle2, CloudSnow } from "lucide-react";
+import { ChevronDown, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/tasks";
 import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
@@ -132,7 +133,7 @@ function useSevereWeather() {
 }
 
 function TasksPage() {
-  const { fullName, session } = useAuth();
+  const { fullName, session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
   const branchId = useActiveBranch();
   const recipes = useCookbookStore((s) => s.recipes);
@@ -148,6 +149,7 @@ function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Debounce timers per task id for comment autosave
   const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -571,6 +573,17 @@ function TasksPage() {
                                         <BookOpen className="h-4 w-4" />
                                       </button>
                                     )}
+                                    {isSuperAdmin && !t.id.startsWith("__virtual_") && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingTask(t)}
+                                        className="p-1.5 rounded-md text-muted-foreground hover:text-neon hover:bg-accent transition shrink-0"
+                                        aria-label={`עריכת משימה: ${t.name}`}
+                                        title="עריכה מהירה"
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </button>
+                                    )}
                                   </div>
 
                                   <div className="mt-3">
@@ -616,6 +629,16 @@ function TasksPage() {
         })}
       </div>
 
+
+      {/* Super-admin quick edit */}
+      <QuickEditTaskDialog
+        task={editingTask}
+        branchId={branchId}
+        onClose={() => setEditingTask(null)}
+        onSaved={(updated) =>
+          setTasks((prev) => prev.map((x) => (x.id === updated.id ? updated : x)))
+        }
+      />
 
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>
