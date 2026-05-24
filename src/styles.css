@@ -37,6 +37,7 @@
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Heebo", system-ui, sans-serif;
 }
