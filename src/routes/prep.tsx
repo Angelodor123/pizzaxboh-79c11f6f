@@ -96,15 +96,27 @@ function PrepPage() {
         </div>
       </div>
 
-      <div className="mb-3 relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="חיפוש פריט..."
-          className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm text-right"
-        />
+      <div className="mb-3 flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="חיפוש פריט..."
+            className="w-full bg-input border border-border rounded-md pr-9 pl-3 py-2 text-sm text-right"
+          />
+        </div>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon hover:opacity-90 whitespace-nowrap text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            הוספה
+          </button>
+        )}
       </div>
+
 
       <div className="text-[11px] text-muted-foreground/70 mb-2 px-1">
         טיפ: גרור פריט ימינה ➜ השלמת 100%. גרור שמאלה ➜ איפוס.
