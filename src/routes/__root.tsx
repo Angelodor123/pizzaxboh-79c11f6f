@@ -29,6 +29,7 @@ import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmHost } from "@/lib/confirm";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
 import { useNotebookRealtime } from "@/lib/notebook-store";
