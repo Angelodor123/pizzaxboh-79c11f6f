@@ -110,7 +110,7 @@ export async function sendPushToSubscriptions(
           Urgency: "high",
           Authorization: `vapid t=${jwt}, k=${VAPID_PUBLIC_KEY}`,
         },
-        body: encrypted,
+        body: encrypted as BodyInit,
       });
 
       if (res.status === 201 || res.status === 202 || res.status === 200) {
