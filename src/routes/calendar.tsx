@@ -1095,6 +1095,29 @@ function EventForm({
           </button>
         </div>
 
+        <Field label="סוג אירוע (תיוג צבעוני)">
+          <div className="relative">
+            <select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value as EventTypeId | "")}
+              className="input pr-9"
+            >
+              <option value="">— ללא תיוג —</option>
+              {EVENT_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  ● {t.label}
+                </option>
+              ))}
+            </select>
+            {eventType && (
+              <span
+                className="absolute top-1/2 -translate-y-1/2 right-3 h-2.5 w-2.5 rounded-full pointer-events-none"
+                style={{ background: eventTypeColor(eventType) || "transparent" }}
+              />
+            )}
+          </div>
+        </Field>
+
         <label className="flex items-center justify-end gap-2 text-sm cursor-pointer">
           <span>חוזר שבועי</span>
           <input
