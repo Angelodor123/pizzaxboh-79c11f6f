@@ -26,7 +26,7 @@ interface EvVehicle {
   swap_at: string | null;
   sort_order: number;
   issue_note: string | null;
-  updated_at: string | null;
+  updated_at: string;
 }
 
 const STATUS_OPTIONS: EvStatus[] = ["ממתין", "בטעינה", "בשימוש"];
