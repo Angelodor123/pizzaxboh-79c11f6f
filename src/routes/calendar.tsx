@@ -1194,9 +1194,34 @@ function EventForm({
           />
         </Field>
 
+        {conflicts.length > 0 && (
+          <div className="rounded-lg border border-neon/70 bg-neon/10 p-3 text-right space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-neon text-sm">
+              <AlertTriangle className="h-4 w-4" />
+              חפיפה עם {conflicts.length === 1 ? "אירוע קיים" : `${conflicts.length} אירועים קיימים`}
+            </div>
+            <ul className="text-xs text-foreground/90 space-y-0.5 max-h-24 overflow-y-auto pr-1">
+              {conflicts.slice(0, 5).map((c) => (
+                <li key={c.id} className="tabular-nums">
+                  • {c.title} — {c.start_time?.slice(0, 5)}{c.end_time ? `–${c.end_time.slice(0, 5)}` : ""}
+                </li>
+              ))}
+            </ul>
+            <label className="flex items-center justify-end gap-2 text-xs cursor-pointer text-foreground">
+              <span>הבנתי, שמור בכל זאת</span>
+              <input
+                type="checkbox"
+                checked={conflictAck}
+                onChange={(e) => setConflictAck(e.target.checked)}
+                className="accent-[var(--neon)]"
+              />
+            </label>
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || (conflicts.length > 0 && !conflictAck)}
           className="w-full h-11 rounded-md bg-neon text-primary-foreground font-bold glow-neon disabled:opacity-50"
         >
           {saving ? "שומר…" : existing ? "עדכן" : "הוסף"}
