@@ -21,6 +21,7 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicHooksDoughAlertRouteImport } from './routes/api/public/hooks/dough-alert'
 
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
@@ -82,6 +83,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksDoughAlertRoute =
+  ApiPublicHooksDoughAlertRouteImport.update({
+    id: '/api/public/hooks/dough-alert',
+    path: '/api/public/hooks/dough-alert',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +134,7 @@ export interface FileRoutesById {
   '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/restock'
     | '/suppliers'
     | '/tasks'
+    | '/api/public/hooks/dough-alert'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/restock'
     | '/suppliers'
     | '/tasks'
+    | '/api/public/hooks/dough-alert'
   id:
     | '__root__'
     | '/'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/restock'
     | '/suppliers'
     | '/tasks'
+    | '/api/public/hooks/dough-alert'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +197,7 @@ export interface RootRouteChildren {
   RestockRoute: typeof RestockRoute
   SuppliersRoute: typeof SuppliersRoute
   TasksRoute: typeof TasksRoute
+  ApiPublicHooksDoughAlertRoute: typeof ApiPublicHooksDoughAlertRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/dough-alert': {
+      id: '/api/public/hooks/dough-alert'
+      path: '/api/public/hooks/dough-alert'
+      fullPath: '/api/public/hooks/dough-alert'
+      preLoaderRoute: typeof ApiPublicHooksDoughAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,7 +309,18 @@ const rootRouteChildren: RootRouteChildren = {
   RestockRoute: RestockRoute,
   SuppliersRoute: SuppliersRoute,
   TasksRoute: TasksRoute,
+  ApiPublicHooksDoughAlertRoute: ApiPublicHooksDoughAlertRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
