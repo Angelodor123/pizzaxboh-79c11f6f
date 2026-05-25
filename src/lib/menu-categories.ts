@@ -62,10 +62,6 @@ export const menuCategoryOrder: MenuCategory[] = [
  */
 export function inferMenuCategory(name: string): MenuCategory {
   const n = name || "";
-  // Desserts — sweet keywords
-  if (/(קינוח|עוגיה|עוגייה|עוגות|עוגה|גלידה|נוטלה|קינדר|טירמיסו|פאי|טארט|נוצ['׳]ולה|שוקולד|מאפ)/.test(n)) {
-    return "desserts";
-  }
   if (/(שתיה|שתייה|קולה|מיץ|סודה|מים|בירה|יין|קוקטייל|אספרסו|קפה|לימונדה)/.test(n)) {
     return "drinks";
   }
@@ -87,12 +83,11 @@ export function inferMenuCategory(name: string): MenuCategory {
 
 /**
  * Recipe categories that represent customer-facing menu items ("דף המנות").
- * Everything else is back-of-house / "דף המתכונים" (sauces, bases, spices, etc.).
+ * Everything else is back-of-house / "דף המתכונים" (sauces, bases, spices, desserts, etc.).
  */
 export const MENU_ITEM_CATEGORIES: ReadonlyArray<RecipeCategory> = [
   "dishes",
   "starters",
-  "desserts",
   "pastas",
   "authentic_pastas",
   "salads",
@@ -104,6 +99,7 @@ export const BACK_OF_HOUSE_CATEGORIES: ReadonlyArray<RecipeCategory> = [
   "jams_creams",
   "spices",
   "croutons",
+  "desserts",
 ];
 
 
@@ -113,15 +109,13 @@ export function isMenuItem(recipe: Pick<Recipe, "category">): boolean {
 
 /**
  * Map a recipe to the public-menu category. Recipes already tagged with a
- * menu-aligned category (starters/desserts/pastas/salads) map directly;
+ * menu-aligned category (starters/pastas/salads) map directly;
  * generic "dishes" fall back to name-based inference.
  */
 export function recipeToMenuCategory(recipe: Pick<Recipe, "category" | "nameHebrew">): MenuCategory {
   switch (recipe.category) {
     case "starters":
       return "starters";
-    case "desserts":
-      return "desserts";
     case "pastas":
     case "authentic_pastas":
       return "pastas";
