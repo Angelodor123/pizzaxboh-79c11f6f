@@ -950,14 +950,17 @@ function InstanceOverrideForm({
 function EventForm({
   existing,
   defaultDate,
+  allEvents,
   onClose,
 }: {
   existing: CalendarEvent | null;
   defaultDate: string;
+  allEvents: CalendarEvent[];
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(existing?.title ?? "");
   const [category, setCategory] = useState<EventCategory>(existing?.category ?? "delivery");
+  const [eventType, setEventType] = useState<EventTypeId | "">((existing?.event_type as EventTypeId) ?? "");
   const [isRecurring, setIsRecurring] = useState(existing?.recurring_weekday !== null && existing?.recurring_weekday !== undefined);
   const [date, setDate] = useState(existing?.event_date ?? defaultDate);
   const [weekday, setWeekday] = useState<number>(existing?.recurring_weekday ?? 0);
@@ -967,6 +970,32 @@ function EventForm({
   const [highPriority, setHighPriority] = useState(existing?.high_priority ?? false);
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const [conflictAck, setConflictAck] = useState(false);
+
+  // Live conflict detection: check against allEvents on the same date / weekday + time overlap
+  const conflicts = useMemo(() => {
+    if (!startTime) return [];
+    const sNew = startTime;
+    const eNew = endTime || startTime;
+    const targetWd = isRecurring ? weekday : new Date(date + "T00:00:00").getDay();
+    return allEvents.filter((ev) => {
+      if (existing && ev.id === existing.id) return false;
+      if (!ev.start_time) return false;
+      const sameDay =
+        (isRecurring && ev.recurring_weekday === weekday) ||
+        (!isRecurring && (ev.event_date === date || ev.recurring_weekday === targetWd));
+      if (!sameDay) return false;
+      const sExist = ev.start_time.slice(0, 5);
+      const eExist = (ev.end_time || ev.start_time).slice(0, 5);
+      // overlap: sNew < eExist && sExist < eNew
+      return sNew < eExist && sExist < eNew;
+    });
+  }, [allEvents, existing, startTime, endTime, date, weekday, isRecurring]);
+
+  // Reset ack when conflicts list changes
+  useEffect(() => {
+    setConflictAck(false);
+  }, [conflicts.length]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -974,10 +1003,15 @@ function EventForm({
       toast.error("חובה להזין כותרת");
       return;
     }
+    if (conflicts.length > 0 && !conflictAck) {
+      toast.error("נמצא חפיפה עם אירוע קיים — אשר את ההמשך");
+      return;
+    }
     setSaving(true);
     const basePayload = {
       title: title.trim(),
       category,
+      event_type: eventType || null,
       event_date: isRecurring ? null : date,
       recurring_weekday: isRecurring ? weekday : null,
       start_time: startTime || null,
@@ -989,10 +1023,10 @@ function EventForm({
 
     let error;
     if (existing) {
-      ({ error } = await supabase.from("calendar_events").update(basePayload).eq("id", existing.id));
+      ({ error } = await supabase.from("calendar_events").update(basePayload as never).eq("id", existing.id));
     } else {
       const branchId = await requireCurrentBranchId();
-      ({ error } = await supabase.from("calendar_events").insert({ ...basePayload, branch_id: branchId }));
+      ({ error } = await supabase.from("calendar_events").insert({ ...basePayload, branch_id: branchId } as never));
     }
 
     setSaving(false);
@@ -1003,6 +1037,7 @@ function EventForm({
     toast.success(existing ? "האירוע עודכן" : "האירוע נוסף");
     onClose();
   };
+
 
   return (
     <div
