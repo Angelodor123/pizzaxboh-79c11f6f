@@ -137,9 +137,10 @@ export function EvChargingWidget() {
   );
 
   const update = async (id: string, patch: Partial<EvVehicle>) => {
-    setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+    const nowIso = new Date().toISOString();
+    setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch, updated_at: nowIso } : v)));
     playPop();
-    await supabase.from("ev_vehicles").update(patch).eq("id", id);
+    await supabase.from("ev_vehicles").update({ ...patch, updated_at: nowIso }).eq("id", id);
   };
 
   const startCharge = (id: string, minutes: number) => {
