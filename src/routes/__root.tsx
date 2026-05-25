@@ -16,7 +16,7 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 const GuidedTour = lazy(() =>
   import("@/components/GuidedTour").then((m) => ({ default: m.GuidedTour })),
