@@ -69,11 +69,19 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       if (e1) throw new Error(e1.message);
     }
 
-    // Patch profile name
-    if (data.fullName !== undefined) {
+    // Patch profile fields (name, dob, start date)
+    const profilePatch: {
+      full_name?: string | null;
+      date_of_birth?: string | null;
+      start_date?: string | null;
+    } = {};
+    if (data.fullName !== undefined) profilePatch.full_name = data.fullName;
+    if (data.dateOfBirth !== undefined) profilePatch.date_of_birth = data.dateOfBirth;
+    if (data.startDate !== undefined) profilePatch.start_date = data.startDate;
+    if (Object.keys(profilePatch).length > 0) {
       const { error: e2 } = await supabaseAdmin
         .from("profiles")
-        .update({ full_name: data.fullName })
+        .update(profilePatch)
         .eq("user_id", data.userId);
       if (e2) throw new Error(e2.message);
     }
