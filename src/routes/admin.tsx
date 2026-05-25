@@ -373,8 +373,9 @@ function AdminPage() {
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`למחוק את "${r.nameHebrew}"?`)) void softDeleteRecipe(r.id);
+                          onClick={async () => {
+                            const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
+                            if (ok) void softDeleteRecipe(r.id);
                           }}
                           className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
                           aria-label="מחק"
