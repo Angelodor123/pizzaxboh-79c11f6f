@@ -433,8 +433,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 <div className="space-y-2">
                   <div>
                     <label className="block text-xs font-bold text-muted-foreground mb-1">ספק *</label>
-                    <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}
-                      className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none">
+                    <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} disabled={!!linkedOrderId}
+                      className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none disabled:opacity-60">
                       <option value="">בחר ספק…</option>
                       {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
