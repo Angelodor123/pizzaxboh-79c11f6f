@@ -388,7 +388,7 @@ export function CategoryDrawer() {
                           opt.key === "super_admin" ? null : opt.key,
                         )
                       }
-                      className={`flex-1 px-2 py-1 rounded-[4px] font-bold transition-colors text-xs ${
+                      className={`flex-1 px-1 py-1 rounded-[4px] font-bold transition-colors text-[11px] whitespace-nowrap ${
                         active
                           ? "bg-neon text-primary-foreground shadow-sm"
                           : "text-zinc-300 hover:bg-zinc-700/60"
