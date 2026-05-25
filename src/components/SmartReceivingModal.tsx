@@ -11,6 +11,7 @@ interface Props {
   suppliers: SupplierOpt[];
   onClose: () => void;
   onSaved: () => void;
+  linkedOrderId?: string | null;
 }
 
 type OrderItem = { name: string; qty: string };
@@ -58,7 +59,7 @@ const looseEq = (a: string, b: string) => {
   return x === y || x.includes(y) || y.includes(x);
 };
 
-export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
+export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId = null }: Props) {
   const ocr = useServerFn(ocrInvoice);
   const [stage, setStage] = useState<Stage>("pick");
   const [supplierId, setSupplierId] = useState("");
@@ -73,6 +74,36 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
   const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [submitting, setSubmitting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Preload the linked order (when receiving was launched contextually)
+  useEffect(() => {
+    if (!linkedOrderId) return;
+    let cancelled = false;
+    (async () => {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("id, supplier_id, sent_at, items, suppliers:supplier_id(name)")
+        .eq("id", linkedOrderId)
+        .maybeSingle();
+      if (cancelled || !order) return;
+      const items = (Array.isArray(order.items) ? order.items : []) as Array<{ name?: string; qty?: string }>;
+      const supplierName = (order as { suppliers?: { name?: string } }).suppliers?.name
+        ?? suppliers.find((s) => s.id === order.supplier_id)?.name
+        ?? "";
+      const match: Match = {
+        order_id: order.id,
+        supplier_id: order.supplier_id,
+        supplier_name: supplierName,
+        sent_at: order.sent_at,
+        items: items.map((i) => ({ name: String(i.name ?? ""), qty: String(i.qty ?? "") })),
+        score: 1,
+      };
+      setSupplierId(order.supplier_id);
+      setChosenMatch(match);
+      setMatches([match]);
+    })();
+    return () => { cancelled = true; };
+  }, [linkedOrderId, suppliers]);
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
   useEffect(() => {
@@ -105,6 +136,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
       if (res.parsed?.invoice_number) setInvoiceNumber(res.parsed.invoice_number);
       if (res.parsed?.total_amount != null) setTotalAmount(String(res.parsed.total_amount));
       if (res.parsed?.document_date) setDocDate(res.parsed.document_date);
+      // If contextually linked to a specific order, auto-link and jump to verify
+      if (linkedOrderId && chosenMatch) {
+        linkToMatch(chosenMatch);
+        return;
+      }
       if ((res.matches?.length ?? 0) > 0) setStage("suggest");
       else setStage("manual");
     } catch (e) {
@@ -162,19 +198,22 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
   const canSubmit = supplierId && !Number.isNaN(totalNum) && totalNum > 0 && docDate && !submitting;
 
   const submit = async () => {
-    if (!canSubmit || !file) return;
+    if (!canSubmit) return;
     setSubmitting(true);
     try {
       const branchId = await requireCurrentBranchId();
-      const now = new Date();
-      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-      const path = `${supplierId}/${ym}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
-        contentType: file.type || "image/jpeg",
-        upsert: false,
-      });
-      if (upErr) throw upErr;
+      let path: string | null = null;
+      if (file) {
+        const now = new Date();
+        const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+        path = `${supplierId}/${ym}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
+          contentType: file.type || "image/jpeg",
+          upsert: false,
+        });
+        if (upErr) throw upErr;
+      }
 
       const { data: invoiceRow, error } = await supabase
         .from("invoices")
@@ -192,6 +231,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
         .select("id")
         .single();
       if (error) throw error;
+
 
       // Invoice items
       const cleanItems = rows.filter((r) => r.name.trim());
@@ -282,13 +322,17 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
         </div>
 
         <div className="overflow-y-auto p-4 space-y-4">
-          {/* STAGE: pick */}
           {stage === "pick" && (
             <>
+              {linkedOrderId && chosenMatch && (
+                <div className="rounded-md border border-neon/60 bg-neon/5 px-3 py-2 text-xs text-neon font-bold">
+                  קליטה עבור הזמנת {chosenMatch.supplier_name} מתאריך {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1">ספק (רמז לזיהוי)</label>
-                <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}
-                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none">
+                <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} disabled={!!linkedOrderId}
+                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none disabled:opacity-60">
                   <option value="">זיהוי אוטומטי…</option>
                   {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -304,9 +348,9 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
                 </div>
               ) : (
                 <button type="button" onClick={() => fileInput.current?.click()}
-                  className="w-full text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-10 hover:border-neon hover:text-neon transition">
+                  className="w-full text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-10 hover:border-neon hover:text-neon transition bg-zinc-900/40">
                   <Upload className="h-8 w-8 mx-auto mb-2" />
-                  צלם או העלה תמונת חשבונית
+                  לחץ לפתיחת מצלמה או גרירת קובץ
                 </button>
               )}
               <button type="button" onClick={start} disabled={!file}
@@ -314,8 +358,30 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 22px rgba(255,45,180,0.45)" }}>
                 <ScanSearch className="h-4 w-4" /> נתח חשבונית
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // Manual entry without OCR
+                  if (chosenMatch) {
+                    setRows(chosenMatch.items.map((oi) => ({
+                      name: oi.name,
+                      orderedQty: Number(oi.qty.replace(/[^\d.]/g, "")) || null,
+                      invoiceQty: Number(oi.qty.replace(/[^\d.]/g, "")) || 0,
+                      unitPrice: 0,
+                      totalPrice: 0,
+                    })));
+                  } else {
+                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }]);
+                  }
+                  setStage("manual");
+                }}
+                className="block mx-auto text-sm text-zinc-400 underline cursor-pointer hover:text-neon transition"
+              >
+                המצלמה לא עובדת? הזן נתונים ידנית
+              </button>
             </>
           )}
+
 
           {/* STAGE: suggest match */}
           {stage === "suggest" && (
@@ -367,8 +433,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
                 <div className="space-y-2">
                   <div>
                     <label className="block text-xs font-bold text-muted-foreground mb-1">ספק *</label>
-                    <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}
-                      className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none">
+                    <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} disabled={!!linkedOrderId}
+                      className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none disabled:opacity-60">
                       <option value="">בחר ספק…</option>
                       {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
@@ -454,12 +520,29 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
                     </tbody>
                   </table>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }])}
+                  className="mt-2 w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
+                >
+                  + הוסף שורה
+                </button>
+                {!file && (
+                  <button
+                    type="button"
+                    onClick={() => fileInput.current?.click()}
+                    className="mt-2 w-full h-9 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-xs font-bold"
+                  >
+                    <Upload className="h-3.5 w-3.5" /> צרף תמונת חשבונית (אופציונלי)
+                  </button>
+                )}
                 {chosenMatch && rows.some((r) => r.orderedQty != null && Math.abs(r.invoiceQty - (r.orderedQty ?? 0)) > 0.001) && (
                   <div className="mt-2 flex items-center gap-2 text-red-500 text-xs font-bold">
                     <AlertTriangle className="h-3.5 w-3.5" /> זוהו פערים בין הכמות שהוזמנה לכמות שהתקבלה — נדרש אישור ידני.
                   </div>
                 )}
               </div>
+
 
               <button type="button" onClick={submit} disabled={!canSubmit}
                 className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white transition disabled:opacity-40"

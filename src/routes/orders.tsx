@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Truck, ChevronRight } from "lucide-react";
+import { Truck, ChevronRight, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
+import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 
 export const Route = createFileRoute("/orders")({
@@ -26,6 +27,7 @@ function OrdersPage() {
   const [list, setList] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Supplier | null>(null);
+  const [receiving, setReceiving] = useState<{ orderId: string | null } | null>(null);
   const [monthCount, setMonthCount] = useState(0);
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
 
@@ -84,9 +86,18 @@ function OrdersPage() {
         <p className="hidden sm:block text-muted-foreground mt-2 text-sm">
           לחץ על לוגו של ספק כדי להכין הזמנה ולשלוח דרך וואטסאפ.
         </p>
-        <div className="mt-3 inline-flex items-center gap-2 text-xs text-muted-foreground border border-border rounded-full px-3 py-1">
-          <span>הזמנות שנשלחו החודש:</span>
-          <span className="text-neon font-bold tabular-nums">{monthCount}</span>
+        <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+          <button
+            onClick={() => setReceiving({ orderId: null })}
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-md font-bold text-white active:scale-95 transition"
+            style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 22px rgba(255,45,180,0.45)" }}
+          >
+            <Camera className="h-4 w-4" /> קבלת סחורה
+          </button>
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground border border-border rounded-full px-3 py-1">
+            <span>הזמנות החודש:</span>
+            <span className="text-neon font-bold tabular-nums">{monthCount}</span>
+          </div>
         </div>
       </div>
 
@@ -135,7 +146,21 @@ function OrdersPage() {
         </Link>
       </div>
 
-      {selected && <OrderModal supplier={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <OrderModal
+          supplier={selected}
+          onClose={() => setSelected(null)}
+          onReceive={(orderId) => setReceiving({ orderId })}
+        />
+      )}
+      {receiving && (
+        <SmartReceivingModal
+          suppliers={list.map((s) => ({ id: s.id, name: s.name }))}
+          linkedOrderId={receiving.orderId}
+          onClose={() => setReceiving(null)}
+          onSaved={() => setReceiving(null)}
+        />
+      )}
     </div>
   );
 }

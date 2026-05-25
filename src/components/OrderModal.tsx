@@ -15,6 +15,7 @@ interface Supplier {
 interface Props {
   supplier: Supplier;
   onClose: () => void;
+  onReceive?: (orderId: string) => void;
 }
 
 const cacheKey = (id: string) => `order-draft:${id}`;
@@ -24,49 +25,85 @@ type HistoryEntry = {
   created_at: string;
   rows: OrderRow[];
   notes?: string;
+  orderId?: string | null;
+  status?: "draft" | "sent" | "received" | "cancelled" | null;
 };
 
-export function OrderModal({ supplier, onClose }: Props) {
+export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [rows, setRows] = useState<OrderRow[]>([{ name: "", qty: "" }]);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  // Load order history for this supplier
+  // Load order history for this supplier — from new `orders` table (with status)
+  // falling back to legacy `supplier_orders_history` when needed.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setHistoryLoading(true);
-      const { data, error } = await supabase
-        .from("supplier_orders_history")
-        .select("id, created_at, order_details")
-        .eq("supplier_id", supplier.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const [ordersRes, legacyRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("id, sent_at, items, notes, status")
+          .eq("supplier_id", supplier.id)
+          .order("sent_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("supplier_orders_history")
+          .select("id, created_at, order_details")
+          .eq("supplier_id", supplier.id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
       if (cancelled) return;
-      if (error) {
-        console.error("history load failed", error);
-        setHistory([]);
-      } else {
-        const parsed: HistoryEntry[] = (data ?? []).map((row) => {
-          const det = (row.order_details ?? {}) as { rows?: OrderRow[]; notes?: string };
-          const cleanRows = Array.isArray(det.rows)
-            ? det.rows.filter((r) => r && (r.name?.trim() || r.qty?.trim()))
-            : [];
-          return {
-            id: row.id,
-            created_at: row.created_at,
-            rows: cleanRows,
-            notes: det.notes,
-          };
-        }).filter((h) => h.rows.length > 0);
-        setHistory(parsed);
+
+      const fromOrders: HistoryEntry[] = (ordersRes.data ?? []).map((o) => {
+        const items = Array.isArray(o.items) ? (o.items as unknown as OrderRow[]) : [];
+        const cleanRows = items
+          .filter((r) => r && (r.name?.toString().trim() || r.qty?.toString().trim()))
+          .map((r) => ({ name: String(r.name ?? ""), qty: String(r.qty ?? "") }));
+        return {
+          id: o.id,
+          created_at: o.sent_at,
+          rows: cleanRows,
+          notes: o.notes ?? undefined,
+          orderId: o.id,
+          status: (o.status as HistoryEntry["status"]) ?? null,
+        };
+      }).filter((h) => h.rows.length > 0);
+
+      const fromLegacy: HistoryEntry[] = (legacyRes.data ?? []).map((row) => {
+        const det = (row.order_details ?? {}) as { rows?: OrderRow[]; notes?: string };
+        const cleanRows = Array.isArray(det.rows)
+          ? det.rows.filter((r) => r && (r.name?.trim() || r.qty?.trim()))
+          : [];
+        return {
+          id: row.id,
+          created_at: row.created_at,
+          rows: cleanRows,
+          notes: det.notes,
+          orderId: null,
+          status: null,
+        };
+      }).filter((h) => h.rows.length > 0);
+
+      // Merge, prefer new orders, dedupe by timestamp+first item name
+      const seen = new Set<string>();
+      const merged: HistoryEntry[] = [];
+      for (const e of [...fromOrders, ...fromLegacy]) {
+        const key = `${e.created_at?.slice(0, 16)}|${e.rows[0]?.name ?? ""}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(e);
       }
+      merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      setHistory(merged.slice(0, 20));
       setHistoryLoading(false);
     })();
     return () => { cancelled = true; };
   }, [supplier.id]);
+
 
 
   // Restore draft
@@ -296,23 +333,47 @@ export function OrderModal({ supplier, onClose }: Props) {
                   .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
                   .filter(Boolean)
                   .join(", ");
+                const isPending = h.status === "sent" && h.orderId;
                 return (
                   <div
                     key={h.id}
                     className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-500">הוזמן</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-500">הוזמן</span>
+                        {isPending && (
+                          <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
+                            ממתינה לקבלה
+                          </span>
+                        )}
+                        {h.status === "received" && (
+                          <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
+                            התקבלה
+                          </span>
+                        )}
+                      </div>
                       <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
                     </div>
                     <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
-                    <button
-                      type="button"
-                      onClick={() => duplicateOrder(h)}
-                      className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
-                    >
-                      שכפל הזמנה
-                    </button>
+                    {isPending && onReceive ? (
+                      <button
+                        type="button"
+                        onClick={() => { onReceive(h.orderId!); onClose(); }}
+                        className="text-xs py-1.5 px-3 rounded w-fit font-bold text-white transition"
+                        style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 14px rgba(255,45,180,0.45)" }}
+                      >
+                        קבל סחורה
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => duplicateOrder(h)}
+                        className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
+                      >
+                        שכפל הזמנה
+                      </button>
+                    )}
                   </div>
                 );
               })}
