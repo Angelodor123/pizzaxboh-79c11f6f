@@ -153,6 +153,31 @@ function TasksPage() {
 
   // Debounce timers per task id for comment autosave
   const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Refs for smooth scroll-into-view on accordion open
+  const shiftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const groupRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
+  useEffect(() => {
+    if (!openShift) return;
+    const el = shiftRefs.current.get(openShift);
+    if (el) {
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [openShift]);
+
+  useEffect(() => {
+    if (!openGroup) return;
+    const el = groupRefs.current.get(openGroup);
+    if (el) {
+      // Wait one frame so the expanded content is in the DOM before scrolling
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [openGroup]);
+
 
   useEffect(() => {
     if (!branchId) return;
@@ -442,8 +467,12 @@ function TasksPage() {
           return (
             <div
               key={shift.id}
-              className={`border rounded-lg overflow-hidden ${isVirtual ? "border-info/50 bg-info/5" : "border-border bg-card/40"}`}
+              ref={(el) => {
+                shiftRefs.current.set(shift.id, el);
+              }}
+              className={`scroll-mt-36 border rounded-lg overflow-hidden ${isVirtual ? "border-info/50 bg-info/5" : "border-border bg-card/40"}`}
             >
+
               <button
                 type="button"
                 onClick={() => setOpenShift(isShiftOpen ? null : shift.id)}
@@ -479,7 +508,14 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-border overflow-hidden shadow-sm mb-2">
+                      <div
+                        key={g.id}
+                        ref={(el) => {
+                          groupRefs.current.set(g.id, el);
+                        }}
+                        className="scroll-mt-36 rounded-xl bg-gray-800/80 border border-border overflow-hidden shadow-sm mb-2"
+                      >
+
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
