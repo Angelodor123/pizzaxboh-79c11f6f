@@ -1,8 +1,26 @@
-import { Toaster as Sonner } from "sonner";
+import { Toaster as Sonner, toast as sonnerToast } from "sonner";
+import { useEffect } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
+let hapticsPatched = false;
+function patchToastHaptics() {
+  if (hapticsPatched) return;
+  hapticsPatched = true;
+  const original = sonnerToast.error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (sonnerToast as any).error = (...args: unknown[]) => {
+    triggerHaptic("warning");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (original as any).apply(sonnerToast, args);
+  };
+}
+
 const Toaster = ({ ...props }: ToasterProps) => {
+  useEffect(() => {
+    patchToastHaptics();
+  }, []);
   return (
     <Sonner
       theme="dark"
