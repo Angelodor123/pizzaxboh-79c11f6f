@@ -420,9 +420,13 @@ export function CopilotFab() {
             {loading && (
               <div className="flex gap-2 items-start">
                 <CopilotMascot className="h-7 w-7 shrink-0 mt-0.5" />
-                <div className="bg-secondary border border-border rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-muted-foreground inline-flex items-center gap-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  חושב...
+                <div className="bg-secondary border border-[#ff3d8a]/40 rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-foreground inline-flex items-center gap-2">
+                  <span className="inline-flex gap-1" aria-hidden="true">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#ff3d8a] animate-pulse [animation-delay:0ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#ff3d8a] animate-pulse [animation-delay:150ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#ff3d8a] animate-pulse [animation-delay:300ms]" />
+                  </span>
+                  <span className="text-muted-foreground">ג'וני בודק במערכת...</span>
                 </div>
               </div>
             )}
