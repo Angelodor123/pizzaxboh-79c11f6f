@@ -1462,13 +1462,26 @@ function SuperAdminUsersPanel() {
     });
   }, [rows, query, statusFilter]);
 
-  const openEdit = (row: DirectoryRow) => {
+  const openEdit = async (row: DirectoryRow) => {
+    let dob = "";
+    let sd = "";
+    if (row.kind === "user" && row.user_id) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("date_of_birth,start_date")
+        .eq("user_id", row.user_id)
+        .maybeSingle();
+      dob = (data?.date_of_birth as string | null) ?? "";
+      sd = (data?.start_date as string | null) ?? "";
+    }
     setEditing({
       row,
       fullName: row.full_name ?? "",
       email: row.email,
       role: row.role,
       branchId: row.assigned_branch_id ?? "",
+      dateOfBirth: dob,
+      startDate: sd,
     });
   };
 
