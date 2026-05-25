@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "model"]),
@@ -24,7 +25,81 @@ You CAN and SHOULD help with: daily operational briefing (orders, deliveries, ev
 
 When asked "what can you do" / "מה אתה יודע לעשות" / "במה תוכל לעזור" — give a short, concrete bulleted list of your capabilities in Hebrew. Do NOT answer "אני לא יודע" to questions about yourself, your role, or what the system can do.
 
-Only respond with "אני לא יודע" when you are asked a specific factual question whose answer is genuinely not available to you (e.g. a specific supplier price you weren't given, or a private detail outside the operational context). Never use it as a default brush-off. Don't use phrases of regret, apology, or filler.`;
+You now have access to Pizza X's internal recipes and procedures provided in the dynamic context layer. When an employee asks how to make a specific item or perform a task, search the provided context. If the exact recipe/procedure exists in the context, provide clear, step-by-step instructions based STRICTLY on that data. If the requested information is NOT in the provided context, you must continue to strictly answer "אני לא יודע" without any further explanation.
+
+Only respond with "אני לא יודע" when you are asked a specific factual question whose answer is genuinely not available to you. Never use it as a default brush-off for questions about yourself, the system, or operations. Don't use phrases of regret, apology, or filler.`;
+
+const RECIPE_TRIGGERS = [
+  "איך מכינים",
+  "איך עושים",
+  "איך מבצעים",
+  "מתכון",
+  "מתכונים",
+  "נוהל",
+  "נהלים",
+  "הוראות",
+  "הכנה",
+  "להכין",
+  "פרוצדורה",
+  "תהליך",
+  "משימה",
+  "משימות",
+];
+
+function shouldInjectKnowledge(text: string): boolean {
+  const lower = text.toLowerCase();
+  return RECIPE_TRIGGERS.some((kw) => lower.includes(kw));
+}
+
+async function buildKnowledgeContext(): Promise<string> {
+  try {
+    const [{ data: recipes }, { data: shifts }, { data: groups }, { data: tasks }] = await Promise.all([
+      supabaseAdmin
+        .from("recipes")
+        .select("name_hebrew, category, base_yield_hebrew, ingredients, instructions_hebrew, technique_notes_hebrew, shelf_life_hebrew, essence_hebrew")
+        .eq("deleted", false)
+        .limit(200),
+      supabaseAdmin.from("shifts").select("id, name").eq("active", true),
+      supabaseAdmin.from("task_groups").select("id, shift_id, name, sort_order").eq("active", true).order("sort_order"),
+      supabaseAdmin.from("tasks").select("name, group_id, sort_order").eq("active", true).order("sort_order"),
+    ]);
+
+    const parts: string[] = [];
+
+    if (recipes && recipes.length) {
+      const lines = recipes.map((r: any) => {
+        const ing = Array.isArray(r.ingredients)
+          ? r.ingredients
+              .map((i: any) => (typeof i === "string" ? i : `${i.name ?? ""} ${i.amount ?? ""} ${i.unit ?? ""}`.trim()))
+              .filter(Boolean)
+              .join("; ")
+          : "";
+        return `### ${r.name_hebrew} [${r.category}]
+תפוקה: ${r.base_yield_hebrew || "—"}
+מרכיבים: ${ing || "—"}
+הוראות: ${r.instructions_hebrew || "—"}${r.technique_notes_hebrew ? `\nטכניקה: ${r.technique_notes_hebrew}` : ""}${r.shelf_life_hebrew ? `\nחיי מדף: ${r.shelf_life_hebrew}` : ""}`;
+      });
+      parts.push(`==== מתכונים ====\n${lines.join("\n\n")}`);
+    }
+
+    if (shifts && groups && tasks) {
+      const shiftLines = shifts.map((s: any) => {
+        const sgroups = groups.filter((g: any) => g.shift_id === s.id);
+        const gLines = sgroups.map((g: any) => {
+          const gtasks = tasks.filter((t: any) => t.group_id === g.id).map((t: any) => `- ${t.name}`);
+          return `  • ${g.name}\n${gtasks.join("\n")}`;
+        });
+        return `### ${s.name}\n${gLines.join("\n")}`;
+      });
+      parts.push(`==== משמרות, קטגוריות ומשימות יומיות ====\n${shiftLines.join("\n\n")}`);
+    }
+
+    return parts.join("\n\n");
+  } catch (err) {
+    console.error("[copilot] knowledge fetch failed", err);
+    return "";
+  }
+}
 
 export const askCopilot = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
@@ -41,16 +116,24 @@ export const askCopilot = createServerFn({ method: "POST" })
     if (data.context?.briefing) ctxParts.push(`תדריך תפעולי של היום: ${data.context.briefing}`);
     const contextLine = ctxParts.length ? `\n\nהקשר נוכחי: ${ctxParts.join(" | ")}.` : "";
 
+    const last = data.messages[data.messages.length - 1];
+    let knowledgeBlock = "";
+    if (shouldInjectKnowledge(last.content)) {
+      const kb = await buildKnowledgeContext();
+      if (kb) {
+        knowledgeBlock = `\n\n==== שכבת ידע דינמית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====`;
+      }
+    }
+
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
-      systemInstruction: SYSTEM_PROMPT + contextLine,
+      systemInstruction: SYSTEM_PROMPT + contextLine + knowledgeBlock,
     });
 
     const history = data.messages.slice(0, -1).map((m) => ({
       role: m.role,
       parts: [{ text: m.content }],
     }));
-    const last = data.messages[data.messages.length - 1];
 
     try {
       const chat = model.startChat({ history });
