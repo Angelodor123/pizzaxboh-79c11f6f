@@ -16,6 +16,7 @@ import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PrepRouteImport } from './routes/prep'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotebookRouteImport } from './routes/notebook'
+import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -58,6 +59,11 @@ const NotebookRoute = NotebookRouteImport.update({
   path: '/notebook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyProfileRoute = MyProfileRouteImport.update({
+  id: '/my-profile',
+  path: '/my-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvoicesRoute = InvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/my-profile'
     | '/notebook'
     | '/orders'
     | '/prep'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/my-profile'
     | '/notebook'
     | '/orders'
     | '/prep'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/my-profile'
     | '/notebook'
     | '/orders'
     | '/prep'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   InvoicesRoute: typeof InvoicesRoute
+  MyProfileRoute: typeof MyProfileRoute
   NotebookRoute: typeof NotebookRoute
   OrdersRoute: typeof OrdersRoute
   PrepRoute: typeof PrepRoute
@@ -251,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotebookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-profile': {
+      id: '/my-profile'
+      path: '/my-profile'
+      fullPath: '/my-profile'
+      preLoaderRoute: typeof MyProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invoices': {
       id: '/invoices'
       path: '/invoices'
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   InvoicesRoute: InvoicesRoute,
+  MyProfileRoute: MyProfileRoute,
   NotebookRoute: NotebookRoute,
   OrdersRoute: OrdersRoute,
   PrepRoute: PrepRoute,
