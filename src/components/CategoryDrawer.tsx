@@ -65,8 +65,11 @@ const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
   }));
 
 // Shared item classes for consistent padding + modern hover.
+// RTL: text anchors to the right (start), icon anchors to the far left (end).
 const itemClass =
-  "flex items-center justify-end gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
+  "flex w-full items-center justify-between gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
+
+const iconWrap = "w-6 flex justify-center shrink-0";
 
 const groupLabelClass =
   "text-zinc-500 text-xs font-bold mb-2 px-4 pt-3 uppercase tracking-wider text-right";
