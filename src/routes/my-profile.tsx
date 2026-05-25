@@ -29,6 +29,8 @@ function MyProfilePage() {
   const [ndaOpen, setNdaOpen] = useState(false);
   const [branchName, setBranchName] = useState<string | null>(null);
   const [joinDate, setJoinDate] = useState<string | null>(null);
+  const [dob, setDob] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string | null>(null);
   const [pushEnabled, setPushEnabled] = useState(false);
 
   const displayName = fullName || email?.split("@")[0] || "אורח";
@@ -37,13 +39,17 @@ function MyProfilePage() {
   useEffect(() => {
     if (!userId) return;
     (async () => {
-      const [{ data: roleRow }, { data: createdRow }] = await Promise.all([
+      const [{ data: roleRow }, { data: profileRow }] = await Promise.all([
         supabase
           .from("user_roles")
           .select("assigned_branch_id, created_at")
           .eq("user_id", userId)
           .maybeSingle(),
-        supabase.from("profiles").select("created_at").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("created_at,date_of_birth,start_date")
+          .eq("user_id", userId)
+          .maybeSingle(),
       ]);
       if (roleRow?.assigned_branch_id) {
         const { data: b } = await supabase
@@ -53,10 +59,12 @@ function MyProfilePage() {
           .maybeSingle();
         setBranchName(b?.name ?? null);
       }
-      const created = (createdRow?.created_at as string) || (roleRow?.created_at as string) || null;
-      if (created) {
-        setJoinDate(new Date(created).toLocaleDateString("he-IL"));
-      }
+      const created = (profileRow?.created_at as string) || (roleRow?.created_at as string) || null;
+      if (created) setJoinDate(new Date(created).toLocaleDateString("he-IL"));
+      const fmt = (d?: string | null) =>
+        d ? new Date(d + "T00:00:00").toLocaleDateString("he-IL", { day: "2-digit", month: "long", year: "numeric" }) : null;
+      setDob(fmt(profileRow?.date_of_birth as string | null));
+      setStartDate(fmt(profileRow?.start_date as string | null));
     })();
     // Check push subscription status
     if ("serviceWorker" in navigator && "PushManager" in window) {
