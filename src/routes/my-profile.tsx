@@ -66,14 +66,45 @@ function MyProfilePage() {
     }
   }, [userId]);
 
+  const iosBlocked = isIOS() && !isStandalone();
+
   const enablePush = async () => {
     if (!userId) return;
-    const ok = await subscribeToPush(userId);
-    if (ok) {
+    try {
+      await subscribeToPush(userId);
       setPushEnabled(true);
       toast.success("התראות הופעלו בהצלחה");
-    } else {
-      toast.error("לא ניתן להפעיל התראות", { description: "אשר/י הרשאה בדפדפן ונסה/י שוב" });
+    } catch (e) {
+      console.error("[my-profile] enablePush failed", e);
+      if (e instanceof PushSubscribeError) {
+        switch (e.reason) {
+          case "permission-denied":
+            toast.error("הדפדפן חוסם התראות", {
+              description: "אנא לחץ על המנעול בשורת הכתובת ואשר קבלת התראות.",
+            });
+            return;
+          case "ios-not-standalone":
+            toast.error("דרושה התקנה למסך הבית", {
+              description: "כדי לקבל התראות באייפון, יש להתקין את האפליקציה למסך הבית קודם.",
+            });
+            return;
+          case "preview":
+            toast.error("התראות לא פעילות בתצוגה המקדימה", {
+              description: "פתח/י את האתר המפורסם כדי להירשם.",
+            });
+            return;
+          case "unsupported":
+            toast.error("הדפדפן לא תומך בהתראות Push");
+            return;
+          case "permission-dismissed":
+            toast.error("ההרשאה לא אושרה", { description: "נסה/י שוב ואשר/י את הבקשה." });
+            return;
+          default:
+            toast.error("לא ניתן להפעיל התראות", { description: e.message });
+            return;
+        }
+      }
+      toast.error("שגיאה לא צפויה בהפעלת התראות");
     }
   };
 
