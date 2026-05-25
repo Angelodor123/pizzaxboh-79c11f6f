@@ -174,7 +174,7 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
   };
 
   const remove = async (id: string) => {
-    if (!confirm("למחוק פריט זה?")) return;
+    if (!(await confirmDelete({ title: "מחיקת פריט", description: "למחוק פריט זה? פעולה זו אינה ניתנת לשחזור." }))) return;
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     void load();
