@@ -333,23 +333,47 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
                   .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
                   .filter(Boolean)
                   .join(", ");
+                const isPending = h.status === "sent" && h.orderId;
                 return (
                   <div
                     key={h.id}
                     className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-500">הוזמן</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-500">הוזמן</span>
+                        {isPending && (
+                          <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
+                            ממתינה לקבלה
+                          </span>
+                        )}
+                        {h.status === "received" && (
+                          <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
+                            התקבלה
+                          </span>
+                        )}
+                      </div>
                       <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
                     </div>
                     <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
-                    <button
-                      type="button"
-                      onClick={() => duplicateOrder(h)}
-                      className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
-                    >
-                      שכפל הזמנה
-                    </button>
+                    {isPending && onReceive ? (
+                      <button
+                        type="button"
+                        onClick={() => { onReceive(h.orderId!); onClose(); }}
+                        className="text-xs py-1.5 px-3 rounded w-fit font-bold text-white transition"
+                        style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 14px rgba(255,45,180,0.45)" }}
+                      >
+                        קבל סחורה
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => duplicateOrder(h)}
+                        className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
+                      >
+                        שכפל הזמנה
+                      </button>
+                    )}
                   </div>
                 );
               })}
