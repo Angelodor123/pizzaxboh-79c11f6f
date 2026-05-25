@@ -165,12 +165,17 @@ function MyProfilePage() {
           <button
             type="button"
             onClick={enablePush}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-neon/60 bg-neon/5 hover:bg-neon/10 active:scale-[0.99] transition touch-manipulation text-right"
+            disabled={iosBlocked}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-neon/60 bg-neon/5 hover:bg-neon/10 active:scale-[0.99] transition touch-manipulation text-right disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <Bell className="h-5 w-5 text-neon shrink-0" />
             <div className="flex-1">
               <div className="font-bold text-sm">הפעלת התראות Push</div>
-              <div className="text-xs text-muted-foreground">קבל/י התראות במכשיר גם כשהאפליקציה סגורה</div>
+              <div className="text-xs text-muted-foreground">
+                {iosBlocked
+                  ? "כדי לקבל התראות באייפון, יש להתקין את האפליקציה למסך הבית קודם."
+                  : "קבל/י התראות במכשיר גם כשהאפליקציה סגורה"}
+              </div>
             </div>
           </button>
         )}
