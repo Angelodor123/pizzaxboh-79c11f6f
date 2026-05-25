@@ -11,6 +11,7 @@ interface Props {
   suppliers: SupplierOpt[];
   onClose: () => void;
   onSaved: () => void;
+  linkedOrderId?: string | null;
 }
 
 type OrderItem = { name: string; qty: string };
