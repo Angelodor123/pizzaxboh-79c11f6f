@@ -76,24 +76,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTutorialCooldownUntil(null);
       return;
     }
-    const [{ data: roleData }, { data: superData }, { data: roleRow }, { data: profile }] =
-      await Promise.all([
-        supabase.rpc("current_user_role"),
-        supabase.rpc("is_super_admin", { _user_id: uid }),
-        supabase
-          .from("user_roles")
-          .select("assigned_branch_id")
-          .eq("user_id", uid)
-          .maybeSingle(),
-        supabase
-          .from("profiles")
-          .select("full_name, tutorial_version, completed_tutorial_steps, tutorial_cooldown_until")
-          .eq("user_id", uid)
-          .maybeSingle(),
-      ]);
-    setRole((roleData as AppRole | null) ?? null);
-    setIsSuperAdmin(Boolean(superData));
-    setAssignedBranchId((roleRow?.assigned_branch_id as string | null) ?? null);
+    const [{ data: roleRows }, { data: profile }] = await Promise.all([
+      supabase
+        .from("user_roles")
+        .select("role, assigned_branch_id")
+        .eq("user_id", uid)
+        .eq("is_active", true),
+      supabase
+        .from("profiles")
+        .select("full_name, tutorial_version, completed_tutorial_steps, tutorial_cooldown_until")
+        .eq("user_id", uid)
+        .maybeSingle(),
+    ]);
+    const roles =
+      (roleRows as { role: string; assigned_branch_id: string | null }[] | null) ?? [];
+    const hasAdmin = roles.some((row) => row.role === "admin");
+    const hasViewer = roles.some((row) => row.role === "viewer");
+    setRole(hasAdmin ? "admin" : hasViewer ? "viewer" : null);
+    setIsSuperAdmin(roles.some((row) => row.role === "super_admin"));
+    setAssignedBranchId(
+      roles.find((row) => row.role !== "super_admin" && row.assigned_branch_id)?.assigned_branch_id ??
+        roles.find((row) => row.assigned_branch_id)?.assigned_branch_id ??
+        null,
+    );
     setFullName((profile?.full_name as string | null) ?? null);
     const p = profile as { tutorial_version?: number; completed_tutorial_steps?: string[]; tutorial_cooldown_until?: string | null } | null;
     setTutorialVersionState(typeof p?.tutorial_version === "number" ? p.tutorial_version : 0);
