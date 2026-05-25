@@ -22,6 +22,8 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
+import { triggerHaptic } from "@/lib/haptics";
+import { celebrate } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
@@ -306,6 +308,7 @@ function TasksPage() {
     if (completed) {
       setPulsingTaskId(taskId);
       setTimeout(() => setPulsingTaskId((cur) => (cur === taskId ? null : cur)), 650);
+      triggerHaptic("light");
     }
     const t = allTasks.find((x) => x.id === taskId);
     const taskName = t?.name ?? "";
@@ -398,6 +401,14 @@ function TasksPage() {
 
   const total = allTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
+
+  const prevPctRef = useRef(pct);
+  useEffect(() => {
+    if (total > 0 && pct === 100 && prevPctRef.current < 100) {
+      void celebrate();
+    }
+    prevPctRef.current = pct;
+  }, [pct, total]);
 
   const displayShifts: Array<{ id: string; name: string }> = [
     ...shifts.map((s) => ({ id: s.id, name: s.name })),

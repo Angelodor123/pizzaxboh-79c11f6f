@@ -15,6 +15,7 @@ import { QuickBackBubble } from "@/components/QuickBackBubble";
 import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
+import { PageTransition } from "@/components/PageTransition";
 
 import { lazy, Suspense, useEffect } from "react";
 
@@ -329,7 +330,9 @@ function AuthedShell() {
       >
         <PageHeader isDishesView={isDishesView} />
         <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
 
       <Suspense fallback={null}>
