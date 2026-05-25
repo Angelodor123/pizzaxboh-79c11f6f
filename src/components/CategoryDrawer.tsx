@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useCookbookStore } from "@/lib/store";
+import { recipeToMenuCategory, isMenuItem } from "@/lib/menu-categories";
 import { Pencil, Check, X, Download } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,19 +55,19 @@ const RECIPE_EMOJI: Record<RecipeCategory, string> = {
   salads: "🥗",
 };
 
-const RECIPE_CATEGORIES: { key: RecipeCategory; emoji: string; label: string }[] =
-  BACK_OF_HOUSE_CATEGORIES.map((key) => ({
-    key,
-    emoji: RECIPE_EMOJI[key],
-    label: categoryLabels[key],
-  }));
+// Static catalog of all known categories — actual sidebar list is filtered
+// dynamically below based on what's present in the live recipes table.
+const ALL_RECIPE_CATEGORIES = BACK_OF_HOUSE_CATEGORIES.map((key) => ({
+  key,
+  emoji: RECIPE_EMOJI[key],
+  label: categoryLabels[key],
+}));
 
-const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
-  menuCategoryOrder.map((key) => ({
-    key,
-    emoji: menuCategoryEmoji[key],
-    label: menuCategoryLabels[key],
-  }));
+const ALL_MENU_CATEGORIES = menuCategoryOrder.map((key) => ({
+  key,
+  emoji: menuCategoryEmoji[key],
+  label: menuCategoryLabels[key],
+}));
 
 // Shared item classes for consistent padding + modern hover.
 // RTL: text anchors to the right (start), icon anchors to the far left (end).
@@ -108,6 +110,27 @@ export function CategoryDrawer() {
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
+
+  // Dynamically filter sidebar categories to only those with ≥1 active item
+  // in the live recipes store. Empty categories are hidden entirely.
+  const recipes = useCookbookStore((s) => s.recipes);
+  const { RECIPE_CATEGORIES, MENU_CATEGORIES } = useMemo(() => {
+    const active = recipes.filter((r) => !r.deleted);
+    const recipeCounts = new Map<RecipeCategory, number>();
+    const menuCounts = new Map<MenuCategory, number>();
+    for (const r of active) {
+      if (isMenuItem(r)) {
+        const mc = recipeToMenuCategory(r);
+        menuCounts.set(mc, (menuCounts.get(mc) ?? 0) + 1);
+      } else {
+        recipeCounts.set(r.category, (recipeCounts.get(r.category) ?? 0) + 1);
+      }
+    }
+    return {
+      RECIPE_CATEGORIES: ALL_RECIPE_CATEGORIES.filter((c) => (recipeCounts.get(c.key) ?? 0) > 0),
+      MENU_CATEGORIES: ALL_MENU_CATEGORIES.filter((c) => (menuCounts.get(c.key) ?? 0) > 0),
+    };
+  }, [recipes]);
 
   useEffect(() => {
     if (!editingName) setNameDraft(fullName ?? "");
