@@ -686,10 +686,11 @@ function InvitationsPanel() {
       return;
     }
     setBusy(true);
+    const fallbackBranch = inviteBranch || branches[0]?.id || null;
     const { error: e } = await supabase
       .from("invitations")
       .upsert(
-        { email: clean, role, assigned_branch_id: inviteBranch || null, full_name: fullName.trim() || null },
+        { email: clean, role, assigned_branch_id: fallbackBranch, full_name: fullName.trim() || null },
         { onConflict: "email" },
       );
     if (e) {
