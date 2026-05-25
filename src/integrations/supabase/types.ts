@@ -190,6 +190,33 @@ export type Database = {
           },
         ]
       }
+      daily_operational_history: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          snapshot_date: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          snapshot_date: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          snapshot_date?: string
+        }
+        Relationships: []
+      }
       daily_task_logs: {
         Row: {
           branch_id: string
@@ -807,8 +834,10 @@ export type Database = {
         Row: {
           completed_tutorial_steps: string[]
           created_at: string
+          date_of_birth: string | null
           full_name: string | null
           has_accepted_nda: boolean
+          start_date: string | null
           tutorial_cooldown_until: string | null
           tutorial_version: number
           updated_at: string
@@ -817,8 +846,10 @@ export type Database = {
         Insert: {
           completed_tutorial_steps?: string[]
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string | null
           has_accepted_nda?: boolean
+          start_date?: string | null
           tutorial_cooldown_until?: string | null
           tutorial_version?: number
           updated_at?: string
@@ -827,8 +858,10 @@ export type Database = {
         Update: {
           completed_tutorial_steps?: string[]
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string | null
           has_accepted_nda?: boolean
+          start_date?: string | null
           tutorial_cooldown_until?: string | null
           tutorial_version?: number
           updated_at?: string
@@ -1390,6 +1423,7 @@ export type Database = {
       }
       notebook_daily_reset: { Args: never; Returns: undefined }
       operational_today: { Args: never; Returns: string }
+      rollover_daily_operations: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "viewer" | "super_admin" | "manager" | "employee"
