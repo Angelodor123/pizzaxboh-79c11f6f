@@ -153,6 +153,31 @@ function TasksPage() {
 
   // Debounce timers per task id for comment autosave
   const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Refs for smooth scroll-into-view on accordion open
+  const shiftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const groupRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
+  useEffect(() => {
+    if (!openShift) return;
+    const el = shiftRefs.current.get(openShift);
+    if (el) {
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [openShift]);
+
+  useEffect(() => {
+    if (!openGroup) return;
+    const el = groupRefs.current.get(openGroup);
+    if (el) {
+      // Wait one frame so the expanded content is in the DOM before scrolling
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [openGroup]);
+
 
   useEffect(() => {
     if (!branchId) return;
