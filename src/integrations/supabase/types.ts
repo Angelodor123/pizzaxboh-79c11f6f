@@ -1192,7 +1192,7 @@ export type Database = {
       operational_today: { Args: never; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "viewer"
+      app_role: "admin" | "viewer" | "super_admin"
       invoice_status: "pending_review" | "approved"
     }
     CompositeTypes: {
@@ -1321,7 +1321,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "viewer"],
+      app_role: ["admin", "viewer", "super_admin"],
       invoice_status: ["pending_review", "approved"],
     },
   },

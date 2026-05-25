@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Pencil, Check, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import {
   Menu,
@@ -81,16 +84,48 @@ export function CategoryDrawer() {
     setDrawerOpen,
   } = useUIStore();
   const {
+    session,
     email,
+    fullName,
     role,
     isSuperAdmin: effIsSuperAdmin,
     realIsSuperAdmin,
     simulatedRole,
     setSimulatedRole,
     signOut,
+    refreshRole,
   } = useAuth();
   const [recipesOpen, setRecipesOpen] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    if (!editingName) setNameDraft(fullName ?? "");
+  }, [fullName, editingName]);
+
+  const saveName = async () => {
+    const userId = session?.user?.id;
+    const next = nameDraft.trim();
+    if (!userId || !next || next === (fullName ?? "")) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: next })
+      .eq("user_id", userId);
+    setSavingName(false);
+    if (error) {
+      toast.error("שגיאה בעדכון השם");
+      return;
+    }
+    await refreshRole();
+    toast.success("השם עודכן");
+    setEditingName(false);
+  };
 
   // Effective role mapping for menu visibility. Uses the *effective* values
   // from useAuth() so "View As" simulation immediately rewires the menu.
@@ -369,18 +404,69 @@ export function CategoryDrawer() {
               )}
             </div>
           )}
-          <div className="px-6 py-4 flex items-center justify-between gap-3">
-            {email && (
-              <div className="text-[11px] text-muted-foreground truncate text-right flex-1">
-                {email}
-              </div>
-            )}
+          <div className="px-6 py-4 space-y-3">
+            {/* Name editor */}
+            <div dir="rtl">
+              {editingName ? (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    autoFocus
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void saveName();
+                      if (e.key === "Escape") setEditingName(false);
+                    }}
+                    placeholder="השם שלך"
+                    className="flex-1 min-w-0 bg-zinc-900 border border-neon/50 rounded-md px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-neon/40 text-right"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void saveName()}
+                    disabled={savingName}
+                    aria-label="שמור שם"
+                    className="p-1.5 rounded-md border border-neon/50 text-neon hover:bg-neon/10 active:scale-95 transition disabled:opacity-50"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingName(false)}
+                    aria-label="ביטול"
+                    className="p-1.5 rounded-md border border-zinc-700 text-muted-foreground hover:text-foreground active:scale-95 transition"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameDraft(fullName ?? "");
+                    setEditingName(true);
+                  }}
+                  className="w-full flex items-center justify-between gap-2 group text-right"
+                  aria-label="ערוך את השם שלך"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-neon transition shrink-0" />
+                  <span className="text-sm font-bold text-foreground truncate group-hover:text-neon transition">
+                    {fullName?.trim() || "הוסף את שמך"}
+                  </span>
+                </button>
+              )}
+              {email && (
+                <div className="text-[11px] text-muted-foreground truncate text-right mt-1">
+                  {email}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={async () => {
                 close();
                 await signOut();
               }}
-              className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:text-neon transition"
+              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold text-foreground hover:text-neon border border-zinc-800 rounded-md py-2 transition"
             >
               <LogOut className="h-4 w-4" />
               התנתק
