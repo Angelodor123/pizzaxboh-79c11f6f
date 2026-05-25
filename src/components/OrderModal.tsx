@@ -29,47 +29,81 @@ type HistoryEntry = {
   status?: "draft" | "sent" | "received" | "cancelled" | null;
 };
 
-export function OrderModal({ supplier, onClose }: Props) {
+export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [rows, setRows] = useState<OrderRow[]>([{ name: "", qty: "" }]);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  // Load order history for this supplier
+  // Load order history for this supplier — from new `orders` table (with status)
+  // falling back to legacy `supplier_orders_history` when needed.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setHistoryLoading(true);
-      const { data, error } = await supabase
-        .from("supplier_orders_history")
-        .select("id, created_at, order_details")
-        .eq("supplier_id", supplier.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const [ordersRes, legacyRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("id, sent_at, items, notes, status")
+          .eq("supplier_id", supplier.id)
+          .order("sent_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("supplier_orders_history")
+          .select("id, created_at, order_details")
+          .eq("supplier_id", supplier.id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
       if (cancelled) return;
-      if (error) {
-        console.error("history load failed", error);
-        setHistory([]);
-      } else {
-        const parsed: HistoryEntry[] = (data ?? []).map((row) => {
-          const det = (row.order_details ?? {}) as { rows?: OrderRow[]; notes?: string };
-          const cleanRows = Array.isArray(det.rows)
-            ? det.rows.filter((r) => r && (r.name?.trim() || r.qty?.trim()))
-            : [];
-          return {
-            id: row.id,
-            created_at: row.created_at,
-            rows: cleanRows,
-            notes: det.notes,
-          };
-        }).filter((h) => h.rows.length > 0);
-        setHistory(parsed);
+
+      const fromOrders: HistoryEntry[] = (ordersRes.data ?? []).map((o) => {
+        const items = Array.isArray(o.items) ? (o.items as unknown as OrderRow[]) : [];
+        const cleanRows = items
+          .filter((r) => r && (r.name?.toString().trim() || r.qty?.toString().trim()))
+          .map((r) => ({ name: String(r.name ?? ""), qty: String(r.qty ?? "") }));
+        return {
+          id: o.id,
+          created_at: o.sent_at,
+          rows: cleanRows,
+          notes: o.notes ?? undefined,
+          orderId: o.id,
+          status: (o.status as HistoryEntry["status"]) ?? null,
+        };
+      }).filter((h) => h.rows.length > 0);
+
+      const fromLegacy: HistoryEntry[] = (legacyRes.data ?? []).map((row) => {
+        const det = (row.order_details ?? {}) as { rows?: OrderRow[]; notes?: string };
+        const cleanRows = Array.isArray(det.rows)
+          ? det.rows.filter((r) => r && (r.name?.trim() || r.qty?.trim()))
+          : [];
+        return {
+          id: row.id,
+          created_at: row.created_at,
+          rows: cleanRows,
+          notes: det.notes,
+          orderId: null,
+          status: null,
+        };
+      }).filter((h) => h.rows.length > 0);
+
+      // Merge, prefer new orders, dedupe by timestamp+first item name
+      const seen = new Set<string>();
+      const merged: HistoryEntry[] = [];
+      for (const e of [...fromOrders, ...fromLegacy]) {
+        const key = `${e.created_at?.slice(0, 16)}|${e.rows[0]?.name ?? ""}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(e);
       }
+      merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      setHistory(merged.slice(0, 20));
       setHistoryLoading(false);
     })();
     return () => { cancelled = true; };
   }, [supplier.id]);
+
 
 
   // Restore draft
