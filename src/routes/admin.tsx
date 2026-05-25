@@ -747,7 +747,8 @@ function InvitationsPanel() {
       setError("לא ניתן להסיר סופר-אדמין");
       return;
     }
-    if (!confirm("להסיר את הרשאת המשתמש?")) return;
+    const ok = await confirmDelete({ title: "הסרת משתמש", description: "להסיר את הרשאת המשתמש? לא יוכל יותר להיכנס למערכת.", confirmLabel: "הסר משתמש" });
+    if (!ok) return;
     const { error: e } = await supabase.from("user_roles").delete().eq("id", id);
     if (e) { setError(e.message); return; }
     await load();
