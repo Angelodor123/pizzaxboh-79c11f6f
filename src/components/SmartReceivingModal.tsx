@@ -136,6 +136,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       if (res.parsed?.invoice_number) setInvoiceNumber(res.parsed.invoice_number);
       if (res.parsed?.total_amount != null) setTotalAmount(String(res.parsed.total_amount));
       if (res.parsed?.document_date) setDocDate(res.parsed.document_date);
+      // If contextually linked to a specific order, auto-link and jump to verify
+      if (linkedOrderId && chosenMatch) {
+        linkToMatch(chosenMatch);
+        return;
+      }
       if ((res.matches?.length ?? 0) > 0) setStage("suggest");
       else setStage("manual");
     } catch (e) {
