@@ -146,7 +146,21 @@ function OrdersPage() {
         </Link>
       </div>
 
-      {selected && <OrderModal supplier={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <OrderModal
+          supplier={selected}
+          onClose={() => setSelected(null)}
+          onReceive={(orderId) => setReceiving({ orderId })}
+        />
+      )}
+      {receiving && (
+        <SmartReceivingModal
+          suppliers={list.map((s) => ({ id: s.id, name: s.name }))}
+          linkedOrderId={receiving.orderId}
+          onClose={() => setReceiving(null)}
+          onSaved={() => setReceiving(null)}
+        />
+      )}
     </div>
   );
 }
