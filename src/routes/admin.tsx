@@ -1771,6 +1771,8 @@ function SuperAdminUsersPanel() {
                 className="w-full bg-input border border-border rounded-md px-3 py-2 text-right"
               >
                 <option value="viewer">צפייה בלבד</option>
+                <option value="employee">עובד</option>
+                <option value="manager">מנהל משמרת</option>
                 <option value="admin">מנהל</option>
                 <option value="super_admin">סופר-אדמין</option>
               </select>
