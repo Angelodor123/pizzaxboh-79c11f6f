@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil } from "lucide-react";
+import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -653,6 +653,22 @@ function TasksPage() {
                                 אין משימות בקבוצה זו.
                               </div>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenGroup(null);
+                                requestAnimationFrame(() => {
+                                  groupRefs.current
+                                    .get(g.id)
+                                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                });
+                              }}
+                              aria-label={`סגור קטגוריה: ${g.name}`}
+                              className="w-full mt-4 py-3 bg-zinc-800/40 hover:bg-zinc-800 text-zinc-400 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors border border-zinc-800/50"
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                              <span>סגור קטגוריה</span>
+                            </button>
                           </div>
                         )}
                       </div>
