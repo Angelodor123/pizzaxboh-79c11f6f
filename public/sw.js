@@ -1,7 +1,8 @@
 // Pizza X Service Worker — notifications + minimal asset cache for PWA installability.
+// Bump version on any change to force activation + cache cleanup on user devices.
 
-const STATIC_CACHE = "pizzax-static-v1";
-const STATIC_ASSETS = ["/", "/manifest.json", "/pizza-x-logo.png"];
+const STATIC_CACHE = "pizzax-static-v3";
+const STATIC_ASSETS = ["/manifest.json", "/pizza-x-logo.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -21,8 +22,10 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Network-first for navigations (always fresh HTML), cache fallback when offline.
-// Cache-first for same-origin static assets.
+// Network-first for navigations (always fresh HTML). No cache fallback —
+// stale HTML referencing missing JS chunks is what causes "stuck on splash".
+// Pass-through for JS/CSS (let the browser HTTP cache + hashed filenames handle it).
+// Cache-first only for stable images / fonts.
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
@@ -30,13 +33,11 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req).catch(() => caches.match("/").then((r) => r || Response.error()))
-    );
+    event.respondWith(fetch(req));
     return;
   }
 
-  if (/\.(?:png|jpg|jpeg|svg|webp|ico|woff2?|ttf|css|js)$/i.test(url.pathname)) {
+  if (/\.(?:png|jpg|jpeg|svg|webp|ico|woff2?|ttf)$/i.test(url.pathname)) {
     event.respondWith(
       caches.match(req).then(
         (cached) =>
