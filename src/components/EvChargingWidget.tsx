@@ -271,44 +271,64 @@ export function EvChargingWidget() {
                   </div>
                 )}
 
-                {/* Battery big display */}
-                <div className="px-3 pt-3 flex items-center justify-center gap-3">
-                  <div className="flex items-baseline gap-0.5 font-display tabular-nums" dir="ltr">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={100}
-                      value={battery}
-                      onFocus={(e) => {
-                        setBatteryDraft((d) => ({ ...d, [v.id]: String(v.battery_pct) }));
-                        e.currentTarget.select();
-                      }}
-                      onChange={(e) => {
-                        setBatteryDraft((d) => ({ ...d, [v.id]: e.target.value }));
-                      }}
-                      onBlur={(e) => {
-                        const raw = e.target.value.trim();
-                        setBatteryDraft((d) => {
-                          const { [v.id]: _, ...rest } = d;
-                          return rest;
-                        });
-                        if (raw === "") return;
-                        const n = Math.max(0, Math.min(100, Number(raw) || 0));
-                        setVehicles((prev) =>
-                          prev.map((x) => (x.id === v.id ? { ...x, battery_pct: n } : x)),
-                        );
-                        void update(v.id, { battery_pct: n });
-                      }}
-                      className={`w-[3.2ch] bg-transparent border-0 p-0 text-center text-3xl font-black ${batteryColor} focus:outline-none focus:ring-0`}
-                      aria-label={`אחוז סוללה ${v.name}`}
-                    />
-                    <span className={`text-xl font-black ${batteryColor}`}>%</span>
+                {/* Battery big display — clickable to edit */}
+                <label
+                  htmlFor={`battery-${v.id}`}
+                  className="mx-3 mt-3 cursor-pointer hover:bg-zinc-800/50 rounded-lg p-2 transition-all active:scale-95 block"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-baseline gap-0.5 font-display tabular-nums" dir="ltr">
+                      <input
+                        id={`battery-${v.id}`}
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={100}
+                        value={battery}
+                        onFocus={(e) => {
+                          setBatteryDraft((d) => ({ ...d, [v.id]: String(v.battery_pct) }));
+                          e.currentTarget.select();
+                        }}
+                        onChange={(e) => {
+                          setBatteryDraft((d) => ({ ...d, [v.id]: e.target.value }));
+                        }}
+                        onBlur={(e) => {
+                          const raw = e.target.value.trim();
+                          setBatteryDraft((d) => {
+                            const { [v.id]: _, ...rest } = d;
+                            return rest;
+                          });
+                          if (raw === "") return;
+                          const n = Math.max(0, Math.min(100, Number(raw) || 0));
+                          setVehicles((prev) =>
+                            prev.map((x) => (x.id === v.id ? { ...x, battery_pct: n } : x)),
+                          );
+                          void update(v.id, { battery_pct: n });
+                        }}
+                        className={`w-[3.2ch] bg-transparent border-0 p-0 text-center text-3xl font-black cursor-pointer ${batteryColor} focus:outline-none focus:ring-0`}
+                        aria-label={`אחוז סוללה ${v.name}`}
+                      />
+                      <span className={`text-xl font-black ${batteryColor}`}>%</span>
+                    </div>
+                    <Pencil className={`h-3.5 w-3.5 opacity-70 ${batteryColor}`} aria-hidden />
                   </div>
-                </div>
-                <div className="px-3 -mt-0.5 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-                  סוללה נוכחית
-                </div>
+                  <div className="text-center text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
+                    סוללה נוכחית (לחץ לעדכון)
+                  </div>
+                  {v.updated_at && (
+                    <div className="text-center text-[10px] text-zinc-600 mt-1" dir="rtl">
+                      עודכן לאחרונה:{" "}
+                      <span dir="ltr">
+                        {new Date(v.updated_at).toLocaleTimeString("he-IL", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </label>
+
 
                 {/* Countdown */}
                 <div className="px-3 mt-2.5 flex items-center justify-between text-xs">
