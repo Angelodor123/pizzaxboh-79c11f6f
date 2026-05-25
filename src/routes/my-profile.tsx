@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, ShieldCheck, User, Building2, BadgeCheck, Calendar, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { subscribeToPush } from "@/lib/push";
+import { subscribeToPush, PushSubscribeError, isIOS, isStandalone } from "@/lib/push";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/my-profile")({
