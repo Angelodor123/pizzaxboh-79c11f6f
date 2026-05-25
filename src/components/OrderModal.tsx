@@ -266,6 +266,46 @@ export function OrderModal({ supplier, onClose }: Props) {
             העתק הזמנה
           </button>
         </div>
+
+        {/* Order History */}
+        <div className="border-t border-zinc-800/50 mt-6 pt-4">
+          <h4 className="text-sm font-bold text-zinc-400 mb-3">היסטורית הזמנות</h4>
+          {historyLoading ? (
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען היסטוריה…
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-xs text-zinc-500">אין הזמנות קודמות לספק זה.</div>
+          ) : (
+            <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+              {history.map((h) => {
+                const summary = h.rows
+                  .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
+                  .filter(Boolean)
+                  .join(", ");
+                return (
+                  <div
+                    key={h.id}
+                    className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-500">הוזמן</span>
+                      <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
+                    </div>
+                    <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
+                    <button
+                      type="button"
+                      onClick={() => duplicateOrder(h)}
+                      className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
+                    >
+                      שכפל הזמנה
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
