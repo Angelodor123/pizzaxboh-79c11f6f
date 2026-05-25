@@ -237,6 +237,36 @@ export type Database = {
           },
         ]
       }
+      dough_updates_log: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          prep_item_id: string
+          trays_count: number
+          updated_by: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          prep_item_id: string
+          trays_count: number
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          prep_item_id?: string
+          trays_count?: number
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: []
+      }
       ev_vehicles: {
         Row: {
           battery_pct: number
