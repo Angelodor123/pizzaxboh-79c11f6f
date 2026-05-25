@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Building2, Plus, Trash2, Check, X, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 
 type Branch = { id: string; name: string; active: boolean };
 
