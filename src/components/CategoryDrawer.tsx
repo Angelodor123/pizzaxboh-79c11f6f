@@ -111,6 +111,27 @@ export function CategoryDrawer() {
   const [savingName, setSavingName] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
 
+  // Dynamically filter sidebar categories to only those with ≥1 active item
+  // in the live recipes store. Empty categories are hidden entirely.
+  const recipes = useCookbookStore((s) => s.recipes);
+  const { RECIPE_CATEGORIES, MENU_CATEGORIES } = useMemo(() => {
+    const active = recipes.filter((r) => !r.deleted);
+    const recipeCounts = new Map<RecipeCategory, number>();
+    const menuCounts = new Map<MenuCategory, number>();
+    for (const r of active) {
+      if (isMenuItem(r)) {
+        const mc = recipeToMenuCategory(r);
+        menuCounts.set(mc, (menuCounts.get(mc) ?? 0) + 1);
+      } else {
+        recipeCounts.set(r.category, (recipeCounts.get(r.category) ?? 0) + 1);
+      }
+    }
+    return {
+      RECIPE_CATEGORIES: ALL_RECIPE_CATEGORIES.filter((c) => (recipeCounts.get(c.key) ?? 0) > 0),
+      MENU_CATEGORIES: ALL_MENU_CATEGORIES.filter((c) => (menuCounts.get(c.key) ?? 0) > 0),
+    };
+  }, [recipes]);
+
   useEffect(() => {
     if (!editingName) setNameDraft(fullName ?? "");
   }, [fullName, editingName]);
