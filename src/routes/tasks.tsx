@@ -402,6 +402,14 @@ function TasksPage() {
   const total = allTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
+  const prevPctRef = useRef(pct);
+  useEffect(() => {
+    if (total > 0 && pct === 100 && prevPctRef.current < 100) {
+      void celebrate();
+    }
+    prevPctRef.current = pct;
+  }, [pct, total]);
+
   const displayShifts: Array<{ id: string; name: string }> = [
     ...shifts.map((s) => ({ id: s.id, name: s.name })),
     ...(winter ? [{ id: VIRTUAL_WINTER_SHIFT_ID, name: "היערכות חורף" }] : []),
