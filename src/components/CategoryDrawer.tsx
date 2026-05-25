@@ -479,6 +479,15 @@ export function CategoryDrawer() {
               </button>
             )}
 
+            <Link
+              to="/my-profile"
+              onClick={close}
+              className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-neon border border-neon/40 hover:bg-neon/10 rounded-md py-1.5 transition"
+            >
+              <UserCircle className="h-3.5 w-3.5" />
+              האזור האישי שלי
+            </Link>
+
             <button
               onClick={async () => {
                 close();
