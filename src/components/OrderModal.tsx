@@ -127,15 +127,28 @@ export function OrderModal({ supplier, onClose }: Props) {
   const saveHistory = async () => {
     try {
       const branchId = await requireCurrentBranchId();
+      const cleanRows = rows.filter((r) => r.name.trim());
+      // legacy history table (kept for the history UI)
       await supabase.from("supplier_orders_history").insert({
         branch_id: branchId,
         supplier_id: supplier.id,
         order_details: JSON.parse(JSON.stringify({ rows, notes, message })),
       });
+      // new orders table — drives goods-receiving matching
+      await supabase.from("orders").insert({
+        branch_id: branchId,
+        supplier_id: supplier.id,
+        status: "sent",
+        items: JSON.parse(JSON.stringify(cleanRows)),
+        notes: notes || null,
+        message,
+        sent_at: new Date().toISOString(),
+      });
     } catch (e) {
       console.error("saveHistory failed", e);
     }
   };
+
 
   const handleWhatsapp = async () => {
     if (!hasContent || submitting) return;
