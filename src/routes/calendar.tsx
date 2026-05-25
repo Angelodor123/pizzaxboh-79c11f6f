@@ -30,6 +30,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   category: EventCategory;
+  event_type?: string | null;
   event_date: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -40,6 +41,7 @@ interface CalendarEvent {
   supplier_id?: string | null;
   is_auto?: boolean;
 }
+
 
 interface EventOverride {
   id: string;
