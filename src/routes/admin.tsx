@@ -1813,6 +1813,36 @@ function SuperAdminUsersPanel() {
               </select>
             </div>
 
+            {editing.row.kind === "user" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">תאריך יום הולדת</label>
+                  <input
+                    type="date"
+                    dir="ltr"
+                    value={editing.dateOfBirth}
+                    onChange={(e) =>
+                      setEditing({ ...editing, dateOfBirth: e.target.value })
+                    }
+                    className="w-full bg-input border border-border rounded-md px-3 py-2 text-left"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">תאריך כניסה לפיצה</label>
+                  <input
+                    type="date"
+                    dir="ltr"
+                    value={editing.startDate}
+                    onChange={(e) =>
+                      setEditing({ ...editing, startDate: e.target.value })
+                    }
+                    className="w-full bg-input border border-border rounded-md px-3 py-2 text-left"
+                  />
+                </div>
+              </div>
+            )}
+
+
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setEditing(null)}
