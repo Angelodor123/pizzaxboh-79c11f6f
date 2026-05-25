@@ -17,7 +17,8 @@ import {
   UtensilsCrossed,
   ListChecks,
   Package,
-} from "lucide-react";
+  UserCircle,
+
 import {
   Sheet,
   SheetContent,
