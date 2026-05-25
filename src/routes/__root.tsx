@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, User } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
@@ -294,6 +294,14 @@ function AuthedShell() {
           <div className="flex items-center gap-1.5 shrink-0">
             {showServiceToggle && <ServiceModeToggle />}
             <BranchSwitcher />
+            <Link
+              to="/my-profile"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
+              aria-label="האזור האישי שלי"
+              title="האזור האישי שלי"
+            >
+              <User className="h-4 w-4" />
+            </Link>
             {pathname !== "/" && (
               <button
                 onClick={() => {

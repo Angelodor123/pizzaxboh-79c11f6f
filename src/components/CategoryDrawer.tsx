@@ -181,12 +181,8 @@ export function CategoryDrawer() {
                 <span className={iconWrap}><Home className="h-5 w-5" /></span>
               </Link>
             </li>
-            <li>
-              <Link to="/my-profile" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">👤 האזור האישי שלי</span>
-                <span className={iconWrap}><UserCircle className="h-5 w-5" /></span>
-              </Link>
-            </li>
+
+
 
             <li>
               <Link to="/tasks" onClick={close} className={itemClass}>
@@ -482,6 +478,15 @@ export function CategoryDrawer() {
                 התקן אפליקציה
               </button>
             )}
+
+            <Link
+              to="/my-profile"
+              onClick={close}
+              className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-neon border border-neon/40 hover:bg-neon/10 rounded-md py-1.5 transition"
+            >
+              <UserCircle className="h-3.5 w-3.5" />
+              האזור האישי שלי
+            </Link>
 
             <button
               onClick={async () => {
