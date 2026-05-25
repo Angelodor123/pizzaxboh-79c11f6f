@@ -32,7 +32,7 @@ export function UnitsPanel() {
     setName(""); void load();
   };
   const remove = async (id: string) => {
-    if (!confirm("למחוק יחידה זו?")) return;
+    if (!(await confirmDelete({ title: "מחיקת יחידת מידה", description: "למחוק יחידה זו? פעולה זו אינה ניתנת לשחזור." }))) return;
     const { error } = await supabase.from("measurement_units").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     void load();
