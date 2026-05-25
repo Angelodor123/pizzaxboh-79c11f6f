@@ -111,6 +111,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "apple-touch-icon", href: "/pizza-x-logo.png" },
+      { rel: "preload", as: "image", href: "/pizza-x-logo.png", fetchpriority: "high" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap",
@@ -250,6 +253,10 @@ function AuthedShell() {
             <img
               src={pizzaXLogo}
               alt="Pizza X"
+              width={216}
+              height={72}
+              fetchPriority="high"
+              decoding="async"
               className="h-12 sm:h-[72px] w-auto object-contain"
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />

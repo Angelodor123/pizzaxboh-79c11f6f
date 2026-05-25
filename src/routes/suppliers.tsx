@@ -162,7 +162,7 @@ function SuppliersPage() {
                 )}
                 <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden border border-border bg-background/60 grid place-content-center">
                   {logo ? (
-                    <img src={logo} alt={s.name} className="h-full w-full object-cover" />
+                    <img src={logo} alt={s.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   ) : (
                     <ImageIcon className="h-5 w-5 text-muted-foreground" />
                   )}
