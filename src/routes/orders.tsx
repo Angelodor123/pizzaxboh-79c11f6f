@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Truck, ChevronRight } from "lucide-react";
+import { Truck, ChevronRight, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
+import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 
 export const Route = createFileRoute("/orders")({
