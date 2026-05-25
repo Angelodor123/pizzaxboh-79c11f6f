@@ -33,6 +33,7 @@ import {
   type SupplierReminderSettings,
 } from "@/lib/site-texts";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
 import {
