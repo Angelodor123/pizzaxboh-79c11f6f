@@ -186,7 +186,7 @@ const RESTRICTED_ROUTES: Record<string, "manager" | "super_admin"> = {
   "/suppliers": "super_admin",
   "/orders": "manager",
   "/invoices": "manager",
-  "/calendar": "manager",
+  // "/calendar" is accessible to all authenticated roles (employees see read-only view; edits gated inside the component).
   "/restock": "manager",
 };
 
