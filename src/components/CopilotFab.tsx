@@ -245,9 +245,8 @@ export function CopilotFab() {
 
     setLoading(true);
     try {
-      const branchId = (await import("@/lib/current-branch")).getCurrentBranchId
-        ? await (await import("@/lib/current-branch")).getCurrentBranchId()
-        : null;
+      const { getCurrentBranchId } = await import("@/lib/current-branch");
+      const branchId = await getCurrentBranchId();
       const res = await ask({
         data: {
           messages: next.slice(-20),
