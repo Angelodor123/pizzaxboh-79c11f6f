@@ -1,86 +1,74 @@
-# Comprehensive Supplier & Invoice Ecosystem
+# תכנית הטמעה — חבילת עדכון מקיפה
 
-This is a large, multi-area build. Breaking it into clean phases. Access throughout is restricted to **Admin + Super Admin** only.
-
-## Phase 1 — Database (single migration)
-
-Alter / add the following:
-
-**`suppliers`** — add columns:
-- `contact_phone` (text) — for WhatsApp links
-- `delivery_days` (text[]) — `['Sunday','Tuesday',...]` (mirrors existing `delivery_weekdays`; we'll keep both in sync for calendar)
-- `is_archived` (boolean, default false)
-
-**`supplier_orders_history`** — new table:
-- `id, branch_id, supplier_id, order_details jsonb, created_by, created_at`
-- RLS: Admin read/insert within own branch (super admin all)
-
-**`invoices`** — add:
-- `is_archived` (boolean, default false)
-
-**`invoice_items`** — already exists, no change.
-
-**Seed data** — Insert the 10 default suppliers (מרינה, געש, בנדיקט, צח, פסטטריה, ישראקו, החברה המרכזית, פרש פסטה, Ristretto, אנשי הזית) into every existing active branch, with `logo_url` pointing to bundled assets and matching `delivery_days`.
-
-**Logos** — Copy 9 uploaded logos into `src/assets/suppliers/` and import; seed `logo_url` with the imported asset paths (resolved at build time).
-
-## Phase 2 — Supplier Selection Hub (`/orders`)
-
-New route `src/routes/orders.tsx`:
-- Admin/super-admin gate (redirect viewers).
-- Header + "סה״כ הזמנות החודש" mini-stat.
-- Logo grid: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6`, identical card sizes, logo in `h-32 w-full flex items-center justify-center p-4 bg-zinc-800/50` box with `object-contain max-h-full max-w-full`, name + category centered below, hover scale + neon-green glow.
-- Click → opens **OrderModal**.
-
-## Phase 3 — Order Modal + WhatsApp
-
-New `src/components/OrderModal.tsx`:
-- Dynamic row builder: שם מוצר, כמות, "הוסף שורה", delete row.
-- "הערות להזמנה" textarea.
-- **localStorage persistence** keyed by `order:{supplierId}` — restored on open, cleared on success.
-- Compiles the exact Hebrew template (numbered list, omit הערות line when empty).
-- **Primary** (WhatsApp green): writes to `supplier_orders_history`, opens `https://wa.me/{phone}?text=...` in new tab. Button disables + spinner during submit.
-- **Secondary**: copy to clipboard + toast "ההזמנה הועתקה בהצלחה".
-
-## Phase 4 — Goods Receiving (`/invoices`)
-
-New route `src/routes/invoices.tsx`:
-- Admin/super-admin gate.
-- **Financial banner**: "סה״כ הוצאות ספקים (חודש נוכחי)" — sum of `total_amount` for non-archived invoices in current calendar month, large high-contrast typography.
-- Table: תאריך, ספק, מס׳ חשבונית, סכום, סטטוס, פעולות (archive).
-- Neon pink "קליטת חשבונית חדשה" button → opens split-view modal.
-
-New `src/components/InvoiceIntakeModal.tsx`:
-- **Left**: image viewer w/ pan & zoom (lightweight CSS transform on wheel/drag), CSS scanning animation overlay during upload.
-- **Right**: supplier dropdown, invoice_number, סכום כולל (required), תאריך חשבונית (required), repeating items table.
-- Submit button disabled until required fields valid.
-- localStorage persistence; double-submit prevention.
-- **Financial anomaly check**: before submit, query avg total for that supplier — if entered > 5× avg OR > 15,000₪, show confirmation modal "שים לב: הסכום שהוזן גבוה מהרגיל" with אישור / חזור לעריכה.
-- Upload to `invoice-images` bucket → insert `invoices` + `invoice_items`.
-
-## Phase 5 — Admin CRUD for Suppliers
-
-Extend `src/routes/suppliers.tsx` (or add `SuppliersAdminPanel` section) for super-admin:
-- Add/Edit form: name, category, contact_phone, file dropzone for logo (uploads to a new `supplier-logos` bucket), day checkboxes ש-ש mapped to both `delivery_days` and `delivery_weekdays`.
-- "Delete" → soft delete (`is_archived = true`). Archived suppliers hidden from grid + calendar.
-
-## Phase 6 — Calendar Failsafe
-
-Update `src/routes/calendar.tsx`:
-- Existing supplier delivery events already auto-sync via DB trigger. Augment the rendered event block:
-  - Default: 🚚 קבלת סחורה: {Supplier} — {Category}
-  - For events with date ≤ today: query `invoices` for matching `supplier_id` on that operational date. If missing → render pulsing red `bg-red-500/10 border border-red-500/40` block with "⚠️ חסרה חשבונית". If present → success styling.
-
-## Phase 7 — Dashboard quick access
-
-Add two buttons to `src/routes/index.tsx` quick-access section (admin only): **הזמנת סחורה** → `/orders`, **קליטת סחורה** → `/invoices`.
-
-## Technical Notes
-- All inserts respect `branch_id` via existing `current_user_branch_id()` helper.
-- RTL preserved via existing `dir="rtl"` root.
-- All buttons have spinner + disabled state during async ops.
-- Reusable `useLocalStorageForm` hook for form persistence.
+הבקשה רחבה מאוד וכוללת תשתיות חדשות (Web Push, WebAuthn, Service Worker מלא). לפני שאני קופץ למימוש, חשוב שנסכים על ההיקף והגישה — חלק מהרכיבים דורשים מפתחות/קונפיגורציה ייעודית.
 
 ---
 
-This is roughly **1 migration + 2 new routes + 4 new components + edits to 3 existing files**. Shall I proceed?
+## חלק 1 — אזור אישי `/my-profile` ✅ פשוט
+
+- ראוט חדש תחת `_authenticated/my-profile.tsx`
+- ברכה אישית עם השם מ-`profiles.full_name`
+- כרטיס סיכום: התפקיד, הסניף, תאריך הצטרפות, סטטוס NDA
+- קישורים מהירים: "מדריך לעובד" → `/guide`, "ה-NDA שלי" (מודאל קריאה בלבד של מסמך ה-NDA)
+- כפתור גישה מסרגל הניווט הראשי
+
+**עלות:** קובץ ראוט אחד + עדכון תפריט. ללא מיגרציה.
+
+---
+
+## חלק 2 — ביומטרי + אופליין ⚠️ מורכב
+
+### 2A — WebAuthn / Passkeys
+Supabase Auth **לא** תומך ב-passkeys נטיב. האפשרויות:
+- **(מומלץ)** WebAuthn מקומי — נשמור credential ID ב-localStorage + טבלה `user_passkeys`, ולאחר אימות ביומטרי מוצלח נשלוף refresh token שמור ונחדש סשן. דורש זהירות אבטחתית.
+- **חלופה פשוטה:** "Quick Unlock" — לאחר התחברות רגילה, נשמור flag מוצפן ונפעיל `navigator.credentials.get()` עם PublicKey רק כדי לבטל-נעילה של סשן קיים שעדיין תקף ב-Supabase (refresh token חי ~30 ימים).
+
+**הצעה:** ניישם את החלופה הפשוטה (Quick Unlock) — מציג FaceID/טביעה רק כשיש סשן Supabase תקף; חוסך תשתית קריפטוגרפית מלאה. אם רוצים passkeys אמיתיים — נצטרך שיחה נפרדת.
+
+### 2B — Service Worker אופליין
+**אזהרה:** ה-SW הנוכחי (`public/sw.js`) הוא kill-switch בלבד (מנקה caches). הוספת caching מלא תשבור עדכונים בתצוגה המקדימה של Lovable וגם עלולה להגיש תוכן ישן באתר המפורסם.
+
+**הצעה מאוזנת:**
+- App Shell cache (HTML, JS, CSS) רק בפרודקשן (`pizzaxboh.lovable.app`), בגישת `NetworkFirst` עם timeout 3 שניות
+- React Query: כבר משתמש ב-cache ב-memory; נוסיף `persistQueryClient` ל-localStorage עבור הקריאות החשובות
+- לא ניגע ב-`id-preview--*` ובאייפריימים
+
+### 2C — באנר אופליין + חסימת mutations
+- hook `useOnlineStatus` עם listener על `online`/`offline`
+- באנר ענברי קבוע למעלה כשאין רשת
+- wrapper סביב mutations שמציג toast בעברית אם `!navigator.onLine`
+
+---
+
+## חלק 3 — פאנל התראות מנהל ⚠️ מורכב מאוד
+
+### 3A — Web Push Notifications
+דורש:
+1. **VAPID keys** — צריך לייצר זוג מפתחות (`bun add web-push` + סקריפט) ולהוסיף כ-secrets: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+2. **טבלה חדשה** `push_subscriptions` (user_id, endpoint, p256dh, auth, branch_id, created_at)
+3. **SW push handler** — מאזין ל-`push` event ומציג notification
+4. **Server function** `subscribeToPush` — שומר subscription
+5. **Server function** `sendPushToUsers` — שולח ל-endpoints (דרך `web-push` בספריית Worker-compatible — ייתכן שנצטרך fetch ידני ל-FCM/Apple עם VAPID JWT, כי `web-push` הוא Node-only)
+
+**הערה קריטית:** ה-Worker runtime לא תומך ב-`web-push` המקורי. נצטרך מימוש VAPID JWT ידני עם `crypto.subtle` — אפשרי אבל ~150 שורות.
+
+### 3B — מסך `/admin/alerts`
+- ראוט חדש תחת `_authenticated/admin/alerts.tsx`, מוגן ל-`admin`+`super_admin`
+- שדה לסף מגשי בצק (נשמר ב-`app_settings` בקליד `dough_alert_threshold`, ברירת מחדל 15)
+- טופס broadcast: textarea + select יעד ("כל הצוות"/"מנהלים בלבד") + כפתור שליחה
+
+### 3C — טריגר אוטומטי
+- Database trigger על `dough_updates_log` אחרי INSERT
+- אם `trays_count < threshold` — `pg_net.http_post` ל-`/api/public/hooks/dough-alert`
+- ה-route שולח push לכל המנהלים+super_admins הרשומים
+- צריך להפעיל `pg_net` extension
+
+---
+
+## שאלות לפני שאני מתחיל
+
+1. **WebAuthn:** האם להסתפק ב-"Quick Unlock" (פשוט, יציב) או דרוש passkeys מלא (מורכב יותר, שבועיים+ פיתוח)?
+2. **Web Push:** האם להמשיך עם מימוש VAPID ידני ב-Worker? לחילופין — להשתמש ב-`notify()` הקיים (`src/lib/notifications.ts`) שעובד רק כשהטאב פתוח, אבל בלי backend push?
+3. **היקף:** האם להגיש את כל שלושת החלקים בבת אחת (גדול, סיכון לבאגים), או לפצל לסבבים — קודם חלק 1 + חלק 2C (פשוטים), אחר כך 2A+2B, ואחרון 3?
+
+ההמלצה שלי: **פיצול לשלושה PRs** כדי לוודא שכל חלק נבדק ויציב לפני המעבר לבא.
