@@ -186,6 +186,7 @@ function RootComponent() {
 // "manager" → admin role required (manager or super admin).
 const RESTRICTED_ROUTES: Record<string, "manager" | "super_admin"> = {
   "/admin": "super_admin",
+  "/admin/alerts": "manager",
   "/suppliers": "super_admin",
   "/orders": "manager",
   "/invoices": "manager",
