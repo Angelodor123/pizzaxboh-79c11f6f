@@ -15,6 +15,12 @@ const RoleEnum = z.enum(["super_admin", "admin", "manager", "employee", "viewer"
 type DbRole = z.infer<typeof RoleEnum>;
 
 // ----- Update existing user (role row)
+const DateStr = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "תאריך לא תקין")
+  .nullable()
+  .optional();
+
 const UpdateUserInput = z.object({
   roleId: z.string().uuid(),
   userId: z.string().uuid(),
@@ -22,6 +28,8 @@ const UpdateUserInput = z.object({
   email: z.string().trim().email().max(254).optional(),
   role: RoleEnum.optional(),
   assignedBranchId: z.string().uuid().nullable().optional(),
+  dateOfBirth: DateStr,
+  startDate: DateStr,
 });
 
 export const adminUpdateUser = createServerFn({ method: "POST" })
