@@ -175,6 +175,8 @@ function RootComponent() {
         </AccessGate>
       </AuthProvider>
       <Toaster position="top-center" richColors closeButton />
+      <ConfirmHost />
+
     </QueryClientProvider>
   );
 }
