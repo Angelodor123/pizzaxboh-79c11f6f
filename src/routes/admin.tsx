@@ -1669,12 +1669,12 @@ function SuperAdminUsersPanel() {
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <button
                     onClick={() => openEdit(row)}
-                    disabled={isSuper}
-                    className="text-[11px] px-2.5 py-1 rounded-md border border-border bg-input hover:bg-card text-foreground disabled:opacity-30 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                    title={isSuper ? "לא ניתן לערוך סופר-אדמין" : "ערוך פרטים"}
+                    className="text-[11px] px-2.5 py-1 rounded-md border border-border bg-input hover:bg-card text-foreground inline-flex items-center gap-1"
+                    title="ערוך פרטים"
                   >
                     <Pencil className="h-3 w-3" /> ערוך
                   </button>
+
 
                   {row.kind === "invite" && (
                     <>
