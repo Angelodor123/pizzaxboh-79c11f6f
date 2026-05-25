@@ -84,16 +84,48 @@ export function CategoryDrawer() {
     setDrawerOpen,
   } = useUIStore();
   const {
+    session,
     email,
+    fullName,
     role,
     isSuperAdmin: effIsSuperAdmin,
     realIsSuperAdmin,
     simulatedRole,
     setSimulatedRole,
     signOut,
+    refreshRole,
   } = useAuth();
   const [recipesOpen, setRecipesOpen] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    if (!editingName) setNameDraft(fullName ?? "");
+  }, [fullName, editingName]);
+
+  const saveName = async () => {
+    const userId = session?.user?.id;
+    const next = nameDraft.trim();
+    if (!userId || !next || next === (fullName ?? "")) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: next })
+      .eq("user_id", userId);
+    setSavingName(false);
+    if (error) {
+      toast.error("שגיאה בעדכון השם");
+      return;
+    }
+    await refreshRole();
+    toast.success("השם עודכן");
+    setEditingName(false);
+  };
 
   // Effective role mapping for menu visibility. Uses the *effective* values
   // from useAuth() so "View As" simulation immediately rewires the menu.
