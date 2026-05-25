@@ -33,6 +33,7 @@ import {
   type SupplierReminderSettings,
 } from "@/lib/site-texts";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvitationEmail } from "@/lib/invitations.functions";
 import {
@@ -372,8 +373,9 @@ function AdminPage() {
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`למחוק את "${r.nameHebrew}"?`)) void softDeleteRecipe(r.id);
+                          onClick={async () => {
+                            const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
+                            if (ok) void softDeleteRecipe(r.id);
                           }}
                           className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
                           aria-label="מחק"
@@ -728,7 +730,8 @@ function InvitationsPanel() {
   };
 
   const revokeInvite = async (id: string) => {
-    if (!confirm("לבטל את ההזמנה?")) return;
+    const ok = await confirmDelete({ title: "ביטול הזמנה", description: "לבטל את ההזמנה? המשתמש המוזמן לא יוכל להירשם עם הקישור הקודם.", confirmLabel: "בטל הזמנה" });
+    if (!ok) return;
     const { error: e } = await supabase.from("invitations").delete().eq("id", id);
     if (e) { setError(e.message); return; }
     await load();
@@ -744,7 +747,8 @@ function InvitationsPanel() {
       setError("לא ניתן להסיר סופר-אדמין");
       return;
     }
-    if (!confirm("להסיר את הרשאת המשתמש?")) return;
+    const ok = await confirmDelete({ title: "הסרת משתמש", description: "להסיר את הרשאת המשתמש? לא יוכל יותר להיכנס למערכת.", confirmLabel: "הסר משתמש" });
+    if (!ok) return;
     const { error: e } = await supabase.from("user_roles").delete().eq("id", id);
     if (e) { setError(e.message); return; }
     await load();

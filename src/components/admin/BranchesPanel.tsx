@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Building2, Plus, Trash2, Check, X, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 
 type Branch = { id: string; name: string; active: boolean };
 
@@ -71,12 +72,11 @@ export function BranchesPanel() {
   };
 
   const remove = async (b: Branch) => {
-    if (
-      !confirm(
-        `למחוק את הסניף "${b.name}"? פעולה זו תמחק את כל הנתונים התפעוליים המשויכים לסניף!`,
-      )
-    )
-      return;
+    const ok = await confirmDelete({
+      title: "מחיקת סניף",
+      description: `למחוק את הסניף "${b.name}"? פעולה זו תמחק את כל הנתונים התפעוליים המשויכים לסניף! פעולה זו אינה ניתנת לשחזור.`,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("branches").delete().eq("id", b.id);
     if (error) {
       toast.error(error.message);

@@ -3,6 +3,7 @@ import { Plus, Trash2, Pencil, Save, X, Power, CheckSquare } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { refreshOnboarding } from "@/components/PageOnboarding";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
@@ -31,7 +32,7 @@ export function UnitsPanel() {
     setName(""); void load();
   };
   const remove = async (id: string) => {
-    if (!confirm("למחוק יחידה זו?")) return;
+    if (!(await confirmDelete({ title: "מחיקת יחידת מידה", description: "למחוק יחידה זו? פעולה זו אינה ניתנת לשחזור." }))) return;
     const { error } = await supabase.from("measurement_units").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     void load();
@@ -173,7 +174,7 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
   };
 
   const remove = async (id: string) => {
-    if (!confirm("למחוק פריט זה?")) return;
+    if (!(await confirmDelete({ title: "מחיקת פריט", description: "למחוק פריט זה? פעולה זו אינה ניתנת לשחזור." }))) return;
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     void load();

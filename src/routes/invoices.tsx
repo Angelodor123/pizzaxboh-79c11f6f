@@ -4,6 +4,7 @@ import { Plus, Archive, FileText, ScanSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
@@ -82,7 +83,12 @@ function InvoicesPage() {
   })();
 
   const archive = async (id: string) => {
-    if (!confirm("להעביר לארכיון? לא תופיע בטבלה אך תישמר.")) return;
+    const ok = await confirmDelete({
+      title: "העברה לארכיון",
+      description: "להעביר את החשבונית לארכיון? היא לא תופיע בטבלה אך תישמר במערכת.",
+      confirmLabel: "העבר לארכיון",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("invoices").update({ is_archived: true }).eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("הועברה לארכיון"); load(); }

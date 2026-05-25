@@ -5,10 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
 });
+
+// Event type catalog — color-coded tags for the calendar (overlays for the existing
+// "delivery" | "event" base category). Each entry maps to a Tailwind dot color.
+export const EVENT_TYPES = [
+  { id: "maintenance",       label: "תחזוקה",          color: "#ef4444" }, // red
+  { id: "inventory_delivery", label: "קבלת סחורה",      color: "#f97316" }, // orange
+  { id: "team_meeting",      label: "פגישת צוות",      color: "#3b82f6" }, // blue
+  { id: "special_event",     label: "אירוע מיוחד",     color: "#ec4899" }, // pink
+] as const;
+type EventTypeId = (typeof EVENT_TYPES)[number]["id"];
+const eventTypeColor = (id?: string | null): string | null =>
+  (EVENT_TYPES.find((t) => t.id === id)?.color as string | undefined) ?? null;
+
 
 type EventCategory = "delivery" | "event";
 
@@ -16,6 +30,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   category: EventCategory;
+  event_type?: string | null;
   event_date: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -26,6 +41,7 @@ interface CalendarEvent {
   supplier_id?: string | null;
   is_auto?: boolean;
 }
+
 
 interface EventOverride {
   id: string;
@@ -217,6 +233,12 @@ function CalendarPage() {
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           eventsForDate={eventsForDate}
+          canEdit={canEdit}
+          onAddForDate={(iso) => {
+            setSelectedDate(iso);
+            setEditing(null);
+            setFormOpen(true);
+          }}
         />
       ) : (
         <WeekView cursor={cursor} setCursor={setCursor} eventsForDate={eventsForDate} />
@@ -247,6 +269,7 @@ function CalendarPage() {
         <EventForm
           existing={editing}
           defaultDate={selectedDate}
+          allEvents={events}
           onClose={() => {
             setFormOpen(false);
             setEditing(null);
@@ -271,12 +294,16 @@ function MonthView({
   selectedDate,
   setSelectedDate,
   eventsForDate,
+  canEdit,
+  onAddForDate,
 }: {
   cursor: Date;
   setCursor: (d: Date) => void;
   selectedDate: string;
   setSelectedDate: (s: string) => void;
-  eventsForDate: (iso: string) => CalendarEvent[];
+  eventsForDate: (iso: string) => EffectiveEvent[];
+  canEdit: boolean;
+  onAddForDate: (iso: string) => void;
 }) {
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
@@ -339,25 +366,48 @@ function MonthView({
           const isToday = c.iso === todayIso;
           const isSelected = c.iso === selectedDate;
           const hasPriority = dayEvents.some((e) => e.high_priority);
+          const typeColors = Array.from(
+            new Set(
+              dayEvents
+                .map((e) => eventTypeColor(e.event_type))
+                .filter((c): c is string => !!c),
+            ),
+          ).slice(0, 3);
           return (
             <button
               key={c.iso + (c.inMonth ? "" : "-o")}
-              onClick={() => setSelectedDate(c.iso)}
+              onClick={() => {
+                setSelectedDate(c.iso);
+                if (canEdit) onAddForDate(c.iso);
+              }}
+              aria-label={canEdit ? `הוסף אירוע ל-${c.iso}` : c.iso}
               className={`relative aspect-square rounded-md text-right p-1 sm:p-1.5 text-xs sm:text-sm border transition ${
                 isSelected
                   ? "border-neon bg-neon/15 text-neon glow-neon"
                   : isToday
                   ? "border-neon/60 text-foreground"
-                  : "border-border/60 hover:border-neon/40"
+                  : "border-border/60 hover:border-neon/40 active:scale-95"
               } ${c.inMonth ? "" : "opacity-30"}`}
             >
               <div className="font-bold tabular-nums">{c.date.getDate()}</div>
-              {dayEvents.length > 0 && (
-                <div className="absolute bottom-1 left-1 right-1 flex items-center gap-0.5 justify-start">
+              {(dayEvents.length > 0 || typeColors.length > 0) && (
+                <div className="absolute bottom-1 left-1 right-1 flex items-center gap-0.5 justify-start flex-wrap">
                   {hasPriority && (
                     <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
                   )}
-                  <span className="h-1.5 w-1.5 rounded-full bg-neon" />
+                  {typeColors.length > 0 ? (
+                    typeColors.map((col) => (
+                      <span
+                        key={col}
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: col }}
+                      />
+                    ))
+                  ) : (
+                    dayEvents.length > 0 && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-neon" />
+                    )
+                  )}
                   {dayEvents.length > 1 && (
                     <span className="text-[9px] text-muted-foreground tabular-nums">×{dayEvents.length}</span>
                   )}
@@ -557,15 +607,21 @@ function DayDetails({
   const d = new Date(isoDate + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("למחוק את האירוע?")) return;
+  const handleDelete = async (id: string, title: string) => {
+    const ok = await confirmDelete({ title: "מחיקת אירוע", itemName: title });
+    if (!ok) return;
     const { error } = await supabase.from("calendar_events").delete().eq("id", id);
     if (error) toast.error("שגיאה במחיקה");
     else toast.success("האירוע נמחק");
   };
 
   const cancelInstance = async (ev: EffectiveEvent, date: string) => {
-    if (!confirm("לבטל את המופע ליום זה בלבד? פרופיל הספק לא ישתנה.")) return;
+    const ok = await confirmDelete({
+      title: "ביטול מופע ליום זה",
+      description: "לבטל את המופע ליום זה בלבד? פרופיל הספק והמופעים האחרים לא ישתנו.",
+      confirmLabel: "בטל ליום זה",
+    });
+    if (!ok) return;
     const payload = { event_id: ev.id, override_date: date, deleted: true };
     const { error } = await supabase
       .from("calendar_event_overrides")
@@ -662,7 +718,7 @@ function DayDetails({
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => handleDelete(ev.id)}
+                            onClick={() => handleDelete(ev.id, ev.title)}
                             className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
                             aria-label="מחק"
                           >
@@ -788,7 +844,13 @@ function InstanceOverrideForm({
       onClose();
       return;
     }
-    if (!confirm("לאפס את העריכה ולחזור לערכי המאסטר?")) return;
+    const ok = await confirmDelete({
+      title: "איפוס עריכה",
+      description: "לאפס את העריכה ליום זה ולחזור לערכי המאסטר?",
+      confirmLabel: "אפס",
+      destructive: false,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("calendar_event_overrides").delete().eq("id", ev._overrideId);
     if (error) toast.error("שגיאה");
     else {
@@ -888,14 +950,17 @@ function InstanceOverrideForm({
 function EventForm({
   existing,
   defaultDate,
+  allEvents,
   onClose,
 }: {
   existing: CalendarEvent | null;
   defaultDate: string;
+  allEvents: CalendarEvent[];
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(existing?.title ?? "");
   const [category, setCategory] = useState<EventCategory>(existing?.category ?? "delivery");
+  const [eventType, setEventType] = useState<EventTypeId | "">((existing?.event_type as EventTypeId) ?? "");
   const [isRecurring, setIsRecurring] = useState(existing?.recurring_weekday !== null && existing?.recurring_weekday !== undefined);
   const [date, setDate] = useState(existing?.event_date ?? defaultDate);
   const [weekday, setWeekday] = useState<number>(existing?.recurring_weekday ?? 0);
@@ -905,6 +970,32 @@ function EventForm({
   const [highPriority, setHighPriority] = useState(existing?.high_priority ?? false);
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const [conflictAck, setConflictAck] = useState(false);
+
+  // Live conflict detection: check against allEvents on the same date / weekday + time overlap
+  const conflicts = useMemo(() => {
+    if (!startTime) return [];
+    const sNew = startTime;
+    const eNew = endTime || startTime;
+    const targetWd = isRecurring ? weekday : new Date(date + "T00:00:00").getDay();
+    return allEvents.filter((ev) => {
+      if (existing && ev.id === existing.id) return false;
+      if (!ev.start_time) return false;
+      const sameDay =
+        (isRecurring && ev.recurring_weekday === weekday) ||
+        (!isRecurring && (ev.event_date === date || ev.recurring_weekday === targetWd));
+      if (!sameDay) return false;
+      const sExist = ev.start_time.slice(0, 5);
+      const eExist = (ev.end_time || ev.start_time).slice(0, 5);
+      // overlap: sNew < eExist && sExist < eNew
+      return sNew < eExist && sExist < eNew;
+    });
+  }, [allEvents, existing, startTime, endTime, date, weekday, isRecurring]);
+
+  // Reset ack when conflicts list changes
+  useEffect(() => {
+    setConflictAck(false);
+  }, [conflicts.length]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -912,10 +1003,15 @@ function EventForm({
       toast.error("חובה להזין כותרת");
       return;
     }
+    if (conflicts.length > 0 && !conflictAck) {
+      toast.error("נמצא חפיפה עם אירוע קיים — אשר את ההמשך");
+      return;
+    }
     setSaving(true);
     const basePayload = {
       title: title.trim(),
       category,
+      event_type: eventType || null,
       event_date: isRecurring ? null : date,
       recurring_weekday: isRecurring ? weekday : null,
       start_time: startTime || null,
@@ -927,10 +1023,10 @@ function EventForm({
 
     let error;
     if (existing) {
-      ({ error } = await supabase.from("calendar_events").update(basePayload).eq("id", existing.id));
+      ({ error } = await supabase.from("calendar_events").update(basePayload as never).eq("id", existing.id));
     } else {
       const branchId = await requireCurrentBranchId();
-      ({ error } = await supabase.from("calendar_events").insert({ ...basePayload, branch_id: branchId }));
+      ({ error } = await supabase.from("calendar_events").insert({ ...basePayload, branch_id: branchId } as never));
     }
 
     setSaving(false);
@@ -941,6 +1037,7 @@ function EventForm({
     toast.success(existing ? "האירוע עודכן" : "האירוע נוסף");
     onClose();
   };
+
 
   return (
     <div
@@ -997,6 +1094,29 @@ function EventForm({
             <Sparkles className="h-4 w-4" /> אירוע
           </button>
         </div>
+
+        <Field label="סוג אירוע (תיוג צבעוני)">
+          <div className="relative">
+            <select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value as EventTypeId | "")}
+              className="input pr-9"
+            >
+              <option value="">— ללא תיוג —</option>
+              {EVENT_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  ● {t.label}
+                </option>
+              ))}
+            </select>
+            {eventType && (
+              <span
+                className="absolute top-1/2 -translate-y-1/2 right-3 h-2.5 w-2.5 rounded-full pointer-events-none"
+                style={{ background: eventTypeColor(eventType) || "transparent" }}
+              />
+            )}
+          </div>
+        </Field>
 
         <label className="flex items-center justify-end gap-2 text-sm cursor-pointer">
           <span>חוזר שבועי</span>
@@ -1074,9 +1194,34 @@ function EventForm({
           />
         </Field>
 
+        {conflicts.length > 0 && (
+          <div className="rounded-lg border border-neon/70 bg-neon/10 p-3 text-right space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-neon text-sm">
+              <AlertTriangle className="h-4 w-4" />
+              חפיפה עם {conflicts.length === 1 ? "אירוע קיים" : `${conflicts.length} אירועים קיימים`}
+            </div>
+            <ul className="text-xs text-foreground/90 space-y-0.5 max-h-24 overflow-y-auto pr-1">
+              {conflicts.slice(0, 5).map((c) => (
+                <li key={c.id} className="tabular-nums">
+                  • {c.title} — {c.start_time?.slice(0, 5)}{c.end_time ? `–${c.end_time.slice(0, 5)}` : ""}
+                </li>
+              ))}
+            </ul>
+            <label className="flex items-center justify-end gap-2 text-xs cursor-pointer text-foreground">
+              <span>הבנתי, שמור בכל זאת</span>
+              <input
+                type="checkbox"
+                checked={conflictAck}
+                onChange={(e) => setConflictAck(e.target.checked)}
+                className="accent-[var(--neon)]"
+              />
+            </label>
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || (conflicts.length > 0 && !conflictAck)}
           className="w-full h-11 rounded-md bg-neon text-primary-foreground font-bold glow-neon disabled:opacity-50"
         >
           {saving ? "שומר…" : existing ? "עדכן" : "הוסף"}

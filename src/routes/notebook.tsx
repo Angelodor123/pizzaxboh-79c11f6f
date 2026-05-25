@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useNotebookStore,
@@ -505,10 +506,9 @@ function NotebookRow({
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`למחוק "${item.text}"?`)) {
-                void removeItem(listKey, item.id);
-              }
+            onClick={async () => {
+              const ok = await confirmDelete({ title: "מחיקת פריט", itemName: item.text });
+              if (ok) void removeItem(listKey, item.id);
             }}
             aria-label={`מחק: ${item.text}`}
             className="shrink-0 p-2 rounded text-muted-foreground hover:text-destructive active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"

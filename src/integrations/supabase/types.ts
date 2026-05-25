@@ -123,6 +123,7 @@ export type Database = {
           created_by: string | null
           end_time: string | null
           event_date: string | null
+          event_type: string | null
           high_priority: boolean
           id: string
           is_auto: boolean
@@ -141,6 +142,7 @@ export type Database = {
           created_by?: string | null
           end_time?: string | null
           event_date?: string | null
+          event_type?: string | null
           high_priority?: boolean
           id?: string
           is_auto?: boolean
@@ -159,6 +161,7 @@ export type Database = {
           created_by?: string | null
           end_time?: string | null
           event_date?: string | null
+          event_type?: string | null
           high_priority?: boolean
           id?: string
           is_auto?: boolean
