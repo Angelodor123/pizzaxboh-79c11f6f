@@ -15,6 +15,7 @@ interface Supplier {
 interface Props {
   supplier: Supplier;
   onClose: () => void;
+  onReceive?: (orderId: string) => void;
 }
 
 const cacheKey = (id: string) => `order-draft:${id}`;
@@ -24,6 +25,8 @@ type HistoryEntry = {
   created_at: string;
   rows: OrderRow[];
   notes?: string;
+  orderId?: string | null;
+  status?: "draft" | "sent" | "received" | "cancelled" | null;
 };
 
 export function OrderModal({ supplier, onClose }: Props) {
