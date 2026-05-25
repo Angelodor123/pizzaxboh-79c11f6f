@@ -11,7 +11,8 @@ async function assertSuperAdmin(userId: string) {
   if (!data) throw new Error("רק סופר-אדמין רשאי לבצע פעולה זו");
 }
 
-const RoleEnum = z.enum(["admin", "viewer"]);
+const RoleEnum = z.enum(["super_admin", "admin", "viewer"]);
+type DbRole = z.infer<typeof RoleEnum>;
 
 // ----- Update existing user (role row)
 const UpdateUserInput = z.object({
@@ -32,7 +33,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     // Patch user_roles
     const rolePatch: {
       email?: string;
-      role?: "admin" | "viewer";
+      role?: DbRole;
       assigned_branch_id?: string | null;
     } = {};
     if (data.email) rolePatch.email = data.email.toLowerCase();
@@ -168,7 +169,7 @@ export const adminUpdateInvitation = createServerFn({ method: "POST" })
     const patch: {
       full_name?: string | null;
       email?: string;
-      role?: "admin" | "viewer";
+      role?: DbRole;
       assigned_branch_id?: string | null;
     } = {};
     if (data.fullName !== undefined) patch.full_name = data.fullName;
