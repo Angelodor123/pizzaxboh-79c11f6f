@@ -47,7 +47,7 @@ export function useActiveBranch() {
 }
 
 export function BranchGate({ children }: { children: React.ReactNode }) {
-  const { session, isSuperAdmin, assignedBranchId, fullName, signOut, loading: authLoading } =
+  const { session, isSuperAdmin, realIsSuperAdmin, assignedBranchId, fullName, signOut, loading: authLoading } =
     useAuth();
   const { branches, loading: branchesLoading } = useBranches();
   const activeId = useActiveBranch();
@@ -55,11 +55,12 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
   // Branch Staff: auto-set their assigned branch
   useEffect(() => {
     if (!session?.user?.id) return;
-    if (isSuperAdmin) return;
+    if (realIsSuperAdmin) return;
     if (assignedBranchId && activeId !== assignedBranchId) {
       setActiveBranchId(assignedBranchId);
     }
-  }, [session?.user?.id, isSuperAdmin, assignedBranchId, activeId]);
+  }, [session?.user?.id, realIsSuperAdmin, assignedBranchId, activeId]);
+
 
   if (!session?.user?.id) return <>{children}</>;
   if (authLoading || branchesLoading) return null;
