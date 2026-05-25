@@ -11,7 +11,7 @@ async function assertSuperAdmin(userId: string) {
   if (!data) throw new Error("רק סופר-אדמין רשאי לבצע פעולה זו");
 }
 
-const RoleEnum = z.enum(["super_admin", "admin", "viewer"]);
+const RoleEnum = z.enum(["super_admin", "admin", "manager", "employee", "viewer"]);
 type DbRole = z.infer<typeof RoleEnum>;
 
 // ----- Update existing user (role row)
