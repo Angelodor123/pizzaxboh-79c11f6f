@@ -174,19 +174,19 @@ export function CategoryDrawer() {
             <li>
               <Link to="/" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">🏠 דף הבית</span>
-                <Home className="h-5 w-5" />
+                <span className={iconWrap}><Home className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
               <Link to="/tasks" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">✅ משימות יומיות</span>
-                <ListChecks className="h-5 w-5" />
+                <span className={iconWrap}><ListChecks className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
               <Link to="/notebook" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
-                <NotebookPen className="h-5 w-5" />
+                <span className={iconWrap}><NotebookPen className="h-5 w-5" /></span>
               </Link>
             </li>
 
@@ -205,7 +205,7 @@ export function CategoryDrawer() {
                   }`}
                 />
                 <span className="flex-1 text-right">🍽️ תפריט המנות</span>
-                <UtensilsCrossed className="h-5 w-5" />
+                <span className={iconWrap}><UtensilsCrossed className="h-5 w-5" /></span>
               </button>
               {dishesOpen && (
                 <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
@@ -259,7 +259,7 @@ export function CategoryDrawer() {
                   }`}
                 />
                 <span className="flex-1 text-right">📖 ספר מתכונים</span>
-                <ChefHat className="h-5 w-5" />
+                <span className={iconWrap}><ChefHat className="h-5 w-5" /></span>
               </button>
               {recipesOpen && (
                 <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
@@ -318,7 +318,7 @@ export function CategoryDrawer() {
                     <span className="flex-1 text-right">
                       📦 הזמנות וקבלת סחורה
                     </span>
-                    <Package className="h-5 w-5" />
+                    <span className={iconWrap}><Package className="h-5 w-5" /></span>
                   </Link>
                 </li>
                 <li>
@@ -326,7 +326,7 @@ export function CategoryDrawer() {
                     <span className="flex-1 text-right">
                       📅 לוח אירועים וסחורות
                     </span>
-                    <CalendarDays className="h-5 w-5" />
+                    <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
                   </Link>
                 </li>
               </ul>
@@ -342,7 +342,7 @@ export function CategoryDrawer() {
                 <li>
                   <Link to="/suppliers" onClick={close} className={itemClass}>
                     <span className="flex-1 text-right">🚚 ניהול ספקים</span>
-                    <Truck className="h-5 w-5" />
+                    <span className={iconWrap}><Truck className="h-5 w-5" /></span>
                   </Link>
                 </li>
                 <li>
@@ -350,7 +350,7 @@ export function CategoryDrawer() {
                     <span className="flex-1 text-right">
                       ⚙️ הגדרות מערכת וצוות
                     </span>
-                    <Settings className="h-5 w-5" />
+                    <span className={iconWrap}><Settings className="h-5 w-5" /></span>
                   </Link>
                 </li>
               </ul>
