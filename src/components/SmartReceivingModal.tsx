@@ -59,7 +59,7 @@ const looseEq = (a: string, b: string) => {
   return x === y || x.includes(y) || y.includes(x);
 };
 
-export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
+export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId = null }: Props) {
   const ocr = useServerFn(ocrInvoice);
   const [stage, setStage] = useState<Stage>("pick");
   const [supplierId, setSupplierId] = useState("");
@@ -74,6 +74,36 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved }: Props) {
   const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [submitting, setSubmitting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Preload the linked order (when receiving was launched contextually)
+  useEffect(() => {
+    if (!linkedOrderId) return;
+    let cancelled = false;
+    (async () => {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("id, supplier_id, sent_at, items, suppliers:supplier_id(name)")
+        .eq("id", linkedOrderId)
+        .maybeSingle();
+      if (cancelled || !order) return;
+      const items = (Array.isArray(order.items) ? order.items : []) as Array<{ name?: string; qty?: string }>;
+      const supplierName = (order as { suppliers?: { name?: string } }).suppliers?.name
+        ?? suppliers.find((s) => s.id === order.supplier_id)?.name
+        ?? "";
+      const match: Match = {
+        order_id: order.id,
+        supplier_id: order.supplier_id,
+        supplier_name: supplierName,
+        sent_at: order.sent_at,
+        items: items.map((i) => ({ name: String(i.name ?? ""), qty: String(i.qty ?? "") })),
+        score: 1,
+      };
+      setSupplierId(order.supplier_id);
+      setChosenMatch(match);
+      setMatches([match]);
+    })();
+    return () => { cancelled = true; };
+  }, [linkedOrderId, suppliers]);
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
   useEffect(() => {
