@@ -357,7 +357,7 @@ export function CategoryDrawer() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/admin" onClick={close} className={itemClass}>
+                  <Link to="/admin" search={{ edit: undefined }} onClick={close} className={itemClass}>
                     <span className="flex-1 text-right">
                       ⚙️ הגדרות מערכת וצוות
                     </span>
