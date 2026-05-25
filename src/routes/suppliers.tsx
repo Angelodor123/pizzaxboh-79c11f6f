@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
