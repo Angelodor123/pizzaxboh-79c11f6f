@@ -117,7 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "apple-touch-icon", href: "/pizza-x-logo.png" },
-      { rel: "preload", as: "image", href: "/pizza-x-logo.png", fetchpriority: "high" },
+      { rel: "preload", as: "image", href: pizzaXLogo, fetchpriority: "high" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous" },
       {
