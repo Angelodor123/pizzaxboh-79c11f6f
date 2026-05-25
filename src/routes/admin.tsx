@@ -1373,6 +1373,8 @@ interface EditState {
   email: string;
   role: AppRole;
   branchId: string;
+  dateOfBirth: string;
+  startDate: string;
 }
 
 interface ConfirmState {
