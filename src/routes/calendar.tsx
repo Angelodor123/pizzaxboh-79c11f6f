@@ -573,15 +573,21 @@ function DayDetails({
   const d = new Date(isoDate + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("למחוק את האירוע?")) return;
+  const handleDelete = async (id: string, title: string) => {
+    const ok = await confirmDelete({ title: "מחיקת אירוע", itemName: title });
+    if (!ok) return;
     const { error } = await supabase.from("calendar_events").delete().eq("id", id);
     if (error) toast.error("שגיאה במחיקה");
     else toast.success("האירוע נמחק");
   };
 
   const cancelInstance = async (ev: EffectiveEvent, date: string) => {
-    if (!confirm("לבטל את המופע ליום זה בלבד? פרופיל הספק לא ישתנה.")) return;
+    const ok = await confirmDelete({
+      title: "ביטול מופע ליום זה",
+      description: "לבטל את המופע ליום זה בלבד? פרופיל הספק והמופעים האחרים לא ישתנו.",
+      confirmLabel: "בטל ליום זה",
+    });
+    if (!ok) return;
     const payload = { event_id: ev.id, override_date: date, deleted: true };
     const { error } = await supabase
       .from("calendar_event_overrides")
