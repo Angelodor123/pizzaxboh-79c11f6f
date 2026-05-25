@@ -123,7 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", type: "image/png", sizes: "192x192", href: "/android-chrome-192x192.png" },
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/android-chrome-512x512.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "preload", as: "image", href: pizzaXLogo, fetchpriority: "high" },
+      { rel: "preload", as: "image", href: pizzaXLogo, fetchPriority: "high" },
       // Apple splash screens (per-resolution)
       { rel: "apple-touch-startup-image", href: "/apple-splash-2048-2732.png", media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
       { rel: "apple-touch-startup-image", href: "/apple-splash-1668-2388.png", media: "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
