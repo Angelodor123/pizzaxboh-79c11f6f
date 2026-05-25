@@ -293,12 +293,16 @@ function MonthView({
   selectedDate,
   setSelectedDate,
   eventsForDate,
+  canEdit,
+  onAddForDate,
 }: {
   cursor: Date;
   setCursor: (d: Date) => void;
   selectedDate: string;
   setSelectedDate: (s: string) => void;
-  eventsForDate: (iso: string) => CalendarEvent[];
+  eventsForDate: (iso: string) => EffectiveEvent[];
+  canEdit: boolean;
+  onAddForDate: (iso: string) => void;
 }) {
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
