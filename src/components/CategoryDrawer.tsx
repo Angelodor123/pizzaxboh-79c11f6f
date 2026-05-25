@@ -181,12 +181,8 @@ export function CategoryDrawer() {
                 <span className={iconWrap}><Home className="h-5 w-5" /></span>
               </Link>
             </li>
-            <li>
-              <Link to="/my-profile" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">👤 האזור האישי שלי</span>
-                <span className={iconWrap}><UserCircle className="h-5 w-5" /></span>
-              </Link>
-            </li>
+
+
 
             <li>
               <Link to="/tasks" onClick={close} className={itemClass}>
