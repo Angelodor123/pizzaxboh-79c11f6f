@@ -41,7 +41,7 @@ import {
   requestNotificationPermission,
 } from "@/lib/notifications";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
-import { useEffect } from "react";
+
 
 function NotFoundComponent() {
   return (
