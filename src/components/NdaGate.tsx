@@ -69,6 +69,11 @@ export function NdaGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <InstallAppPrompt active={accepted === true} />
+    </>
+  );
 }
 
