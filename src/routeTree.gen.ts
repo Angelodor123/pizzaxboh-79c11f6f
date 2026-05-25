@@ -16,11 +16,14 @@ import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PrepRouteImport } from './routes/prep'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotebookRouteImport } from './routes/notebook'
+import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
+import { Route as ApiPublicHooksDoughAlertRouteImport } from './routes/api/public/hooks/dough-alert'
 
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
@@ -57,6 +60,11 @@ const NotebookRoute = NotebookRouteImport.update({
   path: '/notebook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyProfileRoute = MyProfileRouteImport.update({
+  id: '/my-profile',
+  path: '/my-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvoicesRoute = InvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
@@ -82,13 +90,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAlertsRoute = AdminAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiPublicHooksDoughAlertRoute =
+  ApiPublicHooksDoughAlertRouteImport.update({
+    id: '/api/public/hooks/dough-alert',
+    path: '/api/public/hooks/dough-alert',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
@@ -96,13 +116,16 @@ export interface FileRoutesByFullPath {
   '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
@@ -110,14 +133,17 @@ export interface FileRoutesByTo {
   '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
@@ -125,6 +151,8 @@ export interface FileRoutesById {
   '/restock': typeof RestockRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,6 +162,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/my-profile'
     | '/notebook'
     | '/orders'
     | '/prep'
@@ -141,6 +170,8 @@ export interface FileRouteTypes {
     | '/restock'
     | '/suppliers'
     | '/tasks'
+    | '/admin/alerts'
+    | '/api/public/hooks/dough-alert'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,6 +179,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/my-profile'
     | '/notebook'
     | '/orders'
     | '/prep'
@@ -155,6 +187,8 @@ export interface FileRouteTypes {
     | '/restock'
     | '/suppliers'
     | '/tasks'
+    | '/admin/alerts'
+    | '/api/public/hooks/dough-alert'
   id:
     | '__root__'
     | '/'
@@ -162,6 +196,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/my-profile'
     | '/notebook'
     | '/orders'
     | '/prep'
@@ -169,14 +204,17 @@ export interface FileRouteTypes {
     | '/restock'
     | '/suppliers'
     | '/tasks'
+    | '/admin/alerts'
+    | '/api/public/hooks/dough-alert'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   InvoicesRoute: typeof InvoicesRoute
+  MyProfileRoute: typeof MyProfileRoute
   NotebookRoute: typeof NotebookRoute
   OrdersRoute: typeof OrdersRoute
   PrepRoute: typeof PrepRoute
@@ -184,6 +222,7 @@ export interface RootRouteChildren {
   RestockRoute: typeof RestockRoute
   SuppliersRoute: typeof SuppliersRoute
   TasksRoute: typeof TasksRoute
+  ApiPublicHooksDoughAlertRoute: typeof ApiPublicHooksDoughAlertRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -237,6 +276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotebookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-profile': {
+      id: '/my-profile'
+      path: '/my-profile'
+      fullPath: '/my-profile'
+      preLoaderRoute: typeof MyProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invoices': {
       id: '/invoices'
       path: '/invoices'
@@ -272,15 +318,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/alerts': {
+      id: '/admin/alerts'
+      path: '/alerts'
+      fullPath: '/admin/alerts'
+      preLoaderRoute: typeof AdminAlertsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/public/hooks/dough-alert': {
+      id: '/api/public/hooks/dough-alert'
+      path: '/api/public/hooks/dough-alert'
+      fullPath: '/api/public/hooks/dough-alert'
+      preLoaderRoute: typeof ApiPublicHooksDoughAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminAlertsRoute: typeof AdminAlertsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAlertsRoute: AdminAlertsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   InvoicesRoute: InvoicesRoute,
+  MyProfileRoute: MyProfileRoute,
   NotebookRoute: NotebookRoute,
   OrdersRoute: OrdersRoute,
   PrepRoute: PrepRoute,
@@ -288,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   RestockRoute: RestockRoute,
   SuppliersRoute: SuppliersRoute,
   TasksRoute: TasksRoute,
+  ApiPublicHooksDoughAlertRoute: ApiPublicHooksDoughAlertRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

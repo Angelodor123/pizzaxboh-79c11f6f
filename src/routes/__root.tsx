@@ -29,6 +29,7 @@ import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { Toaster } from "@/components/ui/sonner";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConfirmHost } from "@/lib/confirm";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
@@ -170,6 +171,7 @@ function RootComponent() {
         <AccessGate>
           <NdaGate>
             <BranchGate>
+              <OfflineBanner />
               <AuthedShell />
             </BranchGate>
           </NdaGate>
@@ -186,6 +188,7 @@ function RootComponent() {
 // "manager" → admin role required (manager or super admin).
 const RESTRICTED_ROUTES: Record<string, "manager" | "super_admin"> = {
   "/admin": "super_admin",
+  "/admin/alerts": "manager",
   "/suppliers": "super_admin",
   "/orders": "manager",
   "/invoices": "manager",
