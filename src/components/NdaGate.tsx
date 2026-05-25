@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 
 const NDA_TEXT = `המידע הזמין במערכת זו הוא קניינו הבלעדי של Pizza X. כל שיתוף, העתקה, צילום או הפצה של מתכונים, נהלים או מידע פנימי לגורם חיצוני אסורים בהחלט. המשך השימוש מהווה הסכמה מלאה לתנאי הסודיות.`;
 
@@ -68,6 +69,11 @@ export function NdaGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <InstallAppPrompt active={accepted === true} />
+    </>
+  );
 }
 

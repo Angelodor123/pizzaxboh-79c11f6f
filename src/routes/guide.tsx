@@ -108,7 +108,51 @@ function GuidePage() {
         </p>
       </div>
 
+      <section className="rounded-2xl border-2 border-neon/40 bg-gradient-to-br from-neon/5 to-transparent p-5 sm:p-6 mb-4">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
+          What's New
+        </div>
+        <h2 className="font-display text-2xl font-bold mt-1 mb-4">
+          חדש במערכת
+        </h2>
+        <div className="space-y-4 text-sm leading-relaxed">
+          <div>
+            <div className="font-bold text-foreground mb-1">
+              ספקים וקבלת סחורה
+            </div>
+            <p className="text-muted-foreground">
+              מנהלים יכולים כעת לשכפל הזמנות עבר ישירות מהיסטוריית הספק בלחיצה אחת.
+              בנוסף, נוסף תהליך <span className="text-foreground font-bold">"קבלת סחורה"</span>:
+              צילום תעודת המשלוח מפעיל זיהוי OCR חכם שמתאים אוטומטית בין הפריטים שהוזמנו
+              למה שהתקבל בפועל, ומדגיש פערים בכמויות או במחירים. תמיד אפשר לעבור להזנה ידנית
+              כגיבוי.
+            </p>
+          </div>
+          <div>
+            <div className="font-bold text-foreground mb-1">
+              מעקב בצקים — היסטוריה
+            </div>
+            <p className="text-muted-foreground">
+              כעת לחיצה על אייקון השעון בכרטיס{" "}
+              <span className="text-amber-brand font-bold">סטטוס בצקים</span>{" "}
+              חושפת יומן מלא של מי עדכן את כמות המגשים ומתי בדיוק — שקיפות מלאה
+              ואחריותיות לכל צוות המשמרת.
+            </p>
+          </div>
+          <div>
+            <div className="font-bold text-foreground mb-1">
+              צ'קליסטים יומיים — סגירה מהירה
+            </div>
+            <p className="text-muted-foreground">
+              נוספו חיצים לסגירה מהירה בתחתית כל קטגוריה פתוחה, לניווט נוח יותר במובייל
+              בלי לחזור לראש הקטגוריה.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
         <Section title="סטנדרטים של זמן" subtitle="Timing Standards">
           <ul className="space-y-2">
             {timed.map((r) => (
