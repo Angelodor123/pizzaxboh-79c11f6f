@@ -730,7 +730,8 @@ function InvitationsPanel() {
   };
 
   const revokeInvite = async (id: string) => {
-    if (!confirm("לבטל את ההזמנה?")) return;
+    const ok = await confirmDelete({ title: "ביטול הזמנה", description: "לבטל את ההזמנה? המשתמש המוזמן לא יוכל להירשם עם הקישור הקודם.", confirmLabel: "בטל הזמנה" });
+    if (!ok) return;
     const { error: e } = await supabase.from("invitations").delete().eq("id", id);
     if (e) { setError(e.message); return; }
     await load();
