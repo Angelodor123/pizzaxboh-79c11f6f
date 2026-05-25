@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useNotebookStore,
