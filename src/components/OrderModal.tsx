@@ -19,10 +19,55 @@ interface Props {
 
 const cacheKey = (id: string) => `order-draft:${id}`;
 
+type HistoryEntry = {
+  id: string;
+  created_at: string;
+  rows: OrderRow[];
+  notes?: string;
+};
+
 export function OrderModal({ supplier, onClose }: Props) {
   const [rows, setRows] = useState<OrderRow[]>([{ name: "", qty: "" }]);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  // Load order history for this supplier
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setHistoryLoading(true);
+      const { data, error } = await supabase
+        .from("supplier_orders_history")
+        .select("id, created_at, order_details")
+        .eq("supplier_id", supplier.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (cancelled) return;
+      if (error) {
+        console.error("history load failed", error);
+        setHistory([]);
+      } else {
+        const parsed: HistoryEntry[] = (data ?? []).map((row) => {
+          const det = (row.order_details ?? {}) as { rows?: OrderRow[]; notes?: string };
+          const cleanRows = Array.isArray(det.rows)
+            ? det.rows.filter((r) => r && (r.name?.trim() || r.qty?.trim()))
+            : [];
+          return {
+            id: row.id,
+            created_at: row.created_at,
+            rows: cleanRows,
+            notes: det.notes,
+          };
+        }).filter((h) => h.rows.length > 0);
+        setHistory(parsed);
+      }
+      setHistoryLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [supplier.id]);
+
 
   // Restore draft
   useEffect(() => {
