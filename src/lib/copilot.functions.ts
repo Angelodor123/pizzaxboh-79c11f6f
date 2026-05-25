@@ -142,13 +142,15 @@ export const askCopilot = createServerFn({ method: "POST" })
     const contextLine = ctxParts.length ? `\n\nהקשר נוכחי: ${ctxParts.join(" | ")}.` : "";
 
     const last = data.messages[data.messages.length - 1];
+    // Always inject the knowledge layer so Johnny can answer recipe/procedure
+    // questions ("איך מכינים עוגיות", "מה המלאי", וכו') without relying on
+    // trigger-word matching that may miss phrasings.
     let knowledgeBlock = "";
-    if (shouldInjectKnowledge(last.content)) {
-      const kb = await buildKnowledgeContext();
-      if (kb) {
-        knowledgeBlock = `\n\n==== שכבת ידע דינמית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====`;
-      }
+    const kb = await buildKnowledgeContext();
+    if (kb) {
+      knowledgeBlock = `\n\n==== שכבת ידע דינמית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====`;
     }
+    void shouldInjectKnowledge(last.content); // kept for future heuristics
 
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
