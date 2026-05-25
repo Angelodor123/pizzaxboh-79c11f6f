@@ -55,7 +55,7 @@ export const Route = createFileRoute("/admin")({
   }),
 });
 
-type AppRole = "super_admin" | "admin" | "viewer";
+type AppRole = "super_admin" | "admin" | "manager" | "employee" | "viewer";
 
 interface InvitationRow {
   id: string;
