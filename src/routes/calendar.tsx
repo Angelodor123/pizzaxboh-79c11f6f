@@ -365,25 +365,48 @@ function MonthView({
           const isToday = c.iso === todayIso;
           const isSelected = c.iso === selectedDate;
           const hasPriority = dayEvents.some((e) => e.high_priority);
+          const typeColors = Array.from(
+            new Set(
+              dayEvents
+                .map((e) => eventTypeColor(e.event_type))
+                .filter((c): c is string => !!c),
+            ),
+          ).slice(0, 3);
           return (
             <button
               key={c.iso + (c.inMonth ? "" : "-o")}
-              onClick={() => setSelectedDate(c.iso)}
+              onClick={() => {
+                setSelectedDate(c.iso);
+                if (canEdit) onAddForDate(c.iso);
+              }}
+              aria-label={canEdit ? `הוסף אירוע ל-${c.iso}` : c.iso}
               className={`relative aspect-square rounded-md text-right p-1 sm:p-1.5 text-xs sm:text-sm border transition ${
                 isSelected
                   ? "border-neon bg-neon/15 text-neon glow-neon"
                   : isToday
                   ? "border-neon/60 text-foreground"
-                  : "border-border/60 hover:border-neon/40"
+                  : "border-border/60 hover:border-neon/40 active:scale-95"
               } ${c.inMonth ? "" : "opacity-30"}`}
             >
               <div className="font-bold tabular-nums">{c.date.getDate()}</div>
-              {dayEvents.length > 0 && (
-                <div className="absolute bottom-1 left-1 right-1 flex items-center gap-0.5 justify-start">
+              {(dayEvents.length > 0 || typeColors.length > 0) && (
+                <div className="absolute bottom-1 left-1 right-1 flex items-center gap-0.5 justify-start flex-wrap">
                   {hasPriority && (
                     <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
                   )}
-                  <span className="h-1.5 w-1.5 rounded-full bg-neon" />
+                  {typeColors.length > 0 ? (
+                    typeColors.map((col) => (
+                      <span
+                        key={col}
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: col }}
+                      />
+                    ))
+                  ) : (
+                    dayEvents.length > 0 && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-neon" />
+                    )
+                  )}
                   {dayEvents.length > 1 && (
                     <span className="text-[9px] text-muted-foreground tabular-nums">×{dayEvents.length}</span>
                   )}
