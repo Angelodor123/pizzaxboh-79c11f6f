@@ -4,6 +4,7 @@ import { Plus, Archive, FileText, ScanSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
