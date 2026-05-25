@@ -834,7 +834,7 @@ function InvitationsPanel() {
                 אין משתמשים פעילים עדיין.
               </li>
             )}
-            {roles.map((u) => (
+            {roles.filter((u) => (u.role as string) !== "super_admin").map((u) => (
               <li
                 key={u.id}
                 className="flex items-center justify-between px-3 py-2 gap-2"
