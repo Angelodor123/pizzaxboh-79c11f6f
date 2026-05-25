@@ -11,6 +11,147 @@ import {
   type Task,
 } from "@/lib/tasks";
 import { useCookbookStore } from "@/lib/store";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+// ---------- Themed prompt / confirm modals ----------
+
+type PromptState = {
+  open: boolean;
+  title: string;
+  description?: string;
+  placeholder?: string;
+  initial?: string;
+  confirmLabel?: string;
+  onConfirm?: (value: string) => void;
+};
+
+type ConfirmState = {
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  destructive?: boolean;
+  onConfirm?: () => void;
+};
+
+function PromptModal({
+  state,
+  onClose,
+}: {
+  state: PromptState;
+  onClose: () => void;
+}) {
+  const [value, setValue] = useState(state.initial ?? "");
+  useEffect(() => {
+    if (state.open) setValue(state.initial ?? "");
+  }, [state.open, state.initial]);
+
+  return (
+    <Dialog open={state.open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        dir="rtl"
+        className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md"
+      >
+        <DialogHeader className="text-right">
+          <DialogTitle className="text-zinc-100 text-right">{state.title}</DialogTitle>
+          {state.description && (
+            <DialogDescription className="text-zinc-400 text-right">
+              {state.description}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={state.placeholder}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && value.trim()) {
+              state.onConfirm?.(value.trim());
+              onClose();
+            }
+          }}
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-right text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+        />
+        <DialogFooter className="flex flex-row-reverse gap-2 sm:flex-row-reverse">
+          <button
+            onClick={() => {
+              if (!value.trim()) return;
+              state.onConfirm?.(value.trim());
+              onClose();
+            }}
+            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors disabled:opacity-50"
+            disabled={!value.trim()}
+          >
+            {state.confirmLabel ?? "שמור"}
+          </button>
+          <button
+            onClick={onClose}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md text-sm transition-colors"
+          >
+            ביטול
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConfirmModal({
+  state,
+  onClose,
+}: {
+  state: ConfirmState;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={state.open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        dir="rtl"
+        className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md"
+      >
+        <DialogHeader className="text-right">
+          <DialogTitle className="text-zinc-100 text-right">{state.title}</DialogTitle>
+          {state.description && (
+            <DialogDescription className="text-zinc-400 text-right">
+              {state.description}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        <DialogFooter className="flex flex-row-reverse gap-2 sm:flex-row-reverse">
+          <button
+            onClick={() => {
+              state.onConfirm?.();
+              onClose();
+            }}
+            className={
+              state.destructive
+                ? "bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors"
+                : "bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors"
+            }
+          >
+            {state.confirmLabel ?? "אישור"}
+          </button>
+          <button
+            onClick={onClose}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md text-sm transition-colors"
+          >
+            ביטול
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------- Main panel ----------
 
 export function TasksPanel() {
   const { isSuperAdmin } = useAuth();
@@ -22,6 +163,14 @@ export function TasksPanel() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const [promptState, setPromptState] = useState<PromptState>({ open: false, title: "" });
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: "" });
+
+  const askPrompt = (s: Omit<PromptState, "open">) =>
+    setPromptState({ ...s, open: true });
+  const askConfirm = (s: Omit<ConfirmState, "open">) =>
+    setConfirmState({ ...s, open: true });
 
   const reload = async () => {
     if (!branchId) return;
@@ -52,34 +201,49 @@ export function TasksPanel() {
     );
   }
 
-  const addShift = async () => {
-    const name = prompt("שם המשמרת:");
-    if (!name?.trim()) return;
-    const so = (Math.max(0, ...shifts.map((s) => s.sort_order)) || 0) + 10;
-    const { error } = await supabase.from("shifts").insert({
-      branch_id: branchId,
-      name: name.trim(),
-      sort_order: so,
+  const addShift = () =>
+    askPrompt({
+      title: "הוספת משמרת חדשה",
+      placeholder: "שם המשמרת",
+      confirmLabel: "הוסף משמרת",
+      onConfirm: async (name) => {
+        const so = (Math.max(0, ...shifts.map((s) => s.sort_order)) || 0) + 10;
+        const { error } = await supabase.from("shifts").insert({
+          branch_id: branchId,
+          name,
+          sort_order: so,
+        });
+        if (error) return toast.error(error.message);
+        toast.success("משמרת נוספה");
+        reload();
+      },
     });
-    if (error) return toast.error(error.message);
-    toast.success("משמרת נוספה");
-    reload();
-  };
 
-  const renameShift = async (s: Shift) => {
-    const name = prompt("שם חדש:", s.name);
-    if (!name?.trim() || name === s.name) return;
-    const { error } = await supabase.from("shifts").update({ name: name.trim() }).eq("id", s.id);
-    if (error) return toast.error(error.message);
-    reload();
-  };
+  const renameShift = (s: Shift) =>
+    askPrompt({
+      title: "שינוי שם המשמרת",
+      initial: s.name,
+      placeholder: "שם חדש",
+      onConfirm: async (name) => {
+        if (name === s.name) return;
+        const { error } = await supabase.from("shifts").update({ name }).eq("id", s.id);
+        if (error) return toast.error(error.message);
+        reload();
+      },
+    });
 
-  const deleteShift = async (s: Shift) => {
-    if (!confirm(`למחוק את "${s.name}" וכל הקבוצות והמשימות שמתחתיה?`)) return;
-    const { error } = await supabase.from("shifts").delete().eq("id", s.id);
-    if (error) return toast.error(error.message);
-    reload();
-  };
+  const deleteShift = (s: Shift) =>
+    askConfirm({
+      title: `מחיקת משמרת "${s.name}"`,
+      description: "פעולה זו תמחק את כל הקבוצות והמשימות שמתחת למשמרת זו.",
+      confirmLabel: "מחק",
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from("shifts").delete().eq("id", s.id);
+        if (error) return toast.error(error.message);
+        reload();
+      },
+    });
 
   const moveShift = async (s: Shift, dir: -1 | 1) => {
     const sorted = [...shifts].sort((a, b) => a.sort_order - b.sort_order);
@@ -93,35 +257,50 @@ export function TasksPanel() {
     reload();
   };
 
-  const addGroup = async (shiftId: string) => {
-    const name = prompt("שם הקבוצה:");
-    if (!name?.trim()) return;
-    const siblings = groups.filter((g) => g.shift_id === shiftId);
-    const so = (Math.max(0, ...siblings.map((g) => g.sort_order)) || 0) + 10;
-    const { error } = await supabase.from("task_groups").insert({
-      branch_id: branchId,
-      shift_id: shiftId,
-      name: name.trim(),
-      sort_order: so,
+  const addGroup = (shiftId: string) =>
+    askPrompt({
+      title: "הוסף קטגוריה חדשה",
+      placeholder: "שם הקטגוריה",
+      confirmLabel: "הוסף קטגוריה",
+      onConfirm: async (name) => {
+        const siblings = groups.filter((g) => g.shift_id === shiftId);
+        const so = (Math.max(0, ...siblings.map((g) => g.sort_order)) || 0) + 10;
+        const { error } = await supabase.from("task_groups").insert({
+          branch_id: branchId,
+          shift_id: shiftId,
+          name,
+          sort_order: so,
+        });
+        if (error) return toast.error(error.message);
+        reload();
+      },
     });
-    if (error) return toast.error(error.message);
-    reload();
-  };
 
-  const renameGroup = async (g: TaskGroup) => {
-    const name = prompt("שם חדש:", g.name);
-    if (!name?.trim() || name === g.name) return;
-    const { error } = await supabase.from("task_groups").update({ name: name.trim() }).eq("id", g.id);
-    if (error) return toast.error(error.message);
-    reload();
-  };
+  const renameGroup = (g: TaskGroup) =>
+    askPrompt({
+      title: "שינוי שם הקטגוריה",
+      initial: g.name,
+      placeholder: "שם חדש",
+      onConfirm: async (name) => {
+        if (name === g.name) return;
+        const { error } = await supabase.from("task_groups").update({ name }).eq("id", g.id);
+        if (error) return toast.error(error.message);
+        reload();
+      },
+    });
 
-  const deleteGroup = async (g: TaskGroup) => {
-    if (!confirm(`למחוק את "${g.name}" וכל המשימות שלה?`)) return;
-    const { error } = await supabase.from("task_groups").delete().eq("id", g.id);
-    if (error) return toast.error(error.message);
-    reload();
-  };
+  const deleteGroup = (g: TaskGroup) =>
+    askConfirm({
+      title: `מחיקת קטגוריה "${g.name}"`,
+      description: "פעולה זו תמחק את כל המשימות שמתחת לקטגוריה זו.",
+      confirmLabel: "מחק",
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from("task_groups").delete().eq("id", g.id);
+        if (error) return toast.error(error.message);
+        reload();
+      },
+    });
 
   const moveGroup = async (g: TaskGroup, dir: -1 | 1) => {
     const siblings = groups
@@ -137,20 +316,25 @@ export function TasksPanel() {
     reload();
   };
 
-  const addTask = async (groupId: string) => {
-    const name = prompt("שם המשימה:");
-    if (!name?.trim()) return;
-    const siblings = tasks.filter((t) => t.group_id === groupId);
-    const so = (Math.max(0, ...siblings.map((t) => t.sort_order)) || 0) + 10;
-    const { error } = await supabase.from("tasks").insert({
-      branch_id: branchId,
-      group_id: groupId,
-      name: name.trim(),
-      sort_order: so,
+  const addTask = (groupId: string, groupName: string) =>
+    askPrompt({
+      title: "הוספת משימה חדשה",
+      description: `המשימה תתווסף תחת הקטגוריה: ${groupName}`,
+      placeholder: "שם המשימה",
+      confirmLabel: "הוסף משימה",
+      onConfirm: async (name) => {
+        const siblings = tasks.filter((t) => t.group_id === groupId);
+        const so = (Math.max(0, ...siblings.map((t) => t.sort_order)) || 0) + 10;
+        const { error } = await supabase.from("tasks").insert({
+          branch_id: branchId,
+          group_id: groupId,
+          name,
+          sort_order: so,
+        });
+        if (error) return toast.error(error.message);
+        reload();
+      },
     });
-    if (error) return toast.error(error.message);
-    reload();
-  };
 
   const updateTask = async (t: Task, patch: Partial<Task>) => {
     const { error } = await supabase.from("tasks").update(patch).eq("id", t.id);
@@ -158,12 +342,17 @@ export function TasksPanel() {
     reload();
   };
 
-  const deleteTask = async (t: Task) => {
-    if (!confirm(`למחוק את "${t.name}"?`)) return;
-    const { error } = await supabase.from("tasks").delete().eq("id", t.id);
-    if (error) return toast.error(error.message);
-    reload();
-  };
+  const deleteTask = (t: Task) =>
+    askConfirm({
+      title: `מחיקת משימה "${t.name}"`,
+      confirmLabel: "מחק",
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from("tasks").delete().eq("id", t.id);
+        if (error) return toast.error(error.message);
+        reload();
+      },
+    });
 
   const moveTask = async (t: Task, dir: -1 | 1) => {
     const siblings = tasks
@@ -219,7 +408,6 @@ export function TasksPanel() {
                 <button onClick={() => moveShift(s, 1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="הורד"><ChevronDown className="h-4 w-4" /></button>
                 <button onClick={() => renameShift(s)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-4 w-4" /></button>
                 <button onClick={() => deleteShift(s)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-4 w-4" /></button>
-                <button onClick={() => addGroup(s.id)} className="p-1 text-neon" aria-label="הוסף קבוצה"><Plus className="h-4 w-4" /></button>
               </div>
               <button
                 onClick={() => toggle(s.id)}
@@ -239,7 +427,14 @@ export function TasksPanel() {
                         <button onClick={() => moveGroup(g, 1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronDown className="h-3.5 w-3.5" /></button>
                         <button onClick={() => renameGroup(g)} className="p-1 text-muted-foreground hover:text-neon"><Pencil className="h-3.5 w-3.5" /></button>
                         <button onClick={() => deleteGroup(g)} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => addTask(g.id)} className="p-1 text-neon"><Plus className="h-3.5 w-3.5" /></button>
+                        <button
+                          onClick={() => addTask(g.id, g.name)}
+                          className="p-1 text-pink-500 hover:text-pink-400"
+                          aria-label="הוסף משימה"
+                          title="הוסף משימה"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                       <button onClick={() => toggle(g.id)} className="flex-1 text-right text-sm font-bold">{g.name}</button>
                     </div>
@@ -264,8 +459,17 @@ export function TasksPanel() {
                   </div>
                 ))}
                 {groups.filter((g) => g.shift_id === s.id).length === 0 && (
-                  <div className="px-4 py-4 text-center text-xs text-muted-foreground">אין קבוצות במשמרת זו.</div>
+                  <div className="px-4 py-4 text-center text-xs text-muted-foreground">אין קטגוריות במשמרת זו.</div>
                 )}
+
+                <div className="p-3 bg-background/20">
+                  <button
+                    onClick={() => addGroup(s.id)}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-3 py-2 rounded-md text-sm transition-colors"
+                  >
+                    <Plus className="h-4 w-4" /> הוסף קטגוריה חדשה
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -276,6 +480,15 @@ export function TasksPanel() {
           </div>
         )}
       </div>
+
+      <PromptModal
+        state={promptState}
+        onClose={() => setPromptState((p) => ({ ...p, open: false }))}
+      />
+      <ConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState((c) => ({ ...c, open: false }))}
+      />
     </section>
   );
 }
@@ -317,7 +530,7 @@ function TaskRow({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="flex-1 bg-input border border-border rounded-md px-2 py-1 text-sm text-right"
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
           />
         ) : (
           <div className="flex-1 text-sm text-right">{task.name}</div>
@@ -328,7 +541,7 @@ function TaskRow({
           <select
             value={recipeId}
             onChange={(e) => setRecipeId(e.target.value)}
-            className="flex-1 bg-input border border-border rounded-md px-2 py-1 text-xs text-right"
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-xs text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
           >
             <option value="">— ללא קישור למתכון —</option>
             {recipes.map((r) => (
@@ -342,7 +555,7 @@ function TaskRow({
               onUpdate({ name: name.trim() || task.name, recipe_id: recipeId || null });
               setEditing(false);
             }}
-            className="inline-flex items-center gap-1 bg-neon text-primary-foreground font-bold px-2 py-1 rounded text-xs"
+            className="inline-flex items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white font-bold px-2 py-1 rounded text-xs transition-colors"
           >
             <Save className="h-3 w-3" /> שמור
           </button>
