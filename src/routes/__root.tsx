@@ -16,8 +16,14 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
 
-import { GuidedTour } from "@/components/GuidedTour";
-import { CopilotFab } from "@/components/CopilotFab";
+import { lazy, Suspense } from "react";
+
+const GuidedTour = lazy(() =>
+  import("@/components/GuidedTour").then((m) => ({ default: m.GuidedTour })),
+);
+const CopilotFab = lazy(() =>
+  import("@/components/CopilotFab").then((m) => ({ default: m.CopilotFab })),
+);
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
