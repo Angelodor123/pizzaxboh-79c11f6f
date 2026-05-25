@@ -508,7 +508,14 @@ function TasksPage() {
                         : Math.round((gDone / gTasks.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
-                      <div key={g.id} className="rounded-xl bg-gray-800/80 border border-border overflow-hidden shadow-sm mb-2">
+                      <div
+                        key={g.id}
+                        ref={(el) => {
+                          groupRefs.current.set(g.id, el);
+                        }}
+                        className="scroll-mt-36 rounded-xl bg-gray-800/80 border border-border overflow-hidden shadow-sm mb-2"
+                      >
+
                         <button
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
