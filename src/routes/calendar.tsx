@@ -810,7 +810,13 @@ function InstanceOverrideForm({
       onClose();
       return;
     }
-    if (!confirm("לאפס את העריכה ולחזור לערכי המאסטר?")) return;
+    const ok = await confirmDelete({
+      title: "איפוס עריכה",
+      description: "לאפס את העריכה ליום זה ולחזור לערכי המאסטר?",
+      confirmLabel: "אפס",
+      destructive: false,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("calendar_event_overrides").delete().eq("id", ev._overrideId);
     if (error) toast.error("שגיאה");
     else {
