@@ -233,6 +233,12 @@ function CalendarPage() {
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           eventsForDate={eventsForDate}
+          canEdit={canEdit}
+          onAddForDate={(iso) => {
+            setSelectedDate(iso);
+            setEditing(null);
+            setFormOpen(true);
+          }}
         />
       ) : (
         <WeekView cursor={cursor} setCursor={setCursor} eventsForDate={eventsForDate} />
