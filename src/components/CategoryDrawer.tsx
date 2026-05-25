@@ -463,6 +463,16 @@ export function CategoryDrawer() {
               )}
             </div>
 
+            {canInstall && (
+              <button
+                onClick={() => void promptInstall()}
+                className="w-full text-pink-500 border border-pink-500/30 hover:bg-pink-500/10 rounded-lg py-2 px-4 flex items-center justify-center gap-2 text-sm font-bold transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                התקן אפליקציה
+              </button>
+            )}
+
             <button
               onClick={async () => {
                 close();
