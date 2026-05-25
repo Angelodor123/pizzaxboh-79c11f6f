@@ -5,10 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
 });
+
+// Event type catalog — color-coded tags for the calendar (overlays for the existing
+// "delivery" | "event" base category). Each entry maps to a Tailwind dot color.
+export const EVENT_TYPES = [
+  { id: "maintenance",       label: "תחזוקה",          color: "#ef4444" }, // red
+  { id: "inventory_delivery", label: "קבלת סחורה",      color: "#f97316" }, // orange
+  { id: "team_meeting",      label: "פגישת צוות",      color: "#3b82f6" }, // blue
+  { id: "special_event",     label: "אירוע מיוחד",     color: "#ec4899" }, // pink
+] as const;
+type EventTypeId = (typeof EVENT_TYPES)[number]["id"];
+const eventTypeColor = (id?: string | null) =>
+  EVENT_TYPES.find((t) => t.id === id)?.color ?? null;
+
 
 type EventCategory = "delivery" | "event";
 
