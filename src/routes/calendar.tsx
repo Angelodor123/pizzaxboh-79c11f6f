@@ -20,8 +20,8 @@ export const EVENT_TYPES = [
   { id: "special_event",     label: "אירוע מיוחד",     color: "#ec4899" }, // pink
 ] as const;
 type EventTypeId = (typeof EVENT_TYPES)[number]["id"];
-const eventTypeColor = (id?: string | null) =>
-  EVENT_TYPES.find((t) => t.id === id)?.color ?? null;
+const eventTypeColor = (id?: string | null): string | null =>
+  (EVENT_TYPES.find((t) => t.id === id)?.color as string | undefined) ?? null;
 
 
 type EventCategory = "delivery" | "event";
