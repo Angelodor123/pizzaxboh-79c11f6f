@@ -76,7 +76,7 @@ export function EvChargingWidget() {
     const load = async () => {
       const { data } = await supabase
         .from("ev_vehicles")
-        .select("id,name,battery_pct,status,swap_at,sort_order,issue_note")
+        .select("id,name,battery_pct,status,swap_at,sort_order,issue_note,updated_at")
         .order("sort_order", { ascending: true });
       if (mounted && data) setVehicles(data as EvVehicle[]);
     };
