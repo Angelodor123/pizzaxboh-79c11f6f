@@ -303,8 +303,10 @@ function AuthedShell() {
         <Outlet />
       </main>
 
-      <GuidedTour />
-      <CopilotFab />
+      <Suspense fallback={null}>
+        <GuidedTour />
+        <CopilotFab />
+      </Suspense>
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">
