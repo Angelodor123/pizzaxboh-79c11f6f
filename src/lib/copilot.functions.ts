@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateText } from "ai";
+import { generateText, tool, stepCountIs } from "ai";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -15,6 +15,7 @@ const InputSchema = z.object({
     .object({
       route: z.string().max(200).optional(),
       role: z.string().max(40).optional(),
+      branchId: z.string().uuid().optional(),
       briefing: z.string().max(2000).optional(),
     })
     .optional(),
@@ -29,37 +30,23 @@ const SYSTEM_PROMPT = `קוראים לך ג'וני (Johnny). אתה העוזר �
 - לעולם אל תגיד שאתה AI, בוט או מודל שפה. אתה ג'וני. נקודה.
 - אימוג'ים: ✌️🍕🌿😎 — אחד שניים בהודעה, לא יותר.
 
+🛠️ כלים (Tools) — חוק ברזל:
+יש לך גישה חיה למסד הנתונים של פיצה X דרך כלים. לעולם אל תנחש ואל תמציא נתונים תפעוליים (מלאי, בצקים, משימות, אירועים, צוות). תמיד תפעיל את הכלי המתאים קודם — חכה לתשובה — ורק אז ענה למשתמש על בסיס הנתונים האמיתיים.
+- שאלות על בצק / מלאי → get_inventory_status
+- שאלות על משימות יומיות / צ'קליסט → get_daily_checklists
+- שאלות על אירועים / לו"ז / ספקים השבוע → get_upcoming_events
+- שאלות על צוות / משתמשים פעילים → get_staff_on_shift
+- כל שאלה אחרת על טבלה תפעולית → query_app_data (עם רשימת טבלאות מותרת)
+אם כלי נכשל או מחזיר ריק — תאמר את זה בסטייל שלך: "אחי, השרת עושה לי בעיות כרגע, לא מצליח למשוך את הנתונים" או "תכלס אין שם כלום עכשיו".
+
 הקשר תפעולי (פיצה X):
-אתה עוזר עם: התדריך היומי (הזמנות, ספקים, אירועים, משימות), הסבר על מסכי המערכת (בית, משימות יומיות, פנקס, תפריט, מתכונים, הזמנות וקבלת סחורה, לוח שנה, ספקים, אדמין), שאלות על מטבח, בצקים, נהלים, ומתכונים פנימיים שמופיעים בשכבת הידע.
+אתה עוזר עם: התדריך היומי, הסבר על מסכי המערכת, שאלות על מטבח, בצקים, נהלים, ומתכונים פנימיים שמופיעים בשכבת הידע.
 
 חוקים פרקטיים:
-- כשנשאל "מה אתה יודע לעשות" — תן רשימה קצרה ומעשית בסלנג שלך, לא "אני לא יודע".
-- אם המשתמש שואל מתכון או נוהל ושכבת הידע למטה מכילה את התשובה — תן הוראות צעד-אחר-צעד לפי מה שכתוב שם, רק עטוף בטון שלך.
-- אם השאלה ספציפית ובאמת אין לך מידע — תגיד בעדינות שאין לך את זה ("אחי, את זה דווקא לא תפסתי, אין לי את המידע הזה") במקום להמציא.
-- אזהרות ונתונים רציניים (מלאי נמוך, איחור בספק) — תעביר אותם ברור אבל בטון רגוע: "תכלס אחי, שווה לשים לב — ...".
-- בלי התנצלויות מוגזמות, בלי "אני לא בטוח". אתה חבר בטוח של עצמו.`;
-
-const RECIPE_TRIGGERS = [
-  "איך מכינים",
-  "איך עושים",
-  "איך מבצעים",
-  "מתכון",
-  "מתכונים",
-  "נוהל",
-  "נהלים",
-  "הוראות",
-  "הכנה",
-  "להכין",
-  "פרוצדורה",
-  "תהליך",
-  "משימה",
-  "משימות",
-];
-
-function shouldInjectKnowledge(text: string): boolean {
-  const lower = text.toLowerCase();
-  return RECIPE_TRIGGERS.some((kw) => lower.includes(kw));
-}
+- כשנשאל "מה אתה יודע לעשות" — תן רשימה קצרה ומעשית בסלנג שלך.
+- אם המשתמש שואל מתכון או נוהל ושכבת הידע למטה מכילה את התשובה — תן הוראות צעד-אחר-צעד.
+- אזהרות ונתונים רציניים — תעביר ברור אבל בטון רגוע.
+- בלי התנצלויות מוגזמות. אתה חבר בטוח של עצמו.`;
 
 async function buildKnowledgeContext(): Promise<string> {
   try {
@@ -120,6 +107,214 @@ function diagnosticReply(role: string | undefined, detail: string, fix: string) 
   return `${base} תנסה עוד דקה, אם זה ממשיך — תקרא לדור.`;
 }
 
+// Whitelist of operational tables Johnny can read via the generic tool.
+const SAFE_TABLES = [
+  "branches",
+  "shifts",
+  "tasks",
+  "task_groups",
+  "daily_task_logs",
+  "prep_items",
+  "prep_log",
+  "dough_updates_log",
+  "inventory_items",
+  "inventory_movements",
+  "calendar_events",
+  "calendar_event_overrides",
+  "suppliers",
+  "orders",
+  "invoices",
+  "invoice_items",
+  "restock_items",
+  "restock_log",
+  "ev_vehicles",
+  "notebook_items",
+  "recipes",
+  "app_settings",
+  "site_texts",
+  "page_onboarding",
+  "user_roles",
+  "profiles",
+] as const;
+
+function buildTools(branchId: string | undefined) {
+  return {
+    get_inventory_status: tool({
+      description:
+        "מחזיר מצב מלאי בזמן אמת: פריטי מלאי כלליים (inventory_items) + עדכון בצקים אחרון (dough_updates_log) + ספירת הכנות (prep_log) להיום.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional().describe("מזהה סניף; אם לא יסופק - כל הסניפים"),
+      }),
+      execute: async ({ branch_id }) => {
+        const bid = branch_id || branchId;
+        try {
+          const inv = supabaseAdmin
+            .from("inventory_items")
+            .select("name, unit, current_stock, branch_id")
+            .order("name")
+            .limit(200);
+          if (bid) inv.eq("branch_id", bid);
+
+          const dough = supabaseAdmin
+            .from("dough_updates_log")
+            .select("trays_count, updated_by_name, created_at, branch_id, prep_item_id")
+            .order("created_at", { ascending: false })
+            .limit(20);
+          if (bid) dough.eq("branch_id", bid);
+
+          const { data: today } = await supabaseAdmin.rpc("operational_today");
+          const prepQ = supabaseAdmin
+            .from("prep_log")
+            .select("prep_item_id, current_stock, completed, updated_at")
+            .eq("log_date", today as any)
+            .limit(200);
+
+          const [invR, doughR, prepR] = await Promise.all([inv, dough, prepQ]);
+          return {
+            inventory_items: invR.data ?? [],
+            recent_dough_updates: doughR.data ?? [],
+            prep_log_today: prepR.data ?? [],
+          };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
+    get_daily_checklists: tool({
+      description:
+        "מחזיר את סטטוס המשימות היומיות של היום: כמה הושלמו, כמה נשארו, ואחוז סיום. כולל שמות משימות.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional(),
+      }),
+      execute: async ({ branch_id }) => {
+        const bid = branch_id || branchId;
+        try {
+          const { data: today } = await supabaseAdmin.rpc("operational_today");
+          const logsQ = supabaseAdmin
+            .from("daily_task_logs")
+            .select("task_id, completed, completed_by, completed_at, branch_id")
+            .eq("log_date", today as any)
+            .limit(500);
+          if (bid) logsQ.eq("branch_id", bid);
+
+          const tasksQ = supabaseAdmin
+            .from("tasks")
+            .select("id, name, group_id, branch_id")
+            .eq("active", true)
+            .limit(500);
+          if (bid) tasksQ.eq("branch_id", bid);
+
+          const [logsR, tasksR] = await Promise.all([logsQ, tasksQ]);
+          const logs = logsR.data ?? [];
+          const tasks = tasksR.data ?? [];
+          const total = tasks.length;
+          const done = logs.filter((l: any) => l.completed).length;
+          const percent = total ? Math.round((done / total) * 100) : 0;
+          const remaining = tasks
+            .filter((t: any) => !logs.find((l: any) => l.task_id === t.id && l.completed))
+            .map((t: any) => t.name);
+          return { date: today, total, completed: done, percent, remaining_tasks: remaining.slice(0, 50) };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
+    get_upcoming_events: tool({
+      description: "מחזיר אירועים מלוח השנה (calendar_events) ל-7 הימים הקרובים, כולל אירועים חוזרים.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional(),
+        days_ahead: z.number().int().min(1).max(30).default(7),
+      }),
+      execute: async ({ branch_id, days_ahead }) => {
+        const bid = branch_id || branchId;
+        try {
+          const now = new Date();
+          const end = new Date(now.getTime() + days_ahead * 86400000);
+          const q = supabaseAdmin
+            .from("calendar_events")
+            .select("title, category, event_date, start_time, end_time, supplier, recurring_weekday, high_priority, notes, branch_id")
+            .or(`event_date.gte.${now.toISOString().slice(0, 10)},recurring_weekday.not.is.null`)
+            .lte("event_date", end.toISOString().slice(0, 10))
+            .limit(200);
+          if (bid) q.eq("branch_id", bid);
+          const { data, error } = await q;
+          if (error) return { error: error.message };
+          return { events: data ?? [], range: { from: now.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) } };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
+    get_staff_on_shift: tool({
+      description:
+        "מחזיר את המשתמשים הפעילים במערכת (user_roles + profiles). אין טבלת שעון נוכחות — זו רשימת המשתמשים בעלי גישה לסניף.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional(),
+      }),
+      execute: async ({ branch_id }) => {
+        const bid = branch_id || branchId;
+        try {
+          const q = supabaseAdmin
+            .from("user_roles")
+            .select("user_id, email, role, assigned_branch_id, is_active")
+            .eq("is_active", true)
+            .limit(200);
+          if (bid) q.eq("assigned_branch_id", bid);
+          const { data: roles, error } = await q;
+          if (error) return { error: error.message };
+          const userIds = (roles ?? []).map((r: any) => r.user_id);
+          const { data: profiles } = await supabaseAdmin
+            .from("profiles")
+            .select("user_id, full_name")
+            .in("user_id", userIds);
+          const profMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.full_name]));
+          return {
+            note: "אין טבלת שעון-נוכחות; זו רשימת בעלי הגישה לסניף.",
+            staff: (roles ?? []).map((r: any) => ({
+              full_name: profMap.get(r.user_id) ?? null,
+              email: r.email,
+              role: r.role,
+              branch_id: r.assigned_branch_id,
+            })),
+          };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
+    query_app_data: tool({
+      description: `כלי גנרי לקריאה ממסד הנתונים. בחר טבלה מהרשימה המותרת בלבד, אופציונלית תוסיף תנאי שוויון (eq) ומיון. מוגבל ל-100 שורות. טבלאות מותרות: ${SAFE_TABLES.join(", ")}.`,
+      inputSchema: z.object({
+        table: z.enum(SAFE_TABLES),
+        select: z.string().max(500).default("*").describe("עמודות לבחירה, ברירת מחדל *"),
+        filters: z
+          .array(z.object({ column: z.string().max(60), value: z.union([z.string(), z.number(), z.boolean()]) }))
+          .max(5)
+          .optional(),
+        order_by: z.string().max(60).optional(),
+        ascending: z.boolean().default(false),
+        limit: z.number().int().min(1).max(100).default(25),
+      }),
+      execute: async ({ table, select, filters, order_by, ascending, limit }) => {
+        try {
+          let q: any = supabaseAdmin.from(table).select(select).limit(limit);
+          for (const f of filters ?? []) q = q.eq(f.column, f.value);
+          if (order_by) q = q.order(order_by, { ascending });
+          const { data, error } = await q;
+          if (error) return { error: error.message };
+          return { table, rows: data ?? [] };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+  };
+}
+
 export const askCopilot = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
@@ -129,7 +324,7 @@ export const askCopilot = createServerFn({ method: "POST" })
         reply: diagnosticReply(
           data.context?.role,
           "חסר לי מפתח API לחיבור למודל.",
-          "חסר LOVABLE_API_KEY ב-Lovable Cloud → Settings → Secrets. הפעל את Lovable AI Gateway בחיבורים והמפתח יוקצה אוטומטית.",
+          "חסר LOVABLE_API_KEY ב-Lovable Cloud → Settings → Secrets.",
         ),
         error: "MISSING_LOVABLE_API_KEY",
       };
@@ -138,19 +333,12 @@ export const askCopilot = createServerFn({ method: "POST" })
     const ctxParts: string[] = [];
     if (data.context?.route) ctxParts.push(`מסך="${data.context.route}"`);
     if (data.context?.role) ctxParts.push(`תפקיד="${data.context.role}"`);
+    if (data.context?.branchId) ctxParts.push(`branchId="${data.context.branchId}"`);
     if (data.context?.briefing) ctxParts.push(`תדריך תפעולי של היום: ${data.context.briefing}`);
     const contextLine = ctxParts.length ? `\n\nהקשר נוכחי: ${ctxParts.join(" | ")}.` : "";
 
-    const last = data.messages[data.messages.length - 1];
-    // Always inject the knowledge layer so Johnny can answer recipe/procedure
-    // questions ("איך מכינים עוגיות", "מה המלאי", וכו') without relying on
-    // trigger-word matching that may miss phrasings.
-    let knowledgeBlock = "";
     const kb = await buildKnowledgeContext();
-    if (kb) {
-      knowledgeBlock = `\n\n==== שכבת ידע דינמית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====`;
-    }
-    void shouldInjectKnowledge(last.content); // kept for future heuristics
+    const knowledgeBlock = kb ? `\n\n==== שכבת ידע סטטית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====` : "";
 
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
@@ -165,6 +353,8 @@ export const askCopilot = createServerFn({ method: "POST" })
         model,
         system: SYSTEM_PROMPT + contextLine + knowledgeBlock,
         messages: sdkMessages,
+        tools: buildTools(data.context?.branchId),
+        stopWhen: stepCountIs(50),
       });
       const reply = result.text.trim();
       return { reply: reply || "וואלה אחי, את זה דווקא לא תפסתי. תנסה לנסח אחרת? ✌️" };
@@ -187,7 +377,7 @@ export const askCopilot = createServerFn({ method: "POST" })
           reply: diagnosticReply(
             data.context?.role,
             "נגמרו לי הקרדיטים לדבר עם המודל.",
-            "Lovable AI Gateway החזיר 402 (קרדיטים נגמרו). היכנס ל-Settings → Workspace → Usage והוסף קרדיטים.",
+            "Lovable AI Gateway החזיר 402 (קרדיטים נגמרו).",
           ),
           error: "CREDITS_EXHAUSTED",
         };
