@@ -30,8 +30,8 @@ interface Supplier {
 }
 
 function SuppliersPage() {
-  const { role } = useAuth();
-  const canEdit = role === "admin";
+  const { isSuperAdmin } = useAuth();
+  const canEdit = isSuperAdmin;
   const [list, setList] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
