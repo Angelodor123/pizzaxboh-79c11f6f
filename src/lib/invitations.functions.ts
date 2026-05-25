@@ -31,7 +31,12 @@ function buildRawEmail(to: string, subject: string, html: string) {
 export const sendInvitationEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InviteEmailInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Server-side admin role enforcement
+    const { data: roleData, error: roleErr } = await context.supabase.rpc("current_user_role");
+    if (roleErr) throw new Error("בדיקת הרשאות נכשלה");
+    if (roleData !== "admin") throw new Error("Unauthorized: admin role required");
+
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     const GOOGLE_MAIL_API_KEY = process.env.GOOGLE_MAIL_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY חסר");
