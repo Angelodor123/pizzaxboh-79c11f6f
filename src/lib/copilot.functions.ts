@@ -139,6 +139,169 @@ const SAFE_TABLES = [
 
 function buildTools(branchId: string | undefined) {
   return {
+    get_daily_prep: tool({
+      description:
+        "מחזיר את יעדי ההכנות היומיות (prep_items) של היום לפי יום בשבוע, יחד עם סטטוס המלאי הנוכחי וסיום (prep_log) — לטבלת 'הכנות יומיות'.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional(),
+      }),
+      execute: async ({ branch_id }) => {
+        const bid = branch_id || branchId;
+        try {
+          const { data: today } = await supabaseAdmin.rpc("operational_today");
+          const weekdayCols = ["target_sun","target_mon","target_tue","target_wed","target_thu","target_fri","target_sat"];
+          const dow = new Date(String(today)).getDay();
+          const targetCol = weekdayCols[dow];
+
+          const itemsQ = supabaseAdmin
+            .from("prep_items")
+            .select(`id, name, unit, ${targetCol}, branch_id`)
+            .eq("active", true)
+            .order("sort_order")
+            .limit(200);
+          if (bid) itemsQ.eq("branch_id", bid);
+
+          const logQ = supabaseAdmin
+            .from("prep_log")
+            .select("prep_item_id, current_stock, completed, updated_at")
+            .eq("log_date", today as any)
+            .limit(500);
+
+          const [itemsR, logR] = await Promise.all([itemsQ, logQ]);
+          const items = itemsR.data ?? [];
+          const logs = logR.data ?? [];
+          const rows = items.map((it: any) => {
+            const l = logs.find((x: any) => x.prep_item_id === it.id);
+            const target = Number(it[targetCol] ?? 0);
+            const stock = Number(l?.current_stock ?? 0);
+            return {
+              name: it.name,
+              unit: it.unit,
+              target_today: target,
+              current_stock: stock,
+              completed: !!l?.completed,
+              missing: Math.max(0, target - stock),
+              updated_at: l?.updated_at ?? null,
+            };
+          });
+          const total = rows.length;
+          const done = rows.filter((r) => r.completed).length;
+          return {
+            date: today,
+            weekday: dow,
+            total_items: total,
+            completed_items: done,
+            percent: total ? Math.round((done / total) * 100) : 0,
+            items: rows,
+          };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
+    get_dough_inventory: tool({
+      description: "מחזיר את כמות מגשי הבצק האחרונה (trays_count) והחותמת זמן של העדכון האחרון.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional(),
+      }),
+      execute: async ({ branch_id }) => {
+        const bid = branch_id || branchId;
+        try {
+          const q = supabaseAdmin
+            .from("dough_updates_log")
+            .select("trays_count, updated_by_name, created_at, branch_id, prep_item_id")
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (bid) q.eq("branch_id", bid);
+          const { data, error } = await q;
+          if (error) return { error: error.message };
+          const latest = data?.[0];
+          if (!latest) return { trays_count: null, note: "אין עדכוני בצק רשומים." };
+          return {
+            trays_count: latest.trays_count,
+            last_updated_at: latest.created_at,
+            last_updated_by: latest.updated_by_name,
+            branch_id: latest.branch_id,
+          };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
+    get_checklists_status: tool({
+      description:
+        "מחזיר את אחוז ההשלמה הריאל-טיים של הצ'קליסטים היומיים (פתיחה/סגירה/משמרות) ופירוט לפי משמרת.",
+      inputSchema: z.object({
+        branch_id: z.string().uuid().optional(),
+      }),
+      execute: async ({ branch_id }) => {
+        const bid = branch_id || branchId;
+        try {
+          const { data: today } = await supabaseAdmin.rpc("operational_today");
+
+          const tasksQ = supabaseAdmin
+            .from("tasks")
+            .select("id, name, group_id, branch_id")
+            .eq("active", true)
+            .limit(1000);
+          if (bid) tasksQ.eq("branch_id", bid);
+
+          const groupsQ = supabaseAdmin
+            .from("task_groups")
+            .select("id, name, shift_id, branch_id")
+            .eq("active", true)
+            .limit(500);
+          if (bid) groupsQ.eq("branch_id", bid);
+
+          const shiftsQ = supabaseAdmin
+            .from("shifts")
+            .select("id, name, branch_id")
+            .eq("active", true)
+            .limit(100);
+          if (bid) shiftsQ.eq("branch_id", bid);
+
+          const logsQ = supabaseAdmin
+            .from("daily_task_logs")
+            .select("task_id, completed, branch_id")
+            .eq("log_date", today as any)
+            .limit(2000);
+          if (bid) logsQ.eq("branch_id", bid);
+
+          const [tasksR, groupsR, shiftsR, logsR] = await Promise.all([tasksQ, groupsQ, shiftsQ, logsQ]);
+          const tasks = tasksR.data ?? [];
+          const groups = groupsR.data ?? [];
+          const shifts = shiftsR.data ?? [];
+          const logs = logsR.data ?? [];
+          const doneSet = new Set(logs.filter((l: any) => l.completed).map((l: any) => l.task_id));
+
+          const perShift = shifts.map((s: any) => {
+            const sgroupIds = groups.filter((g: any) => g.shift_id === s.id).map((g: any) => g.id);
+            const stasks = tasks.filter((t: any) => sgroupIds.includes(t.group_id));
+            const total = stasks.length;
+            const done = stasks.filter((t: any) => doneSet.has(t.id)).length;
+            return {
+              shift: s.name,
+              total,
+              completed: done,
+              percent: total ? Math.round((done / total) * 100) : 0,
+            };
+          });
+
+          const total = tasks.length;
+          const done = tasks.filter((t: any) => doneSet.has(t.id)).length;
+          return {
+            date: today,
+            overall: { total, completed: done, percent: total ? Math.round((done / total) * 100) : 0 },
+            per_shift: perShift,
+          };
+        } catch (e: any) {
+          return { error: String(e?.message ?? e) };
+        }
+      },
+    }),
+
     get_inventory_status: tool({
       description:
         "מחזיר מצב מלאי בזמן אמת: פריטי מלאי כלליים (inventory_items) + עדכון בצקים אחרון (dough_updates_log) + ספירת הכנות (prep_log) להיום.",
