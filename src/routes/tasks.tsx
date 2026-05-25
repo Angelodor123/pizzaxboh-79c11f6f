@@ -467,8 +467,12 @@ function TasksPage() {
           return (
             <div
               key={shift.id}
-              className={`border rounded-lg overflow-hidden ${isVirtual ? "border-info/50 bg-info/5" : "border-border bg-card/40"}`}
+              ref={(el) => {
+                shiftRefs.current.set(shift.id, el);
+              }}
+              className={`scroll-mt-36 border rounded-lg overflow-hidden ${isVirtual ? "border-info/50 bg-info/5" : "border-border bg-card/40"}`}
             >
+
               <button
                 type="button"
                 onClick={() => setOpenShift(isShiftOpen ? null : shift.id)}
