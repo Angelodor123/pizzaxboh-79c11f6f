@@ -255,10 +255,18 @@ export function CopilotFab() {
         },
       });
       setMessages((m) => [...m, { role: "model", content: res.reply }]);
-    } catch {
+    } catch (err: any) {
+      const detail = isSuperAdmin
+        ? `\n\n🔧 לסופר־אדמין: ${String(err?.message ?? err).slice(0, 220)}`
+        : "";
       setMessages((m) => [
         ...m,
-        { role: "model", content: "השירות לא זמין כרגע. נסה שוב בעוד רגע." },
+        {
+          role: "model",
+          content:
+            "וואלה אחי, נפל לי השרת רגע 🌿 לא הצלחתי להגיע למודל. תנסה עוד שנייה." +
+            detail,
+        },
       ]);
     } finally {
       setLoading(false);
