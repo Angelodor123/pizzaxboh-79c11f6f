@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, ShieldCheck, User, Building2, BadgeCheck, Calendar, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { subscribeToPush } from "@/lib/push";
+import { subscribeToPush, PushSubscribeError, isIOS, isStandalone } from "@/lib/push";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/my-profile")({
@@ -66,14 +66,45 @@ function MyProfilePage() {
     }
   }, [userId]);
 
+  const iosBlocked = isIOS() && !isStandalone();
+
   const enablePush = async () => {
     if (!userId) return;
-    const ok = await subscribeToPush(userId);
-    if (ok) {
+    try {
+      await subscribeToPush(userId);
       setPushEnabled(true);
       toast.success("התראות הופעלו בהצלחה");
-    } else {
-      toast.error("לא ניתן להפעיל התראות", { description: "אשר/י הרשאה בדפדפן ונסה/י שוב" });
+    } catch (e) {
+      console.error("[my-profile] enablePush failed", e);
+      if (e instanceof PushSubscribeError) {
+        switch (e.reason) {
+          case "permission-denied":
+            toast.error("הדפדפן חוסם התראות", {
+              description: "אנא לחץ על המנעול בשורת הכתובת ואשר קבלת התראות.",
+            });
+            return;
+          case "ios-not-standalone":
+            toast.error("דרושה התקנה למסך הבית", {
+              description: "כדי לקבל התראות באייפון, יש להתקין את האפליקציה למסך הבית קודם.",
+            });
+            return;
+          case "preview":
+            toast.error("התראות לא פעילות בתצוגה המקדימה", {
+              description: "פתח/י את האתר המפורסם כדי להירשם.",
+            });
+            return;
+          case "unsupported":
+            toast.error("הדפדפן לא תומך בהתראות Push");
+            return;
+          case "permission-dismissed":
+            toast.error("ההרשאה לא אושרה", { description: "נסה/י שוב ואשר/י את הבקשה." });
+            return;
+          default:
+            toast.error("לא ניתן להפעיל התראות", { description: e.message });
+            return;
+        }
+      }
+      toast.error("שגיאה לא צפויה בהפעלת התראות");
     }
   };
 
@@ -134,12 +165,17 @@ function MyProfilePage() {
           <button
             type="button"
             onClick={enablePush}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-neon/60 bg-neon/5 hover:bg-neon/10 active:scale-[0.99] transition touch-manipulation text-right"
+            disabled={iosBlocked}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-neon/60 bg-neon/5 hover:bg-neon/10 active:scale-[0.99] transition touch-manipulation text-right disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <Bell className="h-5 w-5 text-neon shrink-0" />
             <div className="flex-1">
               <div className="font-bold text-sm">הפעלת התראות Push</div>
-              <div className="text-xs text-muted-foreground">קבל/י התראות במכשיר גם כשהאפליקציה סגורה</div>
+              <div className="text-xs text-muted-foreground">
+                {iosBlocked
+                  ? "כדי לקבל התראות באייפון, יש להתקין את האפליקציה למסך הבית קודם."
+                  : "קבל/י התראות במכשיר גם כשהאפליקציה סגורה"}
+              </div>
             </div>
           </button>
         )}
