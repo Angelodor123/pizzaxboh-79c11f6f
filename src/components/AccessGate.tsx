@@ -9,11 +9,26 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground text-sm">טוען…</div>
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center animate-fade-in"
+        style={{ backgroundColor: "#000000" }}
+      >
+        <img
+          src={pizzaXLogo}
+          alt="Pizza X"
+          className="object-contain animate-pulse-glow"
+          style={{
+            width: "40vw",
+            maxWidth: 360,
+            height: "auto",
+            filter:
+              "drop-shadow(0 0 18px rgba(255,20,147,0.55)) drop-shadow(0 0 36px rgba(255,20,147,0.35))",
+          }}
+        />
       </div>
     );
   }
+
 
   // Authenticated AND has a role → allow app
   if (session && role) {
