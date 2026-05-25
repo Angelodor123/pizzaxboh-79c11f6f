@@ -83,7 +83,12 @@ function InvoicesPage() {
   })();
 
   const archive = async (id: string) => {
-    if (!confirm("להעביר לארכיון? לא תופיע בטבלה אך תישמר.")) return;
+    const ok = await confirmDelete({
+      title: "העברה לארכיון",
+      description: "להעביר את החשבונית לארכיון? היא לא תופיע בטבלה אך תישמר במערכת.",
+      confirmLabel: "העבר לארכיון",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("invoices").update({ is_archived: true }).eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("הועברה לארכיון"); load(); }
