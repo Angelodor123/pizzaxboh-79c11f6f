@@ -318,13 +318,17 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         </div>
 
         <div className="overflow-y-auto p-4 space-y-4">
-          {/* STAGE: pick */}
           {stage === "pick" && (
             <>
+              {linkedOrderId && chosenMatch && (
+                <div className="rounded-md border border-neon/60 bg-neon/5 px-3 py-2 text-xs text-neon font-bold">
+                  קליטה עבור הזמנת {chosenMatch.supplier_name} מתאריך {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1">ספק (רמז לזיהוי)</label>
-                <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}
-                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none">
+                <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} disabled={!!linkedOrderId}
+                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none disabled:opacity-60">
                   <option value="">זיהוי אוטומטי…</option>
                   {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -340,9 +344,9 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 </div>
               ) : (
                 <button type="button" onClick={() => fileInput.current?.click()}
-                  className="w-full text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-10 hover:border-neon hover:text-neon transition">
+                  className="w-full text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-10 hover:border-neon hover:text-neon transition bg-zinc-900/40">
                   <Upload className="h-8 w-8 mx-auto mb-2" />
-                  צלם או העלה תמונת חשבונית
+                  לחץ לפתיחת מצלמה או גרירת קובץ
                 </button>
               )}
               <button type="button" onClick={start} disabled={!file}
@@ -350,8 +354,30 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 22px rgba(255,45,180,0.45)" }}>
                 <ScanSearch className="h-4 w-4" /> נתח חשבונית
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // Manual entry without OCR
+                  if (chosenMatch) {
+                    setRows(chosenMatch.items.map((oi) => ({
+                      name: oi.name,
+                      orderedQty: Number(oi.qty.replace(/[^\d.]/g, "")) || null,
+                      invoiceQty: Number(oi.qty.replace(/[^\d.]/g, "")) || 0,
+                      unitPrice: 0,
+                      totalPrice: 0,
+                    })));
+                  } else {
+                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }]);
+                  }
+                  setStage("manual");
+                }}
+                className="block mx-auto text-sm text-zinc-400 underline cursor-pointer hover:text-neon transition"
+              >
+                המצלמה לא עובדת? הזן נתונים ידנית
+              </button>
             </>
           )}
+
 
           {/* STAGE: suggest match */}
           {stage === "suggest" && (
