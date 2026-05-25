@@ -104,6 +104,7 @@ export function CategoryDrawer() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const { canInstall, promptInstall } = useInstallPrompt();
 
   useEffect(() => {
     if (!editingName) setNameDraft(fullName ?? "");
