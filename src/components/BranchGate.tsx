@@ -66,7 +66,7 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
   if (authLoading || branchesLoading) return null;
 
   // Branch Staff with no branch assigned → fallback screen
-  if (!isSuperAdmin && !assignedBranchId) {
+  if (!realIsSuperAdmin && !assignedBranchId) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <div className="max-w-md space-y-4 rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
@@ -90,10 +90,11 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
   }
 
   // Branch Staff with branch assigned → pass through (effect synced activeId)
-  if (!isSuperAdmin) {
+  if (!realIsSuperAdmin) {
     if (!activeId) return null;
     return <>{children}</>;
   }
+
 
   // Super Admin → must explicitly pick a branch (selection grid)
   if (activeId) return <>{children}</>;
