@@ -198,19 +198,22 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const canSubmit = supplierId && !Number.isNaN(totalNum) && totalNum > 0 && docDate && !submitting;
 
   const submit = async () => {
-    if (!canSubmit || !file) return;
+    if (!canSubmit) return;
     setSubmitting(true);
     try {
       const branchId = await requireCurrentBranchId();
-      const now = new Date();
-      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-      const path = `${supplierId}/${ym}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
-        contentType: file.type || "image/jpeg",
-        upsert: false,
-      });
-      if (upErr) throw upErr;
+      let path: string | null = null;
+      if (file) {
+        const now = new Date();
+        const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+        path = `${supplierId}/${ym}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
+          contentType: file.type || "image/jpeg",
+          upsert: false,
+        });
+        if (upErr) throw upErr;
+      }
 
       const { data: invoiceRow, error } = await supabase
         .from("invoices")
@@ -228,6 +231,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         .select("id")
         .single();
       if (error) throw error;
+
 
       // Invoice items
       const cleanItems = rows.filter((r) => r.name.trim());
