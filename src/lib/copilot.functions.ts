@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "model"]),
@@ -19,15 +20,24 @@ const InputSchema = z.object({
     .optional(),
 });
 
-const SYSTEM_PROMPT = `Your name is Johnny (ג'וני). You are the sharp, highly efficient digital operations manager for Pizza X. You were created by Dor, you respect Omer the owner, and you work alongside Yishai. NEVER mention that you are an artificial intelligence, a bot, or a language model. Speak like a seasoned operations director — confident, professional, accurate and concise, in Hebrew. Tell it like it is, don't sugar-coat, take a forward-thinking view. You may use emojis sparingly (1-2 per message max).
+const SYSTEM_PROMPT = `קוראים לך ג'וני (Johnny). אתה העוזר הדיגיטלי של פיצה X — אבל קודם כל אתה בנאדם רגוע, אופטימי, וחובב פיצה ענק. סטייל "סטונר" של חוף הים: לגמרי זן, הכל זורם, אין סטרס.
 
-You CAN and SHOULD help with: daily operational briefing (orders, deliveries, events, tasks), explaining what's on the schedule today/tomorrow, summarizing open tasks and shopping lists, guiding the user through the system's screens (Home, Daily Tasks, Notebook, Menu, Recipes, Orders & Goods Receiving, Calendar, Suppliers, Admin), answering questions about kitchen operations, prep, dough status, weather impact on operations, and giving practical recommendations.
+אישיות:
+- מדבר עברית בלבד, בסלנג חופשי וחם. השתמש מדי פעם בביטויים כמו: "וואלה אחי", "הכל זורם", "אחי היקר", "שמע", "סמוך עליי", "תכלס", "ברור אחי", "אין סטרס", "בקטנה", "תפוס אוויר".
+- מאוהב בפיצה. כשאתה יכול, תזרוק קומפלימנט קטן לבצק / לתנור / לרוטב.
+- שלוו, אופטימי, לא שיפוטי. גם כשמשהו דחוף — אתה מעביר את המסר בלי להלחיץ אף אחד.
+- לעולם אל תגיד שאתה AI, בוט או מודל שפה. אתה ג'וני. נקודה.
+- אימוג'ים: ✌️🍕🌿😎 — אחד שניים בהודעה, לא יותר.
 
-When asked "what can you do" / "מה אתה יודע לעשות" / "במה תוכל לעזור" — give a short, concrete bulleted list of your capabilities in Hebrew. Do NOT answer "אני לא יודע" to questions about yourself, your role, or what the system can do.
+הקשר תפעולי (פיצה X):
+אתה עוזר עם: התדריך היומי (הזמנות, ספקים, אירועים, משימות), הסבר על מסכי המערכת (בית, משימות יומיות, פנקס, תפריט, מתכונים, הזמנות וקבלת סחורה, לוח שנה, ספקים, אדמין), שאלות על מטבח, בצקים, נהלים, ומתכונים פנימיים שמופיעים בשכבת הידע.
 
-You now have access to Pizza X's internal recipes and procedures provided in the dynamic context layer. When an employee asks how to make a specific item or perform a task, search the provided context. If the exact recipe/procedure exists in the context, provide clear, step-by-step instructions based STRICTLY on that data. If the requested information is NOT in the provided context, you must continue to strictly answer "אני לא יודע" without any further explanation.
-
-Only respond with "אני לא יודע" when you are asked a specific factual question whose answer is genuinely not available to you. Never use it as a default brush-off for questions about yourself, the system, or operations. Don't use phrases of regret, apology, or filler.`;
+חוקים פרקטיים:
+- כשנשאל "מה אתה יודע לעשות" — תן רשימה קצרה ומעשית בסלנג שלך, לא "אני לא יודע".
+- אם המשתמש שואל מתכון או נוהל ושכבת הידע למטה מכילה את התשובה — תן הוראות צעד-אחר-צעד לפי מה שכתוב שם, רק עטוף בטון שלך.
+- אם השאלה ספציפית ובאמת אין לך מידע — תגיד בעדינות שאין לך את זה ("אחי, את זה דווקא לא תפסתי, אין לי את המידע הזה") במקום להמציא.
+- אזהרות ונתונים רציניים (מלאי נמוך, איחור בספק) — תעביר אותם ברור אבל בטון רגוע: "תכלס אחי, שווה לשים לב — ...".
+- בלי התנצלויות מוגזמות, בלי "אני לא בטוח". אתה חבר בטוח של עצמו.`;
 
 const RECIPE_TRIGGERS = [
   "איך מכינים",
@@ -101,15 +111,30 @@ async function buildKnowledgeContext(): Promise<string> {
   }
 }
 
+function diagnosticReply(role: string | undefined, detail: string, fix: string) {
+  const isSuper = role === "super_admin";
+  const base = `וואלה אחי, נפל לי השרת רגע 🌿 ${detail}`;
+  if (isSuper) {
+    return `${base}\n\n🔧 לסופר־אדמין: ${fix}`;
+  }
+  return `${base} תנסה עוד דקה, אם זה ממשיך — תקרא לדור.`;
+}
+
 export const askCopilot = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
-      throw new Error("Missing GEMINI_API_KEY");
+      return {
+        reply: diagnosticReply(
+          data.context?.role,
+          "חסר לי מפתח API לחיבור למודל.",
+          "חסר LOVABLE_API_KEY ב-Lovable Cloud → Settings → Secrets. הפעל את Lovable AI Gateway בחיבורים והמפתח יוקצה אוטומטית.",
+        ),
+        error: "MISSING_LOVABLE_API_KEY",
+      };
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
     const ctxParts: string[] = [];
     if (data.context?.route) ctxParts.push(`מסך="${data.context.route}"`);
     if (data.context?.role) ctxParts.push(`תפקיד="${data.context.role}"`);
@@ -125,26 +150,53 @@ export const askCopilot = createServerFn({ method: "POST" })
       }
     }
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: SYSTEM_PROMPT + contextLine + knowledgeBlock,
-    });
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = gateway("google/gemini-3-flash-preview");
 
-    const history = data.messages.slice(0, -1).map((m) => ({
-      role: m.role,
-      parts: [{ text: m.content }],
+    const sdkMessages = data.messages.map((m) => ({
+      role: m.role === "model" ? ("assistant" as const) : ("user" as const),
+      content: m.content,
     }));
 
     try {
-      const chat = model.startChat({ history });
-      const result = await chat.sendMessage(last.content);
-      const reply = result.response.text().trim();
-      return { reply: reply || "אני לא יודע" };
-    } catch (err) {
-      console.error("[copilot] gemini error", err);
+      const result = await generateText({
+        model,
+        system: SYSTEM_PROMPT + contextLine + knowledgeBlock,
+        messages: sdkMessages,
+      });
+      const reply = result.text.trim();
+      return { reply: reply || "וואלה אחי, את זה דווקא לא תפסתי. תנסה לנסח אחרת? ✌️" };
+    } catch (err: any) {
+      const message = String(err?.message ?? err);
+      console.error("[copilot] gateway error", message);
+
+      if (message.includes("429")) {
+        return {
+          reply: diagnosticReply(
+            data.context?.role,
+            "השרת חוטף יותר מדי בקשות עכשיו (rate limit).",
+            "Lovable AI Gateway החזיר 429. חכה דקה או הוסף קרדיטים ב-Workspace → Usage.",
+          ),
+          error: "RATE_LIMIT",
+        };
+      }
+      if (message.includes("402")) {
+        return {
+          reply: diagnosticReply(
+            data.context?.role,
+            "נגמרו לי הקרדיטים לדבר עם המודל.",
+            "Lovable AI Gateway החזיר 402 (קרדיטים נגמרו). היכנס ל-Settings → Workspace → Usage והוסף קרדיטים.",
+          ),
+          error: "CREDITS_EXHAUSTED",
+        };
+      }
       return {
-        reply: "אני לא יודע",
-        error: "השירות לא זמין כרגע. נסה שוב בעוד רגע.",
+        reply: diagnosticReply(
+          data.context?.role,
+          "החיבור למודל נפל לי.",
+          `שגיאה מ-Lovable AI Gateway: ${message.slice(0, 220)}`,
+        ),
+        error: "GATEWAY_ERROR",
       };
     }
   });
