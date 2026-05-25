@@ -140,7 +140,9 @@ function MyProfilePage() {
         </h2>
         <Row icon={<BadgeCheck className="h-4 w-4" />} label="תפקיד" value={isSuperAdmin ? "מנהל-על" : ROLE_LABEL[role ?? "viewer"]} />
         <Row icon={<Building2 className="h-4 w-4" />} label="סניף משויך" value={branchName ?? "—"} />
-        <Row icon={<Calendar className="h-4 w-4" />} label="הצטרף/ה" value={joinDate ?? "—"} />
+        <Row icon={<Briefcase className="h-4 w-4" />} label="תאריך כניסה לפיצה" value={startDate ?? "—"} />
+        <Row icon={<Cake className="h-4 w-4" />} label="יום הולדת" value={dob ?? "—"} />
+        <Row icon={<Calendar className="h-4 w-4" />} label="נרשם/ה למערכת" value={joinDate ?? "—"} />
         <Row icon={<ShieldCheck className="h-4 w-4" />} label="הסכם סודיות" value="חתום ✓" />
       </div>
 
