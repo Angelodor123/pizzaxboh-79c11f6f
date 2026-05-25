@@ -169,7 +169,7 @@ export const adminUpdateInvitation = createServerFn({ method: "POST" })
     const patch: {
       full_name?: string | null;
       email?: string;
-      role?: "admin" | "viewer";
+      role?: DbRole;
       assigned_branch_id?: string | null;
     } = {};
     if (data.fullName !== undefined) patch.full_name = data.fullName;
