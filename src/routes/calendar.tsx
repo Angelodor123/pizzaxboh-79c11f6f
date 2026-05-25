@@ -269,6 +269,7 @@ function CalendarPage() {
         <EventForm
           existing={editing}
           defaultDate={selectedDate}
+          allEvents={events}
           onClose={() => {
             setFormOpen(false);
             setEditing(null);
