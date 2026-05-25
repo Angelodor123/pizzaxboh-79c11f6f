@@ -284,6 +284,86 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          branch_id: string
+          created_at: string
+          current_stock: number
+          id: string
+          name: string
+          sort_order: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          current_stock?: number
+          id?: string
+          name: string
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          current_stock?: number
+          id?: string
+          name?: string
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          inventory_item_id: string
+          invoice_id: string | null
+          note: string | null
+          order_id: string | null
+          qty_delta: number
+          source: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id: string
+          invoice_id?: string | null
+          note?: string | null
+          order_id?: string | null
+          qty_delta: number
+          source?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id?: string
+          invoice_id?: string | null
+          note?: string | null
+          order_id?: string | null
+          qty_delta?: number
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           assigned_branch_id: string | null
@@ -363,9 +443,11 @@ export type Database = {
           document_date: string
           id: string
           image_url: string | null
+          invoice_image_url: string | null
           invoice_number: string
           is_archived: boolean
           notes: string | null
+          order_id: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           supplier_id: string | null
           total_amount: number
@@ -378,9 +460,11 @@ export type Database = {
           document_date?: string
           id?: string
           image_url?: string | null
+          invoice_image_url?: string | null
           invoice_number?: string
           is_archived?: boolean
           notes?: string | null
+          order_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           supplier_id?: string | null
           total_amount?: number
@@ -393,9 +477,11 @@ export type Database = {
           document_date?: string
           id?: string
           image_url?: string | null
+          invoice_image_url?: string | null
           invoice_number?: string
           is_archived?: boolean
           notes?: string | null
+          order_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           supplier_id?: string | null
           total_amount?: number
@@ -506,6 +592,54 @@ export type Database = {
           items?: Json
           list_key?: string
           snapshot_date?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string | null
+          items: Json
+          message: string | null
+          notes: string | null
+          received_at: string | null
+          sent_at: string
+          status: Database["public"]["Enums"]["order_status"]
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          items?: Json
+          message?: string | null
+          notes?: string | null
+          received_at?: string | null
+          sent_at?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          items?: Json
+          message?: string | null
+          notes?: string | null
+          received_at?: string | null
+          sent_at?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          supplier_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1194,6 +1328,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "viewer" | "super_admin"
       invoice_status: "pending_review" | "approved"
+      order_status: "draft" | "sent" | "received" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1323,6 +1458,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "viewer", "super_admin"],
       invoice_status: ["pending_review", "approved"],
+      order_status: ["draft", "sent", "received", "cancelled"],
     },
   },
 } as const

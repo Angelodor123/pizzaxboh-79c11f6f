@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Archive, FileText } from "lucide-react";
+import { Plus, Archive, FileText, ScanSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
+import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
+
 
 export const Route = createFileRoute("/invoices")({
   component: InvoicesPage,
@@ -34,6 +36,8 @@ function InvoicesPage() {
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(false);
+
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
@@ -111,16 +115,24 @@ function InvoicesPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center mb-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => setSmartOpen(true)}
           className="inline-flex items-center gap-2 h-11 px-5 rounded-md font-bold text-white"
           style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 22px rgba(255,45,180,0.5)" }}
         >
+          <ScanSearch className="h-4 w-4" />
+          קליטה חכמה עם זיהוי
+        </button>
+        <button
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 h-11 px-5 rounded-md font-bold border border-border hover:border-neon hover:text-neon"
+        >
           <Plus className="h-4 w-4" />
-          קליטת חשבונית חדשה
+          קליטה ידנית
         </button>
       </div>
+
 
       {loading ? (
         <div className="text-center text-muted-foreground py-12">טוען…</div>
@@ -181,6 +193,14 @@ function InvoicesPage() {
           onSaved={load}
         />
       )}
+      {smartOpen && (
+        <SmartReceivingModal
+          suppliers={suppliers}
+          onClose={() => setSmartOpen(false)}
+          onSaved={load}
+        />
+      )}
     </div>
   );
 }
+
