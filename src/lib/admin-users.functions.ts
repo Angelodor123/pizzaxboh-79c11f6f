@@ -41,6 +41,18 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       rolePatch.assigned_branch_id = data.assignedBranchId;
 
     if (Object.keys(rolePatch).length > 0) {
+      // Enforce strictly ONE role per user: drop any other role rows for this user
+      // before updating, so the UNIQUE (user_id, role) constraint can't collide
+      // when switching a user's role from admin↔viewer.
+      if (rolePatch.role) {
+        const { error: eDel } = await supabaseAdmin
+          .from("user_roles")
+          .delete()
+          .eq("user_id", data.userId)
+          .neq("id", data.roleId);
+        if (eDel) throw new Error(eDel.message);
+      }
+
       const { error: e1 } = await supabaseAdmin
         .from("user_roles")
         .update(rolePatch)
