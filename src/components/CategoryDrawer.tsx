@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Download } from "lucide-react";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
@@ -64,8 +65,11 @@ const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
   }));
 
 // Shared item classes for consistent padding + modern hover.
+// RTL: text anchors to the right (start), icon anchors to the far left (end).
 const itemClass =
-  "flex items-center justify-end gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
+  "flex w-full items-center justify-between gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
+
+const iconWrap = "w-6 flex justify-center shrink-0";
 
 const groupLabelClass =
   "text-zinc-500 text-xs font-bold mb-2 px-4 pt-3 uppercase tracking-wider text-right";
@@ -100,6 +104,7 @@ export function CategoryDrawer() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const { canInstall, promptInstall } = useInstallPrompt();
 
   useEffect(() => {
     if (!editingName) setNameDraft(fullName ?? "");
@@ -170,19 +175,19 @@ export function CategoryDrawer() {
             <li>
               <Link to="/" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">🏠 דף הבית</span>
-                <Home className="h-5 w-5" />
+                <span className={iconWrap}><Home className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
               <Link to="/tasks" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">✅ משימות יומיות</span>
-                <ListChecks className="h-5 w-5" />
+                <span className={iconWrap}><ListChecks className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
               <Link to="/notebook" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
-                <NotebookPen className="h-5 w-5" />
+                <span className={iconWrap}><NotebookPen className="h-5 w-5" /></span>
               </Link>
             </li>
 
@@ -201,7 +206,7 @@ export function CategoryDrawer() {
                   }`}
                 />
                 <span className="flex-1 text-right">🍽️ תפריט המנות</span>
-                <UtensilsCrossed className="h-5 w-5" />
+                <span className={iconWrap}><UtensilsCrossed className="h-5 w-5" /></span>
               </button>
               {dishesOpen && (
                 <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
@@ -255,7 +260,7 @@ export function CategoryDrawer() {
                   }`}
                 />
                 <span className="flex-1 text-right">📖 ספר מתכונים</span>
-                <ChefHat className="h-5 w-5" />
+                <span className={iconWrap}><ChefHat className="h-5 w-5" /></span>
               </button>
               {recipesOpen && (
                 <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
@@ -314,7 +319,7 @@ export function CategoryDrawer() {
                     <span className="flex-1 text-right">
                       📦 הזמנות וקבלת סחורה
                     </span>
-                    <Package className="h-5 w-5" />
+                    <span className={iconWrap}><Package className="h-5 w-5" /></span>
                   </Link>
                 </li>
                 <li>
@@ -322,7 +327,7 @@ export function CategoryDrawer() {
                     <span className="flex-1 text-right">
                       📅 לוח אירועים וסחורות
                     </span>
-                    <CalendarDays className="h-5 w-5" />
+                    <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
                   </Link>
                 </li>
               </ul>
@@ -338,7 +343,7 @@ export function CategoryDrawer() {
                 <li>
                   <Link to="/suppliers" onClick={close} className={itemClass}>
                     <span className="flex-1 text-right">🚚 ניהול ספקים</span>
-                    <Truck className="h-5 w-5" />
+                    <span className={iconWrap}><Truck className="h-5 w-5" /></span>
                   </Link>
                 </li>
                 <li>
@@ -346,7 +351,7 @@ export function CategoryDrawer() {
                     <span className="flex-1 text-right">
                       ⚙️ הגדרות מערכת וצוות
                     </span>
-                    <Settings className="h-5 w-5" />
+                    <span className={iconWrap}><Settings className="h-5 w-5" /></span>
                   </Link>
                 </li>
               </ul>
@@ -368,7 +373,7 @@ export function CategoryDrawer() {
               >
                 {(
                   [
-                    { key: "super_admin", label: "סופר" },
+                    { key: "super_admin", label: "סופר אדמין" },
                     { key: "manager", label: "מנהל" },
                     { key: "employee", label: "עובד" },
                   ] as const
@@ -384,7 +389,7 @@ export function CategoryDrawer() {
                           opt.key === "super_admin" ? null : opt.key,
                         )
                       }
-                      className={`flex-1 px-2 py-1 rounded-[4px] font-bold transition-colors text-xs ${
+                      className={`flex-1 px-1 py-1 rounded-[4px] font-bold transition-colors text-[11px] whitespace-nowrap ${
                         active
                           ? "bg-neon text-primary-foreground shadow-sm"
                           : "text-zinc-300 hover:bg-zinc-700/60"
@@ -457,6 +462,16 @@ export function CategoryDrawer() {
                 </div>
               )}
             </div>
+
+            {canInstall && (
+              <button
+                onClick={() => void promptInstall()}
+                className="w-full text-pink-500 border border-pink-500/30 hover:bg-pink-500/10 rounded-lg py-2 px-4 flex items-center justify-center gap-2 text-sm font-bold transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                התקן אפליקציה
+              </button>
+            )}
 
             <button
               onClick={async () => {
