@@ -1519,6 +1519,8 @@ function SuperAdminUsersPanel() {
             email: cleanEmail,
             role: e.role,
             assignedBranchId: e.branchId || null,
+            dateOfBirth: e.dateOfBirth || null,
+            startDate: e.startDate || null,
           },
         });
       }
