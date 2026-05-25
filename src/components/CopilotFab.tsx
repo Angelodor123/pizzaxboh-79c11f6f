@@ -245,12 +245,15 @@ export function CopilotFab() {
 
     setLoading(true);
     try {
+      const { getCurrentBranchId } = await import("@/lib/current-branch");
+      const branchId = await getCurrentBranchId();
       const res = await ask({
         data: {
           messages: next.slice(-20),
           context: {
             route: router.state.location.pathname,
             role: isSuperAdmin ? "super_admin" : role ?? "guest",
+            branchId: branchId ?? undefined,
           },
         },
       });
