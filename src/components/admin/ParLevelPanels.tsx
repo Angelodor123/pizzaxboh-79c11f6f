@@ -3,6 +3,7 @@ import { Plus, Trash2, Pencil, Save, X, Power, CheckSquare } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 import { refreshOnboarding } from "@/components/PageOnboarding";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
