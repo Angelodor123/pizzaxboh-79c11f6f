@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Trash2, X, AlertTriangle } from "lucide-react";
 
 type ConfirmOptions = {
