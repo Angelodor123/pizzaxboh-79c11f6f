@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Download } from "lucide-react";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
