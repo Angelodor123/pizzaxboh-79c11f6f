@@ -55,19 +55,19 @@ const RECIPE_EMOJI: Record<RecipeCategory, string> = {
   salads: "🥗",
 };
 
-const RECIPE_CATEGORIES: { key: RecipeCategory; emoji: string; label: string }[] =
-  BACK_OF_HOUSE_CATEGORIES.map((key) => ({
-    key,
-    emoji: RECIPE_EMOJI[key],
-    label: categoryLabels[key],
-  }));
+// Static catalog of all known categories — actual sidebar list is filtered
+// dynamically below based on what's present in the live recipes table.
+const ALL_RECIPE_CATEGORIES = BACK_OF_HOUSE_CATEGORIES.map((key) => ({
+  key,
+  emoji: RECIPE_EMOJI[key],
+  label: categoryLabels[key],
+}));
 
-const MENU_CATEGORIES: { key: MenuCategory; emoji: string; label: string }[] =
-  menuCategoryOrder.map((key) => ({
-    key,
-    emoji: menuCategoryEmoji[key],
-    label: menuCategoryLabels[key],
-  }));
+const ALL_MENU_CATEGORIES = menuCategoryOrder.map((key) => ({
+  key,
+  emoji: menuCategoryEmoji[key],
+  label: menuCategoryLabels[key],
+}));
 
 // Shared item classes for consistent padding + modern hover.
 // RTL: text anchors to the right (start), icon anchors to the far left (end).
