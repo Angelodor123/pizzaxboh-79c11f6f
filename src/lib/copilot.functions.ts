@@ -322,7 +322,7 @@ function buildTools(supabase: any, branchId: string | undefined, userId: string)
             };
           });
           const total = rows.length;
-          const done = rows.filter((r) => r.completed).length;
+          const done = rows.filter((r: any) => r.completed).length;
           return {
             date: today,
             weekday: dow,
