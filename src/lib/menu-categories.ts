@@ -14,6 +14,7 @@ export type MenuCategory =
   | "dips"
   | "pastas"
   | "salads"
+  | "desserts"
   | "drinks"
   | "other";
 
@@ -26,6 +27,7 @@ export const menuCategoryLabels: Record<MenuCategory, string> = {
   dips: "דיפים",
   pastas: "פסטות",
   salads: "סלטים",
+  desserts: "קינוחים",
   drinks: "שתיה קלה",
   other: "אחר",
 };
@@ -39,6 +41,7 @@ export const menuCategoryEmoji: Record<MenuCategory, string> = {
   dips: "🥣",
   pastas: "🍝",
   salads: "🥗",
+  desserts: "🍰",
   drinks: "🥤",
   other: "🍽️",
 };
@@ -52,6 +55,7 @@ export const menuCategoryOrder: MenuCategory[] = [
   "dips",
   "pastas",
   "salads",
+  "desserts",
   "drinks",
   "other",
 ];
