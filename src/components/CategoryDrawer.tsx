@@ -354,22 +354,21 @@ export function CategoryDrawer() {
           )}
         </nav>
 
-        {/* Sticky footer: View As (super admins only) + email + logout */}
+        {/* Sticky footer: View As (super admins only) + name + logout */}
         <div className="sticky bottom-0 border-t border-zinc-800/60 bg-[#18181b]">
           {realIsSuperAdmin && (
-            <div className="px-6 pt-3 pb-2 border-b border-zinc-800/40">
-              <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-zinc-500 mb-1.5 text-right">
-                תצוגת ממשק:
-              </div>
+            <div className="px-3 py-1.5 border-b border-zinc-800/40 flex items-center gap-2" dir="rtl">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500 shrink-0">
+                תצוגה:
+              </span>
               <div
                 role="group"
                 aria-label="תצוגת ממשק"
-                className="flex items-stretch rounded-md bg-zinc-800/50 border border-zinc-700/60 p-0.5 text-xs"
-                dir="rtl"
+                className="flex-1 flex items-stretch rounded-md bg-zinc-800/50 border border-zinc-700/60 p-0.5 text-xs"
               >
                 {(
                   [
-                    { key: "super_admin", label: "סופר אדמין" },
+                    { key: "super_admin", label: "סופר" },
                     { key: "manager", label: "מנהל" },
                     { key: "employee", label: "עובד" },
                   ] as const
@@ -385,7 +384,7 @@ export function CategoryDrawer() {
                           opt.key === "super_admin" ? null : opt.key,
                         )
                       }
-                      className={`flex-1 px-2 py-1.5 rounded-[5px] font-bold transition-colors ${
+                      className={`flex-1 px-2 py-1 rounded-[4px] font-bold transition-colors text-xs ${
                         active
                           ? "bg-neon text-primary-foreground shadow-sm"
                           : "text-zinc-300 hover:bg-zinc-700/60"
@@ -398,13 +397,11 @@ export function CategoryDrawer() {
                 })}
               </div>
               {simulatedRole && (
-                <div className="mt-1.5 text-[10px] text-neon/80 text-right">
-                  מצב סימולציה פעיל
-                </div>
+                <span className="text-[9px] text-neon/80 shrink-0">סימולציה</span>
               )}
             </div>
           )}
-          <div className="px-6 py-4 space-y-3">
+          <div className="px-4 py-2 space-y-1.5">
             {/* Name editor */}
             <div dir="rtl">
               {editingName ? (
@@ -425,7 +422,7 @@ export function CategoryDrawer() {
                     onClick={() => void saveName()}
                     disabled={savingName}
                     aria-label="שמור שם"
-                    className="p-1.5 rounded-md border border-neon/50 text-neon hover:bg-neon/10 active:scale-95 transition disabled:opacity-50"
+                    className="p-1 rounded-md border border-neon/50 text-neon hover:bg-neon/10 active:scale-95 transition disabled:opacity-50"
                   >
                     <Check className="h-4 w-4" />
                   </button>
@@ -433,7 +430,7 @@ export function CategoryDrawer() {
                     type="button"
                     onClick={() => setEditingName(false)}
                     aria-label="ביטול"
-                    className="p-1.5 rounded-md border border-zinc-700 text-muted-foreground hover:text-foreground active:scale-95 transition"
+                    className="p-1 rounded-md border border-zinc-700 text-muted-foreground hover:text-foreground active:scale-95 transition"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -448,14 +445,14 @@ export function CategoryDrawer() {
                   className="w-full flex items-center justify-between gap-2 group text-right"
                   aria-label="ערוך את השם שלך"
                 >
-                  <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-neon transition shrink-0" />
-                  <span className="text-sm font-bold text-foreground truncate group-hover:text-neon transition">
+                  <Pencil className="h-3 w-3 text-muted-foreground group-hover:text-neon transition shrink-0" />
+                  <span className="text-sm font-bold text-foreground truncate group-hover:text-neon transition leading-tight">
                     {fullName?.trim() || "הוסף את שמך"}
                   </span>
                 </button>
               )}
               {email && (
-                <div className="text-[11px] text-muted-foreground truncate text-right mt-1">
+                <div className="text-[10px] text-muted-foreground truncate text-right leading-tight">
                   {email}
                 </div>
               )}
@@ -466,9 +463,9 @@ export function CategoryDrawer() {
                 close();
                 await signOut();
               }}
-              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold text-foreground hover:text-neon border border-zinc-800 rounded-md py-2 transition"
+              className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-foreground hover:text-neon border border-zinc-800 rounded-md py-1.5 transition"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               התנתק
             </button>
           </div>
