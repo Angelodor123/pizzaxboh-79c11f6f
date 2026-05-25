@@ -47,7 +47,7 @@ export function useActiveBranch() {
 }
 
 export function BranchGate({ children }: { children: React.ReactNode }) {
-  const { session, isSuperAdmin, assignedBranchId, fullName, signOut, loading: authLoading } =
+  const { session, isSuperAdmin, realIsSuperAdmin, assignedBranchId, fullName, signOut, loading: authLoading } =
     useAuth();
   const { branches, loading: branchesLoading } = useBranches();
   const activeId = useActiveBranch();
@@ -55,17 +55,18 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
   // Branch Staff: auto-set their assigned branch
   useEffect(() => {
     if (!session?.user?.id) return;
-    if (isSuperAdmin) return;
+    if (realIsSuperAdmin) return;
     if (assignedBranchId && activeId !== assignedBranchId) {
       setActiveBranchId(assignedBranchId);
     }
-  }, [session?.user?.id, isSuperAdmin, assignedBranchId, activeId]);
+  }, [session?.user?.id, realIsSuperAdmin, assignedBranchId, activeId]);
+
 
   if (!session?.user?.id) return <>{children}</>;
   if (authLoading || branchesLoading) return null;
 
   // Branch Staff with no branch assigned → fallback screen
-  if (!isSuperAdmin && !assignedBranchId) {
+  if (!realIsSuperAdmin && !assignedBranchId) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <div className="max-w-md space-y-4 rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
@@ -89,10 +90,11 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
   }
 
   // Branch Staff with branch assigned → pass through (effect synced activeId)
-  if (!isSuperAdmin) {
+  if (!realIsSuperAdmin) {
     if (!activeId) return null;
     return <>{children}</>;
   }
+
 
   // Super Admin → must explicitly pick a branch (selection grid)
   if (activeId) return <>{children}</>;
