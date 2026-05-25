@@ -16,8 +16,14 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
 
-import { GuidedTour } from "@/components/GuidedTour";
-import { CopilotFab } from "@/components/CopilotFab";
+import { lazy, Suspense, useEffect } from "react";
+
+const GuidedTour = lazy(() =>
+  import("@/components/GuidedTour").then((m) => ({ default: m.GuidedTour })),
+);
+const CopilotFab = lazy(() =>
+  import("@/components/CopilotFab").then((m) => ({ default: m.CopilotFab })),
+);
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
@@ -35,7 +41,7 @@ import {
   requestNotificationPermission,
 } from "@/lib/notifications";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
-import { useEffect } from "react";
+
 
 function NotFoundComponent() {
   return (
@@ -111,7 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "apple-touch-icon", href: "/pizza-x-logo.png" },
-      { rel: "preload", as: "image", href: "/pizza-x-logo.png", fetchpriority: "high" },
+      { rel: "preload", as: "image", href: pizzaXLogo, fetchpriority: "high" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous" },
       {
@@ -297,8 +303,10 @@ function AuthedShell() {
         <Outlet />
       </main>
 
-      <GuidedTour />
-      <CopilotFab />
+      <Suspense fallback={null}>
+        <GuidedTour />
+        <CopilotFab />
+      </Suspense>
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">
