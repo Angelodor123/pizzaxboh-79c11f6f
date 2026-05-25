@@ -520,12 +520,29 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                     </tbody>
                   </table>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }])}
+                  className="mt-2 w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
+                >
+                  + הוסף שורה
+                </button>
+                {!file && (
+                  <button
+                    type="button"
+                    onClick={() => fileInput.current?.click()}
+                    className="mt-2 w-full h-9 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-xs font-bold"
+                  >
+                    <Upload className="h-3.5 w-3.5" /> צרף תמונת חשבונית (אופציונלי)
+                  </button>
+                )}
                 {chosenMatch && rows.some((r) => r.orderedQty != null && Math.abs(r.invoiceQty - (r.orderedQty ?? 0)) > 0.001) && (
                   <div className="mt-2 flex items-center gap-2 text-red-500 text-xs font-bold">
                     <AlertTriangle className="h-3.5 w-3.5" /> זוהו פערים בין הכמות שהוזמנה לכמות שהתקבלה — נדרש אישור ידני.
                   </div>
                 )}
               </div>
+
 
               <button type="button" onClick={submit} disabled={!canSubmit}
                 className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white transition disabled:opacity-40"
