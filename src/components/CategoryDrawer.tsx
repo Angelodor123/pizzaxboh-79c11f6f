@@ -372,7 +372,7 @@ export function CategoryDrawer() {
               >
                 {(
                   [
-                    { key: "super_admin", label: "סופר" },
+                    { key: "super_admin", label: "סופר אדמין" },
                     { key: "manager", label: "מנהל" },
                     { key: "employee", label: "עובד" },
                   ] as const
