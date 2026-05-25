@@ -22,6 +22,8 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
+import { triggerHaptic } from "@/lib/haptics";
+import { celebrate } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
@@ -306,6 +308,7 @@ function TasksPage() {
     if (completed) {
       setPulsingTaskId(taskId);
       setTimeout(() => setPulsingTaskId((cur) => (cur === taskId ? null : cur)), 650);
+      triggerHaptic("light");
     }
     const t = allTasks.find((x) => x.id === taskId);
     const taskName = t?.name ?? "";
