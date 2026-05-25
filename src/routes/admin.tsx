@@ -648,7 +648,10 @@ function InvitationsPanel() {
     setInvites((i ?? []) as InvitationRow[]);
     setRoles((r ?? []) as RoleRow[]);
     setSuperAdminIds(new Set(((s ?? []) as string[])));
-    setBranches((b ?? []) as BranchOption[]);
+    const branchList = (b ?? []) as BranchOption[];
+    setBranches(branchList);
+    // PART 4: auto-default branch on invite so no user is created without one
+    setInviteBranch((prev) => prev || branchList[0]?.id || "");
     const m = new Map<string, string>();
     ((p ?? []) as { user_id: string; full_name: string | null }[]).forEach((row) => {
       if (row.full_name) m.set(row.user_id, row.full_name);
