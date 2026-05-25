@@ -1772,6 +1772,7 @@ function SuperAdminUsersPanel() {
               >
                 <option value="viewer">צפייה בלבד</option>
                 <option value="admin">מנהל</option>
+                <option value="super_admin">סופר-אדמין</option>
               </select>
             </div>
 
