@@ -67,7 +67,15 @@ function SuppliersPage() {
 
   const handleArchive = async (s: Supplier) => {
     const next = !s.is_archived;
-    if (!confirm(next ? `להעביר את "${s.name}" לארכיון? אירועי הסחורה האוטומטיים יוסרו מהלוח.` : `לשחזר את "${s.name}" מהארכיון?`)) return;
+    const ok = await confirmDelete({
+      title: next ? "העברה לארכיון" : "שחזור מארכיון",
+      description: next
+        ? `להעביר את "${s.name}" לארכיון? אירועי הסחורה האוטומטיים יוסרו מהלוח.`
+        : `לשחזר את "${s.name}" מהארכיון?`,
+      confirmLabel: next ? "העבר לארכיון" : "שחזר",
+      destructive: next,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("suppliers").update({ is_archived: next }).eq("id", s.id);
     if (error) toast.error("שגיאה: " + error.message);
     else toast.success(next ? "הספק הועבר לארכיון" : "הספק שוחזר");
