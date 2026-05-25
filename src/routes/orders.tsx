@@ -27,6 +27,7 @@ function OrdersPage() {
   const [list, setList] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Supplier | null>(null);
+  const [receiving, setReceiving] = useState<{ orderId: string | null } | null>(null);
   const [monthCount, setMonthCount] = useState(0);
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
 
