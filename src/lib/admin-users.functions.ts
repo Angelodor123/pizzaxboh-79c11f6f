@@ -33,7 +33,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     // Patch user_roles
     const rolePatch: {
       email?: string;
-      role?: "admin" | "viewer";
+      role?: DbRole;
       assigned_branch_id?: string | null;
     } = {};
     if (data.email) rolePatch.email = data.email.toLowerCase();
