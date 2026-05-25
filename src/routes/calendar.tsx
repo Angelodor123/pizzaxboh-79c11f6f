@@ -684,7 +684,7 @@ function DayDetails({
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => handleDelete(ev.id)}
+                            onClick={() => handleDelete(ev.id, ev.title)}
                             className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
                             aria-label="מחק"
                           >
