@@ -648,7 +648,10 @@ function InvitationsPanel() {
     setInvites((i ?? []) as InvitationRow[]);
     setRoles((r ?? []) as RoleRow[]);
     setSuperAdminIds(new Set(((s ?? []) as string[])));
-    setBranches((b ?? []) as BranchOption[]);
+    const branchList = (b ?? []) as BranchOption[];
+    setBranches(branchList);
+    // PART 4: auto-default branch on invite so no user is created without one
+    setInviteBranch((prev) => prev || branchList[0]?.id || "");
     const m = new Map<string, string>();
     ((p ?? []) as { user_id: string; full_name: string | null }[]).forEach((row) => {
       if (row.full_name) m.set(row.user_id, row.full_name);
@@ -683,10 +686,11 @@ function InvitationsPanel() {
       return;
     }
     setBusy(true);
+    const fallbackBranch = inviteBranch || branches[0]?.id || null;
     const { error: e } = await supabase
       .from("invitations")
       .upsert(
-        { email: clean, role, assigned_branch_id: inviteBranch || null, full_name: fullName.trim() || null },
+        { email: clean, role, assigned_branch_id: fallbackBranch, full_name: fullName.trim() || null },
         { onConflict: "email" },
       );
     if (e) {
@@ -1373,6 +1377,8 @@ interface EditState {
   email: string;
   role: AppRole;
   branchId: string;
+  dateOfBirth: string;
+  startDate: string;
 }
 
 interface ConfirmState {
@@ -1460,13 +1466,26 @@ function SuperAdminUsersPanel() {
     });
   }, [rows, query, statusFilter]);
 
-  const openEdit = (row: DirectoryRow) => {
+  const openEdit = async (row: DirectoryRow) => {
+    let dob = "";
+    let sd = "";
+    if (row.kind === "user" && row.user_id) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("date_of_birth,start_date")
+        .eq("user_id", row.user_id)
+        .maybeSingle();
+      dob = (data?.date_of_birth as string | null) ?? "";
+      sd = (data?.start_date as string | null) ?? "";
+    }
     setEditing({
       row,
       fullName: row.full_name ?? "",
       email: row.email,
       role: row.role,
       branchId: row.assigned_branch_id ?? "",
+      dateOfBirth: dob,
+      startDate: sd,
     });
   };
 
@@ -1504,6 +1523,8 @@ function SuperAdminUsersPanel() {
             email: cleanEmail,
             role: e.role,
             assignedBranchId: e.branchId || null,
+            dateOfBirth: e.dateOfBirth || null,
+            startDate: e.startDate || null,
           },
         });
       }
@@ -1795,6 +1816,36 @@ function SuperAdminUsersPanel() {
                 ))}
               </select>
             </div>
+
+            {editing.row.kind === "user" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">תאריך יום הולדת</label>
+                  <input
+                    type="date"
+                    dir="ltr"
+                    value={editing.dateOfBirth}
+                    onChange={(e) =>
+                      setEditing({ ...editing, dateOfBirth: e.target.value })
+                    }
+                    className="w-full bg-input border border-border rounded-md px-3 py-2 text-left"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">תאריך כניסה לפיצה</label>
+                  <input
+                    type="date"
+                    dir="ltr"
+                    value={editing.startDate}
+                    onChange={(e) =>
+                      setEditing({ ...editing, startDate: e.target.value })
+                    }
+                    className="w-full bg-input border border-border rounded-md px-3 py-2 text-left"
+                  />
+                </div>
+              </div>
+            )}
+
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
