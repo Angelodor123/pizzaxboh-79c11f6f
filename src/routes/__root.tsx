@@ -170,6 +170,7 @@ function RootComponent() {
         <AccessGate>
           <NdaGate>
             <BranchGate>
+              <OfflineBanner />
               <AuthedShell />
             </BranchGate>
           </NdaGate>
