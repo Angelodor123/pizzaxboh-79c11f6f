@@ -14,10 +14,11 @@ export const Route = createFileRoute("/calendar")({
 // Event type catalog — color-coded tags for the calendar (overlays for the existing
 // "delivery" | "event" base category). Each entry maps to a Tailwind dot color.
 export const EVENT_TYPES = [
-  { id: "maintenance",       label: "תחזוקה",          color: "#ef4444" }, // red
+  { id: "maintenance",        label: "תחזוקה",          color: "#ef4444" }, // red
   { id: "inventory_delivery", label: "קבלת סחורה",      color: "#f97316" }, // orange
-  { id: "team_meeting",      label: "פגישת צוות",      color: "#3b82f6" }, // blue
-  { id: "special_event",     label: "אירוע מיוחד",     color: "#ec4899" }, // pink
+  { id: "team_meeting",       label: "פגישת צוות",      color: "#3b82f6" }, // blue
+  { id: "special_event",      label: "אירוע מיוחד",     color: "#ec4899" }, // pink
+  { id: "sports_match",       label: "ספורט / משחק",    color: "#22c55e" }, // green
 ] as const;
 type EventTypeId = (typeof EVENT_TYPES)[number]["id"];
 const eventTypeColor = (id?: string | null): string | null =>
