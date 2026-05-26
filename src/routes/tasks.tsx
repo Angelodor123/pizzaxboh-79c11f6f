@@ -37,6 +37,7 @@ type LogState = {
   completed_by: string | null;
   completed_by_user_id: string | null;
   comments: string;
+  photo_url: string | null;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
