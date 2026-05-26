@@ -297,6 +297,27 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_types: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ev_vehicles: {
         Row: {
           battery_pct: number
@@ -553,6 +574,62 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_tickets: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          description: string
+          equipment_type_id: string | null
+          id: string
+          is_read_by_admin: boolean
+          photo_url: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+          urgency: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          description: string
+          equipment_type_id?: string | null
+          id?: string
+          is_read_by_admin?: boolean
+          photo_url?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          urgency: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          description?: string
+          equipment_type_id?: string | null
+          id?: string
+          is_read_by_admin?: boolean
+          photo_url?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_tickets_equipment_type_id_fkey"
+            columns: ["equipment_type_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_types"
             referencedColumns: ["id"]
           },
         ]
