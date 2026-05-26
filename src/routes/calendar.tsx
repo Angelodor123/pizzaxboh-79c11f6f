@@ -93,6 +93,31 @@ function CalendarPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [instanceEdit, setInstanceEdit] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const runSync = useServerFn(syncSportsEvents);
+  const handleSyncSports = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    const t = toast.loading("מסנכרן משחקי מפתח מ-365scores…");
+    try {
+      const res = await runSync();
+      toast.success(
+        `סנכרון הושלם • נוספו ${res.inserted} • כבר קיימים ${res.skipped}`,
+        { id: t },
+      );
+      // refresh local list
+      const branchId = await requireCurrentBranchId();
+      const { data } = await supabase
+        .from("calendar_events")
+        .select("*")
+        .eq("branch_id", branchId);
+      if (data) setEvents(data as CalendarEvent[]);
+    } catch (e) {
+      toast.error(`סנכרון נכשל: ${e instanceof Error ? e.message : String(e)}`, { id: t });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Load events + overrides
   useEffect(() => {
