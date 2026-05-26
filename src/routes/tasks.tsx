@@ -672,6 +672,22 @@ function TasksPage() {
                                     )}
                                   </div>
 
+                                  {t.requires_photo && !t.id.startsWith("__virtual_") && branchId && (
+                                    <div className="mt-3 rounded-lg border border-pink-500/30 bg-pink-500/5 p-3">
+                                      <div className="text-[11px] text-pink-200/90 font-bold mb-2 text-right">
+                                        📷 משימה זו דורשת תמונת ביצוע
+                                      </div>
+                                      <TaskPhotoButton
+                                        taskId={t.id}
+                                        branchId={branchId}
+                                        userId={userId}
+                                        existingPath={log?.photo_url ?? null}
+                                        onUploaded={(path) => handlePhotoUploaded(t.id, path)}
+                                      />
+                                    </div>
+                                  )}
+
+
                                   <div className="mt-3">
                                     <label
                                       htmlFor={`note-${t.id}`}
