@@ -192,6 +192,8 @@ function RootComponent() {
 const RESTRICTED_ROUTES: Record<string, "manager" | "super_admin"> = {
   "/admin": "super_admin",
   "/admin/alerts": "manager",
+  "/admin/maintenance": "manager",
+  "/admin/settings/equipment": "manager",
   "/suppliers": "super_admin",
   "/orders": "manager",
   "/invoices": "manager",
