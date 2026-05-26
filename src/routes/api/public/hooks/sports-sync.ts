@@ -23,7 +23,20 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
             auth: { persistSession: false, autoRefreshToken: false },
           });
 
-          const { matches, feedsTried, itemsScanned } = await extractMatchesFromRss(LOVABLE_API_KEY);
+          let { matches, feedsTried, itemsScanned } = await extractMatchesFromRss(LOVABLE_API_KEY);
+          let fallbackPagesScraped = 0;
+          let usedFallback = false;
+
+          // Backup: if RSS yielded nothing, try Firecrawl on stable fixture pages
+          if (matches.length === 0) {
+            const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
+            if (FIRECRAWL) {
+              usedFallback = true;
+              const fb = await extractMatchesViaFirecrawl(LOVABLE_API_KEY, FIRECRAWL);
+              matches = fb.matches;
+              fallbackPagesScraped = fb.pagesScraped;
+            }
+          }
 
           const { data: branches } = await supabase
             .from("branches")
