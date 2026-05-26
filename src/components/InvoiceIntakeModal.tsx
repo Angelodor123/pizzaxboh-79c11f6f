@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
+import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
 
 interface SupplierOpt { id: string; name: string }
 
 interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string }
+
+interface InventoryOpt { id: string; name: string; unit: string }
+
 
 interface Props {
   suppliers: SupplierOpt[];
@@ -29,7 +34,29 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [showAnomaly, setShowAnomaly] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [inventory, setInventory] = useState<InventoryOpt[]>([]);
+  const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const runOcr = useServerFn(parseInvoiceImage);
+
+  // Load inventory list for autocomplete
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const branchId = await requireCurrentBranchId();
+        const { data } = await supabase
+          .from("inventory_items")
+          .select("id,name,unit")
+          .eq("branch_id", branchId)
+          .order("name");
+        if (!cancelled) setInventory((data ?? []) as InventoryOpt[]);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+
 
   // Restore draft
   useEffect(() => {
@@ -77,15 +104,65 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
   const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
   const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
 
-  const onFileSelected = (f: File | null) => {
+  const fileToDataUrl = (f: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(f);
+    });
+
+  const onFileSelected = async (f: File | null) => {
     setFile(f);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(f ? URL.createObjectURL(f) : null);
-    if (f) {
-      setUploading(true);
-      setTimeout(() => setUploading(false), 1400);
+    if (!f) return;
+
+    setUploading(true);
+    setOcrLoading(true);
+    try {
+      const dataUrl = await fileToDataUrl(f);
+      const parsed = await runOcr({
+        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg" },
+      });
+
+      // Populate header fields when present
+      if (parsed.invoice_number) setInvoiceNumber(parsed.invoice_number);
+      if (parsed.document_date && /^\d{4}-\d{2}-\d{2}$/.test(parsed.document_date)) {
+        setDocDate(parsed.document_date);
+      }
+      if (typeof parsed.total_amount === "number" && parsed.total_amount > 0) {
+        setTotalAmount(String(parsed.total_amount));
+      }
+      // Suggest supplier by fuzzy name match
+      if (parsed.supplier_guess) {
+        const guess = parsed.supplier_guess.trim().toLowerCase();
+        const match = suppliers.find((s) => s.name.toLowerCase().includes(guess) || guess.includes(s.name.toLowerCase()));
+        if (match) setSupplierId(match.id);
+      }
+      // Populate item rows
+      if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+        setItems(
+          parsed.items.map((it) => ({
+            item_name: it.item_name ?? "",
+            quantity: it.quantity != null ? String(it.quantity) : "",
+            unit_price: it.unit_price != null ? String(it.unit_price) : "",
+            total_price: it.total_price != null ? String(it.total_price) : "",
+          })),
+        );
+        toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
+      } else {
+        toast.message("לא זוהו פריטים — מלא ידנית");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "פענוח נכשל";
+      toast.error(`פענוח נכשל: ${msg}`);
+    } finally {
+      setOcrLoading(false);
+      setUploading(false);
     }
   };
+
 
   const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "" }]);
   const updateItem = (i: number, k: keyof ItemRow, v: string) =>
@@ -232,12 +309,18 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                     style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
                     className="max-w-full max-h-full object-contain transition-transform"
                   />
-                  {uploading && (
+                  {(uploading || ocrLoading) && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
                       <div className="absolute inset-x-0 h-1 bg-neon/70 shadow-[0_0_18px_var(--neon)] scan-bar" />
-                      <div className="absolute bottom-3 left-3 text-[10px] font-bold text-neon uppercase tracking-widest">Scanning Document…</div>
+                      <div className="absolute inset-0 bg-background/40 grid place-items-center">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-card/90 border border-neon/60 px-4 py-2 text-sm font-bold text-neon shadow-[0_0_18px_rgba(57,255,20,0.35)]">
+                          <Sparkles className="h-4 w-4 animate-pulse" />
+                          מפענח נתוני קבלה...
+                        </div>
+                      </div>
                     </div>
                   )}
+
                 </>
               ) : (
                 <button
@@ -312,24 +395,62 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
             <div className="pt-2">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-muted-foreground">פריטים</span>
-                <button type="button" onClick={addItem} className="text-xs font-bold text-neon inline-flex items-center gap-1">
-                  <Plus className="h-3 w-3" /> הוסף פריט
+                <button type="button" onClick={addItem} className="text-xs font-bold text-neon inline-flex items-center gap-1 h-11 px-2">
+                  <Plus className="h-4 w-4" /> הוסף פריט
                 </button>
               </div>
-              <div className="space-y-1.5">
+              <datalist id="inventory-items-list">
+                {inventory.map((it) => (
+                  <option key={it.id} value={it.name}>{it.unit}</option>
+                ))}
+              </datalist>
+              <div className="space-y-2">
                 {items.map((row, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_64px_72px_72px_32px] gap-1">
-                    <input placeholder="פריט" value={row.item_name} onChange={(e) => updateItem(i, "item_name", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs" dir="rtl" />
-                    <input placeholder="כמות" value={row.quantity} onChange={(e) => updateItem(i, "quantity", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs tabular-nums" inputMode="decimal" />
-                    <input placeholder="יחידה" value={row.unit_price} onChange={(e) => updateItem(i, "unit_price", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs tabular-nums" inputMode="decimal" />
-                    <input placeholder="סה״כ" value={row.total_price} onChange={(e) => updateItem(i, "total_price", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs tabular-nums" inputMode="decimal" />
-                    <button type="button" onClick={() => removeItem(i)} className="h-9 w-8 grid place-content-center rounded-md border border-border hover:border-destructive hover:text-destructive">
-                      <Trash2 className="h-3 w-3" />
+                  <div key={i} className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center">
+                    <input
+                      placeholder="שם פריט"
+                      list="inventory-items-list"
+                      value={row.item_name}
+                      onChange={(e) => updateItem(i, "item_name", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
+                      dir="rtl"
+                      autoComplete="off"
+                    />
+                    <input
+                      placeholder="כמות"
+                      value={row.quantity}
+                      onChange={(e) => updateItem(i, "quantity", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      inputMode="decimal"
+                    />
+                    <input
+                      placeholder="יח'"
+                      value={row.unit_price}
+                      onChange={(e) => updateItem(i, "unit_price", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      inputMode="decimal"
+                      title="מחיר ליחידה"
+                    />
+                    <input
+                      placeholder="סה״כ"
+                      value={row.total_price}
+                      onChange={(e) => updateItem(i, "total_price", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      inputMode="decimal"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      className="min-h-[44px] w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                      aria-label="מחק שורה"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
+
 
             <div className="pt-3 border-t border-border">
               <button
