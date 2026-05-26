@@ -26,6 +26,7 @@ import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
 import { triggerHaptic } from "@/lib/haptics";
 import { celebrate } from "@/lib/celebrate";
 import { useNotebookStore } from "@/lib/notebook-store";
+import { TaskPhotoButton } from "@/components/TaskPhotoEvidence";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
