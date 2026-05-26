@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Cloud, CloudRain, Sun, CloudSnow, CloudFog, CloudLightning, Loader2, AlertTriangle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Cloud, CloudRain, Sun, CloudSnow, CloudFog, CloudLightning, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 
 // Modi'in, Israel
 const LAT = 31.9009;
@@ -53,35 +53,60 @@ function isRainCode(code: number) {
 export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
   const [data, setData] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const fetchWeather = useCallback(async (signal: AbortSignal) => {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=6&timezone=Asia%2FJerusalem`;
+    const attempt = async () => {
+      const r = await fetch(url, { signal });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    };
+    // Retry once on transient failure
+    let j: any;
+    try {
+      j = await attempt();
+    } catch {
+      await new Promise((res) => setTimeout(res, 800));
+      j = await attempt();
+    }
+    const times: string[] = j?.hourly?.time ?? [];
+    const temps: number[] = j?.hourly?.temperature_2m ?? [];
+    const codes: number[] = j?.hourly?.weather_code ?? [];
+    const probs: number[] = j?.hourly?.precipitation_probability ?? [];
+    if (!times.length || typeof j?.current?.temperature_2m !== "number") {
+      throw new Error("invalid payload");
+    }
+    const hours: HourPoint[] = times.slice(0, 6).map((t, i) => ({
+      time: t,
+      temp: Math.round(temps[i] ?? 0),
+      code: codes[i] ?? 0,
+      precipProb: probs[i] ?? 0,
+    }));
+    return {
+      currentTemp: Math.round(j.current.temperature_2m),
+      currentCode: j.current.weather_code ?? 0,
+      hours,
+    } satisfies WeatherData;
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=6&timezone=Asia%2FJerusalem`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((j) => {
-        if (cancelled) return;
-        const times: string[] = j?.hourly?.time ?? [];
-        const temps: number[] = j?.hourly?.temperature_2m ?? [];
-        const codes: number[] = j?.hourly?.weather_code ?? [];
-        const probs: number[] = j?.hourly?.precipitation_probability ?? [];
-        const hours: HourPoint[] = times.slice(0, 6).map((t, i) => ({
-          time: t,
-          temp: Math.round(temps[i] ?? 0),
-          code: codes[i] ?? 0,
-          precipProb: probs[i] ?? 0,
-        }));
-        setData({
-          currentTemp: Math.round(j?.current?.temperature_2m ?? 0),
-          currentCode: j?.current?.weather_code ?? 0,
-          hours,
-        });
+    const ctl = new AbortController();
+    setLoading(true);
+    setError(null);
+    fetchWeather(ctl.signal)
+      .then((d) => {
+        setData(d);
+        setLoading(false);
       })
-      .catch(() => !cancelled && setError("שגיאה בטעינת מזג האוויר"));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      .catch((e) => {
+        if (ctl.signal.aborted) return;
+        setError(e?.message ?? "error");
+        setLoading(false);
+      });
+    return () => ctl.abort();
+  }, [fetchWeather, reloadKey]);
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
 
@@ -102,12 +127,23 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
         )}
       </div>
 
-      {!data && !error && (
+      {loading && !data && (
         <div className="flex items-center justify-center py-4 text-muted-foreground text-xs">
           <Loader2 className="h-4 w-4 animate-spin ml-2" /> טוען מזג אוויר…
         </div>
       )}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && !loading && !data && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/40 px-3 py-2">
+          <span className="text-xs text-muted-foreground">לא הצלחנו לטעון את מזג האוויר כעת</span>
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:underline"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> רענון
+          </button>
+        </div>
+      )}
 
       {data && (
         <div className="grid grid-cols-6 gap-1 text-center">
