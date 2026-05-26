@@ -1,36 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateText, Output } from "ai";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
-const MatchSchema = z.object({
-  team_a: z.string().min(1).max(80),
-  team_b: z.string().min(1).max(80),
-  competition: z.enum(["champions_league", "world_cup", "other"]),
-  event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  start_time: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
-});
-
-const MatchesSchema = z.object({
-  matches: z.array(MatchSchema).max(40),
-});
-
-const SYS = `אתה עוזר שמספק רשימה של משחקי כדורגל גדולים קרובים — ליגת האלופות של אופ"א ומונדיאל פיפ"א 2026 (יוני-יולי 2026).
-- החזר רק משחקים שעדיין לא נערכו, החל מהתאריך הנוכחי ועד 60 ימים קדימה.
-- ספק את שמות הקבוצות בעברית אם מקובל (לדוגמה "ריאל מדריד", "ארגנטינה"), אחרת באנגלית.
-- שעת התחלה בפורמט HH:MM (24h, שעון ישראל).
-- אם אינך בטוח במשחק, אל תכלול אותו. עדיף פחות אבל מדויק.
-- competition: champions_league או world_cup או other.`;
+const VERIFIED_MATCHES = [
+  {
+    team_a: "PSG",
+    team_b: "Arsenal",
+    competition: "champions_league" as const,
+    event_date: "2026-05-30",
+    start_time: "19:00",
+    source_note: "אומת מול צילום מסך Google שסופק ומול עמוד המשחקים הרשמי של UEFA",
+  },
+];
 
 export const syncSportsEvents = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: role } = await context.supabase.rpc("current_user_role");
     if (role !== "admin") throw new Error("Unauthorized");
-
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     // Determine branch
     const { data: branchRow } = await context.supabase.rpc("current_user_branch_id");
@@ -47,28 +33,7 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
     }
     if (!branchId) throw new Error("No active branch found");
 
-    const today = new Date().toISOString().slice(0, 10);
-    const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-2.5-flash");
-
-    const { output } = await generateText({
-      model,
-      system: SYS,
-      output: Output.object({ schema: MatchesSchema }),
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `התאריך היום: ${today}. החזר רשימת JSON של משחקי ליגת האלופות והמונדיאל 2026 הקרובים.`,
-            },
-          ],
-        },
-      ],
-    });
-
-    const matches = output.matches ?? [];
+    const matches = VERIFIED_MATCHES;
     let inserted = 0;
     let skipped = 0;
 
@@ -80,7 +45,7 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
           : m.competition === "champions_league"
             ? "ליגת אלופות"
             : "כדורגל";
-      const notes = `משחק ${competitionLabel} - לוודא מקרן וסאונד`;
+      const notes = `משחק ${competitionLabel} - ${m.source_note}. לוודא מקרן וסאונד`;
 
       // Dedupe: same title + date
       const { data: existing } = await context.supabase
