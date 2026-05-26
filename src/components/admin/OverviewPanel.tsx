@@ -12,6 +12,7 @@ interface Metrics {
   prepTotal: number;
   tasksDone: number;
   tasksTotal: number;
+  todaySuppliers: string[];
 }
 
 const EMPTY: Metrics = {
@@ -23,6 +24,7 @@ const EMPTY: Metrics = {
   prepTotal: 0,
   tasksDone: 0,
   tasksTotal: 0,
+  todaySuppliers: [],
 };
 
 async function loadMetrics(): Promise<Metrics> {
