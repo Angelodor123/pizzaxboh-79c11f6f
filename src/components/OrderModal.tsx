@@ -69,6 +69,11 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [received, setReceived] = useState<ReceivedInvoice[]>([]);
   const [receivedLoading, setReceivedLoading] = useState(true);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<{ url: string; loading: boolean } | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<EditingInvoiceState | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
