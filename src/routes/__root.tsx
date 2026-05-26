@@ -29,6 +29,8 @@ import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
+import { MaintenanceBell } from "@/components/MaintenanceBell";
+import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConfirmHost } from "@/lib/confirm";
