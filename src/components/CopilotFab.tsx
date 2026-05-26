@@ -257,7 +257,7 @@ export function CopilotFab() {
           },
         },
       });
-      setMessages((m) => [...m, { role: "model", content: res.reply }]);
+      setMessages((m) => [...m, { role: "model", content: res.reply, actions: res.actions }]);
     } catch (err: any) {
       const detail = isSuperAdmin
         ? `\n\n🔧 לסופר־אדמין: ${String(err?.message ?? err).slice(0, 220)}`
