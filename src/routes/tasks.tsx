@@ -288,6 +288,7 @@ function TasksPage() {
           completed_by: state.completed_by,
           completed_by_user_id: state.completed_by_user_id,
           comments: state.comments,
+          photo_url: state.photo_url,
         },
       ]);
     } catch (e) {
