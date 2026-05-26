@@ -651,7 +651,6 @@ function TasksPage() {
                                       onChange={(e) =>
                                         updateComment(t.id, e.target.value)
                                       }
-                                      onBlur={() => flushComment(t.id)}
                                       maxLength={2000}
                                       rows={2}
                                       placeholder="הערה אופציונלית…"
@@ -659,6 +658,27 @@ function TasksPage() {
                                     />
                                     <div className="text-[10px] text-muted-foreground text-end mt-0.5 tabular-nums" dir="ltr">
                                       {(log?.comments ?? "").length}/2000
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
+                                      <button
+                                        type="button"
+                                        onClick={() => reportShortage(t.id)}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
+                                        title="דווח כחוסר"
+                                      >
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        דווח כחוסר
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => saveComment(t.id)}
+                                        disabled={!t.id || t.id.startsWith("__virtual_")}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold bg-neon/90 text-black hover:bg-neon transition disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_8px_rgba(57,255,20,0.4)]"
+                                        title="שמור הערה"
+                                      >
+                                        <Save className="h-3.5 w-3.5" />
+                                        שמור הערה
+                                      </button>
                                     </div>
                                   </div>
                                 </div>
