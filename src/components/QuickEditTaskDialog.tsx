@@ -31,6 +31,8 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
   const [prepItemId, setPrepItemId] = useState("");
   const [sortOrder, setSortOrder] = useState<number>(0);
   const [active, setActive] = useState(true);
+  const [ingredientName, setIngredientName] = useState("");
+  const [itemCategory, setItemCategory] = useState<"raw_material" | "in_house_prep">("in_house_prep");
   const [prepItems, setPrepItems] = useState<PrepItemLite[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -42,6 +44,8 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
     setPrepItemId(task.prep_item_id ?? "");
     setSortOrder(task.sort_order);
     setActive(task.active);
+    setIngredientName(task.ingredient_name ?? "");
+    setItemCategory(task.is_purchased_good ? "raw_material" : "in_house_prep");
   }, [task]);
 
   // Lazy-load prep items list once a task is open
@@ -83,6 +87,8 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
       prep_item_id: prepItemId || null,
       sort_order: Number.isFinite(sortOrder) ? sortOrder : task.sort_order,
       active,
+      ingredient_name: ingredientName.trim() || null,
+      is_purchased_good: itemCategory === "raw_material",
     };
     const { error } = await supabase.from("tasks").update(patch).eq("id", task.id);
     setSaving(false);
