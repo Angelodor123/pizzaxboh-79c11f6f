@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck } from "lucide-react";
+import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, RefreshCw, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { syncSportsEvents } from "@/lib/sports-sync.functions";
+import { toast } from "sonner";
 
 interface Metrics {
   doughTrays: number | null;
@@ -197,6 +200,22 @@ function KpiCard({
 export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
   const [m, setM] = useState<Metrics>(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [sportsEvents, setSportsEvents] = useState<Array<{ id: string; title: string; event_date: string; start_time: string | null; notes: string | null }>>([]);
+  const [syncing, setSyncing] = useState(false);
+  const syncFn = useServerFn(syncSportsEvents);
+
+  const loadSports = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("calendar_events")
+      .select("id, title, event_date, start_time, notes")
+      .eq("event_type", "sports_match")
+      .gte("event_date", today)
+      .order("event_date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .limit(3);
+    setSportsEvents((data ?? []) as never);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -204,6 +223,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
       try {
         const data = await loadMetrics();
         if (alive) setM(data);
+        await loadSports();
       } finally {
         if (alive) setLoading(false);
       }
@@ -215,6 +235,19 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
       clearInterval(t);
     };
   }, []);
+
+  const handleSyncSports = async () => {
+    setSyncing(true);
+    try {
+      const res = await syncFn();
+      toast.success(`סנכרון הושלם — נוספו ${res.inserted} משחקים, ${res.skipped} כבר קיימים`);
+      await loadSports();
+    } catch (e) {
+      toast.error(`סנכרון נכשל: ${e instanceof Error ? e.message : "שגיאה"}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const doughLow = m.doughTrays != null && m.doughTrays < m.doughThreshold;
   const prepPct = m.prepTotal ? Math.round((m.prepDone / m.prepTotal) * 100) : 0;
@@ -294,6 +327,57 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
           </div>
         );
       })()}
+
+      {/* Upcoming Sports Events */}
+      <div className="rounded-xl border border-border bg-card/60 p-5 backdrop-blur">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-md bg-neon/10 text-neon">
+              <Trophy className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                אירועים קרובים
+              </div>
+              <div className="text-[11px] text-muted-foreground">משחקי כדורגל גדולים שמשודרים בפיצה</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSyncSports}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-neon/60 text-neon font-bold px-3 h-11 text-xs hover:bg-neon/10 transition disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "מסנכרן…" : "סנכרן משחקים"}
+          </button>
+        </div>
+        {sportsEvents.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            אין משחקים מתוכננים. לחץ על "סנכרן משחקים" כדי לטעון את הקרובים.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {sportsEvents.map((ev) => (
+              <li key={ev.id} className="flex items-start gap-3 rounded-lg border border-border bg-background/40 p-3">
+                <div className="p-1.5 rounded-md bg-neon/10 text-neon shrink-0">
+                  <CalendarDays className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-foreground truncate">{ev.title}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {new Date(ev.event_date).toLocaleDateString("he-IL", { weekday: "short", day: "2-digit", month: "2-digit" })}
+                    {ev.start_time ? ` · ${ev.start_time.slice(0, 5)}` : ""}
+                  </div>
+                  {ev.notes && (
+                    <div className="text-[11px] text-muted-foreground mt-1 truncate">{ev.notes}</div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* Progress visuals */}
       <div className="rounded-xl border border-border bg-card/60 p-5">

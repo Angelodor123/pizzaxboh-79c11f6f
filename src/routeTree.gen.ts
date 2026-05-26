@@ -27,6 +27,7 @@ import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
+import { Route as ApiPublicHooksSportsSyncRouteImport } from './routes/api/public/hooks/sports-sync'
 import { Route as ApiPublicHooksDoughAlertRouteImport } from './routes/api/public/hooks/dough-alert'
 
 const TasksRoute = TasksRouteImport.update({
@@ -119,6 +120,12 @@ const AdminSettingsEquipmentRoute = AdminSettingsEquipmentRouteImport.update({
   path: '/settings/equipment',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicHooksSportsSyncRoute =
+  ApiPublicHooksSportsSyncRouteImport.update({
+    id: '/api/public/hooks/sports-sync',
+    path: '/api/public/hooks/sports-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDoughAlertRoute =
   ApiPublicHooksDoughAlertRouteImport.update({
     id: '/api/public/hooks/dough-alert',
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
+  '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
+  '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -189,6 +198,7 @@ export interface FileRoutesById {
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
+  '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -212,6 +222,7 @@ export interface FileRouteTypes {
     | '/admin/maintenance'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
+    | '/api/public/hooks/sports-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/maintenance'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
+    | '/api/public/hooks/sports-sync'
   id:
     | '__root__'
     | '/'
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/admin/maintenance'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
+    | '/api/public/hooks/sports-sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -272,6 +285,7 @@ export interface RootRouteChildren {
   SuppliersRoute: typeof SuppliersRoute
   TasksRoute: typeof TasksRoute
   ApiPublicHooksDoughAlertRoute: typeof ApiPublicHooksDoughAlertRoute
+  ApiPublicHooksSportsSyncRoute: typeof ApiPublicHooksSportsSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -402,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsEquipmentRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/hooks/sports-sync': {
+      id: '/api/public/hooks/sports-sync'
+      path: '/api/public/hooks/sports-sync'
+      fullPath: '/api/public/hooks/sports-sync'
+      preLoaderRoute: typeof ApiPublicHooksSportsSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dough-alert': {
       id: '/api/public/hooks/dough-alert'
       path: '/api/public/hooks/dough-alert'
@@ -444,6 +465,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuppliersRoute: SuppliersRoute,
   TasksRoute: TasksRoute,
   ApiPublicHooksDoughAlertRoute: ApiPublicHooksDoughAlertRoute,
+  ApiPublicHooksSportsSyncRoute: ApiPublicHooksSportsSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
