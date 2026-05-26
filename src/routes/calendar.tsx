@@ -416,9 +416,12 @@ function MonthView({
               key={c.iso + (c.inMonth ? "" : "-o")}
               onClick={() => {
                 setSelectedDate(c.iso);
-                if (canEdit) onAddForDate(c.iso);
+                // Smart preview: only auto-open create when the day is empty.
+                // Days with events: just select; DayDetails below shows them
+                // and exposes an explicit "Create New" button.
+                if (canEdit && dayEvents.length === 0) onAddForDate(c.iso);
               }}
-              aria-label={canEdit ? `הוסף אירוע ל-${c.iso}` : c.iso}
+              aria-label={canEdit && dayEvents.length === 0 ? `הוסף אירוע ל-${c.iso}` : c.iso}
               className={`relative aspect-square rounded-md text-right p-1 sm:p-1.5 text-xs sm:text-sm border transition ${
                 isSelected
                   ? "border-neon bg-neon/15 text-neon glow-neon"
