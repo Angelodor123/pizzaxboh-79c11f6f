@@ -373,69 +373,135 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
           </button>
         </div>
 
-        {/* Order History */}
+        {/* Supplier History — Tabs */}
         <div className="border-t border-zinc-800/50 mt-6 pt-4">
-          <h4 className="text-sm font-bold text-zinc-400 mb-3">היסטורית הזמנות</h4>
-          {historyLoading ? (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען היסטוריה…
-            </div>
-          ) : history.length === 0 ? (
-            <div className="text-xs text-zinc-500">אין הזמנות קודמות לספק זה.</div>
-          ) : (
-            <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-              {history.map((h) => {
-                const summary = h.rows
-                  .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
-                  .filter(Boolean)
-                  .join(", ");
-                const isPending = h.status === "sent" && h.orderId;
-                return (
-                  <div
-                    key={h.id}
-                    className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-500">הוזמן</span>
-                        {isPending && (
-                          <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
-                            ממתינה לקבלה
-                          </span>
-                        )}
-                        {h.status === "received" && (
-                          <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
-                            התקבלה
-                          </span>
+          <Tabs defaultValue="sent" dir="rtl">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="sent">הזמנות שנשלחו</TabsTrigger>
+              <TabsTrigger value="received">סחורה שהתקבלה</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="sent" className="mt-3">
+              {historyLoading ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען היסטוריה…
+                </div>
+              ) : history.length === 0 ? (
+                <div className="text-xs text-zinc-500">אין הזמנות קודמות לספק זה.</div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                  {history.map((h) => {
+                    const summary = h.rows
+                      .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
+                      .filter(Boolean)
+                      .join(", ");
+                    const isPending = h.status === "sent" && h.orderId;
+                    return (
+                      <div
+                        key={h.id}
+                        className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-500">הוזמן</span>
+                            {isPending && (
+                              <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
+                                ממתינה לקבלה
+                              </span>
+                            )}
+                            {h.status === "received" && (
+                              <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
+                                התקבלה
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
+                        </div>
+                        <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
+                        {isPending && onReceive ? (
+                          <button
+                            type="button"
+                            onClick={() => { onReceive(h.orderId!); onClose(); }}
+                            className="text-xs py-1.5 px-3 rounded w-fit font-bold text-white transition"
+                            style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 14px rgba(255,45,180,0.45)" }}
+                          >
+                            קבל סחורה
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => duplicateOrder(h)}
+                            className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
+                          >
+                            שכפל הזמנה
+                          </button>
                         )}
                       </div>
-                      <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
-                    </div>
-                    <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
-                    {isPending && onReceive ? (
-                      <button
-                        type="button"
-                        onClick={() => { onReceive(h.orderId!); onClose(); }}
-                        className="text-xs py-1.5 px-3 rounded w-fit font-bold text-white transition"
-                        style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 14px rgba(255,45,180,0.45)" }}
-                      >
-                        קבל סחורה
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => duplicateOrder(h)}
-                        className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
-                      >
-                        שכפל הזמנה
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="received" className="mt-3">
+              {receivedLoading ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען סחורה שהתקבלה…
+                </div>
+              ) : received.length === 0 ? (
+                <div className="text-xs text-zinc-500">לא נרשמו קבלות סחורה לספק זה.</div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                  {received.map((inv) => {
+                    const open = expandedInvoiceId === inv.id;
+                    return (
+                      <div key={inv.id} className="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedInvoiceId(open ? null : inv.id)}
+                          className="w-full p-3 flex items-center justify-between gap-2 text-right hover:bg-zinc-800/60 transition"
+                        >
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <div className="text-xs text-zinc-500">
+                              חשבונית {inv.invoice_number || "—"}
+                            </div>
+                            <div className="text-xs text-zinc-300 font-bold tabular-nums">
+                              {formatDate(inv.document_date)} · ₪{inv.total_amount.toLocaleString("he-IL", { maximumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                          <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
+                        </button>
+                        {open && (
+                          <div className="border-t border-zinc-800 p-3 bg-zinc-950/40">
+                            {inv.items.length === 0 ? (
+                              <div className="text-xs text-zinc-500">אין פריטים שמורים לחשבונית זו.</div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <div className="grid grid-cols-[1fr_56px_72px] text-[10px] font-bold text-zinc-500 px-1">
+                                  <span>פריט</span>
+                                  <span className="text-center">כמות</span>
+                                  <span className="text-center">סה"כ</span>
+                                </div>
+                                {inv.items.map((it) => (
+                                  <div key={it.id} className="grid grid-cols-[1fr_56px_72px] text-xs text-zinc-300 items-center px-1 py-1 rounded bg-zinc-900/60">
+                                    <span className="truncate">{it.item_name}</span>
+                                    <span className="text-center tabular-nums">{it.quantity}</span>
+                                    <span className="text-center tabular-nums font-bold">₪{it.total_price.toLocaleString("he-IL", { maximumFractionDigits: 2 })}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
+
       </div>
     </div>
   );
