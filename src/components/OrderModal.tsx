@@ -613,7 +613,7 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
                           <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
                         </button>
                         {open && (
-                          <div className="border-t border-zinc-800 p-3 bg-zinc-950/40">
+                          <div className="border-t border-zinc-800 p-3 bg-zinc-950/40 space-y-3">
                             {inv.items.length === 0 ? (
                               <div className="text-xs text-zinc-500">אין פריטים שמורים לחשבונית זו.</div>
                             ) : (
@@ -632,6 +632,33 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
                                 ))}
                               </div>
                             )}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
+                              <button
+                                type="button"
+                                onClick={() => openViewImage(inv)}
+                                disabled={!inv.invoice_image_url}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border hover:border-neon hover:text-neon disabled:opacity-40 disabled:cursor-not-allowed transition"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                צפה בחשבונית
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openEditInvoice(inv)}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border hover:border-amber-brand hover:text-amber-brand transition"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                ערוך
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeletingInvoiceId(inv.id)}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-destructive/60 text-destructive hover:bg-destructive/10 transition"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                מחק
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
