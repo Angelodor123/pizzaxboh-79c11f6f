@@ -74,11 +74,11 @@ function EquipmentSettingsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    const ok = await confirm({
+    const ok = await confirmDelete({
       title: "למחוק את הציוד?",
       description: `"${name}" יוסר מהרישום. קריאות שירות קיימות עם הציוד הזה ישמרו אך השדה יתאפס.`,
-      confirmText: "מחק",
-      tone: "destructive",
+      confirmLabel: "מחק",
+      destructive: true,
     });
     if (!ok) return;
     const { error } = await supabase.from("equipment_types").delete().eq("id", id);
