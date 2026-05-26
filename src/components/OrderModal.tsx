@@ -117,6 +117,49 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
     return () => { cancelled = true; };
   }, [supplier.id]);
 
+  // Load received goods (invoices + items) for this supplier
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setReceivedLoading(true);
+      const { data: invs } = await supabase
+        .from("invoices")
+        .select("id, document_date, invoice_number, total_amount")
+        .eq("supplier_id", supplier.id)
+        .eq("is_archived", false)
+        .order("document_date", { ascending: false })
+        .limit(30);
+      if (cancelled) return;
+      const ids = (invs ?? []).map((i) => i.id);
+      let itemsByInvoice: Record<string, ReceivedInvoiceItem[]> = {};
+      if (ids.length) {
+        const { data: items } = await supabase
+          .from("invoice_items")
+          .select("id, invoice_id, item_name, quantity, unit_price, total_price, sort_order")
+          .in("invoice_id", ids)
+          .order("sort_order", { ascending: true });
+        if (cancelled) return;
+        for (const it of items ?? []) {
+          (itemsByInvoice[it.invoice_id] ||= []).push({
+            id: it.id,
+            item_name: it.item_name,
+            quantity: Number(it.quantity ?? 0),
+            unit_price: Number(it.unit_price ?? 0),
+            total_price: Number(it.total_price ?? 0),
+          });
+        }
+      }
+      setReceived((invs ?? []).map((i) => ({
+        id: i.id,
+        document_date: i.document_date,
+        invoice_number: i.invoice_number,
+        total_amount: Number(i.total_amount ?? 0),
+        items: itemsByInvoice[i.id] ?? [],
+      })));
+      setReceivedLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [supplier.id]);
 
 
   // Restore draft
