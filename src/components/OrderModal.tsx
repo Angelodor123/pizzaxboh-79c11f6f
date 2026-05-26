@@ -671,6 +671,164 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
         </div>
 
       </div>
+
+      {/* View invoice image */}
+      <Dialog open={!!viewingImage} onOpenChange={(o) => !o && setViewingImage(null)}>
+        <DialogContent className="max-w-3xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>תמונת חשבונית</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-auto grid place-items-center bg-zinc-950 rounded-md">
+            {viewingImage?.loading ? (
+              <div className="flex items-center gap-2 text-sm text-zinc-400 p-12">
+                <Loader2 className="h-4 w-4 animate-spin" /> טוען…
+              </div>
+            ) : viewingImage?.url ? (
+              <img src={viewingImage.url} alt="חשבונית" className="max-w-full h-auto" />
+            ) : (
+              <div className="p-12 text-sm text-zinc-400 flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" /> אין תמונה זמינה
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit invoice */}
+      <Dialog open={!!editingInvoice} onOpenChange={(o) => !o && !savingEdit && setEditingInvoice(null)}>
+        <DialogContent className="max-w-2xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>עריכת חשבונית</DialogTitle>
+          </DialogHeader>
+          {editingInvoice && (
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto pl-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground">תאריך</label>
+                  <input
+                    type="date"
+                    value={editingInvoice.document_date?.slice(0, 10) ?? ""}
+                    onChange={(e) => setEditingInvoice((p) => p ? { ...p, document_date: e.target.value } : p)}
+                    className="w-full h-9 rounded-md bg-background border border-border px-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground">מס׳ חשבונית</label>
+                  <input
+                    value={editingInvoice.invoice_number}
+                    onChange={(e) => setEditingInvoice((p) => p ? { ...p, invoice_number: e.target.value } : p)}
+                    className="w-full h-9 rounded-md bg-background border border-border px-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground">סה"כ</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={editingInvoice.total_amount}
+                    onChange={(e) => setEditingInvoice((p) => p ? { ...p, total_amount: e.target.value } : p)}
+                    className="w-full h-9 rounded-md bg-background border border-border px-2 text-sm tabular-nums"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-muted-foreground">פריטים</div>
+                {editingInvoice.items.map((it, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_70px_80px_80px_36px] gap-1.5 items-center">
+                    <input
+                      placeholder="פריט"
+                      value={it.item_name}
+                      onChange={(e) => updateEditItem(i, "item_name", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs"
+                    />
+                    <input
+                      placeholder="כמות"
+                      type="number"
+                      inputMode="decimal"
+                      value={it.quantity}
+                      onChange={(e) => updateEditItem(i, "quantity", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs text-center tabular-nums"
+                    />
+                    <input
+                      placeholder="יח׳"
+                      type="number"
+                      inputMode="decimal"
+                      value={it.unit_price}
+                      onChange={(e) => updateEditItem(i, "unit_price", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs text-center tabular-nums"
+                    />
+                    <input
+                      placeholder='סה"כ'
+                      type="number"
+                      inputMode="decimal"
+                      value={it.total_price}
+                      onChange={(e) => updateEditItem(i, "total_price", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs text-center tabular-nums"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeEditItem(i)}
+                      className="h-9 w-9 grid place-content-center rounded-md border border-border hover:border-destructive hover:text-destructive"
+                      aria-label="הסר"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addEditItem}
+                  className="w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
+                >
+                  <Plus className="h-3.5 w-3.5" /> הוסף פריט
+                </button>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setEditingInvoice(null)}
+              disabled={savingEdit}
+              className="h-10 px-4 rounded-md border border-border hover:text-neon text-sm font-bold"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={saveEditInvoice}
+              disabled={savingEdit}
+              className="h-10 px-5 rounded-md bg-neon text-black text-sm font-bold inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {savingEdit && <Loader2 className="h-4 w-4 animate-spin" />}
+              שמור שינויים
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingInvoiceId} onOpenChange={(o) => !o && !deleteBusy && setDeletingInvoiceId(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת חשבונית</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק חשבונית זו לצמיתות?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBusy}>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDeleteInvoice(); }}
+              disabled={deleteBusy}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "מחק לצמיתות"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
