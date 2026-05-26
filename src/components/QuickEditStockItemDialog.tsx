@@ -9,6 +9,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 export interface StockItem {
   id: string;
@@ -31,6 +32,7 @@ interface Props {
   kind: "prep" | "restock";
   onClose: () => void;
   onSaved: (updated: StockItem) => void;
+  onDeleted?: (id: string) => void;
 }
 
 const DAY_COLS = [
