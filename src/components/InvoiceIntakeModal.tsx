@@ -349,7 +349,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
             <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">Goods Receiving</div>
-            <h3 className="font-display text-xl font-bold">קליטת חשבונית חדשה</h3>
+            <h3 className="font-display text-xl font-bold">{isEdit ? "עריכת חשבונית" : "קליטת חשבונית חדשה"}</h3>
           </div>
           <button onClick={onClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
             <X className="h-4 w-4" />
