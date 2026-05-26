@@ -291,6 +291,123 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
     }
   };
 
+
+  const openViewImage = async (inv: ReceivedInvoice) => {
+    if (!inv.invoice_image_url) {
+      toast.error("לא צורפה תמונה לחשבונית זו");
+      return;
+    }
+    setViewingImage({ url: "", loading: true });
+    const { data, error } = await supabase.storage
+      .from("invoice-images")
+      .createSignedUrl(inv.invoice_image_url, 60 * 60);
+    if (error || !data?.signedUrl) {
+      setViewingImage(null);
+      toast.error("טעינת תמונת החשבונית נכשלה");
+      return;
+    }
+    setViewingImage({ url: data.signedUrl, loading: false });
+  };
+
+  const openEditInvoice = (inv: ReceivedInvoice) => {
+    setEditingInvoice({
+      id: inv.id,
+      document_date: inv.document_date,
+      invoice_number: inv.invoice_number ?? "",
+      total_amount: String(inv.total_amount ?? 0),
+      items: inv.items.length
+        ? inv.items.map((it) => ({
+            id: it.id,
+            item_name: it.item_name,
+            quantity: String(it.quantity),
+            unit_price: String(it.unit_price),
+            total_price: String(it.total_price),
+          }))
+        : [{ item_name: "", quantity: "", unit_price: "", total_price: "" }],
+    });
+  };
+
+  const updateEditItem = (idx: number, key: keyof EditableItem, value: string) => {
+    setEditingInvoice((prev) => prev ? {
+      ...prev,
+      items: prev.items.map((it, i) => i === idx ? { ...it, [key]: value } : it),
+    } : prev);
+  };
+
+  const addEditItem = () => setEditingInvoice((prev) => prev ? {
+    ...prev,
+    items: [...prev.items, { item_name: "", quantity: "", unit_price: "", total_price: "" }],
+  } : prev);
+
+  const removeEditItem = (idx: number) => setEditingInvoice((prev) => prev ? {
+    ...prev,
+    items: prev.items.filter((_, i) => i !== idx),
+  } : prev);
+
+  const saveEditInvoice = async () => {
+    if (!editingInvoice) return;
+    setSavingEdit(true);
+    try {
+      const { error: upErr } = await supabase
+        .from("invoices")
+        .update({
+          document_date: editingInvoice.document_date,
+          invoice_number: editingInvoice.invoice_number,
+          total_amount: Number(editingInvoice.total_amount) || 0,
+        })
+        .eq("id", editingInvoice.id);
+      if (upErr) throw upErr;
+
+      const { error: delErr } = await supabase
+        .from("invoice_items")
+        .delete()
+        .eq("invoice_id", editingInvoice.id);
+      if (delErr) throw delErr;
+
+      const cleanItems = editingInvoice.items
+        .filter((it) => it.item_name.trim())
+        .map((it, i) => ({
+          invoice_id: editingInvoice.id,
+          item_name: it.item_name.trim(),
+          quantity: Number(it.quantity) || 0,
+          unit_price: Number(it.unit_price) || 0,
+          total_price: Number(it.total_price) || 0,
+          sort_order: i,
+        }));
+      if (cleanItems.length) {
+        const { error: insErr } = await supabase.from("invoice_items").insert(cleanItems);
+        if (insErr) throw insErr;
+      }
+
+      toast.success("החשבונית עודכנה בהצלחה");
+      setEditingInvoice(null);
+      await loadReceived();
+    } catch (e) {
+      console.error(e);
+      toast.error("עדכון החשבונית נכשל");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const confirmDeleteInvoice = async () => {
+    if (!deletingInvoiceId) return;
+    setDeleteBusy(true);
+    try {
+      await supabase.from("invoice_items").delete().eq("invoice_id", deletingInvoiceId);
+      const { error } = await supabase.from("invoices").delete().eq("id", deletingInvoiceId);
+      if (error) throw error;
+      toast.success("החשבונית נמחקה בהצלחה");
+      setDeletingInvoiceId(null);
+      await loadReceived();
+    } catch (e) {
+      console.error(e);
+      toast.error("מחיקת החשבונית נכשלה");
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 bg-background/85 backdrop-blur-sm grid place-items-center p-3"
