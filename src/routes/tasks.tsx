@@ -404,6 +404,7 @@ function TasksPage() {
         completed_by: prev?.completed_by ?? null,
         completed_by_user_id: prev?.completed_by_user_id ?? null,
         comments: value,
+        photo_url: prev?.photo_url ?? null,
       });
       return next;
     });
