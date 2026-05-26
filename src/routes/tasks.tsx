@@ -212,6 +212,7 @@ function TasksPage() {
           completed_by: l.completed_by,
           completed_by_user_id: l.completed_by_user_id,
           comments: l.comments ?? "",
+          photo_url: l.photo_url ?? null,
         });
       });
       setLogs(map);
