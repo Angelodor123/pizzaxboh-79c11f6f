@@ -425,6 +425,13 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                   <option key={it.id} value={it.name}>{it.unit}</option>
                 ))}
               </datalist>
+              <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center px-0.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span>שם פריט</span>
+                <span className="text-center">כמות</span>
+                <span className="text-center">מחיר יח׳</span>
+                <span className="text-center">סה״כ</span>
+                <span />
+              </div>
               <div className="space-y-2">
                 {items.map((row, i) => (
                   <div key={i} className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center">
@@ -433,7 +440,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                       list="inventory-items-list"
                       value={row.item_name}
                       onChange={(e) => updateItem(i, "item_name", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
+                      className="h-11 rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
                       dir="rtl"
                       autoComplete="off"
                     />
