@@ -50,6 +50,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     active: true,
     recipe_id: null,
     prep_item_id: null,
+    ingredient_name: null,
+    is_purchased_good: false,
   },
   {
     id: "__virtual_winter_t2__",
@@ -60,6 +62,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     active: true,
     recipe_id: null,
     prep_item_id: null,
+    ingredient_name: null,
+    is_purchased_good: false,
   },
   {
     id: "__virtual_winter_t3__",
@@ -70,6 +74,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     active: true,
     recipe_id: null,
     prep_item_id: null,
+    ingredient_name: null,
+    is_purchased_good: false,
   },
 ];
 
