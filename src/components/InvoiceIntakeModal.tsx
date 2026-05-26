@@ -125,8 +125,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
     try {
       const dataUrl = await fileToDataUrl(f);
       const parsed = await runOcr({
-        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg" },
+        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg", supplierId: supplierId || undefined },
       });
+      setRawOcr(parsed);
 
       // Populate header fields when present
       if (parsed.invoice_number) setInvoiceNumber(parsed.invoice_number);
