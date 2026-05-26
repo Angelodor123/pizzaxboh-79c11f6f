@@ -710,6 +710,7 @@ export type Database = {
       }
       notebook_snapshots: {
         Row: {
+          branch_id: string | null
           created_at: string
           id: string
           items: Json
@@ -717,6 +718,7 @@ export type Database = {
           snapshot_date: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           items?: Json
@@ -724,6 +726,7 @@ export type Database = {
           snapshot_date: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           items?: Json
