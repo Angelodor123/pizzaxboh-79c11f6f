@@ -272,6 +272,7 @@ export type Database = {
           branch_id: string
           created_at: string
           id: string
+          location: string
           prep_item_id: string
           trays_count: number
           updated_by: string | null
@@ -281,6 +282,7 @@ export type Database = {
           branch_id: string
           created_at?: string
           id?: string
+          location?: string
           prep_item_id: string
           trays_count: number
           updated_by?: string | null
@@ -290,6 +292,7 @@ export type Database = {
           branch_id?: string
           created_at?: string
           id?: string
+          location?: string
           prep_item_id?: string
           trays_count?: number
           updated_by?: string | null
