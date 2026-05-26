@@ -557,7 +557,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                אשר קליטה
+                {isEdit ? "שמור שינויים" : "אשר קליטה"}
               </button>
               {!formValid && (
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
