@@ -6,6 +6,7 @@ import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
@@ -372,57 +373,115 @@ function MonthView({
           const isToday = c.iso === todayIso;
           const isSelected = c.iso === selectedDate;
           const hasPriority = dayEvents.some((e) => e.high_priority);
-          const typeColors = Array.from(
-            new Set(
-              dayEvents
-                .map((e) => eventTypeColor(e.event_type))
-                .filter((c): c is string => !!c),
-            ),
-          ).slice(0, 3);
+          const visibleEvents = dayEvents.slice(0, 2);
+          const extraCount = Math.max(0, dayEvents.length - 2);
+
+          const cellClass = `relative min-h-[68px] sm:min-h-[88px] rounded-md p-1 sm:p-1.5 border text-right transition overflow-hidden ${
+            isSelected
+              ? "border-neon bg-neon/15 glow-neon"
+              : isToday
+              ? "border-neon/60"
+              : "border-border/60 hover:border-neon/40"
+          } ${c.inMonth ? "" : "opacity-30"}`;
+
+          const handleSelect = () => {
+            setSelectedDate(c.iso);
+            if (canEdit && dayEvents.length === 0) onAddForDate(c.iso);
+          };
+
           return (
-            <button
-              key={c.iso + (c.inMonth ? "" : "-o")}
-              onClick={() => {
-                setSelectedDate(c.iso);
-                // Smart preview: only auto-open create when the day is empty.
-                // Days with events: just select; DayDetails below shows them
-                // and exposes an explicit "Create New" button.
-                if (canEdit && dayEvents.length === 0) onAddForDate(c.iso);
-              }}
-              aria-label={canEdit && dayEvents.length === 0 ? `הוסף אירוע ל-${c.iso}` : c.iso}
-              className={`relative aspect-square rounded-md text-right p-1 sm:p-1.5 text-xs sm:text-sm border transition ${
-                isSelected
-                  ? "border-neon bg-neon/15 text-neon glow-neon"
-                  : isToday
-                  ? "border-neon/60 text-foreground"
-                  : "border-border/60 hover:border-neon/40 active:scale-95"
-              } ${c.inMonth ? "" : "opacity-30"}`}
-            >
-              <div className="font-bold tabular-nums">{c.date.getDate()}</div>
-              {(dayEvents.length > 0 || typeColors.length > 0) && (
-                <div className="absolute bottom-1 left-1 right-1 flex items-center gap-0.5 justify-start flex-wrap">
-                  {hasPriority && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                  )}
-                  {typeColors.length > 0 ? (
-                    typeColors.map((col) => (
+            <div key={c.iso + (c.inMonth ? "" : "-o")} className={cellClass}>
+              {/* Date anchor — always visible, top-left, transparent bg */}
+              <span
+                className={`absolute top-1 left-1 z-10 text-[11px] sm:text-xs font-bold tabular-nums pointer-events-none ${
+                  isSelected ? "text-neon" : isToday ? "text-neon" : "text-foreground"
+                }`}
+              >
+                {c.date.getDate()}
+              </span>
+
+              {/* Click target — fills cell, sits below labels */}
+              <button
+                type="button"
+                onClick={handleSelect}
+                aria-label={canEdit && dayEvents.length === 0 ? `הוסף אירוע ל-${c.iso}` : c.iso}
+                className="absolute inset-0 z-0 active:scale-[0.98] transition"
+              />
+
+              {/* Event labels (1–2) */}
+              <div className="relative z-10 mt-5 sm:mt-6 space-y-0.5 pointer-events-none">
+                {visibleEvents.map((e) => {
+                  const col = eventTypeColor(e.event_type);
+                  return (
+                    <div
+                      key={e.id + c.iso}
+                      className="flex items-center gap-1 text-[9px] sm:text-[10px] leading-tight truncate"
+                      title={e.title}
+                    >
                       <span
-                        key={col}
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: col }}
+                        className="h-1.5 w-1.5 rounded-full shrink-0"
+                        style={{ background: col ?? "var(--neon)" }}
                       />
-                    ))
-                  ) : (
-                    dayEvents.length > 0 && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-neon" />
-                    )
-                  )}
-                  {dayEvents.length > 1 && (
-                    <span className="text-[9px] text-muted-foreground tabular-nums">×{dayEvents.length}</span>
-                  )}
+                      <span className={`truncate ${e.high_priority ? "text-destructive font-bold" : "text-foreground/90"}`}>
+                        {e.title}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* +N more — opens popover */}
+              {extraCount > 0 && (
+                <div className="absolute bottom-1 right-1 z-20">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          setSelectedDate(c.iso);
+                        }}
+                        className="text-[9px] sm:text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded bg-neon/20 text-neon border border-neon/40 hover:bg-neon/30 transition"
+                      >
+                        +{extraCount}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-64 p-2 text-right" dir="rtl">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2 px-1">
+                        {c.date.getDate()}/{c.date.getMonth() + 1} · {dayEvents.length} אירועים
+                      </div>
+                      <ul className="space-y-1 max-h-72 overflow-auto">
+                        {dayEvents.map((e) => {
+                          const col = eventTypeColor(e.event_type);
+                          return (
+                            <li
+                              key={e.id + "-pop"}
+                              className="flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted/40"
+                            >
+                              <span
+                                className="h-2 w-2 rounded-full shrink-0"
+                                style={{ background: col ?? "var(--neon)" }}
+                              />
+                              <span className="truncate flex-1">{e.title}</span>
+                              {e.start_time && (
+                                <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                                  {e.start_time.slice(0, 5)}
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
-            </button>
+
+              {/* Priority indicator dot — bottom-left */}
+              {hasPriority && (
+                <span className="absolute bottom-1 left-1 z-10 h-1.5 w-1.5 rounded-full bg-destructive pointer-events-none" />
+              )}
+            </div>
           );
         })}
       </div>
