@@ -602,20 +602,35 @@ function AdminPage() {
             {saveError && (
               <p className="text-xs text-destructive text-right">{saveError}</p>
             )}
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={closeEditor}
-                className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-card"
-              >
-                ביטול
-              </button>
-              <button
-                onClick={save}
-                disabled={!editing.nameHebrew.trim() || saving}
-                className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
-              >
-                <Check className="h-4 w-4" /> {saving ? "שומר..." : "שמור"}
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              {editing && !editing.id.startsWith("recipe-") ? (
+                <ModalDeleteButton
+                  title={`מחיקת מתכון "${editing.nameHebrew || "ללא שם"}"`}
+                  description="האם למחוק פריט זה לצמיתות?"
+                  onConfirm={async () => {
+                    await softDeleteRecipe(editing.id);
+                    toast.success("המתכון נמחק");
+                    closeEditor();
+                  }}
+                />
+              ) : (
+                <span />
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={closeEditor}
+                  className="h-11 px-4 rounded-md border border-border text-foreground hover:bg-card"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={save}
+                  disabled={!editing.nameHebrew.trim() || saving}
+                  className="h-11 inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 rounded-md glow-neon disabled:opacity-50"
+                >
+                  <Check className="h-4 w-4" /> {saving ? "שומר..." : "שמור"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
