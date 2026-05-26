@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useCookbookStore } from "@/lib/store";
 import type { Task } from "@/lib/tasks";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface PrepItemLite {
   id: string;
@@ -22,6 +23,7 @@ interface Props {
   branchId: string | null;
   onClose: () => void;
   onSaved: (updated: Task) => void;
+  onDeleted?: (id: string) => void;
 }
 
 export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props) {
