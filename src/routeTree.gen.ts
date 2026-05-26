@@ -22,6 +22,7 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as ApiPublicHooksDoughAlertRouteImport } from './routes/api/public/hooks/dough-alert'
 
@@ -90,6 +91,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminHistoryRoute = AdminHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAlertsRoute = AdminAlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/history': typeof AdminHistoryRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesByTo {
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/history': typeof AdminHistoryRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesById {
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/history': typeof AdminHistoryRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRouteTypes {
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
+    | '/admin/history'
     | '/api/public/hooks/dough-alert'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
+    | '/admin/history'
     | '/api/public/hooks/dough-alert'
   id:
     | '__root__'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
+    | '/admin/history'
     | '/api/public/hooks/dough-alert'
   fileRoutesById: FileRoutesById
 }
@@ -318,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/history': {
+      id: '/admin/history'
+      path: '/history'
+      fullPath: '/admin/history'
+      preLoaderRoute: typeof AdminHistoryRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/alerts': {
       id: '/admin/alerts'
       path: '/alerts'
@@ -337,10 +356,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAlertsRoute: typeof AdminAlertsRoute
+  AdminHistoryRoute: typeof AdminHistoryRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAlertsRoute: AdminAlertsRoute,
+  AdminHistoryRoute: AdminHistoryRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
