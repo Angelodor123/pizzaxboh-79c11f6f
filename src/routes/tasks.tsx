@@ -26,6 +26,7 @@ import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
 import { triggerHaptic } from "@/lib/haptics";
 import { celebrate } from "@/lib/celebrate";
 import { useNotebookStore } from "@/lib/notebook-store";
+import { TaskPhotoButton } from "@/components/TaskPhotoEvidence";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
@@ -37,6 +38,7 @@ type LogState = {
   completed_by: string | null;
   completed_by_user_id: string | null;
   comments: string;
+  photo_url: string | null;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
@@ -53,6 +55,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     prep_item_id: null,
     ingredient_name: null,
     is_purchased_good: false,
+    requires_photo: false,
   },
   {
     id: "__virtual_winter_t2__",
@@ -65,6 +68,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     prep_item_id: null,
     ingredient_name: null,
     is_purchased_good: false,
+    requires_photo: false,
   },
   {
     id: "__virtual_winter_t3__",
@@ -77,6 +81,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     prep_item_id: null,
     ingredient_name: null,
     is_purchased_good: false,
+    requires_photo: false,
   },
 ];
 
@@ -208,6 +213,7 @@ function TasksPage() {
           completed_by: l.completed_by,
           completed_by_user_id: l.completed_by_user_id,
           comments: l.comments ?? "",
+          photo_url: l.photo_url ?? null,
         });
       });
       setLogs(map);
@@ -283,6 +289,7 @@ function TasksPage() {
           completed_by: state.completed_by,
           completed_by_user_id: state.completed_by_user_id,
           comments: state.comments,
+          photo_url: state.photo_url,
         },
       ]);
     } catch (e) {
@@ -293,30 +300,53 @@ function TasksPage() {
   const toggleTask = (taskId: string) => {
     const prev = logs.get(taskId);
     const completed = !(prev?.completed ?? false);
+    const task = allTasks.find((x) => x.id === taskId);
+    // Block completion if photo is required and missing
+    if (completed && task?.requires_photo && !prev?.photo_url) {
+      toast.error("יש להעלות תמונה לפני סימון המשימה כבוצעה");
+      return;
+    }
     const nextState: LogState = {
       completed,
       completed_at: completed ? new Date().toISOString() : null,
       completed_by: completed ? fullName : prev?.completed_by ?? null,
       completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
       comments: prev?.comments ?? "",
+      photo_url: prev?.photo_url ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
       next.set(taskId, nextState);
       return next;
     });
-    // Trigger neon pulse only on completion (not uncheck)
     if (completed) {
       setPulsingTaskId(taskId);
       setTimeout(() => setPulsingTaskId((cur) => (cur === taskId ? null : cur)), 650);
       triggerHaptic("light");
     }
-    const t = allTasks.find((x) => x.id === taskId);
-    const taskName = t?.name ?? "";
+    const taskName = task?.name ?? "";
     void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
     if (nextState.completed && taskName) {
       void scanNotebookForMatch(taskName);
     }
+  };
+
+  const handlePhotoUploaded = (taskId: string, path: string) => {
+    const prev = logs.get(taskId);
+    const nextState: LogState = {
+      completed: prev?.completed ?? false,
+      completed_at: prev?.completed_at ?? null,
+      completed_by: prev?.completed_by ?? null,
+      completed_by_user_id: prev?.completed_by_user_id ?? null,
+      comments: prev?.comments ?? "",
+      photo_url: path,
+    };
+    setLogs((m) => {
+      const next = new Map(m);
+      next.set(taskId, nextState);
+      return next;
+    });
+    void persistTask(taskId, nextState);
   };
 
   // Lightweight keyword matching against active notebook tasks.
@@ -375,6 +405,7 @@ function TasksPage() {
         completed_by: prev?.completed_by ?? null,
         completed_by_user_id: prev?.completed_by_user_id ?? null,
         comments: value,
+        photo_url: prev?.photo_url ?? null,
       });
       return next;
     });
@@ -641,6 +672,22 @@ function TasksPage() {
                                       </button>
                                     )}
                                   </div>
+
+                                  {t.requires_photo && !t.id.startsWith("__virtual_") && branchId && (
+                                    <div className="mt-3 rounded-lg border border-pink-500/30 bg-pink-500/5 p-3">
+                                      <div className="text-[11px] text-pink-200/90 font-bold mb-2 text-right">
+                                        📷 משימה זו דורשת תמונת ביצוע
+                                      </div>
+                                      <TaskPhotoButton
+                                        taskId={t.id}
+                                        branchId={branchId}
+                                        userId={userId}
+                                        existingPath={log?.photo_url ?? null}
+                                        onUploaded={(path: string) => handlePhotoUploaded(t.id, path)}
+                                      />
+                                    </div>
+                                  )}
+
 
                                   <div className="mt-3">
                                     <label
