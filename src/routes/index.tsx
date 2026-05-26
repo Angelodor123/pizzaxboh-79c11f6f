@@ -75,6 +75,7 @@ function OperationalDashboard() {
   const openTasks = lists.tasks.filter((t) => !t.done).length;
   const shoppingCount = lists.shopping.filter((t) => !t.done).length;
   const ordersCount = lists.orders.filter((t) => !t.done).length;
+  const shortagesCount = (lists.shortages ?? []).filter((t) => !t.done).length;
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("he-IL", {
