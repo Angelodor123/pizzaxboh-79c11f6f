@@ -257,6 +257,9 @@ function AdminPage() {
 
       {/* Tabs */}
       <div className="mb-6 border-b border-border flex gap-1 overflow-x-auto scrollbar-hide" dir="rtl">
+        <TabButton active={tab === "overview"} onClick={() => setTab("overview")} icon={<LayoutDashboard className="h-4 w-4" />}>
+          סקירה כללית
+        </TabButton>
         <TabButton active={tab === "recipes"} onClick={() => setTab("recipes")} icon={<ChefHat className="h-4 w-4" />}>
           מתכונים
         </TabButton>
