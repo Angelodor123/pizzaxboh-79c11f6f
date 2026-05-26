@@ -970,6 +970,7 @@ function EventForm({
   const [endTime, setEndTime] = useState(existing?.end_time?.slice(0, 5) ?? "");
   const [supplier, setSupplier] = useState(existing?.supplier ?? "");
   const [highPriority, setHighPriority] = useState(existing?.high_priority ?? false);
+  const [projectorBroadcast, setProjectorBroadcast] = useState(existing?.projector_broadcast ?? true);
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [conflictAck, setConflictAck] = useState(false);
