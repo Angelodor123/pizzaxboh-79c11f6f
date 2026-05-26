@@ -12,21 +12,35 @@ interface ItemRow { item_name: string; quantity: string; unit_price: string; tot
 
 interface InventoryOpt { id: string; name: string; unit: string }
 
+export interface EditInvoiceData {
+  id: string;
+  supplier_id: string | null;
+  invoice_number: string | null;
+  total_amount: number | string | null;
+  document_date: string;
+  image_url: string | null;
+}
 
 interface Props {
   suppliers: SupplierOpt[];
   onClose: () => void;
   onSaved: () => void;
+  editInvoice?: EditInvoiceData | null;
 }
 
 const DRAFT_KEY = "invoice-intake-draft";
 const HARD_LIMIT = 15000;
 
-export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
-  const [supplierId, setSupplierId] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [totalAmount, setTotalAmount] = useState("");
-  const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
+export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null }: Props) {
+  const isEdit = !!editInvoice;
+  const [supplierId, setSupplierId] = useState(editInvoice?.supplier_id ?? "");
+  const [invoiceNumber, setInvoiceNumber] = useState(editInvoice?.invoice_number ?? "");
+  const [totalAmount, setTotalAmount] = useState(
+    editInvoice?.total_amount != null ? String(editInvoice.total_amount) : "",
+  );
+  const [docDate, setDocDate] = useState(
+    editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
+  );
   const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "" }]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
