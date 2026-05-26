@@ -28,11 +28,11 @@ export interface Task {
   prep_item_id: string | null;
   ingredient_name: string | null;
   is_purchased_good: boolean;
+  requires_photo: boolean;
 }
 
 // Common Hebrew operational verbs to strip when deriving a raw-ingredient
-// name from a task title. Order matters only for readability — the regex
-// uses word-boundary-ish whitespace anchors so partial matches are safe.
+// name from a task title.
 const HEBREW_OPERATIONAL_VERBS = [
   "להפריד", "לחתוך", "להכין", "לקצוץ", "לגרר", "לטחון", "לבשל", "לאפות",
   "לטגן", "לערבב", "להקפיא", "להפשיר", "לסנן", "למלא", "לערום", "לסדר",
@@ -41,11 +41,6 @@ const HEBREW_OPERATIONAL_VERBS = [
   "להעלות", "לבחוש", "לעטוף", "לארוז", "להגיש",
 ];
 
-/**
- * Extract a clean raw-ingredient name from a checklist task.
- * Prefers explicit ingredient_name; falls back to stripping operational
- * Hebrew verbs from the task title.
- */
 export function extractIngredientName(input: {
   name: string;
   ingredient_name?: string | null;
@@ -57,7 +52,6 @@ export function extractIngredientName(input: {
   for (const verb of HEBREW_OPERATIONAL_VERBS) {
     cleaned = cleaned.replace(new RegExp(`(^|\\s)${verb}(\\s|$)`, "g"), " ");
   }
-  // Strip leftover connector words and tidy whitespace/punctuation
   cleaned = cleaned
     .replace(/\b(של|את|עם|ל|מ|ב)\b/g, " ")
     .replace(/[-–—:|,.]+/g, " ")
@@ -76,28 +70,14 @@ export interface DailyTaskLog {
   completed_by: string | null;
   completed_by_user_id: string | null;
   comments: string;
+  photo_url: string | null;
 }
 
 export async function fetchTaskTree(branchId: string) {
   const [{ data: shifts }, { data: groups }, { data: tasks }] = await Promise.all([
-    supabase
-      .from("shifts")
-      .select("*")
-      .eq("branch_id", branchId)
-      .eq("active", true)
-      .order("sort_order"),
-    supabase
-      .from("task_groups")
-      .select("*")
-      .eq("branch_id", branchId)
-      .eq("active", true)
-      .order("sort_order"),
-    supabase
-      .from("tasks")
-      .select("*")
-      .eq("branch_id", branchId)
-      .eq("active", true)
-      .order("sort_order"),
+    supabase.from("shifts").select("*").eq("branch_id", branchId).eq("active", true).order("sort_order"),
+    supabase.from("task_groups").select("*").eq("branch_id", branchId).eq("active", true).order("sort_order"),
+    supabase.from("tasks").select("*").eq("branch_id", branchId).eq("active", true).order("sort_order"),
   ]);
   return {
     shifts: (shifts ?? []) as Shift[],
@@ -125,6 +105,7 @@ export interface UpsertLogInput {
   completed_by: string | null;
   completed_by_user_id: string | null;
   comments: string;
+  photo_url?: string | null;
 }
 
 export async function upsertLogs(rows: UpsertLogInput[]) {
@@ -133,4 +114,40 @@ export async function upsertLogs(rows: UpsertLogInput[]) {
     .from("daily_task_logs")
     .upsert(rows, { onConflict: "task_id,log_date" });
   if (error) throw error;
+}
+
+const TASK_PHOTOS_BUCKET = "task-photos";
+
+/**
+ * Upload a photo for a task completion. Returns the storage path
+ * (stored in `daily_task_logs.photo_url`) and a freshly-signed URL.
+ */
+export async function uploadTaskPhoto(
+  file: File,
+  opts: { branchId: string; taskId: string; userId: string | null },
+): Promise<{ path: string; signedUrl: string }> {
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+  const stamp = Date.now();
+  const rand = Math.random().toString(36).slice(2, 8);
+  const path = `${opts.branchId}/${opts.taskId}/${stamp}-${rand}.${ext}`;
+
+  const { error: uploadErr } = await supabase.storage
+    .from(TASK_PHOTOS_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type || "image/jpeg" });
+  if (uploadErr) throw uploadErr;
+
+  const signed = await getTaskPhotoSignedUrl(path);
+  return { path, signedUrl: signed ?? "" };
+}
+
+export async function getTaskPhotoSignedUrl(
+  path: string,
+  expiresInSeconds = 3600,
+): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await supabase.storage
+    .from(TASK_PHOTOS_BUCKET)
+    .createSignedUrl(path, expiresInSeconds);
+  if (error) return null;
+  return data?.signedUrl ?? null;
 }
