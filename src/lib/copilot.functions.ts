@@ -768,7 +768,7 @@ export const askCopilot = createServerFn({ method: "POST" })
     if (data.context?.briefing) ctxParts.push(`תדריך תפעולי של היום: ${data.context.briefing}`);
     const contextLine = ctxParts.length ? `\n\nהקשר נוכחי: ${ctxParts.join(" | ")}.` : "";
 
-    const kb = await buildKnowledgeContext();
+    const kb = await buildKnowledgeContext(supabase, data.context?.branchId);
     const knowledgeBlock = kb ? `\n\n==== שכבת ידע סטטית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====` : "";
 
     const gateway = createLovableAiGatewayProvider(apiKey);
