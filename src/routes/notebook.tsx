@@ -43,6 +43,12 @@ const DAILY_LISTS: ListConfig[] = [
     emoji: "📦",
     placeholder: 'לדוגמה: "בצל סגול — 10 ק״ג"',
   },
+  {
+    key: "shortages",
+    title: "חוסרים",
+    emoji: "⚠️",
+    placeholder: 'לדוגמה: "נגמר רוטב עגבניות"',
+  },
 ];
 
 const WAREHOUSE_LISTS: ListConfig[] = [
