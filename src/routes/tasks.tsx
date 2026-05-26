@@ -154,8 +154,6 @@ function TasksPage() {
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Debounce timers per task id for comment autosave
-  const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   // Refs for smooth scroll-into-view on accordion open
   const shiftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const groupRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
