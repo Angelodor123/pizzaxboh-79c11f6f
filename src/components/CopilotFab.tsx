@@ -405,15 +405,40 @@ export function CopilotFab() {
                 {m.role === "model" && (
                   <CopilotMascot className="h-7 w-7 shrink-0 mt-0.5" />
                 )}
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
-                    m.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-tr-sm"
-                      : "bg-secondary text-foreground rounded-tl-sm border border-border",
+                <div className="max-w-[80%] flex flex-col gap-2 items-stretch">
+                  <div
+                    className={cn(
+                      "rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-tr-sm"
+                        : "bg-secondary text-foreground rounded-tl-sm border border-border",
+                    )}
+                  >
+                    {m.content}
+                  </div>
+                  {m.role === "model" && m.actions && m.actions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {m.actions.map((a) => (
+                        <Link
+                          key={a.kind}
+                          to={a.to}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition active:scale-95",
+                            a.count > 0
+                              ? "bg-[#ff3d8a]/15 border-[#ff3d8a]/60 text-[#ff66c4] hover:bg-[#ff3d8a]/25"
+                              : "bg-secondary border-border text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {a.kind === "tasks" && <ListChecks className="h-3.5 w-3.5" />}
+                          {a.kind === "warehouse" && <Package className="h-3.5 w-3.5" />}
+                          {a.kind === "shortages" && <AlertTriangle className="h-3.5 w-3.5" />}
+                          <span>{a.label}</span>
+                          <ArrowLeft className="h-3 w-3" />
+                        </Link>
+                      ))}
+                    </div>
                   )}
-                >
-                  {m.content}
                 </div>
               </div>
             ))}
