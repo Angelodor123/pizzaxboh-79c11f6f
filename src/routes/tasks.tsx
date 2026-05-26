@@ -530,7 +530,11 @@ function TasksPage() {
         {displayShifts.map((shift) => {
           const isShiftOpen = openShift === shift.id;
           const shiftGroups = displayGroupsForShift(shift.id);
-          const shiftTasks = shiftGroups.flatMap((g) => tasksForGroup(g.id));
+          const shiftTopTasks = shiftGroups.flatMap((g) => tasksForGroup(g.id));
+          const shiftTasks = shiftTopTasks.flatMap((t) => {
+            const subs = subtasksFor(t.id);
+            return subs.length > 0 ? subs : [t];
+          });
           const shiftDone = shiftTasks.filter((t) => logs.get(t.id)?.completed).length;
           const isVirtual = shift.id === VIRTUAL_WINTER_SHIFT_ID;
           return (
