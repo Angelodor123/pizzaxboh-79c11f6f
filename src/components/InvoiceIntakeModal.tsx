@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
+import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
 
 interface SupplierOpt { id: string; name: string }
 
 interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string }
+
+interface InventoryOpt { id: string; name: string; unit: string }
+
 
 interface Props {
   suppliers: SupplierOpt[];
