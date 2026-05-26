@@ -255,7 +255,11 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     }
   };
 
-  const doughLow = m.doughTrays != null && m.doughTrays < m.doughThreshold;
+  const doughTotal =
+    m.doughShop == null && m.doughWarehouse == null
+      ? null
+      : (m.doughShop ?? 0) + (m.doughWarehouse ?? 0);
+  const doughLow = doughTotal != null && doughTotal < m.doughThreshold;
   const prepPct = m.prepTotal ? Math.round((m.prepDone / m.prepTotal) * 100) : 0;
   const tasksPct = m.tasksTotal ? Math.round((m.tasksDone / m.tasksTotal) * 100) : 0;
 
@@ -273,8 +277,12 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         <KpiCard
           icon={<Pizza className="h-5 w-5" />}
           label="מגשי בצק כעת"
-          value={loading ? "…" : m.doughTrays ?? "—"}
-          sub={`סף התראה: ${m.doughThreshold}`}
+          value={loading ? "…" : doughTotal ?? "—"}
+          sub={
+            loading
+              ? `סף התראה: ${m.doughThreshold}`
+              : `בפיצה: ${m.doughShop ?? 0} · במחסן: ${m.doughWarehouse ?? 0}`
+          }
           alert={doughLow}
         />
         <KpiCard
