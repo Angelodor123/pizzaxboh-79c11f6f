@@ -50,27 +50,46 @@ function isRainCode(code: number) {
   return (code >= 51 && code <= 67) || (code >= 80 && code <= 86) || code >= 95;
 }
 
+const CACHE_KEY = "weather_widget_cache_v1";
+const MAX_RETRIES = 3;
+
+interface CachedWeather {
+  data: WeatherData;
+  timestamp: number;
+}
+
+function readCache(): CachedWeather | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedWeather;
+    if (!parsed?.data?.hours) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(data: WeatherData) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() } satisfies CachedWeather));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
   const [data, setData] = useState<WeatherData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [staleAt, setStaleAt] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const fetchWeather = useCallback(async (signal: AbortSignal) => {
+  const fetchOnce = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=6&timezone=Asia%2FJerusalem`;
-    const attempt = async () => {
-      const r = await fetch(url, { signal });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    };
-    // Retry once on transient failure
-    let j: any;
-    try {
-      j = await attempt();
-    } catch {
-      await new Promise((res) => setTimeout(res, 800));
-      j = await attempt();
-    }
+    const r = await fetch(url, { signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
     const times: string[] = j?.hourly?.time ?? [];
     const temps: number[] = j?.hourly?.temperature_2m ?? [];
     const codes: number[] = j?.hourly?.weather_code ?? [];
@@ -78,37 +97,66 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
     if (!times.length || typeof j?.current?.temperature_2m !== "number") {
       throw new Error("invalid payload");
     }
-    const hours: HourPoint[] = times.slice(0, 6).map((t, i) => ({
-      time: t,
-      temp: Math.round(temps[i] ?? 0),
-      code: codes[i] ?? 0,
-      precipProb: probs[i] ?? 0,
-    }));
     return {
       currentTemp: Math.round(j.current.temperature_2m),
       currentCode: j.current.weather_code ?? 0,
-      hours,
-    } satisfies WeatherData;
+      hours: times.slice(0, 6).map((t, i) => ({
+        time: t,
+        temp: Math.round(temps[i] ?? 0),
+        code: codes[i] ?? 0,
+        precipProb: probs[i] ?? 0,
+      })),
+    };
   }, []);
 
   useEffect(() => {
     const ctl = new AbortController();
+    let active = true;
+
+    // Show cached immediately while we re-fetch
+    const cached = readCache();
+    if (cached) {
+      setData(cached.data);
+      setStaleAt(cached.timestamp);
+    }
     setLoading(true);
-    setError(null);
-    fetchWeather(ctl.signal)
-      .then((d) => {
-        setData(d);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (ctl.signal.aborted) return;
-        setError(e?.message ?? "error");
-        setLoading(false);
-      });
-    return () => ctl.abort();
-  }, [fetchWeather, reloadKey]);
+    setFailed(false);
+
+    (async () => {
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (!active) return;
+        try {
+          const fresh = await fetchOnce(ctl.signal);
+          if (!active) return;
+          setData(fresh);
+          setStaleAt(null);
+          setFailed(false);
+          setLoading(false);
+          writeCache(fresh);
+          return;
+        } catch (e) {
+          if (ctl.signal.aborted) return;
+          if (attempt < MAX_RETRIES - 1) {
+            await new Promise((res) => setTimeout(res, 800 * (attempt + 1)));
+          }
+        }
+      }
+      if (!active) return;
+      // All retries failed
+      setLoading(false);
+      setFailed(true);
+    })();
+
+    return () => {
+      active = false;
+      ctl.abort();
+    };
+  }, [fetchOnce, reloadKey]);
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
+  const staleLabel = staleAt
+    ? new Date(staleAt).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+    : null;
 
   return (
     <div className="rounded-xl border-2 border-jungle/30 bg-card p-4 flex flex-col gap-3">
@@ -117,14 +165,26 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
           {data ? iconFor(data.currentCode, "h-5 w-5 text-neon") : <Cloud className="h-5 w-5 text-neon" />}
           {title}
         </h2>
-        {data && (
-          <div className="text-right">
-            <div className="font-display text-3xl font-black text-neon tabular-nums leading-none">
-              {data.currentTemp}°
+        <div className="flex items-center gap-2">
+          {(failed || staleAt) && !loading && (
+            <button
+              type="button"
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="inline-flex items-center gap-1 text-[10px] font-bold text-neon hover:underline"
+              aria-label="רענון מזג אוויר"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {data && (
+            <div className="text-right">
+              <div className="font-display text-3xl font-black text-neon tabular-nums leading-none">
+                {data.currentTemp}°
+              </div>
+              <div className="text-[10px] text-foreground/70 mt-0.5">{descFor(data.currentCode)}</div>
             </div>
-            <div className="text-[10px] text-foreground/70 mt-0.5">{descFor(data.currentCode)}</div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {loading && !data && (
@@ -132,9 +192,10 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
           <Loader2 className="h-4 w-4 animate-spin ml-2" /> טוען מזג אוויר…
         </div>
       )}
-      {error && !loading && !data && (
+
+      {failed && !data && !loading && (
         <div className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/40 px-3 py-2">
-          <span className="text-xs text-muted-foreground">לא הצלחנו לטעון את מזג האוויר כעת</span>
+          <span className="text-xs text-muted-foreground">מזג האוויר אינו זמין כעת</span>
           <button
             type="button"
             onClick={() => setReloadKey((k) => k + 1)}
@@ -142,6 +203,12 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
           >
             <RefreshCw className="h-3.5 w-3.5" /> רענון
           </button>
+        </div>
+      )}
+
+      {data && staleAt && (
+        <div className="text-[10px] text-foreground/60">
+          עודכן לאחרונה: {staleLabel}
         </div>
       )}
 
