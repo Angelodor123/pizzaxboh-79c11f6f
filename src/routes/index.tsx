@@ -201,10 +201,11 @@ function OperationalDashboard() {
             <StickyNote className="h-5 w-5 text-neon shrink-0" />
             <h2 className="font-display text-lg font-bold truncate">📝 פנקס הערות ומשימות</h2>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-2 gap-2 text-center">
             <NotebookMini label="משימות" value={openTasks} />
             <NotebookMini label="קניות" value={shoppingCount} />
             <NotebookMini label="הזמנות" value={ordersCount} />
+            <NotebookMini label="חוסרים" value={shortagesCount} />
           </div>
           <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
             פתח פנקס ←
