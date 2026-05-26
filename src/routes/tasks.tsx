@@ -235,7 +235,9 @@ function TasksPage() {
   const groupsForShift = (shiftId: string) =>
     groups.filter((g) => g.shift_id === shiftId);
   const tasksForGroup = (groupId: string) =>
-    allTasks.filter((t) => t.group_id === groupId);
+    allTasks
+      .filter((t) => t.group_id === groupId)
+      .sort((a, b) => a.name.localeCompare(b.name, "he"));
 
   const syncParLevelsForTask = async (taskId: string) => {
     const t = tasks.find((x) => x.id === taskId);
