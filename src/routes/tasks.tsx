@@ -889,6 +889,7 @@ function TasksPage() {
         onSaved={(updated) =>
           setTasks((prev) => prev.map((x) => (x.id === updated.id ? updated : x)))
         }
+        onDeleted={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
       />
 
       {/* Recipe drawer */}
