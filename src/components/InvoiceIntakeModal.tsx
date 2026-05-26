@@ -12,21 +12,35 @@ interface ItemRow { item_name: string; quantity: string; unit_price: string; tot
 
 interface InventoryOpt { id: string; name: string; unit: string }
 
+export interface EditInvoiceData {
+  id: string;
+  supplier_id: string | null;
+  invoice_number: string | null;
+  total_amount: number | string | null;
+  document_date: string;
+  image_url: string | null;
+}
 
 interface Props {
   suppliers: SupplierOpt[];
   onClose: () => void;
   onSaved: () => void;
+  editInvoice?: EditInvoiceData | null;
 }
 
 const DRAFT_KEY = "invoice-intake-draft";
 const HARD_LIMIT = 15000;
 
-export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
-  const [supplierId, setSupplierId] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [totalAmount, setTotalAmount] = useState("");
-  const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
+export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null }: Props) {
+  const isEdit = !!editInvoice;
+  const [supplierId, setSupplierId] = useState(editInvoice?.supplier_id ?? "");
+  const [invoiceNumber, setInvoiceNumber] = useState(editInvoice?.invoice_number ?? "");
+  const [totalAmount, setTotalAmount] = useState(
+    editInvoice?.total_amount != null ? String(editInvoice.total_amount) : "",
+  );
+  const [docDate, setDocDate] = useState(
+    editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
+  );
   const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "" }]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -60,8 +74,38 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
 
 
 
-  // Restore draft
+  // Load existing items when editing
   useEffect(() => {
+    if (!isEdit || !editInvoice) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("invoice_items")
+        .select("item_name,quantity,unit_price,total_price,sort_order")
+        .eq("invoice_id", editInvoice.id)
+        .order("sort_order");
+      if (cancelled) return;
+      const rows = (data ?? []).map((r) => ({
+        item_name: r.item_name ?? "",
+        quantity: r.quantity != null ? String(r.quantity) : "",
+        unit_price: r.unit_price != null ? String(r.unit_price) : "",
+        total_price: r.total_price != null ? String(r.total_price) : "",
+      }));
+      if (rows.length) setItems(rows);
+      // Load existing image preview via signed URL
+      if (editInvoice.image_url) {
+        const { data: signed } = await supabase.storage
+          .from("invoice-images")
+          .createSignedUrl(editInvoice.image_url, 60 * 60);
+        if (!cancelled && signed?.signedUrl) setPreviewUrl(signed.signedUrl);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isEdit, editInvoice]);
+
+  // Restore draft (skip in edit mode)
+  useEffect(() => {
+    if (isEdit) return;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
@@ -73,16 +117,17 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
         if (Array.isArray(d.items) && d.items.length) setItems(d.items);
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [isEdit]);
 
   useEffect(() => {
+    if (isEdit) return;
     const id = setTimeout(() => {
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify({ supplierId, invoiceNumber, totalAmount, docDate, items }));
       } catch { /* ignore */ }
     }, 200);
     return () => clearTimeout(id);
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items]);
+  }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
 
   // Cleanup blob URL on unmount to prevent memory leaks
   useEffect(() => {
@@ -192,7 +237,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
     setSubmitting(true);
     try {
       const branchId = await requireCurrentBranchId();
-      let imageUrl: string | null = null;
+      let imageUrl: string | null = editInvoice?.image_url ?? null;
 
       if (file) {
         const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
@@ -205,25 +250,45 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
         imageUrl = path;
       }
 
-      const { data: invoiceRow, error } = await supabase
-        .from("invoices")
-        .insert({
-          branch_id: branchId,
-          supplier_id: supplierId,
-          invoice_number: invoiceNumber.trim(),
-          total_amount: totalNum,
-          document_date: docDate,
-          image_url: imageUrl,
-          status: "pending_review",
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
+      let invoiceId: string | undefined;
+
+      if (isEdit && editInvoice) {
+        const { error: upErr } = await supabase
+          .from("invoices")
+          .update({
+            supplier_id: supplierId,
+            invoice_number: invoiceNumber.trim(),
+            total_amount: totalNum,
+            document_date: docDate,
+            image_url: imageUrl,
+          })
+          .eq("id", editInvoice.id);
+        if (upErr) throw upErr;
+        invoiceId = editInvoice.id;
+        // Replace items
+        await supabase.from("invoice_items").delete().eq("invoice_id", invoiceId);
+      } else {
+        const { data: invoiceRow, error } = await supabase
+          .from("invoices")
+          .insert({
+            branch_id: branchId,
+            supplier_id: supplierId,
+            invoice_number: invoiceNumber.trim(),
+            total_amount: totalNum,
+            document_date: docDate,
+            image_url: imageUrl,
+            status: "pending_review",
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        invoiceId = invoiceRow?.id;
+      }
 
       const cleanItems = items.filter((r) => r.item_name.trim());
-      if (cleanItems.length && invoiceRow) {
+      if (cleanItems.length && invoiceId) {
         const rows = cleanItems.map((r, idx) => ({
-          invoice_id: invoiceRow.id,
+          invoice_id: invoiceId,
           item_name: r.item_name.trim().slice(0, 200),
           quantity: Number(r.quantity) || 0,
           unit_price: Number(r.unit_price) || 0,
@@ -233,11 +298,13 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
         await supabase.from("invoice_items").insert(rows);
       }
 
-      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-      toast.success("החשבונית נקלטה בהצלחה");
+      if (!isEdit) {
+        try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      }
+      toast.success(isEdit ? "החשבונית עודכנה בהצלחה" : "החשבונית נקלטה בהצלחה");
 
       // Fire-and-forget autonomous learning: compare raw OCR vs user-corrected data
-      if (rawOcr && supplierId) {
+      if (!isEdit && rawOcr && supplierId) {
         const finalData = {
           invoice_number: invoiceNumber.trim(),
           document_date: docDate,
@@ -249,7 +316,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
             total_price: Number(r.total_price) || null,
           })),
         };
-        runLearn({ data: { supplierId, invoiceId: invoiceRow?.id, raw: rawOcr, final: finalData } })
+        runLearn({ data: { supplierId, invoiceId, raw: rawOcr, final: finalData } })
           .catch(() => { /* silent background task */ });
       }
 
@@ -262,6 +329,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
       setSubmitting(false);
     }
   };
+
 
   const handleConfirm = async () => {
     if (!formValid || submitting) return;
@@ -281,7 +349,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
             <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">Goods Receiving</div>
-            <h3 className="font-display text-xl font-bold">קליטת חשבונית חדשה</h3>
+            <h3 className="font-display text-xl font-bold">{isEdit ? "עריכת חשבונית" : "קליטת חשבונית חדשה"}</h3>
           </div>
           <button onClick={onClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
             <X className="h-4 w-4" />
@@ -489,7 +557,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                אשר קליטה
+                {isEdit ? "שמור שינויים" : "אשר קליטה"}
               </button>
               {!formValid && (
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
