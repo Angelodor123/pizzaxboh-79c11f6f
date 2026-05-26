@@ -45,6 +45,9 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [received, setReceived] = useState<ReceivedInvoice[]>([]);
+  const [receivedLoading, setReceivedLoading] = useState(true);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
