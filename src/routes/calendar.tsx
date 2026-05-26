@@ -288,6 +288,10 @@ function CalendarPage() {
           isoDate={selectedDate}
           events={eventsForDate(selectedDate)}
           canEdit={canEdit}
+          onAdd={() => {
+            setEditing(null);
+            setFormOpen(true);
+          }}
           onEdit={(ev) => {
             setEditing(ev);
             setFormOpen(true);
@@ -416,9 +420,12 @@ function MonthView({
               key={c.iso + (c.inMonth ? "" : "-o")}
               onClick={() => {
                 setSelectedDate(c.iso);
-                if (canEdit) onAddForDate(c.iso);
+                // Smart preview: only auto-open create when the day is empty.
+                // Days with events: just select; DayDetails below shows them
+                // and exposes an explicit "Create New" button.
+                if (canEdit && dayEvents.length === 0) onAddForDate(c.iso);
               }}
-              aria-label={canEdit ? `הוסף אירוע ל-${c.iso}` : c.iso}
+              aria-label={canEdit && dayEvents.length === 0 ? `הוסף אירוע ל-${c.iso}` : c.iso}
               className={`relative aspect-square rounded-md text-right p-1 sm:p-1.5 text-xs sm:text-sm border transition ${
                 isSelected
                   ? "border-neon bg-neon/15 text-neon glow-neon"
@@ -612,6 +619,11 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
         {(missing || ev.high_priority) && <AlertTriangle className={`h-3 w-3 ${missing ? "text-destructive" : "text-destructive"}`} />}
         <Icon className={`h-3 w-3 ${missing ? "text-destructive" : isAuto ? "text-success" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
+        {ev.category === "delivery" && (
+          <span className="text-[9px] font-bold text-neon/80 border border-neon/30 rounded px-1 shrink-0">
+            רישום
+          </span>
+        )}
         {missing && (
           <span className="text-[9px] text-destructive border border-destructive/60 rounded px-1 shrink-0">⚠️ חסרה חשבונית</span>
         )}
@@ -633,12 +645,14 @@ function DayDetails({
   isoDate,
   events,
   canEdit,
+  onAdd,
   onEdit,
   onInstanceEdit,
 }: {
   isoDate: string;
   events: EffectiveEvent[];
   canEdit: boolean;
+  onAdd: () => void;
   onEdit: (ev: CalendarEvent) => void;
   onInstanceEdit: (ev: EffectiveEvent, date: string) => void;
 }) {
@@ -670,7 +684,18 @@ function DayDetails({
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-card/80 backdrop-blur p-4">
-      <h2 className="font-display text-lg font-bold mb-3 text-right">{label}</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display text-lg font-bold text-right">{label}</h2>
+        {canEdit && (
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-neon/40 text-neon text-xs font-bold hover:bg-neon/10 active:scale-95 transition"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            צור חדש
+          </button>
+        )}
+      </div>
       {events.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">אין אירועים ביום זה</p>
       ) : (
