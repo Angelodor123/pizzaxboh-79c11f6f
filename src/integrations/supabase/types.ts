@@ -816,6 +816,8 @@ export type Database = {
           branch_id: string
           created_at: string
           id: string
+          ingredient_name: string | null
+          is_purchased_good: boolean
           name: string
           sort_order: number
           target_fri: number
@@ -833,6 +835,8 @@ export type Database = {
           branch_id: string
           created_at?: string
           id?: string
+          ingredient_name?: string | null
+          is_purchased_good?: boolean
           name: string
           sort_order?: number
           target_fri?: number
@@ -850,6 +854,8 @@ export type Database = {
           branch_id?: string
           created_at?: string
           id?: string
+          ingredient_name?: string | null
+          is_purchased_good?: boolean
           name?: string
           sort_order?: number
           target_fri?: number
@@ -1419,6 +1425,8 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          ingredient_name: string | null
+          is_purchased_good: boolean
           name: string
           prep_item_id: string | null
           recipe_id: string | null
@@ -1431,6 +1439,8 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
+          ingredient_name?: string | null
+          is_purchased_good?: boolean
           name: string
           prep_item_id?: string | null
           recipe_id?: string | null
@@ -1443,6 +1453,8 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
+          ingredient_name?: string | null
+          is_purchased_good?: boolean
           name?: string
           prep_item_id?: string | null
           recipe_id?: string | null

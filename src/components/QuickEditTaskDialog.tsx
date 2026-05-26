@@ -31,6 +31,8 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
   const [prepItemId, setPrepItemId] = useState("");
   const [sortOrder, setSortOrder] = useState<number>(0);
   const [active, setActive] = useState(true);
+  const [ingredientName, setIngredientName] = useState("");
+  const [itemCategory, setItemCategory] = useState<"raw_material" | "in_house_prep">("in_house_prep");
   const [prepItems, setPrepItems] = useState<PrepItemLite[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -42,6 +44,8 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
     setPrepItemId(task.prep_item_id ?? "");
     setSortOrder(task.sort_order);
     setActive(task.active);
+    setIngredientName(task.ingredient_name ?? "");
+    setItemCategory(task.is_purchased_good ? "raw_material" : "in_house_prep");
   }, [task]);
 
   // Lazy-load prep items list once a task is open
@@ -83,6 +87,8 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
       prep_item_id: prepItemId || null,
       sort_order: Number.isFinite(sortOrder) ? sortOrder : task.sort_order,
       active,
+      ingredient_name: ingredientName.trim() || null,
+      is_purchased_good: itemCategory === "raw_material",
     };
     const { error } = await supabase.from("tasks").update(patch).eq("id", task.id);
     setSaving(false);
@@ -162,6 +168,41 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
                 כאשר כל קבוצת המשימות מסומנת כבוצעה, המלאי של הפריט המקושר מתעדכן לרמת היעד.
               </p>
             </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+                סיווג פריט
+              </label>
+              <select
+                value={itemCategory}
+                onChange={(e) => setItemCategory(e.target.value as "raw_material" | "in_house_prep")}
+                className="w-full bg-input border border-border focus:border-neon/60 focus:outline-none rounded-md px-2 py-2 text-sm text-right"
+              >
+                <option value="in_house_prep">הכנה פנימית (מתכון מטבח)</option>
+                <option value="raw_material">סחורה לרכישה (חומר גלם מספק)</option>
+              </select>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                רק פריטים המסומנים כ"סחורה לרכישה" יציגו את כפתור "דווח כחוסר".
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+                שם חומר גלם (אופציונלי)
+              </label>
+              <input
+                value={ingredientName}
+                onChange={(e) => setIngredientName(e.target.value)}
+                maxLength={120}
+                placeholder="לדוגמה: בזיליקום, תירס, קופסאות קראפט"
+                className="w-full bg-input border border-border focus:border-neon/60 focus:outline-none rounded-md px-3 py-2 text-sm text-right"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                אם מוגדר — ישמש כשם הפריט בעת דיווח חוסר. אחרת המערכת תנקה פעלים נפוצים משם המשימה.
+              </p>
+            </div>
+
+
 
             <div className="grid grid-cols-2 gap-3">
               <div>

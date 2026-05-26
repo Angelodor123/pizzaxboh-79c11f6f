@@ -14,6 +14,7 @@ import {
   fetchTaskTree,
   fetchTodayLogs,
   upsertLogs,
+  extractIngredientName,
   type Shift,
   type TaskGroup,
   type Task,
@@ -50,6 +51,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     active: true,
     recipe_id: null,
     prep_item_id: null,
+    ingredient_name: null,
+    is_purchased_good: false,
   },
   {
     id: "__virtual_winter_t2__",
@@ -60,6 +63,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     active: true,
     recipe_id: null,
     prep_item_id: null,
+    ingredient_name: null,
+    is_purchased_good: false,
   },
   {
     id: "__virtual_winter_t3__",
@@ -70,6 +75,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     active: true,
     recipe_id: null,
     prep_item_id: null,
+    ingredient_name: null,
+    is_purchased_good: false,
   },
 ];
 
@@ -384,8 +391,16 @@ function TasksPage() {
   const reportShortage = async (taskId: string) => {
     const t = allTasks.find((x) => x.id === taskId);
     if (!t) return;
+    if (!t.is_purchased_good) {
+      toast.error("פריט זה אינו מוגדר כסחורה לרכישה");
+      return;
+    }
+    const itemName = extractIngredientName({
+      name: t.name,
+      ingredient_name: t.ingredient_name,
+    });
     try {
-      await useNotebookStore.getState().addItem("shortages", t.name, "urgent");
+      await useNotebookStore.getState().addItem("shortages", itemName, "urgent");
       triggerHaptic("light");
       toast.success("דווח לחוסרים בהצלחה");
     } catch (e) {
@@ -649,15 +664,19 @@ function TasksPage() {
                                       {(log?.comments ?? "").length}/2000
                                     </div>
                                     <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
-                                      <button
-                                        type="button"
-                                        onClick={() => reportShortage(t.id)}
-                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
-                                        title="דווח כחוסר"
-                                      >
-                                        <AlertTriangle className="h-3.5 w-3.5" />
-                                        דווח כחוסר
-                                      </button>
+                                      {t.is_purchased_good ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => reportShortage(t.id)}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
+                                          title="דווח כחוסר"
+                                        >
+                                          <AlertTriangle className="h-3.5 w-3.5" />
+                                          דווח כחוסר
+                                        </button>
+                                      ) : (
+                                        <span />
+                                      )}
                                       <button
                                         type="button"
                                         onClick={() => saveComment(t.id)}
