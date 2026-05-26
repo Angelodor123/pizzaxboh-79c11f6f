@@ -120,13 +120,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   }, [isEdit]);
 
   useEffect(() => {
+    if (isEdit) return;
     const id = setTimeout(() => {
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify({ supplierId, invoiceNumber, totalAmount, docDate, items }));
       } catch { /* ignore */ }
     }, 200);
     return () => clearTimeout(id);
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items]);
+  }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
 
   // Cleanup blob URL on unmount to prevent memory leaks
   useEffect(() => {
