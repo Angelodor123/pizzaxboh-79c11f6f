@@ -227,15 +227,6 @@ function CalendarPage() {
               <Plus className="h-4 w-4" />
               הוסף אירוע
             </button>
-            <button
-              onClick={handleSyncSports}
-              disabled={syncing}
-              title="סנכרון משחקי מפתח מ-365scores (מונדיאל + ליגת האלופות)"
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-md border border-neon/40 text-neon font-bold hover:bg-neon/10 active:scale-95 transition disabled:opacity-60"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "מסנכרן…" : "רענן משחקי מפתח"}
-            </button>
           </div>
         )}
       </div>
