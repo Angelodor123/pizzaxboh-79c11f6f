@@ -7,6 +7,7 @@ import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
+import { ShortagesSection } from "@/components/ShortagesSection";
 
 export const Route = createFileRoute("/orders")({
   component: OrdersPage,
