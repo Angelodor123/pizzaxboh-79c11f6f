@@ -208,7 +208,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     const today = new Date().toISOString().slice(0, 10);
     const { data } = await supabase
       .from("calendar_events")
-      .select("id, title, event_date, start_time, notes")
+      .select("id, title, event_date, start_time, notes, projector_broadcast")
       .eq("event_type", "sports_match")
       .gte("event_date", today)
       .order("event_date", { ascending: true })
