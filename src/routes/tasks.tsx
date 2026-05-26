@@ -299,30 +299,53 @@ function TasksPage() {
   const toggleTask = (taskId: string) => {
     const prev = logs.get(taskId);
     const completed = !(prev?.completed ?? false);
+    const task = allTasks.find((x) => x.id === taskId);
+    // Block completion if photo is required and missing
+    if (completed && task?.requires_photo && !prev?.photo_url) {
+      toast.error("יש להעלות תמונה לפני סימון המשימה כבוצעה");
+      return;
+    }
     const nextState: LogState = {
       completed,
       completed_at: completed ? new Date().toISOString() : null,
       completed_by: completed ? fullName : prev?.completed_by ?? null,
       completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
       comments: prev?.comments ?? "",
+      photo_url: prev?.photo_url ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
       next.set(taskId, nextState);
       return next;
     });
-    // Trigger neon pulse only on completion (not uncheck)
     if (completed) {
       setPulsingTaskId(taskId);
       setTimeout(() => setPulsingTaskId((cur) => (cur === taskId ? null : cur)), 650);
       triggerHaptic("light");
     }
-    const t = allTasks.find((x) => x.id === taskId);
-    const taskName = t?.name ?? "";
+    const taskName = task?.name ?? "";
     void persistTask(taskId, nextState).then(() => syncParLevelsForTask(taskId));
     if (nextState.completed && taskName) {
       void scanNotebookForMatch(taskName);
     }
+  };
+
+  const handlePhotoUploaded = (taskId: string, path: string) => {
+    const prev = logs.get(taskId);
+    const nextState: LogState = {
+      completed: prev?.completed ?? false,
+      completed_at: prev?.completed_at ?? null,
+      completed_by: prev?.completed_by ?? null,
+      completed_by_user_id: prev?.completed_by_user_id ?? null,
+      comments: prev?.comments ?? "",
+      photo_url: path,
+    };
+    setLogs((m) => {
+      const next = new Map(m);
+      next.set(taskId, nextState);
+      return next;
+    });
+    void persistTask(taskId, nextState);
   };
 
   // Lightweight keyword matching against active notebook tasks.
