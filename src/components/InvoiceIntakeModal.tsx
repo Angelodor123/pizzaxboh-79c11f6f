@@ -389,24 +389,62 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
             <div className="pt-2">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-muted-foreground">פריטים</span>
-                <button type="button" onClick={addItem} className="text-xs font-bold text-neon inline-flex items-center gap-1">
-                  <Plus className="h-3 w-3" /> הוסף פריט
+                <button type="button" onClick={addItem} className="text-xs font-bold text-neon inline-flex items-center gap-1 h-11 px-2">
+                  <Plus className="h-4 w-4" /> הוסף פריט
                 </button>
               </div>
-              <div className="space-y-1.5">
+              <datalist id="inventory-items-list">
+                {inventory.map((it) => (
+                  <option key={it.id} value={it.name}>{it.unit}</option>
+                ))}
+              </datalist>
+              <div className="space-y-2">
                 {items.map((row, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_64px_72px_72px_32px] gap-1">
-                    <input placeholder="פריט" value={row.item_name} onChange={(e) => updateItem(i, "item_name", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs" dir="rtl" />
-                    <input placeholder="כמות" value={row.quantity} onChange={(e) => updateItem(i, "quantity", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs tabular-nums" inputMode="decimal" />
-                    <input placeholder="יחידה" value={row.unit_price} onChange={(e) => updateItem(i, "unit_price", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs tabular-nums" inputMode="decimal" />
-                    <input placeholder="סה״כ" value={row.total_price} onChange={(e) => updateItem(i, "total_price", e.target.value)} className="h-9 rounded-md bg-background border border-border px-2 text-xs tabular-nums" inputMode="decimal" />
-                    <button type="button" onClick={() => removeItem(i)} className="h-9 w-8 grid place-content-center rounded-md border border-border hover:border-destructive hover:text-destructive">
-                      <Trash2 className="h-3 w-3" />
+                  <div key={i} className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center">
+                    <input
+                      placeholder="שם פריט"
+                      list="inventory-items-list"
+                      value={row.item_name}
+                      onChange={(e) => updateItem(i, "item_name", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
+                      dir="rtl"
+                      autoComplete="off"
+                    />
+                    <input
+                      placeholder="כמות"
+                      value={row.quantity}
+                      onChange={(e) => updateItem(i, "quantity", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      inputMode="decimal"
+                    />
+                    <input
+                      placeholder="יח'"
+                      value={row.unit_price}
+                      onChange={(e) => updateItem(i, "unit_price", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      inputMode="decimal"
+                      title="מחיר ליחידה"
+                    />
+                    <input
+                      placeholder="סה״כ"
+                      value={row.total_price}
+                      onChange={(e) => updateItem(i, "total_price", e.target.value)}
+                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      inputMode="decimal"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      className="min-h-[44px] w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                      aria-label="מחק שורה"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
+
 
             <div className="pt-3 border-t border-border">
               <button
