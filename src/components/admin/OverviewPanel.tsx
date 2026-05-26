@@ -7,7 +7,8 @@ import { syncSportsEvents } from "@/lib/sports-sync.functions";
 import { toast } from "sonner";
 
 interface Metrics {
-  doughTrays: number | null;
+  doughShop: number | null;
+  doughWarehouse: number | null;
   doughThreshold: number;
   openTickets: number;
   activeShortages: number;
@@ -19,7 +20,8 @@ interface Metrics {
 }
 
 const EMPTY: Metrics = {
-  doughTrays: null,
+  doughShop: null,
+  doughWarehouse: null,
   doughThreshold: 15,
   openTickets: 0,
   activeShortages: 0,
