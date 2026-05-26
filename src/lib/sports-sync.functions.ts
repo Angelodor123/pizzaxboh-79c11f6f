@@ -99,7 +99,7 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
       const { error } = await context.supabase.from("calendar_events").insert({
         branch_id: branchId,
         title,
-        category: "marketing",
+        category: "event",
         event_type: "sports_match",
         event_date: m.event_date,
         start_time: m.start_time ?? null,
