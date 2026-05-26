@@ -140,12 +140,15 @@ function OrdersPage() {
         </div>
       )}
 
+      <ShortagesSection />
+
       <div className="mt-6 text-center">
         <Link to="/suppliers" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-neon">
           <ChevronRight className="h-3 w-3" />
           ניהול ספקים, לוגואים וימי חלוקה
         </Link>
       </div>
+
 
       {selected && (
         <OrderModal
