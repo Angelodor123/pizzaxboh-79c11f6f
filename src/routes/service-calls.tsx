@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import type { MaintenanceTicket, TicketStatus, Urgency } from "@/lib/maintenance-store";
 
-export const Route = createFileRoute("/admin/maintenance")({
+export const Route = createFileRoute("/service-calls")({
   component: AdminMaintenancePage,
 });
 
