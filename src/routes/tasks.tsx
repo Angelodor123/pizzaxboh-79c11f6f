@@ -597,7 +597,7 @@ function TasksPage() {
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
                           aria-expanded={isGroupOpen}
-                          aria-label={`${g.name} — ${gDone} מתוך ${gTasks.length}`}
+                          aria-label={`${g.name} — ${gDone} מתוך ${gCountable.length}`}
                           className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-4 hover:bg-gray-800 transition"
                         >
                           <ChevronDown
@@ -614,7 +614,7 @@ function TasksPage() {
                               </span>
                             </div>
                             <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-center gap-2">
-                              <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
+                              <bdi className="tabular-nums">{gDone}/{gCountable.length}</bdi>
                               <div className="w-20 h-1 rounded-full bg-background/60 border border-border overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${gPct === 100 ? "bg-success" : "bg-neon"}`}
