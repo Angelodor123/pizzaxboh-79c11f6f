@@ -6,8 +6,6 @@ import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
-import { useServerFn } from "@tanstack/react-start";
-import { syncSportsEvents } from "@/lib/sports-sync.functions";
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
