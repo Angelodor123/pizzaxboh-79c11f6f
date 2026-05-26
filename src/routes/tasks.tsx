@@ -212,13 +212,6 @@ function TasksPage() {
     };
   }, [branchId]);
 
-  // Cleanup any pending debounce timers on unmount
-  useEffect(() => {
-    return () => {
-      commentTimers.current.forEach((t) => clearTimeout(t));
-      commentTimers.current.clear();
-    };
-  }, []);
 
   const allTasks = useMemo(() => {
     const list = [...tasks];
