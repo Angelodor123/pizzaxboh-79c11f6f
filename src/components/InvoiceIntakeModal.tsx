@@ -549,7 +549,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             </div>
 
 
-            <div className="pt-3 border-t border-border">
+            <div className="pt-3 border-t border-border space-y-2">
               <button
                 type="button"
                 onClick={handleConfirm}
@@ -564,6 +564,25 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
                   יש למלא ספק, סכום כולל ותאריך כדי להמשיך.
                 </p>
+              )}
+              {isEdit && editInvoice && (
+                <div className="flex justify-start pt-1">
+                  <ModalDeleteButton
+                    title="מחיקת חשבונית"
+                    description="האם למחוק פריט זה לצמיתות?"
+                    onConfirm={async () => {
+                      await supabase.from("invoice_items").delete().eq("invoice_id", editInvoice.id);
+                      const { error } = await supabase.from("invoices").delete().eq("id", editInvoice.id);
+                      if (error) {
+                        toast.error(error.message);
+                        throw error;
+                      }
+                      toast.success("החשבונית נמחקה בהצלחה");
+                      onDeleted?.(editInvoice.id);
+                      onClose();
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
