@@ -1,25 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { generateText, Output } from "ai";
-import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import type { Database } from "@/integrations/supabase/types";
 
-const MatchSchema = z.object({
-  team_a: z.string().min(1).max(80),
-  team_b: z.string().min(1).max(80),
-  competition: z.enum(["champions_league", "world_cup", "other"]),
-  event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  start_time: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
-});
+type VerifiedMatch = {
+  team_a: string;
+  team_b: string;
+  competition: "champions_league" | "world_cup" | "other";
+  event_date: string;
+  start_time: string;
+  source_note: string;
+};
 
-const MatchesSchema = z.object({ matches: z.array(MatchSchema).max(40) });
-
-const SYS = `אתה עוזר שמספק רשימה של משחקי כדורגל גדולים קרובים — ליגת האלופות של אופ"א ומונדיאל פיפ"א 2026 (יוני-יולי 2026).
-- החזר רק משחקים שעדיין לא נערכו, החל מהתאריך הנוכחי ועד 60 ימים קדימה.
-- שמות הקבוצות בעברית אם מקובל, אחרת באנגלית.
-- שעת התחלה בפורמט HH:MM (24h, שעון ישראל).
-- אם אינך בטוח, אל תכלול. עדיף פחות אבל מדויק.`;
+const VERIFIED_MATCHES: VerifiedMatch[] = [
+  {
+    team_a: "PSG",
+    team_b: "Arsenal",
+    competition: "champions_league",
+    event_date: "2026-05-30",
+    start_time: "19:00",
+    source_note: "אומת מול צילום מסך Google שסופק ומול עמוד המשחקים הרשמי של UEFA",
+  },
+];
 
 export const Route = createFileRoute("/api/public/hooks/sports-sync")({
   server: {
