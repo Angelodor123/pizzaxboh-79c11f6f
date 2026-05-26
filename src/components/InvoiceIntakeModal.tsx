@@ -74,8 +74,38 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
 
 
-  // Restore draft
+  // Load existing items when editing
   useEffect(() => {
+    if (!isEdit || !editInvoice) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("invoice_items")
+        .select("item_name,quantity,unit_price,total_price,sort_order")
+        .eq("invoice_id", editInvoice.id)
+        .order("sort_order");
+      if (cancelled) return;
+      const rows = (data ?? []).map((r) => ({
+        item_name: r.item_name ?? "",
+        quantity: r.quantity != null ? String(r.quantity) : "",
+        unit_price: r.unit_price != null ? String(r.unit_price) : "",
+        total_price: r.total_price != null ? String(r.total_price) : "",
+      }));
+      if (rows.length) setItems(rows);
+      // Load existing image preview via signed URL
+      if (editInvoice.image_url) {
+        const { data: signed } = await supabase.storage
+          .from("invoice-images")
+          .createSignedUrl(editInvoice.image_url, 60 * 60);
+        if (!cancelled && signed?.signedUrl) setPreviewUrl(signed.signedUrl);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isEdit, editInvoice]);
+
+  // Restore draft (skip in edit mode)
+  useEffect(() => {
+    if (isEdit) return;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
@@ -87,7 +117,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         if (Array.isArray(d.items) && d.items.length) setItems(d.items);
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [isEdit]);
 
   useEffect(() => {
     const id = setTimeout(() => {
