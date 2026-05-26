@@ -428,33 +428,33 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           {/* STAGE: verify (side-by-side) */}
           {(stage === "verify" || stage === "manual") && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4">
                 {previewUrl && <img src={previewUrl} alt="חשבונית" className="w-full max-h-72 object-contain rounded-xl bg-zinc-900/60 border border-border" />}
-                <div className="space-y-2">
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1">ספק *</label>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="block text-xs font-bold text-muted-foreground">ספק *</label>
                     <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} disabled={!!linkedOrderId}
-                      className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none disabled:opacity-60">
+                      className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none disabled:opacity-60">
                       <option value="">בחר ספק…</option>
                       {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-bold text-muted-foreground mb-1">מס׳ חשבונית</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="block text-xs font-bold text-muted-foreground">מס׳ חשבונית</label>
                       <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)}
-                        className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none" />
+                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-muted-foreground mb-1">תאריך *</label>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="block text-xs font-bold text-muted-foreground">תאריך *</label>
                       <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)}
-                        className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none" />
+                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none [&::-webkit-datetime-edit]:py-0 [&::-webkit-datetime-edit]:leading-none [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1">סכום כולל ₪ *</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="block text-xs font-bold text-muted-foreground">סכום כולל ₪ *</label>
                     <input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
-                      className="w-full h-11 rounded-md bg-background border-2 border-border px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums" />
+                      className="w-full h-11 rounded-md bg-background border-2 border-border px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums" />
                   </div>
                   {chosenMatch && (
                     <div className="text-[11px] text-neon">✓ משויך להזמנה {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")} · {supplierName}</div>
@@ -462,71 +462,70 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
                   <div className="text-sm font-bold">השוואת פריטים</div>
                   {chosenMatch && (
                     <div className="text-[11px] text-muted-foreground">השווה הוזמן ↔ חשבונית. פערים מסומנים באדום.</div>
                   )}
                 </div>
-                <div className="rounded-xl border border-border overflow-hidden">
-                  <table className="w-full text-xs">
-                    <thead className="bg-background/60 text-muted-foreground">
-                      <tr>
-                        <th className="px-2 py-2 text-right">פריט</th>
-                        {chosenMatch && <th className="px-2 py-2 text-right w-20">הוזמן</th>}
-                        <th className="px-2 py-2 text-right w-24">בחשבונית</th>
-                        <th className="px-2 py-2 text-right w-20">יח׳ ₪</th>
-                        <th className="px-2 py-2 text-right w-20">סה״כ ₪</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {rows.length === 0 && (
-                        <tr><td colSpan={chosenMatch ? 5 : 4} className="px-3 py-6 text-center text-muted-foreground">לא זוהו פריטים</td></tr>
-                      )}
-                      {rows.map((r, i) => {
-                        const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
-                        const isExtra = chosenMatch && r.orderedQty == null;
-                        return (
-                          <tr key={i} className={isExtra ? "bg-amber-brand/5" : ""}>
-                            <td className="px-2 py-1.5">
-                              <input value={r.name} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
-                                className="w-full h-8 rounded bg-background border border-border px-1.5 text-xs" />
-                              {isExtra && <div className="text-[10px] text-amber-brand mt-0.5">פריט לא בהזמנה</div>}
-                            </td>
-                            {chosenMatch && (
-                              <td className="px-2 py-1.5 tabular-nums text-muted-foreground">
-                                {r.orderedQty ?? "—"}
-                              </td>
-                            )}
-                            <td className="px-2 py-1.5">
-                              <input type="number" step="0.01" value={r.invoiceQty}
-                                onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x))}
-                                className={`w-full h-8 rounded bg-background border px-1.5 text-xs tabular-nums ${mismatch ? "border-red-500 text-red-500 font-bold" : "border-border"}`} />
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <input type="number" step="0.01" value={r.unitPrice}
-                                onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x))}
-                                className="w-full h-8 rounded bg-background border border-border px-1.5 text-xs tabular-nums" />
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <input type="number" step="0.01" value={r.totalPrice}
-                                onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
-                                className="w-full h-8 rounded bg-background border border-border px-1.5 text-xs tabular-nums" />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="rounded-xl border border-border p-2">
+                  {(() => {
+                    const cols = chosenMatch
+                      ? "grid-cols-[1fr_56px_72px_72px_72px]"
+                      : "grid-cols-[1fr_72px_72px_72px]";
+                    return (
+                      <>
+                        <div className={`grid ${cols} gap-2 px-1 pb-2 text-[11px] font-bold text-muted-foreground`}>
+                          <div className="text-right">פריט</div>
+                          {chosenMatch && <div className="text-center">הוזמן</div>}
+                          <div className="text-center">בחשבונית</div>
+                          <div className="text-center">יח׳ ₪</div>
+                          <div className="text-center">סה״כ ₪</div>
+                        </div>
+                        {rows.length === 0 && (
+                          <div className="px-3 py-6 text-center text-xs text-muted-foreground">לא זוהו פריטים</div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                          {rows.map((r, i) => {
+                            const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
+                            const isExtra = chosenMatch && r.orderedQty == null;
+                            return (
+                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md ${isExtra ? "bg-amber-brand/5" : ""}`}>
+                                <div>
+                                  <input value={r.name} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
+                                    className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none" />
+                                  {isExtra && <div className="text-[10px] text-amber-brand mt-0.5">פריט לא בהזמנה</div>}
+                                </div>
+                                {chosenMatch && (
+                                  <div className="text-center text-xs tabular-nums text-muted-foreground">{r.orderedQty ?? "—"}</div>
+                                )}
+                                <input type="number" step="0.01" value={r.invoiceQty}
+                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x))}
+                                  className={`w-full h-10 rounded bg-background border px-2 text-xs leading-none text-center tabular-nums ${mismatch ? "border-red-500 text-red-500 font-bold" : "border-border"}`} />
+                                <input type="number" step="0.01" value={r.unitPrice}
+                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x))}
+                                  className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
+                                <input type="number" step="0.01" value={r.totalPrice}
+                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
+                                  className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <button
                   type="button"
                   onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }])}
-                  className="mt-2 w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
+                  className="mt-3 w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
                 >
                   + הוסף שורה
                 </button>
+
                 {!file && (
                   <button
                     type="button"
