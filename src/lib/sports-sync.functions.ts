@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { extractMatchesFromRss } from "@/lib/sports-rss.server";
+import { extractMatchesViaFirecrawl } from "@/lib/sports-firecrawl.server";
 
 export const syncSportsEvents = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -9,7 +9,9 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
     if (role !== "admin") throw new Error("Unauthorized");
 
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+    const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("Missing LOVABLE_API_KEY");
+    if (!FIRECRAWL) throw new Error("Missing FIRECRAWL_API_KEY");
 
     const { data: branchRow } = await context.supabase.rpc("current_user_branch_id");
     let branchId = branchRow as string | null;
@@ -25,7 +27,10 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
     }
     if (!branchId) throw new Error("No active branch found");
 
-    const { matches, feedsTried, itemsScanned } = await extractMatchesFromRss(LOVABLE_API_KEY);
+    const { matches, pagesScraped } = await extractMatchesViaFirecrawl(
+      LOVABLE_API_KEY,
+      FIRECRAWL,
+    );
 
     let inserted = 0;
     let skipped = 0;
@@ -67,10 +72,10 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
 
     return {
       ok: true,
+      source: "365scores",
       inserted,
       skipped,
       matches_found: matches.length,
-      feeds_tried: feedsTried,
-      items_scanned: itemsScanned,
+      pages_scraped: pagesScraped,
     };
   });
