@@ -88,7 +88,7 @@ export function CriticalMaintenanceInterceptor() {
             סמן כנקרא וסגור
           </button>
           <Link
-            to="/admin/maintenance"
+            to="/service-calls"
             onClick={handleAck}
             className="w-full h-10 rounded-lg font-medium text-zinc-300 border border-zinc-800 hover:border-zinc-600 hover:text-white transition inline-flex items-center justify-center"
           >

@@ -289,7 +289,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
           icon={<Wrench className="h-5 w-5" />}
           label="קריאות שירות פתוחות"
           value={loading ? "…" : m.openTickets}
-          href="/admin/maintenance"
+          href="/service-calls"
           alert={m.openTickets > 0}
         />
         <KpiCard
