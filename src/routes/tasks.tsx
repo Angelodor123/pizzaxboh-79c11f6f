@@ -368,38 +368,40 @@ function TasksPage() {
 
   const updateComment = (taskId: string, value: string) => {
     if (value.length > 2000) value = value.slice(0, 2000);
-    let nextState: LogState | null = null;
     setLogs((m) => {
       const next = new Map(m);
       const prev = next.get(taskId);
-      nextState = {
+      next.set(taskId, {
         completed: prev?.completed ?? false,
         completed_at: prev?.completed_at ?? null,
         completed_by: prev?.completed_by ?? null,
         completed_by_user_id: prev?.completed_by_user_id ?? null,
         comments: value,
-      };
-      next.set(taskId, nextState);
+      });
       return next;
     });
-    // Debounced save (750ms)
-    const existing = commentTimers.current.get(taskId);
-    if (existing) clearTimeout(existing);
-    const handle = setTimeout(() => {
-      commentTimers.current.delete(taskId);
-      if (nextState) void persistTask(taskId, nextState);
-    }, 750);
-    commentTimers.current.set(taskId, handle);
   };
 
-  const flushComment = (taskId: string) => {
-    const existing = commentTimers.current.get(taskId);
-    if (existing) {
-      clearTimeout(existing);
-      commentTimers.current.delete(taskId);
-    }
+  const saveComment = async (taskId: string) => {
     const state = logs.get(taskId);
-    if (state) void persistTask(taskId, state);
+    if (!state) return;
+    await persistTask(taskId, state);
+    triggerHaptic("light");
+    toast.success("הערה נשמרה");
+  };
+
+  const reportShortage = async (taskId: string) => {
+    const t = allTasks.find((x) => x.id === taskId);
+    if (!t) return;
+    const note = (logs.get(taskId)?.comments ?? "").trim();
+    const text = note || t.name;
+    try {
+      await useNotebookStore.getState().addItem("shortages", text, "urgent");
+      triggerHaptic("light");
+      toast.success("דווח לחוסרים בהצלחה");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "דיווח חוסר נכשל");
+    }
   };
 
   const total = allTasks.length;
