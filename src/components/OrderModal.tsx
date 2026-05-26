@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
-import { X, Plus, Trash2, Copy, Send, Loader2 } from "lucide-react";
+import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { compileOrderMessage, whatsappUrl, type OrderRow } from "@/lib/order-template";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type ReceivedInvoiceItem = { id: string; item_name: string; quantity: number; unit_price: number; total_price: number };
+type ReceivedInvoice = {
+  id: string;
+  document_date: string;
+  invoice_number: string;
+  total_amount: number;
+  items: ReceivedInvoiceItem[];
+};
 
 interface Supplier {
   id: string;
@@ -35,6 +45,9 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [received, setReceived] = useState<ReceivedInvoice[]>([]);
+  const [receivedLoading, setReceivedLoading] = useState(true);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
@@ -104,6 +117,49 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
     return () => { cancelled = true; };
   }, [supplier.id]);
 
+  // Load received goods (invoices + items) for this supplier
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setReceivedLoading(true);
+      const { data: invs } = await supabase
+        .from("invoices")
+        .select("id, document_date, invoice_number, total_amount")
+        .eq("supplier_id", supplier.id)
+        .eq("is_archived", false)
+        .order("document_date", { ascending: false })
+        .limit(30);
+      if (cancelled) return;
+      const ids = (invs ?? []).map((i) => i.id);
+      let itemsByInvoice: Record<string, ReceivedInvoiceItem[]> = {};
+      if (ids.length) {
+        const { data: items } = await supabase
+          .from("invoice_items")
+          .select("id, invoice_id, item_name, quantity, unit_price, total_price, sort_order")
+          .in("invoice_id", ids)
+          .order("sort_order", { ascending: true });
+        if (cancelled) return;
+        for (const it of items ?? []) {
+          (itemsByInvoice[it.invoice_id] ||= []).push({
+            id: it.id,
+            item_name: it.item_name,
+            quantity: Number(it.quantity ?? 0),
+            unit_price: Number(it.unit_price ?? 0),
+            total_price: Number(it.total_price ?? 0),
+          });
+        }
+      }
+      setReceived((invs ?? []).map((i) => ({
+        id: i.id,
+        document_date: i.document_date,
+        invoice_number: i.invoice_number,
+        total_amount: Number(i.total_amount ?? 0),
+        items: itemsByInvoice[i.id] ?? [],
+      })));
+      setReceivedLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [supplier.id]);
 
 
   // Restore draft
@@ -317,69 +373,135 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
           </button>
         </div>
 
-        {/* Order History */}
+        {/* Supplier History — Tabs */}
         <div className="border-t border-zinc-800/50 mt-6 pt-4">
-          <h4 className="text-sm font-bold text-zinc-400 mb-3">היסטורית הזמנות</h4>
-          {historyLoading ? (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען היסטוריה…
-            </div>
-          ) : history.length === 0 ? (
-            <div className="text-xs text-zinc-500">אין הזמנות קודמות לספק זה.</div>
-          ) : (
-            <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-              {history.map((h) => {
-                const summary = h.rows
-                  .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
-                  .filter(Boolean)
-                  .join(", ");
-                const isPending = h.status === "sent" && h.orderId;
-                return (
-                  <div
-                    key={h.id}
-                    className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-500">הוזמן</span>
-                        {isPending && (
-                          <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
-                            ממתינה לקבלה
-                          </span>
-                        )}
-                        {h.status === "received" && (
-                          <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
-                            התקבלה
-                          </span>
+          <Tabs defaultValue="sent" dir="rtl">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="sent">הזמנות שנשלחו</TabsTrigger>
+              <TabsTrigger value="received">סחורה שהתקבלה</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="sent" className="mt-3">
+              {historyLoading ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען היסטוריה…
+                </div>
+              ) : history.length === 0 ? (
+                <div className="text-xs text-zinc-500">אין הזמנות קודמות לספק זה.</div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                  {history.map((h) => {
+                    const summary = h.rows
+                      .map((r) => `${r.name.trim()}${r.qty.trim() ? ` (${r.qty.trim()})` : ""}`)
+                      .filter(Boolean)
+                      .join(", ");
+                    const isPending = h.status === "sent" && h.orderId;
+                    return (
+                      <div
+                        key={h.id}
+                        className="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-2 flex flex-col gap-2"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-500">הוזמן</span>
+                            {isPending && (
+                              <span className="text-[10px] font-bold text-amber-brand border border-amber-brand/60 rounded px-1.5 py-0.5">
+                                ממתינה לקבלה
+                              </span>
+                            )}
+                            {h.status === "received" && (
+                              <span className="text-[10px] font-bold text-success border border-success/60 rounded px-1.5 py-0.5">
+                                התקבלה
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
+                        </div>
+                        <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
+                        {isPending && onReceive ? (
+                          <button
+                            type="button"
+                            onClick={() => { onReceive(h.orderId!); onClose(); }}
+                            className="text-xs py-1.5 px-3 rounded w-fit font-bold text-white transition"
+                            style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 14px rgba(255,45,180,0.45)" }}
+                          >
+                            קבל סחורה
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => duplicateOrder(h)}
+                            className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
+                          >
+                            שכפל הזמנה
+                          </button>
                         )}
                       </div>
-                      <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
-                    </div>
-                    <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
-                    {isPending && onReceive ? (
-                      <button
-                        type="button"
-                        onClick={() => { onReceive(h.orderId!); onClose(); }}
-                        className="text-xs py-1.5 px-3 rounded w-fit font-bold text-white transition"
-                        style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 14px rgba(255,45,180,0.45)" }}
-                      >
-                        קבל סחורה
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => duplicateOrder(h)}
-                        className="bg-zinc-800 hover:bg-zinc-700 text-pink-500 text-xs py-1 px-3 rounded w-fit transition-colors"
-                      >
-                        שכפל הזמנה
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="received" className="mt-3">
+              {receivedLoading ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> טוען סחורה שהתקבלה…
+                </div>
+              ) : received.length === 0 ? (
+                <div className="text-xs text-zinc-500">לא נרשמו קבלות סחורה לספק זה.</div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                  {received.map((inv) => {
+                    const open = expandedInvoiceId === inv.id;
+                    return (
+                      <div key={inv.id} className="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedInvoiceId(open ? null : inv.id)}
+                          className="w-full p-3 flex items-center justify-between gap-2 text-right hover:bg-zinc-800/60 transition"
+                        >
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <div className="text-xs text-zinc-500">
+                              חשבונית {inv.invoice_number || "—"}
+                            </div>
+                            <div className="text-xs text-zinc-300 font-bold tabular-nums">
+                              {formatDate(inv.document_date)} · ₪{inv.total_amount.toLocaleString("he-IL", { maximumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                          <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
+                        </button>
+                        {open && (
+                          <div className="border-t border-zinc-800 p-3 bg-zinc-950/40">
+                            {inv.items.length === 0 ? (
+                              <div className="text-xs text-zinc-500">אין פריטים שמורים לחשבונית זו.</div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <div className="grid grid-cols-[1fr_56px_72px] text-[10px] font-bold text-zinc-500 px-1">
+                                  <span>פריט</span>
+                                  <span className="text-center">כמות</span>
+                                  <span className="text-center">סה"כ</span>
+                                </div>
+                                {inv.items.map((it) => (
+                                  <div key={it.id} className="grid grid-cols-[1fr_56px_72px] text-xs text-zinc-300 items-center px-1 py-1 rounded bg-zinc-900/60">
+                                    <span className="truncate">{it.item_name}</span>
+                                    <span className="text-center tabular-nums">{it.quantity}</span>
+                                    <span className="text-center tabular-nums font-bold">₪{it.total_price.toLocaleString("he-IL", { maximumFractionDigits: 2 })}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
+
       </div>
     </div>
   );
