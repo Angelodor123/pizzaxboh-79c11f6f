@@ -46,7 +46,8 @@ import {
 import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
 import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
-import { Building2, ListChecks } from "lucide-react";
+import { OverviewPanel } from "@/components/admin/OverviewPanel";
+import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -241,7 +242,7 @@ function AdminPage() {
   };
 
   const { isSuperAdmin } = useAuth();
-  const [tab, setTab] = useState<"recipes" | "users" | "branches" | "tasks" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("recipes");
+  const [tab, setTab] = useState<"overview" | "recipes" | "users" | "branches" | "tasks" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("overview");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -256,6 +257,9 @@ function AdminPage() {
 
       {/* Tabs */}
       <div className="mb-6 border-b border-border flex gap-1 overflow-x-auto scrollbar-hide" dir="rtl">
+        <TabButton active={tab === "overview"} onClick={() => setTab("overview")} icon={<LayoutDashboard className="h-4 w-4" />}>
+          סקירה כללית
+        </TabButton>
         <TabButton active={tab === "recipes"} onClick={() => setTab("recipes")} icon={<ChefHat className="h-4 w-4" />}>
           מתכונים
         </TabButton>
@@ -291,6 +295,8 @@ function AdminPage() {
           השלמות מהמחסן
         </TabButton>
       </div>
+
+      {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
 
       {tab === "users" && (
         <div className="space-y-6">

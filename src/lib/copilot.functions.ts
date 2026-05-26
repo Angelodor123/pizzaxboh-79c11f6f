@@ -632,6 +632,77 @@ function buildTools(supabase: any, branchId: string | undefined, userId: string)
   };
 }
 
+const SNAPSHOT_PATTERNS = [
+  /תמונת\s*מצב/,
+  /סטטוס/,
+  /מה\s*המצב/,
+  /סקירה/,
+  /תקציר/,
+  /עדכון\s*תפעולי/,
+  /איפה\s*אנחנו\s*עומד/,
+  /מה\s*נשאר/,
+];
+
+function isSnapshotIntent(text: string): boolean {
+  return SNAPSHOT_PATTERNS.some((re) => re.test(text));
+}
+
+async function computeSnapshot(supabase: any, branchId: string | undefined) {
+  try {
+    const { data: today } = await supabase.rpc("operational_today");
+
+    // Incomplete tasks today
+    const tasksQ = supabase.from("tasks").select("id", { count: "exact", head: true }).eq("active", true);
+    if (branchId) tasksQ.eq("branch_id", branchId);
+    const { count: totalTasks } = await tasksQ;
+
+    const doneQ = supabase
+      .from("daily_task_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("log_date", today)
+      .eq("completed", true);
+    if (branchId) doneQ.eq("branch_id", branchId);
+    const { count: doneTasks } = await doneQ;
+    const incompleteTasks = Math.max(0, (totalTasks ?? 0) - (doneTasks ?? 0));
+
+    // Warehouse list pending
+    const warehouseQ = supabase
+      .from("notebook_items")
+      .select("id", { count: "exact", head: true })
+      .eq("list_key", "warehouse")
+      .eq("done", false)
+      .is("archived_at", null);
+    if (branchId) warehouseQ.eq("branch_id", branchId);
+    const { count: warehouseCount } = await warehouseQ;
+
+    // Active shortages
+    const shortagesQ = supabase
+      .from("notebook_items")
+      .select("id", { count: "exact", head: true })
+      .eq("list_key", "shortages")
+      .eq("done", false)
+      .is("archived_at", null);
+    if (branchId) shortagesQ.eq("branch_id", branchId);
+    const { count: shortagesCount } = await shortagesQ;
+
+    return {
+      incompleteTasks,
+      warehouseCount: warehouseCount ?? 0,
+      shortagesCount: shortagesCount ?? 0,
+    };
+  } catch (err) {
+    console.error("[copilot] snapshot failed", err);
+    return null;
+  }
+}
+
+export type CopilotAction = {
+  kind: "tasks" | "warehouse" | "shortages";
+  label: string;
+  count: number;
+  to: string;
+};
+
 export const askCopilot = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
@@ -649,6 +720,24 @@ export const askCopilot = createServerFn({ method: "POST" })
     }
 
     const { supabase, userId } = context as { supabase: any; userId: string };
+
+    // Snapshot intent detection — pre-compute counts for deep-link chips
+    const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
+    const snapshotIntent = lastUser ? isSnapshotIntent(lastUser.content) : false;
+    let snapshot: Awaited<ReturnType<typeof computeSnapshot>> = null;
+    let snapshotBlock = "";
+    let actions: CopilotAction[] = [];
+    if (snapshotIntent) {
+      snapshot = await computeSnapshot(supabase, data.context?.branchId);
+      if (snapshot) {
+        snapshotBlock = `\n\n==== תמונת מצב חיה (נכון לרגע זה) ====\nמשימות פתוחות בצ'קליסט: ${snapshot.incompleteTasks}\nפריטים פתוחים ברשימת מחסן: ${snapshot.warehouseCount}\nחוסרים פעילים: ${snapshot.shortagesCount}\n==== סוף תמונת המצב ====\n\nהוראה: שלב את שלושת המספרים האלה בעברית בטון רגוע ("וואלה אחי, הנה תמונת המצב..."). אל תוסיף קישורים או כפתורים — הם יוצגו אוטומטית בממשק.`;
+        actions = [
+          { kind: "tasks", label: `${snapshot.incompleteTasks} משימות פתוחות`, count: snapshot.incompleteTasks, to: "/tasks" },
+          { kind: "warehouse", label: `${snapshot.warehouseCount} פריטי מחסן`, count: snapshot.warehouseCount, to: "/notebook" },
+          { kind: "shortages", label: `${snapshot.shortagesCount} חוסרים`, count: snapshot.shortagesCount, to: "/notebook" },
+        ];
+      }
+    }
 
     const ctxParts: string[] = [];
     if (data.context?.route) ctxParts.push(`מסך="${data.context.route}"`);
@@ -671,13 +760,16 @@ export const askCopilot = createServerFn({ method: "POST" })
     try {
       const result = await generateText({
         model,
-        system: SYSTEM_PROMPT + contextLine + knowledgeBlock,
+        system: SYSTEM_PROMPT + contextLine + knowledgeBlock + snapshotBlock,
         messages: sdkMessages,
         tools: buildTools(supabase, data.context?.branchId, userId),
         stopWhen: stepCountIs(50),
       });
       const reply = result.text.trim();
-      return { reply: reply || "וואלה אחי, את זה דווקא לא תפסתי. תנסה לנסח אחרת? ✌️" };
+      return {
+        reply: reply || "וואלה אחי, את זה דווקא לא תפסתי. תנסה לנסח אחרת? ✌️",
+        actions,
+      };
     } catch (err: any) {
       const message = String(err?.message ?? err);
       console.error("[copilot] gateway error", message);
@@ -718,3 +810,4 @@ export const askCopilot = createServerFn({ method: "POST" })
       };
     }
   });
+
