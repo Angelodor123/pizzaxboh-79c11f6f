@@ -7,7 +7,7 @@ import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
-import { ShortagesSection } from "@/components/ShortagesSection";
+
 
 export const Route = createFileRoute("/orders")({
   component: OrdersPage,
@@ -140,7 +140,7 @@ function OrdersPage() {
         </div>
       )}
 
-      <ShortagesSection />
+      
 
       <div className="mt-6 text-center">
         <Link to="/suppliers" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-neon">

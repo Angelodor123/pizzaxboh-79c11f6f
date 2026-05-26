@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 
-export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse";
+export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse" | "shortages";
 
 export type NotebookPriority = "normal" | "urgent";
 
@@ -43,6 +43,7 @@ const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
   recurring: [],
   orders: [],
   warehouse: [],
+  shortages: [],
 };
 
 function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
@@ -52,6 +53,7 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
     recurring: [],
     orders: [],
     warehouse: [],
+    shortages: [],
   };
   for (const r of rows) {
     if (!out[r.list_key]) continue;
