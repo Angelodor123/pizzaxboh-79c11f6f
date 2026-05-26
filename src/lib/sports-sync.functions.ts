@@ -1,7 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const VERIFIED_MATCHES = [
+type VerifiedMatch = {
+  team_a: string;
+  team_b: string;
+  competition: "champions_league" | "world_cup" | "other";
+  event_date: string;
+  start_time: string;
+  source_note: string;
+};
+
+const VERIFIED_MATCHES: VerifiedMatch[] = [
   {
     team_a: "PSG",
     team_b: "Arsenal",
