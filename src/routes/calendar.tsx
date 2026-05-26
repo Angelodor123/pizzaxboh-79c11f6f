@@ -1021,6 +1021,7 @@ function EventForm({
       end_time: endTime || null,
       supplier: supplier.trim() || null,
       high_priority: highPriority,
+      projector_broadcast: eventType === "sports_match" ? projectorBroadcast : false,
       notes: notes.trim() || null,
     };
 
