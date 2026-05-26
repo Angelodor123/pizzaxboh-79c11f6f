@@ -1187,6 +1187,20 @@ function EventForm({
           />
         </label>
 
+        {eventType === "sports_match" && (
+          <label className="flex items-center justify-end gap-2 text-sm cursor-pointer rounded-lg border border-neon/40 bg-neon/5 p-3">
+            <span className="flex items-center gap-1.5 font-bold">
+              <Projector className="h-4 w-4 text-neon" /> הקרנה במקרן?
+            </span>
+            <input
+              type="checkbox"
+              checked={projectorBroadcast}
+              onChange={(e) => setProjectorBroadcast(e.target.checked)}
+              className="accent-[var(--neon)] h-4 w-4"
+            />
+          </label>
+        )}
+
         <Field label="הערות / הוראות הכנה">
           <textarea
             value={notes}
