@@ -106,6 +106,7 @@ export const syncSportsEvents = createServerFn({ method: "POST" })
         end_time: null,
         notes,
         high_priority: false,
+        projector_broadcast: true,
         is_auto: true,
       });
       if (!error) inserted++;

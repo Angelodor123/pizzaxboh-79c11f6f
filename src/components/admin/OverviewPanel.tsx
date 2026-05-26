@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, RefreshCw, CalendarDays } from "lucide-react";
+import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, RefreshCw, CalendarDays, Projector } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { syncSportsEvents } from "@/lib/sports-sync.functions";
@@ -200,7 +200,7 @@ function KpiCard({
 export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
   const [m, setM] = useState<Metrics>(EMPTY);
   const [loading, setLoading] = useState(true);
-  const [sportsEvents, setSportsEvents] = useState<Array<{ id: string; title: string; event_date: string; start_time: string | null; notes: string | null }>>([]);
+  const [sportsEvents, setSportsEvents] = useState<Array<{ id: string; title: string; event_date: string; start_time: string | null; notes: string | null; projector_broadcast: boolean | null }>>([]);
   const [syncing, setSyncing] = useState(false);
   const syncFn = useServerFn(syncSportsEvents);
 
@@ -208,7 +208,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     const today = new Date().toISOString().slice(0, 10);
     const { data } = await supabase
       .from("calendar_events")
-      .select("id, title, event_date, start_time, notes")
+      .select("id, title, event_date, start_time, notes, projector_broadcast")
       .eq("event_type", "sports_match")
       .gte("event_date", today)
       .order("event_date", { ascending: true })
@@ -364,7 +364,18 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
                   <CalendarDays className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-foreground truncate">{ev.title}</div>
+                  <div className="text-sm font-bold text-foreground truncate flex items-center gap-1.5">
+                    <span className="truncate">{ev.title}</span>
+                    {ev.projector_broadcast && (
+                      <span
+                        title="הקרנה במקרן"
+                        className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-neon/15 text-neon border border-neon/40 text-[10px] font-bold"
+                      >
+                        <Projector className="h-3 w-3" />
+                        מקרן
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[11px] text-muted-foreground mt-0.5">
                     {new Date(ev.event_date).toLocaleDateString("he-IL", { weekday: "short", day: "2-digit", month: "2-digit" })}
                     {ev.start_time ? ` · ${ev.start_time.slice(0, 5)}` : ""}

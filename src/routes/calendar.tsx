@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft } from "lucide-react";
+import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
@@ -14,10 +14,11 @@ export const Route = createFileRoute("/calendar")({
 // Event type catalog — color-coded tags for the calendar (overlays for the existing
 // "delivery" | "event" base category). Each entry maps to a Tailwind dot color.
 export const EVENT_TYPES = [
-  { id: "maintenance",       label: "תחזוקה",          color: "#ef4444" }, // red
+  { id: "maintenance",        label: "תחזוקה",          color: "#ef4444" }, // red
   { id: "inventory_delivery", label: "קבלת סחורה",      color: "#f97316" }, // orange
-  { id: "team_meeting",      label: "פגישת צוות",      color: "#3b82f6" }, // blue
-  { id: "special_event",     label: "אירוע מיוחד",     color: "#ec4899" }, // pink
+  { id: "team_meeting",       label: "פגישת צוות",      color: "#3b82f6" }, // blue
+  { id: "special_event",      label: "אירוע מיוחד",     color: "#ec4899" }, // pink
+  { id: "sports_match",       label: "ספורט / משחק",    color: "#22c55e" }, // green
 ] as const;
 type EventTypeId = (typeof EVENT_TYPES)[number]["id"];
 const eventTypeColor = (id?: string | null): string | null =>
@@ -40,6 +41,7 @@ interface CalendarEvent {
   recurring_weekday: number | null;
   supplier_id?: string | null;
   is_auto?: boolean;
+  projector_broadcast?: boolean | null;
 }
 
 
@@ -968,6 +970,7 @@ function EventForm({
   const [endTime, setEndTime] = useState(existing?.end_time?.slice(0, 5) ?? "");
   const [supplier, setSupplier] = useState(existing?.supplier ?? "");
   const [highPriority, setHighPriority] = useState(existing?.high_priority ?? false);
+  const [projectorBroadcast, setProjectorBroadcast] = useState(existing?.projector_broadcast ?? true);
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [conflictAck, setConflictAck] = useState(false);
@@ -1018,6 +1021,7 @@ function EventForm({
       end_time: endTime || null,
       supplier: supplier.trim() || null,
       high_priority: highPriority,
+      projector_broadcast: eventType === "sports_match" ? projectorBroadcast : false,
       notes: notes.trim() || null,
     };
 
@@ -1182,6 +1186,20 @@ function EventForm({
             className="accent-[var(--destructive)]"
           />
         </label>
+
+        {eventType === "sports_match" && (
+          <label className="flex items-center justify-end gap-2 text-sm cursor-pointer rounded-lg border border-neon/40 bg-neon/5 p-3">
+            <span className="flex items-center gap-1.5 font-bold">
+              <Projector className="h-4 w-4 text-neon" /> הקרנה במקרן?
+            </span>
+            <input
+              type="checkbox"
+              checked={projectorBroadcast}
+              onChange={(e) => setProjectorBroadcast(e.target.checked)}
+              className="accent-[var(--neon)] h-4 w-4"
+            />
+          </label>
+        )}
 
         <Field label="הערות / הוראות הכנה">
           <textarea

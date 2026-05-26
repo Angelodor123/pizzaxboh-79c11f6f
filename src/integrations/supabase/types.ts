@@ -128,6 +128,7 @@ export type Database = {
           id: string
           is_auto: boolean
           notes: string | null
+          projector_broadcast: boolean
           recurring_weekday: number | null
           start_time: string | null
           supplier: string | null
@@ -147,6 +148,7 @@ export type Database = {
           id?: string
           is_auto?: boolean
           notes?: string | null
+          projector_broadcast?: boolean
           recurring_weekday?: number | null
           start_time?: string | null
           supplier?: string | null
@@ -166,6 +168,7 @@ export type Database = {
           id?: string
           is_auto?: boolean
           notes?: string | null
+          projector_broadcast?: boolean
           recurring_weekday?: number | null
           start_time?: string | null
           supplier?: string | null
