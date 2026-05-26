@@ -123,7 +123,7 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
               const { error } = await supabase.from("calendar_events").insert({
                 branch_id: br.id,
                 title,
-                category: "marketing",
+                category: "event",
                 event_type: "sports_match",
                 event_date: m.event_date,
                 start_time: m.start_time ?? null,
