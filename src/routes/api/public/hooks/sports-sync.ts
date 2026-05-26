@@ -90,6 +90,8 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
             matches_found: matches.length,
             feeds_tried: feedsTried,
             items_scanned: itemsScanned,
+            used_firecrawl_fallback: usedFallback,
+            firecrawl_pages_scraped: fallbackPagesScraped,
           });
         } catch (e) {
           console.error("sports-sync error", e);
