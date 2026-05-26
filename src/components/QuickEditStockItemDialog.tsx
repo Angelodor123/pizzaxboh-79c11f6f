@@ -46,7 +46,7 @@ const DAY_COLS = [
 ] as const;
 const WEEKDAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
-export function QuickEditStockItemDialog({ item, kind, onClose, onSaved }: Props) {
+export function QuickEditStockItemDialog({ item, kind, onClose, onSaved, onDeleted }: Props) {
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [barcode, setBarcode] = useState("");
