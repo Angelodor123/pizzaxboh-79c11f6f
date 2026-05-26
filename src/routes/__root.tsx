@@ -296,6 +296,7 @@ function AuthedShell() {
           </Link>
           <div className="flex items-center gap-1.5 shrink-0">
             {showServiceToggle && <ServiceModeToggle />}
+            <MaintenanceBell />
             <BranchSwitcher />
             <Link
               to="/my-profile"
