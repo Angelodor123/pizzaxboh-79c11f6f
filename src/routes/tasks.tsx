@@ -391,8 +391,16 @@ function TasksPage() {
   const reportShortage = async (taskId: string) => {
     const t = allTasks.find((x) => x.id === taskId);
     if (!t) return;
+    if (!t.is_purchased_good) {
+      toast.error("פריט זה אינו מוגדר כסחורה לרכישה");
+      return;
+    }
+    const itemName = extractIngredientName({
+      name: t.name,
+      ingredient_name: t.ingredient_name,
+    });
     try {
-      await useNotebookStore.getState().addItem("shortages", t.name, "urgent");
+      await useNotebookStore.getState().addItem("shortages", itemName, "urgent");
       triggerHaptic("light");
       toast.success("דווח לחוסרים בהצלחה");
     } catch (e) {
