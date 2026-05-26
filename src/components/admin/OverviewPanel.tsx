@@ -200,6 +200,22 @@ function KpiCard({
 export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
   const [m, setM] = useState<Metrics>(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [sportsEvents, setSportsEvents] = useState<Array<{ id: string; title: string; event_date: string; start_time: string | null; notes: string | null }>>([]);
+  const [syncing, setSyncing] = useState(false);
+  const syncFn = useServerFn(syncSportsEvents);
+
+  const loadSports = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("calendar_events")
+      .select("id, title, event_date, start_time, notes")
+      .eq("event_type", "sports_match")
+      .gte("event_date", today)
+      .order("event_date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .limit(3);
+    setSportsEvents((data ?? []) as never);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -207,6 +223,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
       try {
         const data = await loadMetrics();
         if (alive) setM(data);
+        await loadSports();
       } finally {
         if (alive) setLoading(false);
       }
@@ -218,6 +235,19 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
       clearInterval(t);
     };
   }, []);
+
+  const handleSyncSports = async () => {
+    setSyncing(true);
+    try {
+      const res = await syncFn();
+      toast.success(`סנכרון הושלם — נוספו ${res.inserted} משחקים, ${res.skipped} כבר קיימים`);
+      await loadSports();
+    } catch (e) {
+      toast.error(`סנכרון נכשל: ${e instanceof Error ? e.message : "שגיאה"}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const doughLow = m.doughTrays != null && m.doughTrays < m.doughThreshold;
   const prepPct = m.prepTotal ? Math.round((m.prepDone / m.prepTotal) * 100) : 0;
