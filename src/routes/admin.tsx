@@ -296,6 +296,8 @@ function AdminPage() {
         </TabButton>
       </div>
 
+      {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
+
       {tab === "users" && (
         <div className="space-y-6">
           <InvitationsPanel />
