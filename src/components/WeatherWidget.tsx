@@ -117,11 +117,40 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const fetchFallback = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
+    const j = await fetchJsonWithTimeout("https://wttr.in/Modiin?format=j1", signal);
+    const current = j?.current_condition?.[0];
+    const hourly = (j?.weather ?? []).flatMap((day: { date?: string; hourly?: Array<Record<string, unknown>> }) =>
+      (day.hourly ?? []).map((hour) => ({ ...hour, date: day.date })),
+    );
+    if (!current || !hourly.length) throw new Error("invalid fallback payload");
+
+    const now = new Date();
+    const currentHour = now.getHours() * 100;
+    const upcoming = hourly.filter((h: { time?: unknown }) => Number(h.time ?? 0) >= currentHour).slice(0, 6);
+    const selected = upcoming.length >= 3 ? upcoming : hourly.slice(0, 6);
+
+    return {
+      currentTemp: Math.round(Number(current.temp_C ?? 0)),
+      currentCode: mapWttrCode(Number(current.weatherCode ?? 116)),
+      hours: selected.map((h: { date?: unknown; time?: unknown; tempC?: unknown; weatherCode?: unknown; chanceofrain?: unknown }) => {
+        const rawTime = String(h.time ?? "0").padStart(4, "0");
+        const hour = rawTime.slice(0, -2) || "0";
+        const minute = rawTime.slice(-2);
+        const date = typeof h.date === "string" ? h.date : now.toISOString().slice(0, 10);
+        return {
+          time: `${date}T${hour.padStart(2, "0")}:${minute}:00`,
+          temp: Math.round(Number(h.tempC ?? 0)),
+          code: mapWttrCode(Number(h.weatherCode ?? 116)),
+          precipProb: Math.round(Number(h.chanceofrain ?? 0)),
+        };
+      }),
+    };
+  }, []);
+
   const fetchOnce = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=6&timezone=Asia%2FJerusalem`;
-    const r = await fetch(url, { signal });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const j = await r.json();
+    const j = await fetchJsonWithTimeout(url, signal);
     const times: string[] = j?.hourly?.time ?? [];
     const temps: number[] = j?.hourly?.temperature_2m ?? [];
     const codes: number[] = j?.hourly?.weather_code ?? [];
@@ -141,6 +170,18 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
     };
   }, []);
 
+  const fetchWeather = useCallback(
+    async (signal: AbortSignal): Promise<WeatherData> => {
+      try {
+        return await fetchOnce(signal);
+      } catch (primaryError) {
+        if (signal.aborted) throw primaryError;
+        return fetchFallback(signal);
+      }
+    },
+    [fetchFallback, fetchOnce],
+  );
+
   useEffect(() => {
     const ctl = new AbortController();
     let active = true;
@@ -158,7 +199,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         if (!active) return;
         try {
-          const fresh = await fetchOnce(ctl.signal);
+          const fresh = await fetchWeather(ctl.signal);
           if (!active) return;
           setData(fresh);
           setStaleAt(null);
@@ -183,7 +224,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
       active = false;
       ctl.abort();
     };
-  }, [fetchOnce, reloadKey]);
+  }, [fetchWeather, reloadKey]);
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
   const staleLabel = staleAt
