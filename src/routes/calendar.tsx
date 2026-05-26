@@ -1,13 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector, RefreshCw } from "lucide-react";
+import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
-import { useServerFn } from "@tanstack/react-start";
-import { syncSportsEvents } from "@/lib/sports-sync.functions";
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
@@ -93,31 +91,6 @@ function CalendarPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [instanceEdit, setInstanceEdit] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const runSync = useServerFn(syncSportsEvents);
-  const handleSyncSports = async () => {
-    if (syncing) return;
-    setSyncing(true);
-    const t = toast.loading("מסנכרן משחקי מפתח מ-365scores…");
-    try {
-      const res = await runSync();
-      toast.success(
-        `סנכרון הושלם • נוספו ${res.inserted} • כבר קיימים ${res.skipped}`,
-        { id: t },
-      );
-      // refresh local list
-      const branchId = await requireCurrentBranchId();
-      const { data } = await supabase
-        .from("calendar_events")
-        .select("*")
-        .eq("branch_id", branchId);
-      if (data) setEvents(data as CalendarEvent[]);
-    } catch (e) {
-      toast.error(`סנכרון נכשל: ${e instanceof Error ? e.message : String(e)}`, { id: t });
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   // Load events + overrides
   useEffect(() => {
@@ -226,15 +199,6 @@ function CalendarPage() {
             >
               <Plus className="h-4 w-4" />
               הוסף אירוע
-            </button>
-            <button
-              onClick={handleSyncSports}
-              disabled={syncing}
-              title="סנכרון משחקי מפתח מ-365scores (מונדיאל + ליגת האלופות)"
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-md border border-neon/40 text-neon font-bold hover:bg-neon/10 active:scale-95 transition disabled:opacity-60"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "מסנכרן…" : "רענן משחקי מפתח"}
             </button>
           </div>
         )}
