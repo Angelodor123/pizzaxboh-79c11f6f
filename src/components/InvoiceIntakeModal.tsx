@@ -104,15 +104,65 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
   const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
   const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
 
-  const onFileSelected = (f: File | null) => {
+  const fileToDataUrl = (f: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(f);
+    });
+
+  const onFileSelected = async (f: File | null) => {
     setFile(f);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(f ? URL.createObjectURL(f) : null);
-    if (f) {
-      setUploading(true);
-      setTimeout(() => setUploading(false), 1400);
+    if (!f) return;
+
+    setUploading(true);
+    setOcrLoading(true);
+    try {
+      const dataUrl = await fileToDataUrl(f);
+      const parsed = await runOcr({
+        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg" },
+      });
+
+      // Populate header fields when present
+      if (parsed.invoice_number) setInvoiceNumber(parsed.invoice_number);
+      if (parsed.document_date && /^\d{4}-\d{2}-\d{2}$/.test(parsed.document_date)) {
+        setDocDate(parsed.document_date);
+      }
+      if (typeof parsed.total_amount === "number" && parsed.total_amount > 0) {
+        setTotalAmount(String(parsed.total_amount));
+      }
+      // Suggest supplier by fuzzy name match
+      if (parsed.supplier_guess) {
+        const guess = parsed.supplier_guess.trim().toLowerCase();
+        const match = suppliers.find((s) => s.name.toLowerCase().includes(guess) || guess.includes(s.name.toLowerCase()));
+        if (match) setSupplierId(match.id);
+      }
+      // Populate item rows
+      if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+        setItems(
+          parsed.items.map((it) => ({
+            item_name: it.item_name ?? "",
+            quantity: it.quantity != null ? String(it.quantity) : "",
+            unit_price: it.unit_price != null ? String(it.unit_price) : "",
+            total_price: it.total_price != null ? String(it.total_price) : "",
+          })),
+        );
+        toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
+      } else {
+        toast.message("לא זוהו פריטים — מלא ידנית");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "פענוח נכשל";
+      toast.error(`פענוח נכשל: ${msg}`);
+    } finally {
+      setOcrLoading(false);
+      setUploading(false);
     }
   };
+
 
   const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "" }]);
   const updateItem = (i: number, k: keyof ItemRow, v: string) =>
