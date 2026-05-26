@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pizza, X, History } from "lucide-react";
+import { Pizza, X, History, Store, Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
@@ -10,11 +10,14 @@ interface PrepItem {
   unit: string;
 }
 
+type DoughLocation = "shop" | "warehouse";
+
 interface DoughLogRow {
   id: string;
   trays_count: number;
   updated_by_name: string | null;
   created_at: string;
+  location: DoughLocation;
 }
 
 function formatTime(iso: string) {
@@ -44,26 +47,35 @@ function formatDateTime(iso: string) {
 export function DoughStatusCard() {
   const branchId = useActiveBranch();
   const [item, setItem] = useState<PrepItem | null>(null);
-  const [current, setCurrent] = useState<number>(0);
+  const [shopCount, setShopCount] = useState<number>(0);
+  const [warehouseCount, setWarehouseCount] = useState<number>(0);
   const [logDate, setLogDate] = useState<string>("");
   const [lastUpdate, setLastUpdate] = useState<DoughLogRow | null>(null);
   const [open, setOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<DoughLogRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [draft, setDraft] = useState<string>("");
+  const [shopDraft, setShopDraft] = useState<string>("");
+  const [warehouseDraft, setWarehouseDraft] = useState<string>("");
   const [saving, setSaving] = useState(false);
+
+  const total = shopCount + warehouseCount;
 
   const loadLatest = async (itemId: string, branch: string) => {
     const { data } = await supabase
       .from("dough_updates_log")
-      .select("id,trays_count,updated_by_name,created_at")
+      .select("id,trays_count,updated_by_name,created_at,location")
       .eq("branch_id", branch)
       .eq("prep_item_id", itemId)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    setLastUpdate((data as DoughLogRow) ?? null);
+      .limit(50);
+    const rows = (data as DoughLogRow[]) ?? [];
+    setLastUpdate(rows[0] ?? null);
+    const latestShop = rows.find((r) => r.location === "shop");
+    const latestWh = rows.find((r) => r.location === "warehouse");
+    if (latestShop) setShopCount(Number(latestShop.trays_count));
+    if (latestWh) setWarehouseCount(Number(latestWh.trays_count));
+    return { latestShop, latestWh };
   };
 
   const load = async () => {
@@ -87,8 +99,15 @@ export function DoughStatusCard() {
       .eq("prep_item_id", (pi as PrepItem).id)
       .eq("log_date", date)
       .maybeSingle();
-    setCurrent(Number(log?.current_stock ?? 0));
-    await loadLatest((pi as PrepItem).id, branchId);
+    const fallbackTotal = Number(log?.current_stock ?? 0);
+    const { latestShop, latestWh } = await loadLatest(
+      (pi as PrepItem).id,
+      branchId,
+    );
+    // If we have no per-location history yet, seed shop with the existing total.
+    if (!latestShop && !latestWh && fallbackTotal > 0) {
+      setShopCount(fallbackTotal);
+    }
   };
 
   useEffect(() => {
@@ -102,41 +121,46 @@ export function DoughStatusCard() {
     setHistoryLoading(true);
     const { data } = await supabase
       .from("dough_updates_log")
-      .select("id,trays_count,updated_by_name,created_at")
+      .select("id,trays_count,updated_by_name,created_at,location")
       .eq("branch_id", branchId)
       .eq("prep_item_id", item.id)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(30);
     setHistory((data as DoughLogRow[]) ?? []);
     setHistoryLoading(false);
   };
 
+  const parseCount = (s: string) => {
+    if (s.trim() === "") return 0;
+    const n = Math.max(0, Math.min(999, Math.floor(Number(s))));
+    return Number.isFinite(n) ? n : NaN;
+  };
+
   const submit = async () => {
     if (!item || !logDate || !branchId) return;
-    const n = Math.max(0, Math.min(999, Math.floor(Number(draft))));
-    if (!Number.isFinite(n)) {
-      toast.error("יש להזין מספר תקין");
+    const shopN = parseCount(shopDraft);
+    const whN = parseCount(warehouseDraft);
+    if (!Number.isFinite(shopN) || !Number.isFinite(whN)) {
+      toast.error("יש להזין מספרים תקינים");
       return;
     }
+    const totalN = shopN + whN;
     setSaving(true);
-    const { error } = await supabase
-      .from("prep_log")
-      .upsert(
-        {
-          prep_item_id: item.id,
-          log_date: logDate,
-          current_stock: n,
-          completed: n > 0,
-        },
-        { onConflict: "prep_item_id,log_date" },
-      );
+    const { error } = await supabase.from("prep_log").upsert(
+      {
+        prep_item_id: item.id,
+        log_date: logDate,
+        current_stock: totalN,
+        completed: totalN > 0,
+      },
+      { onConflict: "prep_item_id,log_date" },
+    );
     if (error) {
       setSaving(false);
       toast.error("שמירה נכשלה");
       return;
     }
 
-    // Log the update
     const { data: userRes } = await supabase.auth.getUser();
     const user = userRes?.user ?? null;
     let userName: string | null = null;
@@ -147,26 +171,61 @@ export function DoughStatusCard() {
         .eq("user_id", user.id)
         .maybeSingle();
       userName =
-        (prof?.full_name as string | undefined) ??
-        (user.email ?? null);
+        (prof?.full_name as string | undefined) ?? (user.email ?? null);
     }
-    await supabase.from("dough_updates_log").insert({
-      branch_id: branchId,
-      prep_item_id: item.id,
-      trays_count: n,
-      updated_by: user?.id ?? null,
-      updated_by_name: userName,
-    });
+
+    const rows: Array<{
+      branch_id: string;
+      prep_item_id: string;
+      trays_count: number;
+      updated_by: string | null;
+      updated_by_name: string | null;
+      location: DoughLocation;
+    }> = [];
+    if (shopN !== shopCount) {
+      rows.push({
+        branch_id: branchId,
+        prep_item_id: item.id,
+        trays_count: shopN,
+        updated_by: user?.id ?? null,
+        updated_by_name: userName,
+        location: "shop",
+      });
+    }
+    if (whN !== warehouseCount) {
+      rows.push({
+        branch_id: branchId,
+        prep_item_id: item.id,
+        trays_count: whN,
+        updated_by: user?.id ?? null,
+        updated_by_name: userName,
+        location: "warehouse",
+      });
+    }
+    if (rows.length === 0) {
+      // Always log at least one snapshot so updated_at is fresh
+      rows.push({
+        branch_id: branchId,
+        prep_item_id: item.id,
+        trays_count: shopN,
+        updated_by: user?.id ?? null,
+        updated_by_name: userName,
+        location: "shop",
+      });
+    }
+    await supabase.from("dough_updates_log").insert(rows);
 
     setSaving(false);
-    setCurrent(n);
+    setShopCount(shopN);
+    setWarehouseCount(whN);
     setOpen(false);
-    toast.success(`עודכן: ${n} מגשי בצק`);
+    toast.success(`עודכן: ${totalN} מגשים (פיצה ${shopN} · מחסן ${whN})`);
     void loadLatest(item.id, branchId);
   };
 
   const openModal = () => {
-    setDraft(String(current));
+    setShopDraft(shopCount ? String(shopCount) : "");
+    setWarehouseDraft(warehouseCount ? String(warehouseCount) : "");
     setOpen(true);
   };
 
@@ -197,7 +256,17 @@ export function DoughStatusCard() {
             </span>
           </div>
           <div className="font-display text-3xl font-black text-amber-300 tabular-nums leading-tight">
-            {current}
+            {total}
+          </div>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-semibold tabular-nums">
+              <Store className="h-3 w-3" />
+              בפיצה: {shopCount}
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-[11px] text-sky-200 font-semibold tabular-nums">
+              <Warehouse className="h-3 w-3" />
+              במחסן: {warehouseCount}
+            </span>
           </div>
           {lastUpdate && (
             <div className="text-xs text-zinc-400 mt-1">
@@ -205,7 +274,7 @@ export function DoughStatusCard() {
             </div>
           )}
           <div className="text-xs text-foreground/70">
-            {current === 1 ? "מגש מוכן" : "מגשים מוכנים"} · לחיצה לעדכון
+            סה״כ {total === 1 ? "מגש מוכן" : "מגשים מוכנים"} · לחיצה לעדכון
           </div>
         </button>
       </div>
@@ -233,16 +302,48 @@ export function DoughStatusCard() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={999}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              autoFocus
-              className="w-full bg-background border-2 border-border focus:border-amber-400 focus:outline-none rounded-lg px-3 py-3 text-center font-display text-3xl font-black tabular-nums"
-            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-1 text-xs font-semibold text-amber-200">
+                  <Store className="h-3.5 w-3.5" /> בפיצה
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={999}
+                  placeholder="0"
+                  value={shopDraft}
+                  onChange={(e) => setShopDraft(e.target.value)}
+                  autoFocus
+                  className="w-full h-11 bg-background border-2 border-border focus:border-amber-400 focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-1 text-xs font-semibold text-sky-200">
+                  <Warehouse className="h-3.5 w-3.5" /> במחסן
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={999}
+                  placeholder="0"
+                  value={warehouseDraft}
+                  onChange={(e) => setWarehouseDraft(e.target.value)}
+                  className="w-full h-11 bg-background border-2 border-border focus:border-sky-400 focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums"
+                />
+              </label>
+            </div>
+
+            <div className="text-center text-sm text-muted-foreground">
+              סה״כ:{" "}
+              <span className="font-bold text-amber-300 tabular-nums">
+                {(parseCount(shopDraft) || 0) + (parseCount(warehouseDraft) || 0)}
+              </span>{" "}
+              מגשים
+            </div>
             <div className="text-xs text-muted-foreground text-center">
               ייסונכרן לפס ההכנות היומי ({item?.name ?? "בצקים"})
             </div>
@@ -291,22 +392,41 @@ export function DoughStatusCard() {
                   אין עדיין עדכונים
                 </div>
               ) : (
-                history.map((row) => (
-                  <div
-                    key={row.id}
-                    className="flex flex-col gap-1 p-3 border-b border-zinc-800/50 last:border-0"
-                  >
-                    <div className="text-base font-bold text-amber-300 tabular-nums">
-                      {row.trays_count} מגשים
+                history.map((row) => {
+                  const isShop = row.location === "shop";
+                  return (
+                    <div
+                      key={row.id}
+                      className="flex flex-col gap-1 p-3 border-b border-zinc-800/50 last:border-0"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            isShop
+                              ? "bg-amber-500/15 text-amber-200 border border-amber-500/30"
+                              : "bg-sky-500/15 text-sky-200 border border-sky-500/30"
+                          }`}
+                        >
+                          {isShop ? (
+                            <Store className="h-3 w-3" />
+                          ) : (
+                            <Warehouse className="h-3 w-3" />
+                          )}
+                          {isShop ? "בפיצה" : "במחסן"}
+                        </span>
+                        <span className="text-base font-bold text-amber-300 tabular-nums">
+                          {row.trays_count} מגשים
+                        </span>
+                      </div>
+                      <div className="text-sm text-zinc-300">
+                        {row.updated_by_name ?? "משתמש לא ידוע"}
+                      </div>
+                      <div className="text-xs text-zinc-500">
+                        {formatDateTime(row.created_at)}
+                      </div>
                     </div>
-                    <div className="text-sm text-zinc-300">
-                      {row.updated_by_name ?? "משתמש לא ידוע"}
-                    </div>
-                    <div className="text-xs text-zinc-500">
-                      {formatDateTime(row.created_at)}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
