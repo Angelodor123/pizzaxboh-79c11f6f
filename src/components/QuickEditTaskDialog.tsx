@@ -26,7 +26,7 @@ interface Props {
   onDeleted?: (id: string) => void;
 }
 
-export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props) {
+export function QuickEditTaskDialog({ task, branchId, onClose, onSaved, onDeleted }: Props) {
   const recipes = useCookbookStore((s) => s.recipes);
   const [name, setName] = useState("");
   const [recipeId, setRecipeId] = useState("");
