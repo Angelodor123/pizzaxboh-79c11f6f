@@ -12,10 +12,8 @@ import type { ExtractedMatch } from "./sports-rss.server";
 const FIRECRAWL_API = "https://api.firecrawl.dev/v2/scrape";
 
 const FALLBACK_URLS: { url: string; label: string }[] = [
-  { url: "https://www.365scores.com/he/football/competition/world-cup-tournaments-72", label: "365scores - World Cup" },
-  { url: "https://www.365scores.com/he/football/competition/champions-league-7", label: "365scores - Champions League" },
-  { url: "https://www.uefa.com/uefachampionsleague/fixtures-results/", label: "UEFA Champions League" },
-  { url: "https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/canadamexicousa2026/matches", label: "FIFA World Cup 2026" },
+  { url: "https://www.365scores.com/he/football/competition/world-cup-tournaments-72", label: "365scores - מונדיאל" },
+  { url: "https://www.365scores.com/he/football/competition/champions-league-7", label: "365scores - ליגת האלופות" },
 ];
 
 const SYSTEM_PROMPT = `אתה עוזר מומחה לקליטת לוח משחקי כדורגל מתוכן עמוד אינטרנט.

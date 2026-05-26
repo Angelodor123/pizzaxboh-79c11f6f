@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { extractMatchesFromRss } from "@/lib/sports-rss.server";
 import { extractMatchesViaFirecrawl } from "@/lib/sports-firecrawl.server";
 
 export const Route = createFileRoute("/api/public/hooks/sports-sync")({
@@ -12,31 +11,26 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
           const SUPABASE_URL = process.env.SUPABASE_URL!;
           const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
           const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY!;
+          const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
           if (!SUPABASE_URL || !SERVICE) {
             return Response.json({ ok: false, error: "missing supabase env" }, { status: 500 });
           }
           if (!LOVABLE_API_KEY) {
             return Response.json({ ok: false, error: "missing LOVABLE_API_KEY" }, { status: 500 });
           }
+          if (!FIRECRAWL) {
+            return Response.json({ ok: false, error: "missing FIRECRAWL_API_KEY" }, { status: 500 });
+          }
 
           const supabase = createClient<Database>(SUPABASE_URL, SERVICE, {
             auth: { persistSession: false, autoRefreshToken: false },
           });
 
-          let { matches, feedsTried, itemsScanned } = await extractMatchesFromRss(LOVABLE_API_KEY);
-          let fallbackPagesScraped = 0;
-          let usedFallback = false;
-
-          // Backup: if RSS yielded nothing, try Firecrawl on stable fixture pages
-          if (matches.length === 0) {
-            const FIRECRAWL = process.env.FIRECRAWL_API_KEY;
-            if (FIRECRAWL) {
-              usedFallback = true;
-              const fb = await extractMatchesViaFirecrawl(LOVABLE_API_KEY, FIRECRAWL);
-              matches = fb.matches;
-              fallbackPagesScraped = fb.pagesScraped;
-            }
-          }
+          // Primary (and only) source: 365scores via Firecrawl + Gemini
+          const { matches, pagesScraped } = await extractMatchesViaFirecrawl(
+            LOVABLE_API_KEY,
+            FIRECRAWL,
+          );
 
           const { data: branches } = await supabase
             .from("branches")
@@ -85,13 +79,11 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
 
           return Response.json({
             ok: true,
+            source: "365scores",
             inserted,
             skipped,
             matches_found: matches.length,
-            feeds_tried: feedsTried,
-            items_scanned: itemsScanned,
-            used_firecrawl_fallback: usedFallback,
-            firecrawl_pages_scraped: fallbackPagesScraped,
+            pages_scraped: pagesScraped,
           });
         } catch (e) {
           console.error("sports-sync error", e);
@@ -101,3 +93,4 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
     },
   },
 });
+
