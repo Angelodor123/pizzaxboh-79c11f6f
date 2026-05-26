@@ -41,6 +41,7 @@ interface CalendarEvent {
   recurring_weekday: number | null;
   supplier_id?: string | null;
   is_auto?: boolean;
+  projector_broadcast?: boolean | null;
 }
 
 
