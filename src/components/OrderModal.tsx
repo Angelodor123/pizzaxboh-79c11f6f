@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
-import { X, Plus, Trash2, Copy, Send, Loader2 } from "lucide-react";
+import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { compileOrderMessage, whatsappUrl, type OrderRow } from "@/lib/order-template";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type ReceivedInvoiceItem = { id: string; item_name: string; quantity: number; unit_price: number; total_price: number };
+type ReceivedInvoice = {
+  id: string;
+  document_date: string;
+  invoice_number: string;
+  total_amount: number;
+  items: ReceivedInvoiceItem[];
+};
 
 interface Supplier {
   id: string;
