@@ -300,6 +300,10 @@ function InvoicesPage() {
           onClose={() => setEditTarget(null)}
           onSaved={load}
           editInvoice={editTarget}
+          onDeleted={() => {
+            setEditTarget(null);
+            load();
+          }}
         />
       )}
 
