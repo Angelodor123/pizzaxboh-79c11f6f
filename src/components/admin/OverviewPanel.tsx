@@ -364,7 +364,18 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
                   <CalendarDays className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-foreground truncate">{ev.title}</div>
+                  <div className="text-sm font-bold text-foreground truncate flex items-center gap-1.5">
+                    <span className="truncate">{ev.title}</span>
+                    {ev.projector_broadcast && (
+                      <span
+                        title="הקרנה במקרן"
+                        className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-neon/15 text-neon border border-neon/40 text-[10px] font-bold"
+                      >
+                        <Projector className="h-3 w-3" />
+                        מקרן
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[11px] text-muted-foreground mt-0.5">
                     {new Date(ev.event_date).toLocaleDateString("he-IL", { weekday: "short", day: "2-digit", month: "2-digit" })}
                     {ev.start_time ? ` · ${ev.start_time.slice(0, 5)}` : ""}
