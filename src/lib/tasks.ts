@@ -26,6 +26,44 @@ export interface Task {
   active: boolean;
   recipe_id: string | null;
   prep_item_id: string | null;
+  ingredient_name: string | null;
+  is_purchased_good: boolean;
+}
+
+// Common Hebrew operational verbs to strip when deriving a raw-ingredient
+// name from a task title. Order matters only for readability — the regex
+// uses word-boundary-ish whitespace anchors so partial matches are safe.
+const HEBREW_OPERATIONAL_VERBS = [
+  "להפריד", "לחתוך", "להכין", "לקצוץ", "לגרר", "לטחון", "לבשל", "לאפות",
+  "לטגן", "לערבב", "להקפיא", "להפשיר", "לסנן", "למלא", "לערום", "לסדר",
+  "לשטוף", "לנקות", "לקלף", "לפרוס", "לחמם", "להוציא", "לבדוק", "להחליף",
+  "לזרוק", "להזמין", "לספור", "למדוד", "לשקול", "להעמיד", "להוריד",
+  "להעלות", "לבחוש", "לעטוף", "לארוז", "להגיש",
+];
+
+/**
+ * Extract a clean raw-ingredient name from a checklist task.
+ * Prefers explicit ingredient_name; falls back to stripping operational
+ * Hebrew verbs from the task title.
+ */
+export function extractIngredientName(input: {
+  name: string;
+  ingredient_name?: string | null;
+}): string {
+  const explicit = (input.ingredient_name ?? "").trim();
+  if (explicit) return explicit;
+
+  let cleaned = input.name;
+  for (const verb of HEBREW_OPERATIONAL_VERBS) {
+    cleaned = cleaned.replace(new RegExp(`(^|\\s)${verb}(\\s|$)`, "g"), " ");
+  }
+  // Strip leftover connector words and tidy whitespace/punctuation
+  cleaned = cleaned
+    .replace(/\b(של|את|עם|ל|מ|ב)\b/g, " ")
+    .replace(/[-–—:|,.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || input.name.trim();
 }
 
 export interface DailyTaskLog {
