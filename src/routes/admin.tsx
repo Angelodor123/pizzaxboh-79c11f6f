@@ -46,7 +46,8 @@ import {
 import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "@/components/admin/ParLevelPanels";
 import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
-import { Building2, ListChecks } from "lucide-react";
+import { OverviewPanel } from "@/components/admin/OverviewPanel";
+import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
