@@ -43,13 +43,17 @@ async function loadMetrics(): Promise<Metrics> {
     .maybeSingle();
   out.doughThreshold = Number((thr?.value as any)?.value ?? 15);
 
-  // Latest dough trays
+  // Latest dough trays per location (shop / warehouse)
   const { data: dough } = await supabase
     .from("dough_updates_log")
-    .select("trays_count, created_at")
+    .select("trays_count, location, created_at")
     .order("created_at", { ascending: false })
-    .limit(1);
-  out.doughTrays = dough?.[0]?.trays_count ?? null;
+    .limit(50);
+  const rows = (dough ?? []) as Array<{ trays_count: number; location: string }>;
+  const latestShop = rows.find((r) => r.location === "shop");
+  const latestWh = rows.find((r) => r.location === "warehouse");
+  out.doughShop = latestShop ? Number(latestShop.trays_count) : null;
+  out.doughWarehouse = latestWh ? Number(latestWh.trays_count) : null;
 
   // Open maintenance tickets (unread by admin)
   const { count: ticketCount } = await supabase
