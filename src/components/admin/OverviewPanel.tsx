@@ -97,6 +97,21 @@ async function loadMetrics(): Promise<Metrics> {
     out.tasksDone = tDone ?? 0;
   }
 
+  // Today's received goods
+  const { data: todayInvoices } = await supabase
+    .from("invoices")
+    .select("supplier_id, suppliers:supplier_id(name)")
+    .eq("document_date", today)
+    .eq("is_archived", false);
+  const names = Array.from(
+    new Set(
+      (todayInvoices ?? [])
+        .map((r: any) => r.suppliers?.name)
+        .filter((n: any): n is string => !!n && typeof n === "string")
+    )
+  );
+  out.todaySuppliers = names;
+
   return out;
 }
 
