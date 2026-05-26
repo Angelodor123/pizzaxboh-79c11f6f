@@ -70,7 +70,7 @@ export function MaintenanceBell() {
             kind: "ticket" as const,
             title: t.description || "קריאת שירות חדשה",
             subtitle: t.urgency,
-            href: "/admin/maintenance",
+            href: "/service-calls",
             createdAt: t.created_at,
             urgent: typeof t.urgency === "string" && t.urgency.startsWith("קריטי"),
           }),
@@ -194,7 +194,7 @@ export function MaintenanceBell() {
         <div className="border-t border-border px-3 py-2 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => go("/admin/maintenance")}
+            onClick={() => go("/service-calls")}
             className="text-[11px] font-bold text-neon hover:underline"
           >
             כל קריאות השירות
