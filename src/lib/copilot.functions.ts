@@ -62,17 +62,30 @@ const SYSTEM_PROMPT = `קוראים לך ג'וני (Johnny). אתה הסוכן �
 - אזהרות ונתונים רציניים — תעביר ברור אבל בטון רגוע.
 - בלי התנצלויות מוגזמות. אתה חבר בטוח של עצמו.`;
 
-async function buildKnowledgeContext(): Promise<string> {
+async function buildKnowledgeContext(
+  supabase: any,
+  branchId: string | undefined,
+): Promise<string> {
   try {
+    const recipesQ = supabase
+      .from("recipes")
+      .select("name_hebrew, category, base_yield_hebrew, ingredients, instructions_hebrew, technique_notes_hebrew, shelf_life_hebrew, essence_hebrew, branch_id")
+      .eq("deleted", false)
+      .limit(200);
+    const shiftsQ = supabase.from("shifts").select("id, name, branch_id").eq("active", true);
+    const groupsQ = supabase.from("task_groups").select("id, shift_id, name, sort_order, branch_id").eq("active", true).order("sort_order");
+    const tasksQ = supabase.from("tasks").select("name, group_id, sort_order, branch_id").eq("active", true).order("sort_order");
+    if (branchId) {
+      recipesQ.eq("branch_id", branchId);
+      shiftsQ.eq("branch_id", branchId);
+      groupsQ.eq("branch_id", branchId);
+      tasksQ.eq("branch_id", branchId);
+    }
     const [{ data: recipes }, { data: shifts }, { data: groups }, { data: tasks }] = await Promise.all([
-      supabaseAdmin
-        .from("recipes")
-        .select("name_hebrew, category, base_yield_hebrew, ingredients, instructions_hebrew, technique_notes_hebrew, shelf_life_hebrew, essence_hebrew")
-        .eq("deleted", false)
-        .limit(200),
-      supabaseAdmin.from("shifts").select("id, name").eq("active", true),
-      supabaseAdmin.from("task_groups").select("id, shift_id, name, sort_order").eq("active", true).order("sort_order"),
-      supabaseAdmin.from("tasks").select("name, group_id, sort_order").eq("active", true).order("sort_order"),
+      recipesQ,
+      shiftsQ,
+      groupsQ,
+      tasksQ,
     ]);
 
     const parts: string[] = [];
@@ -721,6 +734,15 @@ export const askCopilot = createServerFn({ method: "POST" })
 
     const { supabase, userId } = context as { supabase: any; userId: string };
 
+    // Role gate: only active admin/viewer may invoke the copilot
+    const { data: roleData } = await supabase.rpc("current_user_role");
+    if (!roleData) {
+      return {
+        reply: "אחי, אין לך הרשאה לשימוש בעוזר. תפנה למנהל 🌿",
+        error: "FORBIDDEN",
+      };
+    }
+
     // Snapshot intent detection — pre-compute counts for deep-link chips
     const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
     const snapshotIntent = lastUser ? isSnapshotIntent(lastUser.content) : false;
@@ -746,7 +768,7 @@ export const askCopilot = createServerFn({ method: "POST" })
     if (data.context?.briefing) ctxParts.push(`תדריך תפעולי של היום: ${data.context.briefing}`);
     const contextLine = ctxParts.length ? `\n\nהקשר נוכחי: ${ctxParts.join(" | ")}.` : "";
 
-    const kb = await buildKnowledgeContext();
+    const kb = await buildKnowledgeContext(supabase, data.context?.branchId);
     const knowledgeBlock = kb ? `\n\n==== שכבת ידע סטטית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====` : "";
 
     const gateway = createLovableAiGatewayProvider(apiKey);
