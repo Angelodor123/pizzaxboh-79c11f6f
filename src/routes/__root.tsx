@@ -29,6 +29,8 @@ import { NdaGate } from "@/components/NdaGate";
 import { BranchGate } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
+import { MaintenanceBell } from "@/components/MaintenanceBell";
+import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConfirmHost } from "@/lib/confirm";
@@ -190,6 +192,8 @@ function RootComponent() {
 const RESTRICTED_ROUTES: Record<string, "manager" | "super_admin"> = {
   "/admin": "super_admin",
   "/admin/alerts": "manager",
+  "/admin/maintenance": "manager",
+  "/admin/settings/equipment": "manager",
   "/suppliers": "super_admin",
   "/orders": "manager",
   "/invoices": "manager",
@@ -294,6 +298,7 @@ function AuthedShell() {
           </Link>
           <div className="flex items-center gap-1.5 shrink-0">
             {showServiceToggle && <ServiceModeToggle />}
+            <MaintenanceBell />
             <BranchSwitcher />
             <Link
               to="/my-profile"
@@ -339,6 +344,7 @@ function AuthedShell() {
         <GuidedTour />
         <CopilotFab />
       </Suspense>
+      <CriticalMaintenanceInterceptor />
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">

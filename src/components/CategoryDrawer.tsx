@@ -20,6 +20,7 @@ import {
   ListChecks,
   Package,
   UserCircle,
+  Wrench,
 } from "lucide-react";
 
 
@@ -217,6 +218,12 @@ export function CategoryDrawer() {
               <Link to="/notebook" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
                 <span className={iconWrap}><NotebookPen className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/maintenance" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">🛠️ פתיחת קריאת שירות</span>
+                <span className={iconWrap}><Wrench className="h-5 w-5" /></span>
               </Link>
             </li>
 

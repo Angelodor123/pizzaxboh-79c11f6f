@@ -17,13 +17,16 @@ import { Route as PrepRouteImport } from './routes/prep'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as MyProfileRouteImport } from './routes/my-profile'
+import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
+import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
 import { Route as ApiPublicHooksDoughAlertRouteImport } from './routes/api/public/hooks/dough-alert'
 
 const TasksRoute = TasksRouteImport.update({
@@ -66,6 +69,11 @@ const MyProfileRoute = MyProfileRouteImport.update({
   path: '/my-profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaintenanceRoute = MaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvoicesRoute = InvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
@@ -91,6 +99,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminHistoryRoute = AdminHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -99,6 +112,11 @@ const AdminHistoryRoute = AdminHistoryRouteImport.update({
 const AdminAlertsRoute = AdminAlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsEquipmentRoute = AdminSettingsEquipmentRouteImport.update({
+  id: '/settings/equipment',
+  path: '/settings/equipment',
   getParentRoute: () => AdminRoute,
 } as any)
 const ApiPublicHooksDoughAlertRoute =
@@ -114,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
@@ -124,6 +143,8 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesByTo {
@@ -132,6 +153,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
@@ -142,6 +164,8 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRoutesById {
@@ -151,6 +175,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
+  '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/orders': typeof OrdersRoute
@@ -161,6 +186,8 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
 export interface FileRouteTypes {
@@ -171,6 +198,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/maintenance'
     | '/my-profile'
     | '/notebook'
     | '/orders'
@@ -181,6 +209,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
+    | '/admin/maintenance'
+    | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -189,6 +219,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/maintenance'
     | '/my-profile'
     | '/notebook'
     | '/orders'
@@ -199,6 +230,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
+    | '/admin/maintenance'
+    | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
   id:
     | '__root__'
@@ -207,6 +240,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/guide'
     | '/invoices'
+    | '/maintenance'
     | '/my-profile'
     | '/notebook'
     | '/orders'
@@ -217,6 +251,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
+    | '/admin/maintenance'
+    | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
   fileRoutesById: FileRoutesById
 }
@@ -226,6 +262,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   InvoicesRoute: typeof InvoicesRoute
+  MaintenanceRoute: typeof MaintenanceRoute
   MyProfileRoute: typeof MyProfileRoute
   NotebookRoute: typeof NotebookRoute
   OrdersRoute: typeof OrdersRoute
@@ -295,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/maintenance': {
+      id: '/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof MaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invoices': {
       id: '/invoices'
       path: '/invoices'
@@ -330,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/maintenance': {
+      id: '/admin/maintenance'
+      path: '/maintenance'
+      fullPath: '/admin/maintenance'
+      preLoaderRoute: typeof AdminMaintenanceRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/history': {
       id: '/admin/history'
       path: '/history'
@@ -342,6 +393,13 @@ declare module '@tanstack/react-router' {
       path: '/alerts'
       fullPath: '/admin/alerts'
       preLoaderRoute: typeof AdminAlertsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/equipment': {
+      id: '/admin/settings/equipment'
+      path: '/settings/equipment'
+      fullPath: '/admin/settings/equipment'
+      preLoaderRoute: typeof AdminSettingsEquipmentRouteImport
       parentRoute: typeof AdminRoute
     }
     '/api/public/hooks/dough-alert': {
@@ -357,11 +415,15 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAlertsRoute: typeof AdminAlertsRoute
   AdminHistoryRoute: typeof AdminHistoryRoute
+  AdminMaintenanceRoute: typeof AdminMaintenanceRoute
+  AdminSettingsEquipmentRoute: typeof AdminSettingsEquipmentRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAlertsRoute: AdminAlertsRoute,
   AdminHistoryRoute: AdminHistoryRoute,
+  AdminMaintenanceRoute: AdminMaintenanceRoute,
+  AdminSettingsEquipmentRoute: AdminSettingsEquipmentRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -372,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   InvoicesRoute: InvoicesRoute,
+  MaintenanceRoute: MaintenanceRoute,
   MyProfileRoute: MyProfileRoute,
   NotebookRoute: NotebookRoute,
   OrdersRoute: OrdersRoute,
