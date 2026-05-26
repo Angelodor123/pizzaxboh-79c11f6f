@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil } from "lucide-react";
+import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
 import { triggerHaptic } from "@/lib/haptics";
 import { celebrate } from "@/lib/celebrate";
+import { useNotebookStore } from "@/lib/notebook-store";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
@@ -153,8 +154,6 @@ function TasksPage() {
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Debounce timers per task id for comment autosave
-  const commentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   // Refs for smooth scroll-into-view on accordion open
   const shiftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const groupRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
@@ -213,13 +212,6 @@ function TasksPage() {
     };
   }, [branchId]);
 
-  // Cleanup any pending debounce timers on unmount
-  useEffect(() => {
-    return () => {
-      commentTimers.current.forEach((t) => clearTimeout(t));
-      commentTimers.current.clear();
-    };
-  }, []);
 
   const allTasks = useMemo(() => {
     const list = [...tasks];
@@ -367,38 +359,40 @@ function TasksPage() {
 
   const updateComment = (taskId: string, value: string) => {
     if (value.length > 2000) value = value.slice(0, 2000);
-    let nextState: LogState | null = null;
     setLogs((m) => {
       const next = new Map(m);
       const prev = next.get(taskId);
-      nextState = {
+      next.set(taskId, {
         completed: prev?.completed ?? false,
         completed_at: prev?.completed_at ?? null,
         completed_by: prev?.completed_by ?? null,
         completed_by_user_id: prev?.completed_by_user_id ?? null,
         comments: value,
-      };
-      next.set(taskId, nextState);
+      });
       return next;
     });
-    // Debounced save (750ms)
-    const existing = commentTimers.current.get(taskId);
-    if (existing) clearTimeout(existing);
-    const handle = setTimeout(() => {
-      commentTimers.current.delete(taskId);
-      if (nextState) void persistTask(taskId, nextState);
-    }, 750);
-    commentTimers.current.set(taskId, handle);
   };
 
-  const flushComment = (taskId: string) => {
-    const existing = commentTimers.current.get(taskId);
-    if (existing) {
-      clearTimeout(existing);
-      commentTimers.current.delete(taskId);
-    }
+  const saveComment = async (taskId: string) => {
     const state = logs.get(taskId);
-    if (state) void persistTask(taskId, state);
+    if (!state) return;
+    await persistTask(taskId, state);
+    triggerHaptic("light");
+    toast.success("הערה נשמרה");
+  };
+
+  const reportShortage = async (taskId: string) => {
+    const t = allTasks.find((x) => x.id === taskId);
+    if (!t) return;
+    const note = (logs.get(taskId)?.comments ?? "").trim();
+    const text = note || t.name;
+    try {
+      await useNotebookStore.getState().addItem("shortages", text, "urgent");
+      triggerHaptic("light");
+      toast.success("דווח לחוסרים בהצלחה");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "דיווח חוסר נכשל");
+    }
   };
 
   const total = allTasks.length;
@@ -648,7 +642,6 @@ function TasksPage() {
                                       onChange={(e) =>
                                         updateComment(t.id, e.target.value)
                                       }
-                                      onBlur={() => flushComment(t.id)}
                                       maxLength={2000}
                                       rows={2}
                                       placeholder="הערה אופציונלית…"
@@ -656,6 +649,27 @@ function TasksPage() {
                                     />
                                     <div className="text-[10px] text-muted-foreground text-end mt-0.5 tabular-nums" dir="ltr">
                                       {(log?.comments ?? "").length}/2000
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
+                                      <button
+                                        type="button"
+                                        onClick={() => reportShortage(t.id)}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
+                                        title="דווח כחוסר"
+                                      >
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        דווח כחוסר
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => saveComment(t.id)}
+                                        disabled={!t.id || t.id.startsWith("__virtual_")}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold bg-neon/90 text-black hover:bg-neon transition disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_8px_rgba(57,255,20,0.4)]"
+                                        title="שמור הערה"
+                                      >
+                                        <Save className="h-3.5 w-3.5" />
+                                        שמור הערה
+                                      </button>
                                     </div>
                                   </div>
                                 </div>
