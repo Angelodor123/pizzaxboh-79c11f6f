@@ -288,6 +288,10 @@ function CalendarPage() {
           isoDate={selectedDate}
           events={eventsForDate(selectedDate)}
           canEdit={canEdit}
+          onAdd={() => {
+            setEditing(null);
+            setFormOpen(true);
+          }}
           onEdit={(ev) => {
             setEditing(ev);
             setFormOpen(true);
