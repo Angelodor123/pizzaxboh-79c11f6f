@@ -87,7 +87,7 @@ export const parseInvoiceImage = createServerFn({ method: "POST" })
     if (data.supplierId) {
       await context.supabase
         .from("suppliers")
-        .update({ last_raw_ocr: output as unknown as Record<string, unknown> })
+        .update({ last_raw_ocr: output as unknown as never })
         .eq("id", data.supplierId);
     }
 
@@ -172,8 +172,8 @@ export const learnFromCorrection = createServerFn({ method: "POST" })
         supplier_id: data.supplierId,
         invoice_id: data.invoiceId ?? null,
         branch_id: sup.branch_id,
-        raw_ocr: data.raw as unknown as Record<string, unknown>,
-        final_data: data.final as unknown as Record<string, unknown>,
+        raw_ocr: data.raw as unknown as never,
+        final_data: data.final as unknown as never,
         diff_summary: output.diff_summary,
       });
 
