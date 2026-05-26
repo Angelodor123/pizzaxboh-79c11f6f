@@ -235,6 +235,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
 
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       toast.success("החשבונית נקלטה בהצלחה");
+
+      // Fire-and-forget autonomous learning: compare raw OCR vs user-corrected data
+      if (rawOcr && supplierId) {
+        const finalData = {
+          invoice_number: invoiceNumber.trim(),
+          document_date: docDate,
+          total_amount: totalNum,
+          items: cleanItems.map((r) => ({
+            item_name: r.item_name.trim(),
+            quantity: Number(r.quantity) || null,
+            unit_price: Number(r.unit_price) || null,
+            total_price: Number(r.total_price) || null,
+          })),
+        };
+        runLearn({ data: { supplierId, invoiceId: invoiceRow?.id, raw: rawOcr, final: finalData } })
+          .catch(() => { /* silent background task */ });
+      }
+
       onSaved();
       onClose();
     } catch (e) {
