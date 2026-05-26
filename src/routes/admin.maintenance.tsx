@@ -86,8 +86,11 @@ function AdminMaintenancePage() {
   });
 
   const updateStatus = async (id: string, status: TicketStatus) => {
-    const patch: Record<string, unknown> = { status, is_read_by_admin: true };
-    if (status === "resolved") patch.resolved_at = new Date().toISOString();
+    const patch = {
+      status,
+      is_read_by_admin: true,
+      ...(status === "resolved" ? { resolved_at: new Date().toISOString() } : {}),
+    };
     const { error } = await supabase
       .from("maintenance_tickets")
       .update(patch)
