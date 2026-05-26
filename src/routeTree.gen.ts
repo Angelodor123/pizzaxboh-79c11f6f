@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as ServiceCallsRouteImport } from './routes/service-calls'
 import { Route as RestockRouteImport } from './routes/restock'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PrepRouteImport } from './routes/prep'
@@ -23,7 +24,6 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
@@ -38,6 +38,11 @@ const TasksRoute = TasksRouteImport.update({
 const SuppliersRoute = SuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServiceCallsRoute = ServiceCallsRouteImport.update({
+  id: '/service-calls',
+  path: '/service-calls',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RestockRoute = RestockRouteImport.update({
@@ -100,11 +105,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
-  id: '/maintenance',
-  path: '/maintenance',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminHistoryRoute = AdminHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -146,11 +146,11 @@ export interface FileRoutesByFullPath {
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
+  '/service-calls': typeof ServiceCallsRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
-  '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -168,11 +168,11 @@ export interface FileRoutesByTo {
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
+  '/service-calls': typeof ServiceCallsRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
-  '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -191,11 +191,11 @@ export interface FileRoutesById {
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
+  '/service-calls': typeof ServiceCallsRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
-  '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -215,11 +215,11 @@ export interface FileRouteTypes {
     | '/prep'
     | '/recipes'
     | '/restock'
+    | '/service-calls'
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
-    | '/admin/maintenance'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -237,11 +237,11 @@ export interface FileRouteTypes {
     | '/prep'
     | '/recipes'
     | '/restock'
+    | '/service-calls'
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
-    | '/admin/maintenance'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -259,11 +259,11 @@ export interface FileRouteTypes {
     | '/prep'
     | '/recipes'
     | '/restock'
+    | '/service-calls'
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
-    | '/admin/maintenance'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -282,6 +282,7 @@ export interface RootRouteChildren {
   PrepRoute: typeof PrepRoute
   RecipesRoute: typeof RecipesRoute
   RestockRoute: typeof RestockRoute
+  ServiceCallsRoute: typeof ServiceCallsRoute
   SuppliersRoute: typeof SuppliersRoute
   TasksRoute: typeof TasksRoute
   ApiPublicHooksDoughAlertRoute: typeof ApiPublicHooksDoughAlertRoute
@@ -302,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/suppliers'
       fullPath: '/suppliers'
       preLoaderRoute: typeof SuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/service-calls': {
+      id: '/service-calls'
+      path: '/service-calls'
+      fullPath: '/service-calls'
+      preLoaderRoute: typeof ServiceCallsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/restock': {
@@ -388,13 +396,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/maintenance': {
-      id: '/admin/maintenance'
-      path: '/maintenance'
-      fullPath: '/admin/maintenance'
-      preLoaderRoute: typeof AdminMaintenanceRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/history': {
       id: '/admin/history'
       path: '/history'
@@ -436,14 +437,12 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAlertsRoute: typeof AdminAlertsRoute
   AdminHistoryRoute: typeof AdminHistoryRoute
-  AdminMaintenanceRoute: typeof AdminMaintenanceRoute
   AdminSettingsEquipmentRoute: typeof AdminSettingsEquipmentRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAlertsRoute: AdminAlertsRoute,
   AdminHistoryRoute: AdminHistoryRoute,
-  AdminMaintenanceRoute: AdminMaintenanceRoute,
   AdminSettingsEquipmentRoute: AdminSettingsEquipmentRoute,
 }
 
@@ -462,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrepRoute: PrepRoute,
   RecipesRoute: RecipesRoute,
   RestockRoute: RestockRoute,
+  ServiceCallsRoute: ServiceCallsRoute,
   SuppliersRoute: SuppliersRoute,
   TasksRoute: TasksRoute,
   ApiPublicHooksDoughAlertRoute: ApiPublicHooksDoughAlertRoute,
@@ -470,3 +470,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
