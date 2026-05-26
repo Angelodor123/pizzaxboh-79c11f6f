@@ -683,7 +683,7 @@ function TasksPage() {
                                         branchId={branchId}
                                         userId={userId}
                                         existingPath={log?.photo_url ?? null}
-                                        onUploaded={(path) => handlePhotoUploaded(t.id, path)}
+                                        onUploaded={(path: string) => handlePhotoUploaded(t.id, path)}
                                       />
                                     </div>
                                   )}
