@@ -679,7 +679,18 @@ function DayDetails({
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-card/80 backdrop-blur p-4">
-      <h2 className="font-display text-lg font-bold mb-3 text-right">{label}</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display text-lg font-bold text-right">{label}</h2>
+        {canEdit && (
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-neon/40 text-neon text-xs font-bold hover:bg-neon/10 active:scale-95 transition"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            צור חדש
+          </button>
+        )}
+      </div>
       {events.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">אין אירועים ביום זה</p>
       ) : (
