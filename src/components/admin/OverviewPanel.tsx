@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat } from "lucide-react";
+import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Metrics {
@@ -12,6 +12,7 @@ interface Metrics {
   prepTotal: number;
   tasksDone: number;
   tasksTotal: number;
+  todaySuppliers: string[];
 }
 
 const EMPTY: Metrics = {
@@ -23,6 +24,7 @@ const EMPTY: Metrics = {
   prepTotal: 0,
   tasksDone: 0,
   tasksTotal: 0,
+  todaySuppliers: [],
 };
 
 async function loadMetrics(): Promise<Metrics> {
@@ -94,6 +96,21 @@ async function loadMetrics(): Promise<Metrics> {
       .eq("completed", true);
     out.tasksDone = tDone ?? 0;
   }
+
+  // Today's received goods
+  const { data: todayInvoices } = await supabase
+    .from("invoices")
+    .select("supplier_id, suppliers:supplier_id(name)")
+    .eq("document_date", today)
+    .eq("is_archived", false);
+  const names = Array.from(
+    new Set(
+      (todayInvoices ?? [])
+        .map((r: any) => r.suppliers?.name)
+        .filter((n: any): n is string => !!n && typeof n === "string")
+    )
+  );
+  out.todaySuppliers = names;
 
   return out;
 }
@@ -236,6 +253,47 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
           alert={m.activeShortages > 0}
         />
       </div>
+
+      {/* Today's Deliveries */}
+      {(() => {
+        const hasDeliveries = m.todaySuppliers.length > 0;
+        return (
+          <div
+            className={`rounded-xl border p-5 backdrop-blur transition ${
+              hasDeliveries
+                ? "border-neon/60 bg-neon/5 shadow-[0_0_28px_-10px_hsl(var(--neon))]"
+                : "border-border bg-card/60"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={`p-2 rounded-md shrink-0 ${
+                  hasDeliveries ? "bg-neon/15 text-neon" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                <PackageCheck className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  סחורה שהתקבלה היום
+                </div>
+                {loading ? (
+                  <div className="mt-2 text-sm text-muted-foreground">…</div>
+                ) : hasDeliveries ? (
+                  <div className="mt-2 text-base font-bold text-foreground leading-relaxed">
+                    התקבלה סחורה מ:{" "}
+                    <span className="text-neon">{m.todaySuppliers.join(", ")}</span>
+                  </div>
+                ) : (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    טרם נקלטה סחורה היום
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Progress visuals */}
       <div className="rounded-xl border border-border bg-card/60 p-5">
