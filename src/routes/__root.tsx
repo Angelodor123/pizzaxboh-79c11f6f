@@ -344,6 +344,7 @@ function AuthedShell() {
         <GuidedTour />
         <CopilotFab />
       </Suspense>
+      <CriticalMaintenanceInterceptor />
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
         <p className="text-xs text-muted-foreground/70">
