@@ -56,6 +56,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     ingredient_name: null,
     is_purchased_good: false,
     requires_photo: false,
+    parent_task_id: null,
   },
   {
     id: "__virtual_winter_t2__",
@@ -69,6 +70,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     ingredient_name: null,
     is_purchased_good: false,
     requires_photo: false,
+    parent_task_id: null,
   },
   {
     id: "__virtual_winter_t3__",
@@ -82,6 +84,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     ingredient_name: null,
     is_purchased_good: false,
     requires_photo: false,
+    parent_task_id: null,
   },
 ];
 
@@ -232,17 +235,32 @@ function TasksPage() {
     return list;
   }, [tasks, winter]);
 
+  const hasChildren = useMemo(() => {
+    const s = new Set<string>();
+    for (const t of allTasks) if (t.parent_task_id) s.add(t.parent_task_id);
+    return s;
+  }, [allTasks]);
+
+  const countableTasks = useMemo(
+    () => allTasks.filter((t) => !hasChildren.has(t.id)),
+    [allTasks, hasChildren],
+  );
+
   const completedCount = useMemo(
-    () => allTasks.filter((t) => logs.get(t.id)?.completed).length,
-    [allTasks, logs],
+    () => countableTasks.filter((t) => logs.get(t.id)?.completed).length,
+    [countableTasks, logs],
   );
 
   const groupsForShift = (shiftId: string) =>
     groups.filter((g) => g.shift_id === shiftId);
   const tasksForGroup = (groupId: string) =>
     allTasks
-      .filter((t) => t.group_id === groupId)
+      .filter((t) => t.group_id === groupId && !t.parent_task_id)
       .sort((a, b) => a.name.localeCompare(b.name, "he"));
+  const subtasksFor = (parentId: string) =>
+    allTasks
+      .filter((t) => t.parent_task_id === parentId)
+      .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "he"));
 
   const syncParLevelsForTask = async (taskId: string) => {
     const t = tasks.find((x) => x.id === taskId);
@@ -439,7 +457,7 @@ function TasksPage() {
     }
   };
 
-  const total = allTasks.length;
+  const total = countableTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
   const prevPctRef = useRef(pct);
@@ -512,7 +530,11 @@ function TasksPage() {
         {displayShifts.map((shift) => {
           const isShiftOpen = openShift === shift.id;
           const shiftGroups = displayGroupsForShift(shift.id);
-          const shiftTasks = shiftGroups.flatMap((g) => tasksForGroup(g.id));
+          const shiftTopTasks = shiftGroups.flatMap((g) => tasksForGroup(g.id));
+          const shiftTasks = shiftTopTasks.flatMap((t) => {
+            const subs = subtasksFor(t.id);
+            return subs.length > 0 ? subs : [t];
+          });
           const shiftDone = shiftTasks.filter((t) => logs.get(t.id)?.completed).length;
           const isVirtual = shift.id === VIRTUAL_WINTER_SHIFT_ID;
           return (
@@ -552,11 +574,15 @@ function TasksPage() {
                   {shiftGroups.map((g) => {
                     const isGroupOpen = openGroup === g.id;
                     const gTasks = tasksForGroup(g.id);
-                    const gDone = gTasks.filter((t) => logs.get(t.id)?.completed).length;
+                    const gCountable = gTasks.flatMap((t) => {
+                      const subs = subtasksFor(t.id);
+                      return subs.length > 0 ? subs : [t];
+                    });
+                    const gDone = gCountable.filter((t) => logs.get(t.id)?.completed).length;
                     const gPct =
-                      gTasks.length === 0
+                      gCountable.length === 0
                         ? 0
-                        : Math.round((gDone / gTasks.length) * 100);
+                        : Math.round((gDone / gCountable.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
                       <div
@@ -571,7 +597,7 @@ function TasksPage() {
                           type="button"
                           onClick={() => setOpenGroup(isGroupOpen ? null : g.id)}
                           aria-expanded={isGroupOpen}
-                          aria-label={`${g.name} — ${gDone} מתוך ${gTasks.length}`}
+                          aria-label={`${g.name} — ${gDone} מתוך ${gCountable.length}`}
                           className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-5 py-4 hover:bg-gray-800 transition"
                         >
                           <ChevronDown
@@ -588,7 +614,7 @@ function TasksPage() {
                               </span>
                             </div>
                             <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-center gap-2">
-                              <bdi className="tabular-nums">{gDone}/{gTasks.length}</bdi>
+                              <bdi className="tabular-nums">{gDone}/{gCountable.length}</bdi>
                               <div className="w-20 h-1 rounded-full bg-background/60 border border-border overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${gPct === 100 ? "bg-success" : "bg-neon"}`}
@@ -606,6 +632,88 @@ function TasksPage() {
                         {isGroupOpen && (
                           <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
                             {gTasks.map((t) => {
+                              const subs = subtasksFor(t.id);
+                              if (subs.length > 0) {
+                                const subsDone = subs.filter((s) => logs.get(s.id)?.completed).length;
+                                const allDone = subsDone === subs.length;
+                                return (
+                                  <div
+                                    key={t.id}
+                                    className={`rounded-xl border p-4 transition-all duration-300 ${
+                                      allDone
+                                        ? "bg-card/40 border-border"
+                                        : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)]"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                      <div className={`text-sm font-bold leading-snug flex-1 text-right ${allDone ? "text-gray-500" : "text-foreground"}`}>
+                                        {t.name}
+                                      </div>
+                                      <div className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                                        <bdi>{subsDone}/{subs.length}</bdi>
+                                      </div>
+                                      {isSuperAdmin && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingTask(t)}
+                                          className="p-1.5 rounded-md text-muted-foreground hover:text-neon hover:bg-accent transition shrink-0"
+                                          aria-label={`עריכת משימה: ${t.name}`}
+                                          title="עריכה מהירה"
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="space-y-3">
+                                      {subs.map((s) => {
+                                        const slog = logs.get(s.id);
+                                        const sdone = slog?.completed ?? false;
+                                        const sstamp = sdone && slog?.completed_at
+                                          ? formatStamp(slog.completed_by, slog.completed_at)
+                                          : null;
+                                        return (
+                                          <div
+                                            key={s.id}
+                                            className={`rounded-lg border p-3 ${sdone ? "bg-background/30 border-border" : "bg-background/50 border-pink-500/30"}`}
+                                          >
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                              <input
+                                                type="checkbox"
+                                                checked={sdone}
+                                                onChange={() => toggleTask(s.id)}
+                                                aria-label={`סמן כבוצע: ${s.name}`}
+                                                className={`mt-0.5 h-5 w-5 shrink-0 ${sdone ? "accent-[#39FF14]" : "accent-primary"}`}
+                                              />
+                                              <div className="flex-1 min-w-0 text-right">
+                                                <div className={`text-sm font-bold leading-snug ${sdone ? "line-through text-gray-500" : "text-foreground"}`}>
+                                                  {s.name}
+                                                </div>
+                                                {sstamp && (
+                                                  <div className="text-[11px] text-primary/90 mt-1 leading-snug">{sstamp}</div>
+                                                )}
+                                              </div>
+                                            </label>
+                                            {s.requires_photo && branchId && (
+                                              <div className="mt-2 rounded-lg border border-pink-500/30 bg-pink-500/5 p-2.5">
+                                                <div className="text-[11px] text-pink-200/90 font-bold mb-2 text-right">
+                                                  📷 נדרשת תמונת ביצוע
+                                                </div>
+                                                <TaskPhotoButton
+                                                  taskId={s.id}
+                                                  branchId={branchId}
+                                                  userId={userId}
+                                                  existingPath={slog?.photo_url ?? null}
+                                                  onUploaded={(path: string) => handlePhotoUploaded(s.id, path)}
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              }
                               const log = logs.get(t.id);
                               const done = log?.completed ?? false;
                               const isPulsing = pulsingTaskId === t.id;

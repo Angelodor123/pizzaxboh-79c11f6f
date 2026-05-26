@@ -29,6 +29,7 @@ export interface Task {
   ingredient_name: string | null;
   is_purchased_good: boolean;
   requires_photo: boolean;
+  parent_task_id: string | null;
 }
 
 // Common Hebrew operational verbs to strip when deriving a raw-ingredient

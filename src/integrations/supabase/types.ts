@@ -1494,6 +1494,7 @@ export type Database = {
           ingredient_name: string | null
           is_purchased_good: boolean
           name: string
+          parent_task_id: string | null
           prep_item_id: string | null
           recipe_id: string | null
           requires_photo: boolean
@@ -1509,6 +1510,7 @@ export type Database = {
           ingredient_name?: string | null
           is_purchased_good?: boolean
           name: string
+          parent_task_id?: string | null
           prep_item_id?: string | null
           recipe_id?: string | null
           requires_photo?: boolean
@@ -1524,6 +1526,7 @@ export type Database = {
           ingredient_name?: string | null
           is_purchased_good?: boolean
           name?: string
+          parent_task_id?: string | null
           prep_item_id?: string | null
           recipe_id?: string | null
           requires_photo?: boolean
@@ -1536,6 +1539,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "task_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
