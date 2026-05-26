@@ -34,7 +34,29 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [showAnomaly, setShowAnomaly] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [inventory, setInventory] = useState<InventoryOpt[]>([]);
+  const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const runOcr = useServerFn(parseInvoiceImage);
+
+  // Load inventory list for autocomplete
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const branchId = await requireCurrentBranchId();
+        const { data } = await supabase
+          .from("inventory_items")
+          .select("id,name,unit")
+          .eq("branch_id", branchId)
+          .order("name");
+        if (!cancelled) setInventory((data ?? []) as InventoryOpt[]);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+
 
   // Restore draft
   useEffect(() => {
