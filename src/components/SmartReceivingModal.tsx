@@ -428,39 +428,40 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           {/* STAGE: verify (side-by-side) */}
           {(stage === "verify" || stage === "manual") && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4">
                 {previewUrl && <img src={previewUrl} alt="חשבונית" className="w-full max-h-72 object-contain rounded-xl bg-zinc-900/60 border border-border" />}
-                <div className="space-y-2">
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1">ספק *</label>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="block text-xs font-bold text-muted-foreground">ספק *</label>
                     <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} disabled={!!linkedOrderId}
-                      className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none disabled:opacity-60">
+                      className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none disabled:opacity-60">
                       <option value="">בחר ספק…</option>
                       {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-bold text-muted-foreground mb-1">מס׳ חשבונית</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="block text-xs font-bold text-muted-foreground">מס׳ חשבונית</label>
                       <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)}
-                        className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none" />
+                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-muted-foreground mb-1">תאריך *</label>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="block text-xs font-bold text-muted-foreground">תאריך *</label>
                       <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)}
-                        className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none" />
+                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none [&::-webkit-datetime-edit]:py-0 [&::-webkit-datetime-edit]:leading-none [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1">סכום כולל ₪ *</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="block text-xs font-bold text-muted-foreground">סכום כולל ₪ *</label>
                     <input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
-                      className="w-full h-11 rounded-md bg-background border-2 border-border px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums" />
+                      className="w-full h-11 rounded-md bg-background border-2 border-border px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums" />
                   </div>
                   {chosenMatch && (
                     <div className="text-[11px] text-neon">✓ משויך להזמנה {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")} · {supplierName}</div>
                   )}
                 </div>
               </div>
+
 
               <div>
                 <div className="flex items-center justify-between mb-2">
