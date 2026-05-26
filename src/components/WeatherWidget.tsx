@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Cloud, CloudRain, Sun, CloudSnow, CloudFog, CloudLightning, Loader2, AlertTriangle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Cloud, CloudRain, Sun, CloudSnow, CloudFog, CloudLightning, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 
 // Modi'in, Israel
 const LAT = 31.9009;
