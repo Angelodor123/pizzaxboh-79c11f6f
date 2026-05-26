@@ -516,6 +516,57 @@ export type Database = {
           },
         ]
       }
+      invoice_ocr_feedback: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          diff_summary: string | null
+          final_data: Json
+          id: string
+          invoice_id: string | null
+          raw_ocr: Json
+          supplier_id: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          diff_summary?: string | null
+          final_data?: Json
+          id?: string
+          invoice_id?: string | null
+          raw_ocr?: Json
+          supplier_id?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          diff_summary?: string | null
+          final_data?: Json
+          id?: string
+          invoice_id?: string | null
+          raw_ocr?: Json
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_ocr_feedback_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_ocr_feedback_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           branch_id: string
@@ -1328,9 +1379,11 @@ export type Database = {
           delivery_weekdays: number[]
           id: string
           is_archived: boolean
+          last_raw_ocr: Json | null
           logo_url: string | null
           name: string
           notes: string | null
+          parsing_instructions: string | null
           updated_at: string
         }
         Insert: {
@@ -1345,9 +1398,11 @@ export type Database = {
           delivery_weekdays?: number[]
           id?: string
           is_archived?: boolean
+          last_raw_ocr?: Json | null
           logo_url?: string | null
           name: string
           notes?: string | null
+          parsing_instructions?: string | null
           updated_at?: string
         }
         Update: {
@@ -1362,9 +1417,11 @@ export type Database = {
           delivery_weekdays?: number[]
           id?: string
           is_archived?: boolean
+          last_raw_ocr?: Json | null
           logo_url?: string | null
           name?: string
           notes?: string | null
+          parsing_instructions?: string | null
           updated_at?: string
         }
         Relationships: [

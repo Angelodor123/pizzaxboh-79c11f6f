@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
-import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
+import { parseInvoiceImage, learnFromCorrection, type ParsedInvoice } from "@/lib/invoice-ocr.functions";
 
 interface SupplierOpt { id: string; name: string }
 
@@ -37,7 +37,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
   const [inventory, setInventory] = useState<InventoryOpt[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [rawOcr, setRawOcr] = useState<ParsedInvoice | null>(null);
   const runOcr = useServerFn(parseInvoiceImage);
+  const runLearn = useServerFn(learnFromCorrection);
 
   // Load inventory list for autocomplete
   useEffect(() => {
@@ -123,8 +125,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
     try {
       const dataUrl = await fileToDataUrl(f);
       const parsed = await runOcr({
-        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg" },
+        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg", supplierId: supplierId || undefined },
       });
+      setRawOcr(parsed);
 
       // Populate header fields when present
       if (parsed.invoice_number) setInvoiceNumber(parsed.invoice_number);
@@ -232,6 +235,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
 
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       toast.success("החשבונית נקלטה בהצלחה");
+
+      // Fire-and-forget autonomous learning: compare raw OCR vs user-corrected data
+      if (rawOcr && supplierId) {
+        const finalData = {
+          invoice_number: invoiceNumber.trim(),
+          document_date: docDate,
+          total_amount: totalNum,
+          items: cleanItems.map((r) => ({
+            item_name: r.item_name.trim(),
+            quantity: Number(r.quantity) || null,
+            unit_price: Number(r.unit_price) || null,
+            total_price: Number(r.total_price) || null,
+          })),
+        };
+        runLearn({ data: { supplierId, invoiceId: invoiceRow?.id, raw: rawOcr, final: finalData } })
+          .catch(() => { /* silent background task */ });
+      }
+
       onSaved();
       onClose();
     } catch (e) {
@@ -346,7 +367,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
               <select
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
-                className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
               >
                 <option value="">בחר ספק…</option>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -359,7 +380,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                 <input
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
                   maxLength={60}
                 />
               </div>
@@ -372,7 +393,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                   value={docDate}
                   onChange={(e) => setDocDate(e.target.value)}
                   required
-                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
                 />
               </div>
             </div>
@@ -404,6 +425,13 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                   <option key={it.id} value={it.name}>{it.unit}</option>
                 ))}
               </datalist>
+              <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center px-0.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span>שם פריט</span>
+                <span className="text-center">כמות</span>
+                <span className="text-center">מחיר יח׳</span>
+                <span className="text-center">סה״כ</span>
+                <span />
+              </div>
               <div className="space-y-2">
                 {items.map((row, i) => (
                   <div key={i} className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center">
@@ -412,7 +440,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                       list="inventory-items-list"
                       value={row.item_name}
                       onChange={(e) => updateItem(i, "item_name", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
+                      className="h-11 rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
                       dir="rtl"
                       autoComplete="off"
                     />
@@ -420,14 +448,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                       placeholder="כמות"
                       value={row.quantity}
                       onChange={(e) => updateItem(i, "quantity", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
                       inputMode="decimal"
                     />
                     <input
                       placeholder="יח'"
                       value={row.unit_price}
                       onChange={(e) => updateItem(i, "unit_price", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
                       inputMode="decimal"
                       title="מחיר ליחידה"
                     />
@@ -435,13 +463,13 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                       placeholder="סה״כ"
                       value={row.total_price}
                       onChange={(e) => updateItem(i, "total_price", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
                       inputMode="decimal"
                     />
                     <button
                       type="button"
                       onClick={() => removeItem(i)}
-                      className="min-h-[44px] w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                      className="h-11 w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
                       aria-label="מחק שורה"
                     >
                       <Trash2 className="h-4 w-4" />
