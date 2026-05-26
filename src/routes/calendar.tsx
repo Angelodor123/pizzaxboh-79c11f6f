@@ -619,6 +619,11 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
         {(missing || ev.high_priority) && <AlertTriangle className={`h-3 w-3 ${missing ? "text-destructive" : "text-destructive"}`} />}
         <Icon className={`h-3 w-3 ${missing ? "text-destructive" : isAuto ? "text-success" : "text-neon"}`} />
         <span className="truncate">{ev.title}</span>
+        {ev.category === "delivery" && (
+          <span className="text-[9px] font-bold text-neon/80 border border-neon/30 rounded px-1 shrink-0">
+            רישום
+          </span>
+        )}
         {missing && (
           <span className="text-[9px] text-destructive border border-destructive/60 rounded px-1 shrink-0">⚠️ חסרה חשבונית</span>
         )}
