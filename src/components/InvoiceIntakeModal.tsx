@@ -37,7 +37,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
   const [inventory, setInventory] = useState<InventoryOpt[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [rawOcr, setRawOcr] = useState<ParsedInvoice | null>(null);
   const runOcr = useServerFn(parseInvoiceImage);
+  const runLearn = useServerFn(learnFromCorrection);
 
   // Load inventory list for autocomplete
   useEffect(() => {
