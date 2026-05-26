@@ -328,6 +328,57 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         );
       })()}
 
+      {/* Upcoming Sports Events */}
+      <div className="rounded-xl border border-border bg-card/60 p-5 backdrop-blur">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-md bg-neon/10 text-neon">
+              <Trophy className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                אירועים קרובים
+              </div>
+              <div className="text-[11px] text-muted-foreground">משחקי כדורגל גדולים שמשודרים בפיצה</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSyncSports}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-neon/60 text-neon font-bold px-3 h-11 text-xs hover:bg-neon/10 transition disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "מסנכרן…" : "סנכרן משחקים"}
+          </button>
+        </div>
+        {sportsEvents.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            אין משחקים מתוכננים. לחץ על "סנכרן משחקים" כדי לטעון את הקרובים.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {sportsEvents.map((ev) => (
+              <li key={ev.id} className="flex items-start gap-3 rounded-lg border border-border bg-background/40 p-3">
+                <div className="p-1.5 rounded-md bg-neon/10 text-neon shrink-0">
+                  <CalendarDays className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-foreground truncate">{ev.title}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {new Date(ev.event_date).toLocaleDateString("he-IL", { weekday: "short", day: "2-digit", month: "2-digit" })}
+                    {ev.start_time ? ` · ${ev.start_time.slice(0, 5)}` : ""}
+                  </div>
+                  {ev.notes && (
+                    <div className="text-[11px] text-muted-foreground mt-1 truncate">{ev.notes}</div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* Progress visuals */}
       <div className="rounded-xl border border-border bg-card/60 p-5">
         <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
