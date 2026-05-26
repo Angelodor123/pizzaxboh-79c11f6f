@@ -457,7 +457,7 @@ function TasksPage() {
     }
   };
 
-  const total = allTasks.length;
+  const total = countableTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
   const prevPctRef = useRef(pct);
