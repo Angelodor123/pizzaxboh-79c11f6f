@@ -235,17 +235,32 @@ function TasksPage() {
     return list;
   }, [tasks, winter]);
 
+  const hasChildren = useMemo(() => {
+    const s = new Set<string>();
+    for (const t of allTasks) if (t.parent_task_id) s.add(t.parent_task_id);
+    return s;
+  }, [allTasks]);
+
+  const countableTasks = useMemo(
+    () => allTasks.filter((t) => !hasChildren.has(t.id)),
+    [allTasks, hasChildren],
+  );
+
   const completedCount = useMemo(
-    () => allTasks.filter((t) => logs.get(t.id)?.completed).length,
-    [allTasks, logs],
+    () => countableTasks.filter((t) => logs.get(t.id)?.completed).length,
+    [countableTasks, logs],
   );
 
   const groupsForShift = (shiftId: string) =>
     groups.filter((g) => g.shift_id === shiftId);
   const tasksForGroup = (groupId: string) =>
     allTasks
-      .filter((t) => t.group_id === groupId)
+      .filter((t) => t.group_id === groupId && !t.parent_task_id)
       .sort((a, b) => a.name.localeCompare(b.name, "he"));
+  const subtasksFor = (parentId: string) =>
+    allTasks
+      .filter((t) => t.parent_task_id === parentId)
+      .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "he"));
 
   const syncParLevelsForTask = async (taskId: string) => {
     const t = tasks.find((x) => x.id === taskId);
