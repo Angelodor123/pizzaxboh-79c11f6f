@@ -26,12 +26,13 @@ interface Props {
   onClose: () => void;
   onSaved: () => void;
   editInvoice?: EditInvoiceData | null;
+  onDeleted?: (id: string) => void;
 }
 
 const DRAFT_KEY = "invoice-intake-draft";
 const HARD_LIMIT = 15000;
 
-export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null }: Props) {
+export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted }: Props) {
   const isEdit = !!editInvoice;
   const [supplierId, setSupplierId] = useState(editInvoice?.supplier_id ?? "");
   const [invoiceNumber, setInvoiceNumber] = useState(editInvoice?.invoice_number ?? "");
