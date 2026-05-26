@@ -309,12 +309,18 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                     style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
                     className="max-w-full max-h-full object-contain transition-transform"
                   />
-                  {uploading && (
+                  {(uploading || ocrLoading) && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
                       <div className="absolute inset-x-0 h-1 bg-neon/70 shadow-[0_0_18px_var(--neon)] scan-bar" />
-                      <div className="absolute bottom-3 left-3 text-[10px] font-bold text-neon uppercase tracking-widest">Scanning Document…</div>
+                      <div className="absolute inset-0 bg-background/40 grid place-items-center">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-card/90 border border-neon/60 px-4 py-2 text-sm font-bold text-neon shadow-[0_0_18px_rgba(57,255,20,0.35)]">
+                          <Sparkles className="h-4 w-4 animate-pulse" />
+                          מפענח נתוני קבלה...
+                        </div>
+                      </div>
                     </div>
                   )}
+
                 </>
               ) : (
                 <button
