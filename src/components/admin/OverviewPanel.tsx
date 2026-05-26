@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat } from "lucide-react";
+import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Metrics {
