@@ -1,23 +1,22 @@
 /**
- * Firecrawl fallback for sports fixtures.
- * Used only when RSS feeds return zero confident matches.
- *
- * Scrapes well-known fixture pages and asks Gemini (via Lovable AI Gateway)
- * to extract confirmed Champions League / World Cup matches with a concrete
- * future date and kickoff time in Asia/Jerusalem.
+ * Sports fixtures extraction via Firecrawl Search (Google results).
+ * Searches Google for upcoming Champions League / World Cup matches,
+ * scrapes the top results, and asks Gemini to extract confirmed matches.
  */
 
 import type { ExtractedMatch } from "./sports-rss.server";
 
-const FIRECRAWL_API = "https://api.firecrawl.dev/v2/scrape";
+const FIRECRAWL_SEARCH_API = "https://api.firecrawl.dev/v2/search";
 
-const FALLBACK_URLS: { url: string; label: string }[] = [
-  { url: "https://www.365scores.com/he/football/competition/world-cup-tournaments-72", label: "365scores - מונדיאל" },
-  { url: "https://www.365scores.com/he/football/competition/champions-league-7", label: "365scores - ליגת האלופות" },
+const SEARCH_QUERIES: { query: string; label: string }[] = [
+  { query: "מונדיאל 2026 משחקים השבוע שעות שידור", label: "מונדיאל 2026" },
+  { query: "ליגת האלופות משחקים השבוע שעות שידור", label: "ליגת האלופות" },
+  { query: "FIFA World Cup 2026 fixtures this week kickoff time", label: "World Cup EN" },
+  { query: "UEFA Champions League fixtures this week kickoff time", label: "Champions League EN" },
 ];
 
-const SYSTEM_PROMPT = `אתה עוזר מומחה לקליטת לוח משחקי כדורגל מתוכן עמוד אינטרנט.
-מותר להחזיר משחק רק אם התוכן מציין במפורש תאריך עתידי, שעה וקבוצות זהויות.
+const SYSTEM_PROMPT = `אתה עוזר מומחה לחילוץ לוח משחקי כדורגל מתוצאות חיפוש גוגל.
+מותר להחזיר משחק רק אם התוכן מציין במפורש תאריך עתידי, שעה וזהות שתי הקבוצות.
 אסור להמציא או להשלים מהראש. בספק — לא להחזיר.
 
 מותר רק שני סוגי טורנירים:
@@ -25,35 +24,53 @@ const SYSTEM_PROMPT = `אתה עוזר מומחה לקליטת לוח משחקי
 - "world_cup" (FIFA World Cup 2026)
 
 תאריך חייב להיות עתידי בפורמט YYYY-MM-DD. שעה בפורמט HH:MM שעון ישראל (24h).
-אם שעה לא ידועה במפורש — לא להחזיר את המשחק.
+אם השעה מצוינת באזור זמן אחר — המר לשעון ישראל. אם לא ניתן לקבוע במדויק — לא להחזיר.
 
 החזר JSON תקין בלבד:
 { "matches": [ { "team_a","team_b","competition","event_date","start_time","source_title","source_url" } ] }`;
 
-async function firecrawlScrape(url: string, firecrawlKey: string): Promise<string | null> {
+type FirecrawlSearchResult = {
+  url?: string;
+  title?: string;
+  description?: string;
+  markdown?: string;
+};
+
+async function firecrawlSearch(
+  query: string,
+  firecrawlKey: string,
+): Promise<FirecrawlSearchResult[]> {
   try {
-    const res = await fetch(FIRECRAWL_API, {
+    const res = await fetch(FIRECRAWL_SEARCH_API, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${firecrawlKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url,
-        formats: ["markdown"],
-        onlyMainContent: true,
+        query,
+        limit: 6,
+        tbs: "qdr:w",
+        scrapeOptions: { formats: ["markdown"], onlyMainContent: true },
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(45_000),
     });
     if (!res.ok) {
-      console.warn(`[firecrawl] ${url} HTTP ${res.status}`);
-      return null;
+      console.warn(`[firecrawl-search] "${query}" HTTP ${res.status}`);
+      return [];
     }
-    const data = (await res.json()) as { data?: { markdown?: string }; markdown?: string };
-    return data.markdown ?? data.data?.markdown ?? null;
+    const data = (await res.json()) as {
+      data?: FirecrawlSearchResult[] | { web?: FirecrawlSearchResult[] };
+    };
+    const arr = Array.isArray(data.data)
+      ? data.data
+      : Array.isArray((data.data as { web?: FirecrawlSearchResult[] } | undefined)?.web)
+        ? (data.data as { web: FirecrawlSearchResult[] }).web
+        : [];
+    return arr;
   } catch (e) {
-    console.warn(`[firecrawl] ${url} failed`, e);
-    return null;
+    console.warn(`[firecrawl-search] "${query}" failed`, e);
+    return [];
   }
 }
 
@@ -63,10 +80,18 @@ export async function extractMatchesViaFirecrawl(
 ): Promise<{ matches: ExtractedMatch[]; pagesScraped: number }> {
   const pages: { url: string; label: string; markdown: string }[] = [];
 
-  for (const target of FALLBACK_URLS) {
-    const md = await firecrawlScrape(target.url, firecrawlKey);
-    if (md && md.trim().length > 0) {
-      pages.push({ url: target.url, label: target.label, markdown: md.slice(0, 8_000) });
+  for (const target of SEARCH_QUERIES) {
+    const results = await firecrawlSearch(target.query, firecrawlKey);
+    for (const r of results) {
+      const url = r.url ?? "";
+      const title = r.title ?? target.label;
+      const content = (r.markdown ?? r.description ?? "").trim();
+      if (!url || !content) continue;
+      pages.push({
+        url,
+        label: title,
+        markdown: content.slice(0, 4_000),
+      });
     }
   }
 
@@ -78,7 +103,11 @@ export async function extractMatchesViaFirecrawl(
   const userPayload = JSON.stringify({
     today: todayIso,
     timezone: "Asia/Jerusalem",
-    pages: pages.map((p) => ({ source_title: p.label, source_url: p.url, content: p.markdown })),
+    pages: pages.slice(0, 20).map((p) => ({
+      source_title: p.label,
+      source_url: p.url,
+      content: p.markdown,
+    })),
   });
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -96,7 +125,7 @@ export async function extractMatchesViaFirecrawl(
       ],
       response_format: { type: "json_object" },
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(45_000),
   });
 
   if (!res.ok) {
