@@ -632,6 +632,88 @@ function TasksPage() {
                         {isGroupOpen && (
                           <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
                             {gTasks.map((t) => {
+                              const subs = subtasksFor(t.id);
+                              if (subs.length > 0) {
+                                const subsDone = subs.filter((s) => logs.get(s.id)?.completed).length;
+                                const allDone = subsDone === subs.length;
+                                return (
+                                  <div
+                                    key={t.id}
+                                    className={`rounded-xl border p-4 transition-all duration-300 ${
+                                      allDone
+                                        ? "bg-card/40 border-border"
+                                        : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)]"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                      <div className={`text-sm font-bold leading-snug flex-1 text-right ${allDone ? "text-gray-500" : "text-foreground"}`}>
+                                        {t.name}
+                                      </div>
+                                      <div className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                                        <bdi>{subsDone}/{subs.length}</bdi>
+                                      </div>
+                                      {isSuperAdmin && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingTask(t)}
+                                          className="p-1.5 rounded-md text-muted-foreground hover:text-neon hover:bg-accent transition shrink-0"
+                                          aria-label={`עריכת משימה: ${t.name}`}
+                                          title="עריכה מהירה"
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="space-y-3">
+                                      {subs.map((s) => {
+                                        const slog = logs.get(s.id);
+                                        const sdone = slog?.completed ?? false;
+                                        const sstamp = sdone && slog?.completed_at
+                                          ? formatStamp(slog.completed_by, slog.completed_at)
+                                          : null;
+                                        return (
+                                          <div
+                                            key={s.id}
+                                            className={`rounded-lg border p-3 ${sdone ? "bg-background/30 border-border" : "bg-background/50 border-pink-500/30"}`}
+                                          >
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                              <input
+                                                type="checkbox"
+                                                checked={sdone}
+                                                onChange={() => toggleTask(s.id)}
+                                                aria-label={`סמן כבוצע: ${s.name}`}
+                                                className={`mt-0.5 h-5 w-5 shrink-0 ${sdone ? "accent-[#39FF14]" : "accent-primary"}`}
+                                              />
+                                              <div className="flex-1 min-w-0 text-right">
+                                                <div className={`text-sm font-bold leading-snug ${sdone ? "line-through text-gray-500" : "text-foreground"}`}>
+                                                  {s.name}
+                                                </div>
+                                                {sstamp && (
+                                                  <div className="text-[11px] text-primary/90 mt-1 leading-snug">{sstamp}</div>
+                                                )}
+                                              </div>
+                                            </label>
+                                            {s.requires_photo && branchId && (
+                                              <div className="mt-2 rounded-lg border border-pink-500/30 bg-pink-500/5 p-2.5">
+                                                <div className="text-[11px] text-pink-200/90 font-bold mb-2 text-right">
+                                                  📷 נדרשת תמונת ביצוע
+                                                </div>
+                                                <TaskPhotoButton
+                                                  taskId={s.id}
+                                                  branchId={branchId}
+                                                  userId={userId}
+                                                  existingPath={slog?.photo_url ?? null}
+                                                  onUploaded={(path: string) => handlePhotoUploaded(s.id, path)}
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              }
                               const log = logs.get(t.id);
                               const done = log?.completed ?? false;
                               const isPulsing = pulsingTaskId === t.id;
