@@ -574,11 +574,15 @@ function TasksPage() {
                   {shiftGroups.map((g) => {
                     const isGroupOpen = openGroup === g.id;
                     const gTasks = tasksForGroup(g.id);
-                    const gDone = gTasks.filter((t) => logs.get(t.id)?.completed).length;
+                    const gCountable = gTasks.flatMap((t) => {
+                      const subs = subtasksFor(t.id);
+                      return subs.length > 0 ? subs : [t];
+                    });
+                    const gDone = gCountable.filter((t) => logs.get(t.id)?.completed).length;
                     const gPct =
-                      gTasks.length === 0
+                      gCountable.length === 0
                         ? 0
-                        : Math.round((gDone / gTasks.length) * 100);
+                        : Math.round((gDone / gCountable.length) * 100);
                     const emoji = emojiForGroup(g.name);
                     return (
                       <div
