@@ -4,7 +4,7 @@ import { Plus, Trash2, Pencil, Loader2, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { confirm } from "@/lib/confirm";
+import { confirmDelete } from "@/lib/confirm";
 import type { EquipmentType } from "@/lib/maintenance-store";
 
 export const Route = createFileRoute("/admin/settings/equipment")({
