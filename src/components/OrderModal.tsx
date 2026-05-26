@@ -1,10 +1,21 @@
-import { useEffect, useState } from "react";
-import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown, Eye, Pencil, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { compileOrderMessage, whatsappUrl, type OrderRow } from "@/lib/order-template";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ReceivedInvoiceItem = { id: string; item_name: string; quantity: number; unit_price: number; total_price: number };
 type ReceivedInvoice = {
@@ -12,7 +23,17 @@ type ReceivedInvoice = {
   document_date: string;
   invoice_number: string;
   total_amount: number;
+  invoice_image_url: string | null;
   items: ReceivedInvoiceItem[];
+};
+
+type EditableItem = { id?: string; item_name: string; quantity: string; unit_price: string; total_price: string };
+type EditingInvoiceState = {
+  id: string;
+  document_date: string;
+  invoice_number: string;
+  total_amount: string;
+  items: EditableItem[];
 };
 
 interface Supplier {
@@ -48,6 +69,11 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [received, setReceived] = useState<ReceivedInvoice[]>([]);
   const [receivedLoading, setReceivedLoading] = useState(true);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<{ url: string; loading: boolean } | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<EditingInvoiceState | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
@@ -118,48 +144,46 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   }, [supplier.id]);
 
   // Load received goods (invoices + items) for this supplier
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setReceivedLoading(true);
-      const { data: invs } = await supabase
-        .from("invoices")
-        .select("id, document_date, invoice_number, total_amount")
-        .eq("supplier_id", supplier.id)
-        .eq("is_archived", false)
-        .order("document_date", { ascending: false })
-        .limit(30);
-      if (cancelled) return;
-      const ids = (invs ?? []).map((i) => i.id);
-      let itemsByInvoice: Record<string, ReceivedInvoiceItem[]> = {};
-      if (ids.length) {
-        const { data: items } = await supabase
-          .from("invoice_items")
-          .select("id, invoice_id, item_name, quantity, unit_price, total_price, sort_order")
-          .in("invoice_id", ids)
-          .order("sort_order", { ascending: true });
-        if (cancelled) return;
-        for (const it of items ?? []) {
-          (itemsByInvoice[it.invoice_id] ||= []).push({
-            id: it.id,
-            item_name: it.item_name,
-            quantity: Number(it.quantity ?? 0),
-            unit_price: Number(it.unit_price ?? 0),
-            total_price: Number(it.total_price ?? 0),
-          });
-        }
+  const loadReceived = useCallback(async () => {
+    setReceivedLoading(true);
+    const { data: invs } = await supabase
+      .from("invoices")
+      .select("id, document_date, invoice_number, total_amount, invoice_image_url")
+      .eq("supplier_id", supplier.id)
+      .eq("is_archived", false)
+      .order("document_date", { ascending: false })
+      .limit(30);
+    const ids = (invs ?? []).map((i) => i.id);
+    const itemsByInvoice: Record<string, ReceivedInvoiceItem[]> = {};
+    if (ids.length) {
+      const { data: items } = await supabase
+        .from("invoice_items")
+        .select("id, invoice_id, item_name, quantity, unit_price, total_price, sort_order")
+        .in("invoice_id", ids)
+        .order("sort_order", { ascending: true });
+      for (const it of items ?? []) {
+        (itemsByInvoice[it.invoice_id] ||= []).push({
+          id: it.id,
+          item_name: it.item_name,
+          quantity: Number(it.quantity ?? 0),
+          unit_price: Number(it.unit_price ?? 0),
+          total_price: Number(it.total_price ?? 0),
+        });
       }
-      setReceived((invs ?? []).map((i) => ({
-        id: i.id,
-        document_date: i.document_date,
-        invoice_number: i.invoice_number,
-        total_amount: Number(i.total_amount ?? 0),
-        items: itemsByInvoice[i.id] ?? [],
-      })));
-      setReceivedLoading(false);
-    })();
-    return () => { cancelled = true; };
+    }
+    setReceived((invs ?? []).map((i) => ({
+      id: i.id,
+      document_date: i.document_date,
+      invoice_number: i.invoice_number,
+      total_amount: Number(i.total_amount ?? 0),
+      invoice_image_url: i.invoice_image_url ?? null,
+      items: itemsByInvoice[i.id] ?? [],
+    })));
+    setReceivedLoading(false);
   }, [supplier.id]);
+
+  useEffect(() => { loadReceived(); }, [loadReceived]);
+
 
 
   // Restore draft
@@ -264,6 +288,123 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
       toast.success("ההזמנה הועתקה בהצלחה");
     } catch {
       toast.error("העתקה נכשלה");
+    }
+  };
+
+
+  const openViewImage = async (inv: ReceivedInvoice) => {
+    if (!inv.invoice_image_url) {
+      toast.error("לא צורפה תמונה לחשבונית זו");
+      return;
+    }
+    setViewingImage({ url: "", loading: true });
+    const { data, error } = await supabase.storage
+      .from("invoice-images")
+      .createSignedUrl(inv.invoice_image_url, 60 * 60);
+    if (error || !data?.signedUrl) {
+      setViewingImage(null);
+      toast.error("טעינת תמונת החשבונית נכשלה");
+      return;
+    }
+    setViewingImage({ url: data.signedUrl, loading: false });
+  };
+
+  const openEditInvoice = (inv: ReceivedInvoice) => {
+    setEditingInvoice({
+      id: inv.id,
+      document_date: inv.document_date,
+      invoice_number: inv.invoice_number ?? "",
+      total_amount: String(inv.total_amount ?? 0),
+      items: inv.items.length
+        ? inv.items.map((it) => ({
+            id: it.id,
+            item_name: it.item_name,
+            quantity: String(it.quantity),
+            unit_price: String(it.unit_price),
+            total_price: String(it.total_price),
+          }))
+        : [{ item_name: "", quantity: "", unit_price: "", total_price: "" }],
+    });
+  };
+
+  const updateEditItem = (idx: number, key: keyof EditableItem, value: string) => {
+    setEditingInvoice((prev) => prev ? {
+      ...prev,
+      items: prev.items.map((it, i) => i === idx ? { ...it, [key]: value } : it),
+    } : prev);
+  };
+
+  const addEditItem = () => setEditingInvoice((prev) => prev ? {
+    ...prev,
+    items: [...prev.items, { item_name: "", quantity: "", unit_price: "", total_price: "" }],
+  } : prev);
+
+  const removeEditItem = (idx: number) => setEditingInvoice((prev) => prev ? {
+    ...prev,
+    items: prev.items.filter((_, i) => i !== idx),
+  } : prev);
+
+  const saveEditInvoice = async () => {
+    if (!editingInvoice) return;
+    setSavingEdit(true);
+    try {
+      const { error: upErr } = await supabase
+        .from("invoices")
+        .update({
+          document_date: editingInvoice.document_date,
+          invoice_number: editingInvoice.invoice_number,
+          total_amount: Number(editingInvoice.total_amount) || 0,
+        })
+        .eq("id", editingInvoice.id);
+      if (upErr) throw upErr;
+
+      const { error: delErr } = await supabase
+        .from("invoice_items")
+        .delete()
+        .eq("invoice_id", editingInvoice.id);
+      if (delErr) throw delErr;
+
+      const cleanItems = editingInvoice.items
+        .filter((it) => it.item_name.trim())
+        .map((it, i) => ({
+          invoice_id: editingInvoice.id,
+          item_name: it.item_name.trim(),
+          quantity: Number(it.quantity) || 0,
+          unit_price: Number(it.unit_price) || 0,
+          total_price: Number(it.total_price) || 0,
+          sort_order: i,
+        }));
+      if (cleanItems.length) {
+        const { error: insErr } = await supabase.from("invoice_items").insert(cleanItems);
+        if (insErr) throw insErr;
+      }
+
+      toast.success("החשבונית עודכנה בהצלחה");
+      setEditingInvoice(null);
+      await loadReceived();
+    } catch (e) {
+      console.error(e);
+      toast.error("עדכון החשבונית נכשל");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const confirmDeleteInvoice = async () => {
+    if (!deletingInvoiceId) return;
+    setDeleteBusy(true);
+    try {
+      await supabase.from("invoice_items").delete().eq("invoice_id", deletingInvoiceId);
+      const { error } = await supabase.from("invoices").delete().eq("id", deletingInvoiceId);
+      if (error) throw error;
+      toast.success("החשבונית נמחקה בהצלחה");
+      setDeletingInvoiceId(null);
+      await loadReceived();
+    } catch (e) {
+      console.error(e);
+      toast.error("מחיקת החשבונית נכשלה");
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -472,7 +613,7 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
                           <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
                         </button>
                         {open && (
-                          <div className="border-t border-zinc-800 p-3 bg-zinc-950/40">
+                          <div className="border-t border-zinc-800 p-3 bg-zinc-950/40 space-y-3">
                             {inv.items.length === 0 ? (
                               <div className="text-xs text-zinc-500">אין פריטים שמורים לחשבונית זו.</div>
                             ) : (
@@ -491,6 +632,33 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
                                 ))}
                               </div>
                             )}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
+                              <button
+                                type="button"
+                                onClick={() => openViewImage(inv)}
+                                disabled={!inv.invoice_image_url}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border hover:border-neon hover:text-neon disabled:opacity-40 disabled:cursor-not-allowed transition"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                צפה בחשבונית
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openEditInvoice(inv)}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border hover:border-amber-brand hover:text-amber-brand transition"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                ערוך
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeletingInvoiceId(inv.id)}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-destructive/60 text-destructive hover:bg-destructive/10 transition"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                מחק
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -503,6 +671,164 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
         </div>
 
       </div>
+
+      {/* View invoice image */}
+      <Dialog open={!!viewingImage} onOpenChange={(o) => !o && setViewingImage(null)}>
+        <DialogContent className="max-w-3xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>תמונת חשבונית</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-auto grid place-items-center bg-zinc-950 rounded-md">
+            {viewingImage?.loading ? (
+              <div className="flex items-center gap-2 text-sm text-zinc-400 p-12">
+                <Loader2 className="h-4 w-4 animate-spin" /> טוען…
+              </div>
+            ) : viewingImage?.url ? (
+              <img src={viewingImage.url} alt="חשבונית" className="max-w-full h-auto" />
+            ) : (
+              <div className="p-12 text-sm text-zinc-400 flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" /> אין תמונה זמינה
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit invoice */}
+      <Dialog open={!!editingInvoice} onOpenChange={(o) => !o && !savingEdit && setEditingInvoice(null)}>
+        <DialogContent className="max-w-2xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>עריכת חשבונית</DialogTitle>
+          </DialogHeader>
+          {editingInvoice && (
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto pl-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground">תאריך</label>
+                  <input
+                    type="date"
+                    value={editingInvoice.document_date?.slice(0, 10) ?? ""}
+                    onChange={(e) => setEditingInvoice((p) => p ? { ...p, document_date: e.target.value } : p)}
+                    className="w-full h-9 rounded-md bg-background border border-border px-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground">מס׳ חשבונית</label>
+                  <input
+                    value={editingInvoice.invoice_number}
+                    onChange={(e) => setEditingInvoice((p) => p ? { ...p, invoice_number: e.target.value } : p)}
+                    className="w-full h-9 rounded-md bg-background border border-border px-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground">סה"כ</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={editingInvoice.total_amount}
+                    onChange={(e) => setEditingInvoice((p) => p ? { ...p, total_amount: e.target.value } : p)}
+                    className="w-full h-9 rounded-md bg-background border border-border px-2 text-sm tabular-nums"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-muted-foreground">פריטים</div>
+                {editingInvoice.items.map((it, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_70px_80px_80px_36px] gap-1.5 items-center">
+                    <input
+                      placeholder="פריט"
+                      value={it.item_name}
+                      onChange={(e) => updateEditItem(i, "item_name", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs"
+                    />
+                    <input
+                      placeholder="כמות"
+                      type="number"
+                      inputMode="decimal"
+                      value={it.quantity}
+                      onChange={(e) => updateEditItem(i, "quantity", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs text-center tabular-nums"
+                    />
+                    <input
+                      placeholder="יח׳"
+                      type="number"
+                      inputMode="decimal"
+                      value={it.unit_price}
+                      onChange={(e) => updateEditItem(i, "unit_price", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs text-center tabular-nums"
+                    />
+                    <input
+                      placeholder='סה"כ'
+                      type="number"
+                      inputMode="decimal"
+                      value={it.total_price}
+                      onChange={(e) => updateEditItem(i, "total_price", e.target.value)}
+                      className="h-9 rounded-md bg-background border border-border px-2 text-xs text-center tabular-nums"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeEditItem(i)}
+                      className="h-9 w-9 grid place-content-center rounded-md border border-border hover:border-destructive hover:text-destructive"
+                      aria-label="הסר"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addEditItem}
+                  className="w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
+                >
+                  <Plus className="h-3.5 w-3.5" /> הוסף פריט
+                </button>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setEditingInvoice(null)}
+              disabled={savingEdit}
+              className="h-10 px-4 rounded-md border border-border hover:text-neon text-sm font-bold"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={saveEditInvoice}
+              disabled={savingEdit}
+              className="h-10 px-5 rounded-md bg-neon text-black text-sm font-bold inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {savingEdit && <Loader2 className="h-4 w-4 animate-spin" />}
+              שמור שינויים
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingInvoiceId} onOpenChange={(o) => !o && !deleteBusy && setDeletingInvoiceId(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת חשבונית</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק חשבונית זו לצמיתות?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBusy}>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDeleteInvoice(); }}
+              disabled={deleteBusy}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "מחק לצמיתות"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
