@@ -106,6 +106,7 @@ export const Route = createFileRoute("/api/public/hooks/sports-sync")({
                 end_time: null,
                 notes,
                 high_priority: false,
+                projector_broadcast: true,
                 is_auto: true,
               });
               if (!error) inserted++;
