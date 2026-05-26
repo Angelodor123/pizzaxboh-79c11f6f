@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { extractMatchesFromRss } from "@/lib/sports-rss.server";
+import { extractMatchesViaFirecrawl } from "@/lib/sports-firecrawl.server";
 
 export const Route = createFileRoute("/api/public/hooks/sports-sync")({
   server: {
