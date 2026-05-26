@@ -231,6 +231,7 @@ export type Database = {
           created_at: string
           id: string
           log_date: string
+          photo_url: string | null
           task_id: string
           updated_at: string
         }
@@ -244,6 +245,7 @@ export type Database = {
           created_at?: string
           id?: string
           log_date?: string
+          photo_url?: string | null
           task_id: string
           updated_at?: string
         }
@@ -257,6 +259,7 @@ export type Database = {
           created_at?: string
           id?: string
           log_date?: string
+          photo_url?: string | null
           task_id?: string
           updated_at?: string
         }
@@ -1493,6 +1496,7 @@ export type Database = {
           name: string
           prep_item_id: string | null
           recipe_id: string | null
+          requires_photo: boolean
           sort_order: number
           updated_at: string
         }
@@ -1507,6 +1511,7 @@ export type Database = {
           name: string
           prep_item_id?: string | null
           recipe_id?: string | null
+          requires_photo?: boolean
           sort_order?: number
           updated_at?: string
         }
@@ -1521,6 +1526,7 @@ export type Database = {
           name?: string
           prep_item_id?: string | null
           recipe_id?: string | null
+          requires_photo?: boolean
           sort_order?: number
           updated_at?: string
         }
