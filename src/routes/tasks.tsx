@@ -664,15 +664,19 @@ function TasksPage() {
                                       {(log?.comments ?? "").length}/2000
                                     </div>
                                     <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
-                                      <button
-                                        type="button"
-                                        onClick={() => reportShortage(t.id)}
-                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
-                                        title="דווח כחוסר"
-                                      >
-                                        <AlertTriangle className="h-3.5 w-3.5" />
-                                        דווח כחוסר
-                                      </button>
+                                      {t.is_purchased_good ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => reportShortage(t.id)}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
+                                          title="דווח כחוסר"
+                                        >
+                                          <AlertTriangle className="h-3.5 w-3.5" />
+                                          דווח כחוסר
+                                        </button>
+                                      ) : (
+                                        <span />
+                                      )}
                                       <button
                                         type="button"
                                         onClick={() => saveComment(t.id)}
