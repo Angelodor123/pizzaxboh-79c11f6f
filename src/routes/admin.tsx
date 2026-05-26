@@ -48,6 +48,7 @@ import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
 import { OverviewPanel } from "@/components/admin/OverviewPanel";
 import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
@@ -601,20 +602,35 @@ function AdminPage() {
             {saveError && (
               <p className="text-xs text-destructive text-right">{saveError}</p>
             )}
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={closeEditor}
-                className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-card"
-              >
-                ביטול
-              </button>
-              <button
-                onClick={save}
-                disabled={!editing.nameHebrew.trim() || saving}
-                className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
-              >
-                <Check className="h-4 w-4" /> {saving ? "שומר..." : "שמור"}
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              {editing && !editing.id.startsWith("recipe-") ? (
+                <ModalDeleteButton
+                  title={`מחיקת מתכון "${editing.nameHebrew || "ללא שם"}"`}
+                  description="האם למחוק פריט זה לצמיתות?"
+                  onConfirm={async () => {
+                    await softDeleteRecipe(editing.id);
+                    toast.success("המתכון נמחק");
+                    closeEditor();
+                  }}
+                />
+              ) : (
+                <span />
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={closeEditor}
+                  className="h-11 px-4 rounded-md border border-border text-foreground hover:bg-card"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={save}
+                  disabled={!editing.nameHebrew.trim() || saving}
+                  className="h-11 inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 rounded-md glow-neon disabled:opacity-50"
+                >
+                  <Check className="h-4 w-4" /> {saving ? "שומר..." : "שמור"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1853,21 +1869,50 @@ function SuperAdminUsersPanel() {
             )}
 
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={() => setEditing(null)}
-                className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-background"
-              >
-                ביטול
-              </button>
-              <button
-                onClick={saveEdit}
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <ModalDeleteButton
+                title={
+                  editing.row.kind === "invite"
+                    ? `ביטול הזמנה ל-${editing.email}`
+                    : `הסרת משתמש ${editing.fullName || editing.email}`
+                }
+                description="האם למחוק פריט זה לצמיתות?"
                 disabled={working}
-                className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {working ? "שומר…" : "שמור שינויים"}
-              </button>
+                onConfirm={async () => {
+                  try {
+                    if (editing.row.kind === "invite") {
+                      await revokeInviteFn({ data: { invitationId: editing.row.row_id } });
+                      toast.success("ההזמנה בוטלה");
+                    } else {
+                      await suspendFn({
+                        data: { roleId: editing.row.row_id, userId: editing.row.user_id! },
+                      });
+                      toast.success("המשתמש הוסר");
+                    }
+                    setEditing(null);
+                    await load();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "שגיאה במחיקה");
+                    throw err;
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditing(null)}
+                  className="h-11 px-4 rounded-md border border-border text-foreground hover:bg-background"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={saveEdit}
+                  disabled={working}
+                  className="h-11 inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 rounded-md glow-neon disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  {working ? "שומר…" : "שמור שינויים"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -7,7 +7,8 @@ import { syncSportsEvents } from "@/lib/sports-sync.functions";
 import { toast } from "sonner";
 
 interface Metrics {
-  doughTrays: number | null;
+  doughShop: number | null;
+  doughWarehouse: number | null;
   doughThreshold: number;
   openTickets: number;
   activeShortages: number;
@@ -19,7 +20,8 @@ interface Metrics {
 }
 
 const EMPTY: Metrics = {
-  doughTrays: null,
+  doughShop: null,
+  doughWarehouse: null,
   doughThreshold: 15,
   openTickets: 0,
   activeShortages: 0,
@@ -41,13 +43,17 @@ async function loadMetrics(): Promise<Metrics> {
     .maybeSingle();
   out.doughThreshold = Number((thr?.value as any)?.value ?? 15);
 
-  // Latest dough trays
+  // Latest dough trays per location (shop / warehouse)
   const { data: dough } = await supabase
     .from("dough_updates_log")
-    .select("trays_count, created_at")
+    .select("trays_count, location, created_at")
     .order("created_at", { ascending: false })
-    .limit(1);
-  out.doughTrays = dough?.[0]?.trays_count ?? null;
+    .limit(50);
+  const rows = (dough ?? []) as Array<{ trays_count: number; location: string }>;
+  const latestShop = rows.find((r) => r.location === "shop");
+  const latestWh = rows.find((r) => r.location === "warehouse");
+  out.doughShop = latestShop ? Number(latestShop.trays_count) : null;
+  out.doughWarehouse = latestWh ? Number(latestWh.trays_count) : null;
 
   // Open maintenance tickets (unread by admin)
   const { count: ticketCount } = await supabase
@@ -249,7 +255,11 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     }
   };
 
-  const doughLow = m.doughTrays != null && m.doughTrays < m.doughThreshold;
+  const doughTotal =
+    m.doughShop == null && m.doughWarehouse == null
+      ? null
+      : (m.doughShop ?? 0) + (m.doughWarehouse ?? 0);
+  const doughLow = doughTotal != null && doughTotal < m.doughThreshold;
   const prepPct = m.prepTotal ? Math.round((m.prepDone / m.prepTotal) * 100) : 0;
   const tasksPct = m.tasksTotal ? Math.round((m.tasksDone / m.tasksTotal) * 100) : 0;
 
@@ -267,8 +277,12 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         <KpiCard
           icon={<Pizza className="h-5 w-5" />}
           label="מגשי בצק כעת"
-          value={loading ? "…" : m.doughTrays ?? "—"}
-          sub={`סף התראה: ${m.doughThreshold}`}
+          value={loading ? "…" : doughTotal ?? "—"}
+          sub={
+            loading
+              ? `סף התראה: ${m.doughThreshold}`
+              : `בפיצה: ${m.doughShop ?? 0} · במחסן: ${m.doughWarehouse ?? 0}`
+          }
           alert={doughLow}
         />
         <KpiCard
