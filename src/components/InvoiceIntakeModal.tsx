@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { parseInvoiceImage, learnFromCorrection, type ParsedInvoice } from "@/lib/invoice-ocr.functions";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface SupplierOpt { id: string; name: string }
 
@@ -26,12 +27,13 @@ interface Props {
   onClose: () => void;
   onSaved: () => void;
   editInvoice?: EditInvoiceData | null;
+  onDeleted?: (id: string) => void;
 }
 
 const DRAFT_KEY = "invoice-intake-draft";
 const HARD_LIMIT = 15000;
 
-export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null }: Props) {
+export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted }: Props) {
   const isEdit = !!editInvoice;
   const [supplierId, setSupplierId] = useState(editInvoice?.supplier_id ?? "");
   const [invoiceNumber, setInvoiceNumber] = useState(editInvoice?.invoice_number ?? "");
@@ -548,7 +550,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             </div>
 
 
-            <div className="pt-3 border-t border-border">
+            <div className="pt-3 border-t border-border space-y-2">
               <button
                 type="button"
                 onClick={handleConfirm}
@@ -563,6 +565,25 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
                   יש למלא ספק, סכום כולל ותאריך כדי להמשיך.
                 </p>
+              )}
+              {isEdit && editInvoice && (
+                <div className="flex justify-start pt-1">
+                  <ModalDeleteButton
+                    title="מחיקת חשבונית"
+                    description="האם למחוק פריט זה לצמיתות?"
+                    onConfirm={async () => {
+                      await supabase.from("invoice_items").delete().eq("invoice_id", editInvoice.id);
+                      const { error } = await supabase.from("invoices").delete().eq("id", editInvoice.id);
+                      if (error) {
+                        toast.error(error.message);
+                        throw error;
+                      }
+                      toast.success("החשבונית נמחקה בהצלחה");
+                      onDeleted?.(editInvoice.id);
+                      onClose();
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>

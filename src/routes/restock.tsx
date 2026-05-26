@@ -207,6 +207,7 @@ function RestockPage() {
         onSaved={(upd) =>
           setItems((prev) => prev.map((x) => (x.id === upd.id ? ({ ...x, ...upd } as Item) : x)))
         }
+        onDeleted={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
       />
     </div>
   );

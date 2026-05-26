@@ -9,6 +9,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 export interface StockItem {
   id: string;
@@ -31,6 +32,7 @@ interface Props {
   kind: "prep" | "restock";
   onClose: () => void;
   onSaved: (updated: StockItem) => void;
+  onDeleted?: (id: string) => void;
 }
 
 const DAY_COLS = [
@@ -44,7 +46,7 @@ const DAY_COLS = [
 ] as const;
 const WEEKDAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
-export function QuickEditStockItemDialog({ item, kind, onClose, onSaved }: Props) {
+export function QuickEditStockItemDialog({ item, kind, onClose, onSaved, onDeleted }: Props) {
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -208,25 +210,42 @@ export function QuickEditStockItemDialog({ item, kind, onClose, onSaved }: Props
               </label>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={onClose}
-                className="px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition"
-              >
-                ביטול
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="inline-flex items-center gap-1.5 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon text-xs disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Save className="h-3.5 w-3.5" />
-                )}
-                שמור שינויים
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <ModalDeleteButton
+                title={`מחיקת "${item.name}"`}
+                description="האם למחוק פריט זה לצמיתות?"
+                onConfirm={async () => {
+                  const table = kind === "prep" ? "prep_items" : "restock_items";
+                  const { error } = await supabase.from(table).delete().eq("id", item.id);
+                  if (error) {
+                    toast.error(error.message);
+                    throw error;
+                  }
+                  toast.success("הפריט נמחק");
+                  onDeleted?.(item.id);
+                  onClose();
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onClose}
+                  className="px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon text-xs disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
+                  שמור שינויים
+                </button>
+              </div>
             </div>
           </div>
         )}

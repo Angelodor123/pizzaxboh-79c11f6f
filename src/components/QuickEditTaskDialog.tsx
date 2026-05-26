@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useCookbookStore } from "@/lib/store";
 import type { Task } from "@/lib/tasks";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface PrepItemLite {
   id: string;
@@ -22,9 +23,10 @@ interface Props {
   branchId: string | null;
   onClose: () => void;
   onSaved: (updated: Task) => void;
+  onDeleted?: (id: string) => void;
 }
 
-export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props) {
+export function QuickEditTaskDialog({ task, branchId, onClose, onSaved, onDeleted }: Props) {
   const recipes = useCookbookStore((s) => s.recipes);
   const [name, setName] = useState("");
   const [recipeId, setRecipeId] = useState("");
@@ -232,25 +234,41 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved }: Props)
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={onClose}
-                className="px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition"
-              >
-                ביטול
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="inline-flex items-center gap-1.5 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon text-xs disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Save className="h-3.5 w-3.5" />
-                )}
-                שמור שינויים
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <ModalDeleteButton
+                title={`מחיקת משימה "${task.name}"`}
+                description="האם למחוק פריט זה לצמיתות?"
+                onConfirm={async () => {
+                  const { error } = await supabase.from("tasks").delete().eq("id", task.id);
+                  if (error) {
+                    toast.error(error.message);
+                    throw error;
+                  }
+                  toast.success("המשימה נמחקה");
+                  onDeleted?.(task.id);
+                  onClose();
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onClose}
+                  className="px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon text-xs disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
+                  שמור שינויים
+                </button>
+              </div>
             </div>
           </div>
         )}
