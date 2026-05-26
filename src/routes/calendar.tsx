@@ -640,12 +640,14 @@ function DayDetails({
   isoDate,
   events,
   canEdit,
+  onAdd,
   onEdit,
   onInstanceEdit,
 }: {
   isoDate: string;
   events: EffectiveEvent[];
   canEdit: boolean;
+  onAdd: () => void;
   onEdit: (ev: CalendarEvent) => void;
   onInstanceEdit: (ev: EffectiveEvent, date: string) => void;
 }) {
