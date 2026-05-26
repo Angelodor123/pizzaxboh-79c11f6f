@@ -48,6 +48,7 @@ import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
 import { OverviewPanel } from "@/components/admin/OverviewPanel";
 import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
+import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGate,
