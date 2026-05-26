@@ -734,6 +734,15 @@ export const askCopilot = createServerFn({ method: "POST" })
 
     const { supabase, userId } = context as { supabase: any; userId: string };
 
+    // Role gate: only active admin/viewer may invoke the copilot
+    const { data: roleData } = await supabase.rpc("current_user_role");
+    if (!roleData) {
+      return {
+        reply: "אחי, אין לך הרשאה לשימוש בעוזר. תפנה למנהל 🌿",
+        error: "FORBIDDEN",
+      };
+    }
+
     // Snapshot intent detection — pre-compute counts for deep-link chips
     const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
     const snapshotIntent = lastUser ? isSnapshotIntent(lastUser.content) : false;
