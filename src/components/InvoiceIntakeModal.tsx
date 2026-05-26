@@ -367,7 +367,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
               <select
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
-                className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
               >
                 <option value="">בחר ספק…</option>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -380,7 +380,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                 <input
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
                   maxLength={60}
                 />
               </div>
@@ -393,7 +393,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                   value={docDate}
                   onChange={(e) => setDocDate(e.target.value)}
                   required
-                  className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
                 />
               </div>
             </div>
@@ -448,14 +448,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                       placeholder="כמות"
                       value={row.quantity}
                       onChange={(e) => updateItem(i, "quantity", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
                       inputMode="decimal"
                     />
                     <input
                       placeholder="יח'"
                       value={row.unit_price}
                       onChange={(e) => updateItem(i, "unit_price", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
                       inputMode="decimal"
                       title="מחיר ליחידה"
                     />
@@ -463,13 +463,13 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved }: Props) {
                       placeholder="סה״כ"
                       value={row.total_price}
                       onChange={(e) => updateItem(i, "total_price", e.target.value)}
-                      className="min-h-[44px] rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
+                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
                       inputMode="decimal"
                     />
                     <button
                       type="button"
                       onClick={() => removeItem(i)}
-                      className="min-h-[44px] w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                      className="h-11 w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
                       aria-label="מחק שורה"
                     >
                       <Trash2 className="h-4 w-4" />
