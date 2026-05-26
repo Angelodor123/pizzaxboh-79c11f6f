@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useMotionValue } from "framer-motion";
-import { Loader2, Minus, Send } from "lucide-react";
-import { askCopilot } from "@/lib/copilot.functions";
+import { Loader2, Minus, Send, ListChecks, Package, AlertTriangle, ArrowLeft } from "lucide-react";
+import { askCopilot, type CopilotAction } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
 import {
@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 
 
-type Msg = { role: "user" | "model"; content: string };
+type Msg = { role: "user" | "model"; content: string; actions?: CopilotAction[] };
 
 const TUTORIAL_PATTERNS = [
   /תפעיל\s*את\s*המדריך/,
