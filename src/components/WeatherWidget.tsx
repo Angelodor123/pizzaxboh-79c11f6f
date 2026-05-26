@@ -52,6 +52,7 @@ function isRainCode(code: number) {
 
 const CACHE_KEY = "weather_widget_cache_v1";
 const MAX_RETRIES = 3;
+const REQUEST_TIMEOUT_MS = 6_000;
 
 interface CachedWeather {
   data: WeatherData;
@@ -76,6 +77,37 @@ function writeCache(data: WeatherData) {
   } catch {
     /* ignore */
   }
+}
+
+async function fetchJsonWithTimeout(url: string, signal: AbortSignal) {
+  const timeoutController = new AbortController();
+  const abortFromParent = () => timeoutController.abort();
+  const timer = window.setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
+  signal.addEventListener("abort", abortFromParent, { once: true });
+
+  try {
+    const response = await fetch(url, {
+      signal: timeoutController.signal,
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } finally {
+    window.clearTimeout(timer);
+    signal.removeEventListener("abort", abortFromParent);
+  }
+}
+
+function mapWttrCode(code: number) {
+  if (code === 113) return 0;
+  if (code === 116) return 2;
+  if (code === 119 || code === 122) return 3;
+  if ([143, 248, 260].includes(code)) return 45;
+  if (code >= 386) return 95;
+  if ((code >= 317 && code <= 338) || (code >= 368 && code <= 377)) return 71;
+  if ((code >= 263 && code <= 284) || (code >= 293 && code <= 314)) return 51;
+  if ((code >= 353 && code <= 365) || code === 176) return 61;
+  return 2;
 }
 
 export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
