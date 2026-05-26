@@ -384,10 +384,8 @@ function TasksPage() {
   const reportShortage = async (taskId: string) => {
     const t = allTasks.find((x) => x.id === taskId);
     if (!t) return;
-    const note = (logs.get(taskId)?.comments ?? "").trim();
-    const text = note || t.name;
     try {
-      await useNotebookStore.getState().addItem("shortages", text, "urgent");
+      await useNotebookStore.getState().addItem("shortages", t.name, "urgent");
       triggerHaptic("light");
       toast.success("דווח לחוסרים בהצלחה");
     } catch (e) {
