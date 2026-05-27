@@ -271,7 +271,8 @@ function TasksPage() {
 
 
   const allTasks = useMemo(() => {
-    const list = [...tasks];
+    const today = new Date();
+    const list = tasks.filter((t) => isTaskActiveOn(t, today));
     if (winter) list.push(...VIRTUAL_WINTER_TASKS);
     return list;
   }, [tasks, winter]);
