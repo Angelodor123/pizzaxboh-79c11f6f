@@ -53,9 +53,10 @@ interface CarryItem {
 }
 
 function ShiftBriefingPage() {
-  const branch = useActiveBranch();
-  const { user } = useAuth();
-  const branchId = branch?.id;
+  const branchId = useActiveBranch();
+  const { session, fullName, email } = useAuth();
+  const userId = session?.user?.id ?? null;
+  const userLabel = fullName ?? email ?? "briefing";
 
   const [loading, setLoading] = useState(true);
   const [shifts, setShifts] = useState<Shift[]>([]);
