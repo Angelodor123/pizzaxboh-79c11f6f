@@ -138,8 +138,8 @@ function ShiftBriefingPage() {
       if (!log) continue;
       if (log.completed) continue;
       if ((log.comments || "").startsWith("ARCHIVED:")) continue;
-      const grp = grpById.get(t.group_id);
-      const shift = grp ? shiftById.get(grp.shift_id) : undefined;
+      const grp = t.group_id ? grpById.get(t.group_id) : undefined;
+      const shift = grp ? shiftById.get(grp.shift_id) : (t.shift_id ? shiftById.get(t.shift_id) : undefined);
       items.push({
         taskId: t.id,
         taskName: t.name,
