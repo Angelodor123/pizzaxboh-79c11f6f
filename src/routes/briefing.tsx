@@ -16,6 +16,7 @@ import { useActiveBranch } from "@/components/BranchGate";
 import { useAuth } from "@/lib/auth";
 import {
   fetchTaskTree,
+  isTaskActiveOn,
   type Task,
   type TaskGroup,
   type Shift,
