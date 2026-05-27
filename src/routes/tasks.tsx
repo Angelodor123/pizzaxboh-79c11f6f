@@ -57,6 +57,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    recurrence_type: "daily",
+    recurrence_day: null,
     shift_id: null,
   },
   {
@@ -72,6 +74,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    recurrence_type: "daily",
+    recurrence_day: null,
     shift_id: null,
   },
   {
@@ -87,6 +91,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    recurrence_type: "daily",
+    recurrence_day: null,
     shift_id: null,
   },
 ];
