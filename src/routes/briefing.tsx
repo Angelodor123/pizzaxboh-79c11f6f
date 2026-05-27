@@ -16,6 +16,7 @@ import { useActiveBranch } from "@/components/BranchGate";
 import { useAuth } from "@/lib/auth";
 import {
   fetchTaskTree,
+  isTaskActiveOn,
   type Task,
   type TaskGroup,
   type Shift,
@@ -162,6 +163,7 @@ function ShiftBriefingPage() {
     const grpById = new Map(groups.map((g) => [g.id, g]));
     const grouped: Record<string, { shiftName: string; tasks: { task: Task; groupName: string }[] }> = {};
     for (const t of tasks) {
+      if (!isTaskActiveOn(t, today)) continue;
       if (completedToday.has(t.id)) continue;
       const grp = t.group_id ? grpById.get(t.group_id) : undefined;
       const shiftName = (grp && shiftById.get(grp.shift_id)?.name) || (t.shift_id ? shiftById.get(t.shift_id)?.name : undefined) || "כללי";
@@ -169,7 +171,7 @@ function ShiftBriefingPage() {
       grouped[shiftName].tasks.push({ task: t, groupName: grp?.name ?? "—" });
     }
     return Object.values(grouped);
-  }, [tasks, groups, shifts, todayLogs]);
+  }, [tasks, groups, shifts, todayLogs, today]);
 
   async function reassignToToday(item: CarryItem) {
     if (!branchId) return;

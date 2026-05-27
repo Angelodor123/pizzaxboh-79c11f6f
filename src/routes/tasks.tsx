@@ -15,6 +15,7 @@ import {
   fetchTodayLogs,
   upsertLogs,
   extractIngredientName,
+  isTaskActiveOn,
   type Shift,
   type TaskGroup,
   type Task,
@@ -57,6 +58,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    recurrence_type: "daily",
+    recurrence_day: null,
     shift_id: null,
   },
   {
@@ -72,6 +75,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    recurrence_type: "daily",
+    recurrence_day: null,
     shift_id: null,
   },
   {
@@ -87,6 +92,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    recurrence_type: "daily",
+    recurrence_day: null,
     shift_id: null,
   },
 ];
@@ -264,7 +271,8 @@ function TasksPage() {
 
 
   const allTasks = useMemo(() => {
-    const list = [...tasks];
+    const today = new Date();
+    const list = tasks.filter((t) => isTaskActiveOn(t, today));
     if (winter) list.push(...VIRTUAL_WINTER_TASKS);
     return list;
   }, [tasks, winter]);

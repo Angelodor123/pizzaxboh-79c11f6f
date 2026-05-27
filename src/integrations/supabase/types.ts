@@ -1497,6 +1497,8 @@ export type Database = {
           parent_task_id: string | null
           prep_item_id: string | null
           recipe_id: string | null
+          recurrence_day: number | null
+          recurrence_type: Database["public"]["Enums"]["task_recurrence_type"]
           requires_photo: boolean
           shift_id: string | null
           sort_order: number
@@ -1514,6 +1516,8 @@ export type Database = {
           parent_task_id?: string | null
           prep_item_id?: string | null
           recipe_id?: string | null
+          recurrence_day?: number | null
+          recurrence_type?: Database["public"]["Enums"]["task_recurrence_type"]
           requires_photo?: boolean
           shift_id?: string | null
           sort_order?: number
@@ -1531,6 +1535,8 @@ export type Database = {
           parent_task_id?: string | null
           prep_item_id?: string | null
           recipe_id?: string | null
+          recurrence_day?: number | null
+          recurrence_type?: Database["public"]["Enums"]["task_recurrence_type"]
           requires_photo?: boolean
           shift_id?: string | null
           sort_order?: number
@@ -1651,11 +1657,16 @@ export type Database = {
       operational_day_start: { Args: never; Returns: string }
       operational_today: { Args: never; Returns: string }
       rollover_daily_operations: { Args: never; Returns: undefined }
+      task_active_on: {
+        Args: { _date: string; _task_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "viewer" | "super_admin" | "manager" | "employee"
       invoice_status: "pending_review" | "approved"
       order_status: "draft" | "sent" | "received" | "cancelled"
+      task_recurrence_type: "daily" | "weekly" | "monthly" | "as_needed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1786,6 +1797,7 @@ export const Constants = {
       app_role: ["admin", "viewer", "super_admin", "manager", "employee"],
       invoice_status: ["pending_review", "approved"],
       order_status: ["draft", "sent", "received", "cancelled"],
+      task_recurrence_type: ["daily", "weekly", "monthly", "as_needed"],
     },
   },
 } as const

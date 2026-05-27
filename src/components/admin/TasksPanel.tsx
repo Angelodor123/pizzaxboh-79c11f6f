@@ -6,9 +6,12 @@ import { useActiveBranch } from "@/components/BranchGate";
 import { useAuth } from "@/lib/auth";
 import {
   fetchTaskTree,
+  recurrenceLabel,
+  WEEKDAY_HE,
   type Shift,
   type TaskGroup,
   type Task,
+  type RecurrenceType,
 } from "@/lib/tasks";
 import { useCookbookStore } from "@/lib/store";
 import {
@@ -151,6 +154,109 @@ function ConfirmModal({
   );
 }
 
+// ---------- New Task modal (with scheduling) ----------
+
+type NewTaskState = {
+  open: boolean;
+  parentName: string;
+  shiftId?: string;
+  groupId?: string;
+  onConfirm?: (v: { name: string; recurrence_type: RecurrenceType; recurrence_day: number | null }) => void;
+};
+
+function NewTaskModal({ state, onClose }: { state: NewTaskState; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [rtype, setRtype] = useState<RecurrenceType>("daily");
+  const [rday, setRday] = useState<number>(0);
+  const [rdom, setRdom] = useState<number>(1);
+
+  useEffect(() => {
+    if (state.open) {
+      setName(""); setRtype("daily"); setRday(0); setRdom(1);
+    }
+  }, [state.open]);
+
+  const submit = () => {
+    if (!name.trim()) return;
+    const recurrence_day =
+      rtype === "weekly" ? rday : rtype === "monthly" ? rdom : null;
+    state.onConfirm?.({ name: name.trim(), recurrence_type: rtype, recurrence_day });
+    onClose();
+  };
+
+  return (
+    <Dialog open={state.open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent dir="rtl" className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md">
+        <DialogHeader className="text-right">
+          <DialogTitle className="text-zinc-100 text-right">משימה חדשה</DialogTitle>
+          <DialogDescription className="text-zinc-400 text-right">
+            תתווסף תחת: {state.parentName}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1 text-right">שם המשימה</label>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="שם המשימה"
+              onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) submit(); }}
+              className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1 text-right">תדירות</label>
+            <select
+              value={rtype}
+              onChange={(e) => setRtype(e.target.value as RecurrenceType)}
+              className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+            >
+              <option value="daily">יומי</option>
+              <option value="weekly">שבועי</option>
+              <option value="monthly">חודשי</option>
+              <option value="as_needed">לפי צורך</option>
+            </select>
+          </div>
+          {rtype === "weekly" && (
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1 text-right">יום בשבוע</label>
+              <select
+                value={rday}
+                onChange={(e) => setRday(Number(e.target.value))}
+                className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+              >
+                {WEEKDAY_HE.map((d, i) => <option key={i} value={i}>יום {d}</option>)}
+              </select>
+            </div>
+          )}
+          {rtype === "monthly" && (
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1 text-right">יום בחודש (1-31)</label>
+              <input
+                type="number" min={1} max={31}
+                value={rdom}
+                onChange={(e) => setRdom(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
+                className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+              />
+            </div>
+          )}
+        </div>
+        <DialogFooter className="flex flex-row-reverse gap-2 sm:flex-row-reverse">
+          <button onClick={submit} disabled={!name.trim()}
+            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors disabled:opacity-50">
+            הוסף משימה
+          </button>
+          <button onClick={onClose}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md text-sm transition-colors">
+            ביטול
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ---------- Main panel ----------
 
 export function TasksPanel() {
@@ -166,6 +272,7 @@ export function TasksPanel() {
 
   const [promptState, setPromptState] = useState<PromptState>({ open: false, title: "" });
   const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: "" });
+  const [newTaskState, setNewTaskState] = useState<NewTaskState>({ open: false, parentName: "" });
 
   const askPrompt = (s: Omit<PromptState, "open">) =>
     setPromptState({ ...s, open: true });
@@ -304,12 +411,12 @@ export function TasksPanel() {
 
   // Add a task — under a Category (groupId set) OR directly under an Area (shiftId set).
   const addTaskTo = (opts: { shiftId?: string; groupId?: string; parentName: string }) =>
-    askPrompt({
-      title: "משימה חדשה",
-      description: `המשימה תתווסף תחת: ${opts.parentName}`,
-      placeholder: "שם המשימה",
-      confirmLabel: "הוסף משימה",
-      onConfirm: async (name) => {
+    setNewTaskState({
+      open: true,
+      parentName: opts.parentName,
+      shiftId: opts.shiftId,
+      groupId: opts.groupId,
+      onConfirm: async ({ name, recurrence_type, recurrence_day }) => {
         const siblings = opts.groupId
           ? tasks.filter((t) => t.group_id === opts.groupId)
           : tasks.filter((t) => t.shift_id === opts.shiftId && !t.group_id);
@@ -320,6 +427,8 @@ export function TasksPanel() {
           shift_id: opts.groupId ? null : (opts.shiftId ?? null),
           name,
           sort_order: so,
+          recurrence_type,
+          recurrence_day,
         });
         if (error) return toast.error(error.message);
         reload();
@@ -512,6 +621,10 @@ export function TasksPanel() {
         state={confirmState}
         onClose={() => setConfirmState((c) => ({ ...c, open: false }))}
       />
+      <NewTaskModal
+        state={newTaskState}
+        onClose={() => setNewTaskState((s) => ({ ...s, open: false }))}
+      />
     </section>
   );
 }
@@ -530,11 +643,31 @@ function TaskRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(task.name);
   const [recipeId, setRecipeId] = useState(task.recipe_id ?? "");
+  const [rtype, setRtype] = useState<RecurrenceType>(task.recurrence_type ?? "daily");
+  const [rday, setRday] = useState<number>(
+    task.recurrence_type === "weekly" ? (task.recurrence_day ?? 0) : 0,
+  );
+  const [rdom, setRdom] = useState<number>(
+    task.recurrence_type === "monthly" ? (task.recurrence_day ?? 1) : 1,
+  );
 
   useEffect(() => {
     setName(task.name);
     setRecipeId(task.recipe_id ?? "");
-  }, [task.id, task.name, task.recipe_id]);
+    setRtype(task.recurrence_type ?? "daily");
+    setRday(task.recurrence_type === "weekly" ? (task.recurrence_day ?? 0) : 0);
+    setRdom(task.recurrence_type === "monthly" ? (task.recurrence_day ?? 1) : 1);
+  }, [task.id, task.name, task.recipe_id, task.recurrence_type, task.recurrence_day]);
+
+  const badge = recurrenceLabel(task);
+  const badgeTone =
+    task.recurrence_type === "daily"
+      ? "bg-zinc-800 text-zinc-300"
+      : task.recurrence_type === "weekly"
+        ? "bg-neon/15 text-neon border border-neon/30"
+        : task.recurrence_type === "monthly"
+          ? "bg-purple-500/15 text-purple-300 border border-purple-500/30"
+          : "bg-amber-500/15 text-amber-300 border border-amber-500/30";
 
   return (
     <li className="px-3 py-2 bg-background/40">
@@ -552,32 +685,72 @@ function TaskRow({
             className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
           />
         ) : (
-          <div className="flex-1 text-sm text-right">{task.name}</div>
+          <div className="flex-1 text-right">
+            <div className="text-sm">{task.name}</div>
+            <div className="mt-0.5">
+              <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded ${badgeTone}`}>{badge}</span>
+            </div>
+          </div>
         )}
       </div>
       {editing && (
-        <div className="mt-2 flex items-center gap-2 pr-12">
-          <select
-            value={recipeId}
-            onChange={(e) => setRecipeId(e.target.value)}
-            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-xs text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
-          >
-            <option value="">— ללא קישור למתכון —</option>
-            {recipes.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nameHebrew}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => {
-              onUpdate({ name: name.trim() || task.name, recipe_id: recipeId || null });
-              setEditing(false);
-            }}
-            className="inline-flex items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white font-bold px-2 py-1 rounded text-xs transition-colors"
-          >
-            <Save className="h-3 w-3" /> שמור
-          </button>
+        <div className="mt-2 space-y-2 pr-12">
+          <div className="flex items-center gap-2">
+            <select
+              value={recipeId}
+              onChange={(e) => setRecipeId(e.target.value)}
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-xs text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+            >
+              <option value="">— ללא קישור למתכון —</option>
+              {recipes.map((r) => (
+                <option key={r.id} value={r.id}>{r.nameHebrew}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={rtype}
+              onChange={(e) => setRtype(e.target.value as RecurrenceType)}
+              className="bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-xs text-right text-zinc-100"
+            >
+              <option value="daily">יומי</option>
+              <option value="weekly">שבועי</option>
+              <option value="monthly">חודשי</option>
+              <option value="as_needed">לפי צורך</option>
+            </select>
+            {rtype === "weekly" && (
+              <select
+                value={rday}
+                onChange={(e) => setRday(Number(e.target.value))}
+                className="bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-xs text-right text-zinc-100"
+              >
+                {WEEKDAY_HE.map((d, i) => <option key={i} value={i}>יום {d}</option>)}
+              </select>
+            )}
+            {rtype === "monthly" && (
+              <input
+                type="number" min={1} max={31} value={rdom}
+                onChange={(e) => setRdom(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
+                className="w-20 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-xs text-right text-zinc-100"
+              />
+            )}
+            <button
+              onClick={() => {
+                const recurrence_day =
+                  rtype === "weekly" ? rday : rtype === "monthly" ? rdom : null;
+                onUpdate({
+                  name: name.trim() || task.name,
+                  recipe_id: recipeId || null,
+                  recurrence_type: rtype,
+                  recurrence_day,
+                });
+                setEditing(false);
+              }}
+              className="inline-flex items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white font-bold px-2 py-1 rounded text-xs transition-colors mr-auto"
+            >
+              <Save className="h-3 w-3" /> שמור
+            </button>
+          </div>
         </div>
       )}
     </li>
