@@ -17,6 +17,8 @@ export interface TaskGroup {
   active: boolean;
 }
 
+export type RecurrenceType = "daily" | "weekly" | "monthly" | "as_needed";
+
 export interface Task {
   id: string;
   branch_id: string;
@@ -31,6 +33,33 @@ export interface Task {
   is_purchased_good: boolean;
   requires_photo: boolean;
   parent_task_id: string | null;
+  recurrence_type: RecurrenceType;
+  recurrence_day: number | null;
+}
+
+export const WEEKDAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"] as const;
+
+/** Returns true if this template should appear on the given local date. */
+export function isTaskActiveOn(t: Pick<Task, "recurrence_type" | "recurrence_day">, date: Date): boolean {
+  const dow = date.getDay();
+  const dom = date.getDate();
+  switch (t.recurrence_type) {
+    case "daily": return true;
+    case "weekly": return (t.recurrence_day ?? dow) === dow;
+    case "monthly": return (t.recurrence_day ?? 1) === dom;
+    case "as_needed": return false;
+    default: return true;
+  }
+}
+
+export function recurrenceLabel(t: Pick<Task, "recurrence_type" | "recurrence_day">): string {
+  switch (t.recurrence_type) {
+    case "daily": return "יומי";
+    case "weekly": return `שבועי · יום ${WEEKDAY_HE[t.recurrence_day ?? 0]}`;
+    case "monthly": return `חודשי · ${t.recurrence_day ?? 1} בחודש`;
+    case "as_needed": return "לפי צורך";
+    default: return "יומי";
+  }
 }
 
 // Common Hebrew operational verbs to strip when deriving a raw-ingredient
