@@ -411,12 +411,12 @@ export function TasksPanel() {
 
   // Add a task — under a Category (groupId set) OR directly under an Area (shiftId set).
   const addTaskTo = (opts: { shiftId?: string; groupId?: string; parentName: string }) =>
-    askPrompt({
-      title: "משימה חדשה",
-      description: `המשימה תתווסף תחת: ${opts.parentName}`,
-      placeholder: "שם המשימה",
-      confirmLabel: "הוסף משימה",
-      onConfirm: async (name) => {
+    setNewTaskState({
+      open: true,
+      parentName: opts.parentName,
+      shiftId: opts.shiftId,
+      groupId: opts.groupId,
+      onConfirm: async ({ name, recurrence_type, recurrence_day }) => {
         const siblings = opts.groupId
           ? tasks.filter((t) => t.group_id === opts.groupId)
           : tasks.filter((t) => t.shift_id === opts.shiftId && !t.group_id);
@@ -427,6 +427,8 @@ export function TasksPanel() {
           shift_id: opts.groupId ? null : (opts.shiftId ?? null),
           name,
           sort_order: so,
+          recurrence_type,
+          recurrence_day,
         });
         if (error) return toast.error(error.message);
         reload();
