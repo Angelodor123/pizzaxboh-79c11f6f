@@ -57,6 +57,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    shift_id: null,
   },
   {
     id: "__virtual_winter_t2__",
@@ -71,6 +72,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    shift_id: null,
   },
   {
     id: "__virtual_winter_t3__",
@@ -85,6 +87,7 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     is_purchased_good: false,
     requires_photo: false,
     parent_task_id: null,
+    shift_id: null,
   },
 ];
 
