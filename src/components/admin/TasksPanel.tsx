@@ -272,6 +272,7 @@ export function TasksPanel() {
 
   const [promptState, setPromptState] = useState<PromptState>({ open: false, title: "" });
   const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: "" });
+  const [newTaskState, setNewTaskState] = useState<NewTaskState>({ open: false, parentName: "" });
 
   const askPrompt = (s: Omit<PromptState, "open">) =>
     setPromptState({ ...s, open: true });
