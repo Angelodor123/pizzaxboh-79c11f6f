@@ -285,12 +285,32 @@ function TasksPage() {
     [countableTasks, logs],
   );
 
-  const groupsForShift = (shiftId: string) =>
-    groups.filter((g) => g.shift_id === shiftId);
-  const tasksForGroup = (groupId: string) =>
-    allTasks
+  const DIRECT_PREFIX = "__direct_shift__";
+  const groupsForShift = (shiftId: string) => {
+    const real = groups.filter((g) => g.shift_id === shiftId);
+    const hasDirect = allTasks.some((t) => t.shift_id === shiftId && !t.group_id && !t.parent_task_id);
+    if (!hasDirect) return real;
+    const synthetic: TaskGroup = {
+      id: `${DIRECT_PREFIX}${shiftId}`,
+      branch_id: "",
+      shift_id: shiftId,
+      name: "משימות כלליות",
+      sort_order: -1,
+      active: true,
+    };
+    return [synthetic, ...real];
+  };
+  const tasksForGroup = (groupId: string) => {
+    if (groupId.startsWith(DIRECT_PREFIX)) {
+      const sid = groupId.slice(DIRECT_PREFIX.length);
+      return allTasks
+        .filter((t) => t.shift_id === sid && !t.group_id && !t.parent_task_id)
+        .sort((a, b) => a.name.localeCompare(b.name, "he"));
+    }
+    return allTasks
       .filter((t) => t.group_id === groupId && !t.parent_task_id)
       .sort((a, b) => a.name.localeCompare(b.name, "he"));
+  };
   const subtasksFor = (parentId: string) =>
     allTasks
       .filter((t) => t.parent_task_id === parentId)
