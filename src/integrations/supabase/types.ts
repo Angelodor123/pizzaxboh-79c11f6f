@@ -1489,7 +1489,7 @@ export type Database = {
           active: boolean
           branch_id: string
           created_at: string
-          group_id: string
+          group_id: string | null
           id: string
           ingredient_name: string | null
           is_purchased_good: boolean
@@ -1498,6 +1498,7 @@ export type Database = {
           prep_item_id: string | null
           recipe_id: string | null
           requires_photo: boolean
+          shift_id: string | null
           sort_order: number
           updated_at: string
         }
@@ -1505,7 +1506,7 @@ export type Database = {
           active?: boolean
           branch_id: string
           created_at?: string
-          group_id: string
+          group_id?: string | null
           id?: string
           ingredient_name?: string | null
           is_purchased_good?: boolean
@@ -1514,6 +1515,7 @@ export type Database = {
           prep_item_id?: string | null
           recipe_id?: string | null
           requires_photo?: boolean
+          shift_id?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1521,7 +1523,7 @@ export type Database = {
           active?: boolean
           branch_id?: string
           created_at?: string
-          group_id?: string
+          group_id?: string | null
           id?: string
           ingredient_name?: string | null
           is_purchased_good?: boolean
@@ -1530,6 +1532,7 @@ export type Database = {
           prep_item_id?: string | null
           recipe_id?: string | null
           requires_photo?: boolean
+          shift_id?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1553,6 +1556,13 @@ export type Database = {
             columns: ["prep_item_id"]
             isOneToOne: false
             referencedRelation: "prep_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
         ]
