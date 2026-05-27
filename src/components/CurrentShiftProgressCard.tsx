@@ -62,7 +62,7 @@ export function CurrentShiftProgressCard() {
             .eq("active", true),
           supabase
             .from("tasks")
-            .select("id,group_id,shift_id")
+            .select("id,group_id,shift_id,recurrence_type,recurrence_day")
             .eq("branch_id", branchId)
             .eq("active", true),
           supabase.rpc("operational_today"),
