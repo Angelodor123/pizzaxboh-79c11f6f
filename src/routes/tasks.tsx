@@ -15,6 +15,7 @@ import {
   fetchTodayLogs,
   upsertLogs,
   extractIngredientName,
+  isTaskActiveOn,
   type Shift,
   type TaskGroup,
   type Task,
