@@ -154,6 +154,109 @@ function ConfirmModal({
   );
 }
 
+// ---------- New Task modal (with scheduling) ----------
+
+type NewTaskState = {
+  open: boolean;
+  parentName: string;
+  shiftId?: string;
+  groupId?: string;
+  onConfirm?: (v: { name: string; recurrence_type: RecurrenceType; recurrence_day: number | null }) => void;
+};
+
+function NewTaskModal({ state, onClose }: { state: NewTaskState; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [rtype, setRtype] = useState<RecurrenceType>("daily");
+  const [rday, setRday] = useState<number>(0);
+  const [rdom, setRdom] = useState<number>(1);
+
+  useEffect(() => {
+    if (state.open) {
+      setName(""); setRtype("daily"); setRday(0); setRdom(1);
+    }
+  }, [state.open]);
+
+  const submit = () => {
+    if (!name.trim()) return;
+    const recurrence_day =
+      rtype === "weekly" ? rday : rtype === "monthly" ? rdom : null;
+    state.onConfirm?.({ name: name.trim(), recurrence_type: rtype, recurrence_day });
+    onClose();
+  };
+
+  return (
+    <Dialog open={state.open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent dir="rtl" className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md">
+        <DialogHeader className="text-right">
+          <DialogTitle className="text-zinc-100 text-right">משימה חדשה</DialogTitle>
+          <DialogDescription className="text-zinc-400 text-right">
+            תתווסף תחת: {state.parentName}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1 text-right">שם המשימה</label>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="שם המשימה"
+              onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) submit(); }}
+              className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1 text-right">תדירות</label>
+            <select
+              value={rtype}
+              onChange={(e) => setRtype(e.target.value as RecurrenceType)}
+              className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+            >
+              <option value="daily">יומי</option>
+              <option value="weekly">שבועי</option>
+              <option value="monthly">חודשי</option>
+              <option value="as_needed">לפי צורך</option>
+            </select>
+          </div>
+          {rtype === "weekly" && (
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1 text-right">יום בשבוע</label>
+              <select
+                value={rday}
+                onChange={(e) => setRday(Number(e.target.value))}
+                className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+              >
+                {WEEKDAY_HE.map((d, i) => <option key={i} value={i}>יום {d}</option>)}
+              </select>
+            </div>
+          )}
+          {rtype === "monthly" && (
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1 text-right">יום בחודש (1-31)</label>
+              <input
+                type="number" min={1} max={31}
+                value={rdom}
+                onChange={(e) => setRdom(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
+                className="w-full h-11 bg-zinc-950 border border-zinc-800 rounded-md px-3 text-sm text-right text-zinc-100 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+              />
+            </div>
+          )}
+        </div>
+        <DialogFooter className="flex flex-row-reverse gap-2 sm:flex-row-reverse">
+          <button onClick={submit} disabled={!name.trim()}
+            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors disabled:opacity-50">
+            הוסף משימה
+          </button>
+          <button onClick={onClose}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md text-sm transition-colors">
+            ביטול
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ---------- Main panel ----------
 
 export function TasksPanel() {
