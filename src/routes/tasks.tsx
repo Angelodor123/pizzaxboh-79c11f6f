@@ -195,38 +195,69 @@ function TasksPage() {
   }, [openGroup]);
 
 
+  const reloadLogs = async (branch: string, expectedDate?: string) => {
+    const todayLogs = await fetchTodayLogs(branch);
+    const { data: today } = await supabase.rpc("operational_today");
+    const dateStr = (today as string) ?? new Date().toISOString().slice(0, 10);
+    setLogDate(dateStr);
+    const map = new Map<string, LogState>();
+    todayLogs.forEach((l: DailyTaskLog) => {
+      map.set(l.task_id, {
+        completed: l.completed,
+        completed_at: l.completed_at,
+        completed_by: l.completed_by,
+        completed_by_user_id: l.completed_by_user_id,
+        comments: l.comments ?? "",
+        photo_url: l.photo_url ?? null,
+      });
+    });
+    setLogs(map);
+    return dateStr;
+  };
+
   useEffect(() => {
     if (!branchId) return;
     let abort = false;
     (async () => {
       setLoading(true);
       const tree = await fetchTaskTree(branchId);
-      const todayLogs = await fetchTodayLogs(branchId);
-      const { data: today } = await supabase.rpc("operational_today");
       if (abort) return;
       setShifts(tree.shifts);
       setGroups(tree.groups);
       setTasks(tree.tasks);
-      setLogDate((today as string) ?? new Date().toISOString().slice(0, 10));
-      const map = new Map<string, LogState>();
-      todayLogs.forEach((l: DailyTaskLog) => {
-        map.set(l.task_id, {
-          completed: l.completed,
-          completed_at: l.completed_at,
-          completed_by: l.completed_by,
-          completed_by_user_id: l.completed_by_user_id,
-          comments: l.comments ?? "",
-          photo_url: l.photo_url ?? null,
-        });
-      });
-      setLogs(map);
+      await reloadLogs(branchId);
       setOpenShift(tree.shifts[0]?.id ?? null);
       setLoading(false);
     })();
     return () => {
       abort = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
+
+  // Auto-refresh when the operational day rolls over (5am Asia/Jerusalem),
+  // or when the user returns to the tab after the boundary.
+  useEffect(() => {
+    if (!branchId) return;
+    const check = async () => {
+      const { data: today } = await supabase.rpc("operational_today");
+      const dateStr = today as string;
+      if (dateStr && dateStr !== logDate) {
+        await reloadLogs(branchId);
+      }
+    };
+    const onVis = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    const id = window.setInterval(() => void check(), 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId, logDate]);
+
 
 
   const allTasks = useMemo(() => {

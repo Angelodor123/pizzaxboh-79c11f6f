@@ -62,19 +62,24 @@ export function DoughStatusCard() {
   const total = shopCount + warehouseCount;
 
   const loadLatest = async (itemId: string, branch: string) => {
+    // Reset display each operational day at 5am (Asia/Jerusalem).
+    // History is preserved — we only filter what's shown on the card.
+    const { data: dayStart } = await supabase.rpc("operational_day_start");
+    const cutoff = (dayStart as string) ?? new Date(0).toISOString();
     const { data } = await supabase
       .from("dough_updates_log")
       .select("id,trays_count,updated_by_name,created_at,location")
       .eq("branch_id", branch)
       .eq("prep_item_id", itemId)
+      .gte("created_at", cutoff)
       .order("created_at", { ascending: false })
       .limit(50);
     const rows = (data as DoughLogRow[]) ?? [];
     setLastUpdate(rows[0] ?? null);
     const latestShop = rows.find((r) => r.location === "shop");
     const latestWh = rows.find((r) => r.location === "warehouse");
-    if (latestShop) setShopCount(Number(latestShop.trays_count));
-    if (latestWh) setWarehouseCount(Number(latestWh.trays_count));
+    setShopCount(latestShop ? Number(latestShop.trays_count) : 0);
+    setWarehouseCount(latestWh ? Number(latestWh.trays_count) : 0);
     return { latestShop, latestWh };
   };
 
@@ -114,6 +119,29 @@ export function DoughStatusCard() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
+
+  // Auto-reset the displayed counts when the operational day rolls over
+  // at 5am Asia/Jerusalem, or when the user returns to the tab afterwards.
+  useEffect(() => {
+    if (!branchId) return;
+    const check = async () => {
+      const { data: today } = await supabase.rpc("operational_today");
+      const dateStr = today as string;
+      if (dateStr && dateStr !== logDate) {
+        await load();
+      }
+    };
+    const onVis = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    const id = window.setInterval(() => void check(), 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId, logDate]);
 
   const openHistory = async () => {
     if (!item || !branchId) return;

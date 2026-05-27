@@ -1638,6 +1638,7 @@ export type Database = {
         }[]
       }
       notebook_daily_reset: { Args: never; Returns: undefined }
+      operational_day_start: { Args: never; Returns: string }
       operational_today: { Args: never; Returns: string }
       rollover_daily_operations: { Args: never; Returns: undefined }
     }
