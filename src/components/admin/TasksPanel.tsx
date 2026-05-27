@@ -621,6 +621,10 @@ export function TasksPanel() {
         state={confirmState}
         onClose={() => setConfirmState((c) => ({ ...c, open: false }))}
       />
+      <NewTaskModal
+        state={newTaskState}
+        onClose={() => setNewTaskState((s) => ({ ...s, open: false }))}
+      />
     </section>
   );
 }
