@@ -138,8 +138,8 @@ function ShiftBriefingPage() {
       if (!log) continue;
       if (log.completed) continue;
       if ((log.comments || "").startsWith("ARCHIVED:")) continue;
-      const grp = grpById.get(t.group_id);
-      const shift = grp ? shiftById.get(grp.shift_id) : undefined;
+      const grp = t.group_id ? grpById.get(t.group_id) : undefined;
+      const shift = grp ? shiftById.get(grp.shift_id) : (t.shift_id ? shiftById.get(t.shift_id) : undefined);
       items.push({
         taskId: t.id,
         taskName: t.name,
@@ -163,8 +163,8 @@ function ShiftBriefingPage() {
     const grouped: Record<string, { shiftName: string; tasks: { task: Task; groupName: string }[] }> = {};
     for (const t of tasks) {
       if (completedToday.has(t.id)) continue;
-      const grp = grpById.get(t.group_id);
-      const shiftName = (grp && shiftById.get(grp.shift_id)?.name) || "כללי";
+      const grp = t.group_id ? grpById.get(t.group_id) : undefined;
+      const shiftName = (grp && shiftById.get(grp.shift_id)?.name) || (t.shift_id ? shiftById.get(t.shift_id)?.name : undefined) || "כללי";
       if (!grouped[shiftName]) grouped[shiftName] = { shiftName, tasks: [] };
       grouped[shiftName].tasks.push({ task: t, groupName: grp?.name ?? "—" });
     }

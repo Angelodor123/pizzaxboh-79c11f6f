@@ -20,7 +20,8 @@ export interface TaskGroup {
 export interface Task {
   id: string;
   branch_id: string;
-  group_id: string;
+  group_id: string | null;
+  shift_id: string | null;
   name: string;
   sort_order: number;
   active: boolean;

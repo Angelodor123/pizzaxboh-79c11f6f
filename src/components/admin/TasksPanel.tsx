@@ -203,9 +203,9 @@ export function TasksPanel() {
 
   const addShift = () =>
     askPrompt({
-      title: "הוספת משמרת חדשה",
-      placeholder: "שם המשמרת",
-      confirmLabel: "הוסף משמרת",
+      title: "אזור / משמרת חדשה",
+      placeholder: "שם האזור או המשמרת",
+      confirmLabel: "הוסף",
       onConfirm: async (name) => {
         const so = (Math.max(0, ...shifts.map((s) => s.sort_order)) || 0) + 10;
         const { error } = await supabase.from("shifts").insert({
@@ -214,14 +214,14 @@ export function TasksPanel() {
           sort_order: so,
         });
         if (error) return toast.error(error.message);
-        toast.success("משמרת נוספה");
+        toast.success("נוסף בהצלחה");
         reload();
       },
     });
 
   const renameShift = (s: Shift) =>
     askPrompt({
-      title: "שינוי שם המשמרת",
+      title: "שינוי שם האזור / המשמרת",
       initial: s.name,
       placeholder: "שם חדש",
       onConfirm: async (name) => {
@@ -234,8 +234,8 @@ export function TasksPanel() {
 
   const deleteShift = (s: Shift) =>
     askConfirm({
-      title: `מחיקת משמרת "${s.name}"`,
-      description: "פעולה זו תמחק את כל הקבוצות והמשימות שמתחת למשמרת זו.",
+      title: `מחיקת "${s.name}"`,
+      description: "פעולה זו תמחק את כל הקטגוריות והמשימות מתחתיו.",
       confirmLabel: "מחק",
       destructive: true,
       onConfirm: async () => {
@@ -259,7 +259,7 @@ export function TasksPanel() {
 
   const addGroup = (shiftId: string) =>
     askPrompt({
-      title: "הוסף קטגוריה חדשה",
+      title: "קטגוריה חדשה",
       placeholder: "שם הקטגוריה",
       confirmLabel: "הוסף קטגוריה",
       onConfirm: async (name) => {
@@ -302,32 +302,22 @@ export function TasksPanel() {
       },
     });
 
-  const moveGroup = async (g: TaskGroup, dir: -1 | 1) => {
-    const siblings = groups
-      .filter((x) => x.shift_id === g.shift_id)
-      .sort((a, b) => a.sort_order - b.sort_order);
-    const idx = siblings.findIndex((x) => x.id === g.id);
-    const swap = siblings[idx + dir];
-    if (!swap) return;
-    await Promise.all([
-      supabase.from("task_groups").update({ sort_order: swap.sort_order }).eq("id", g.id),
-      supabase.from("task_groups").update({ sort_order: g.sort_order }).eq("id", swap.id),
-    ]);
-    reload();
-  };
-
-  const addTask = (groupId: string, groupName: string) =>
+  // Add a task — under a Category (groupId set) OR directly under an Area (shiftId set).
+  const addTaskTo = (opts: { shiftId?: string; groupId?: string; parentName: string }) =>
     askPrompt({
-      title: "הוספת משימה חדשה",
-      description: `המשימה תתווסף תחת הקטגוריה: ${groupName}`,
+      title: "משימה חדשה",
+      description: `המשימה תתווסף תחת: ${opts.parentName}`,
       placeholder: "שם המשימה",
       confirmLabel: "הוסף משימה",
       onConfirm: async (name) => {
-        const siblings = tasks.filter((t) => t.group_id === groupId);
+        const siblings = opts.groupId
+          ? tasks.filter((t) => t.group_id === opts.groupId)
+          : tasks.filter((t) => t.shift_id === opts.shiftId && !t.group_id);
         const so = (Math.max(0, ...siblings.map((t) => t.sort_order)) || 0) + 10;
         const { error } = await supabase.from("tasks").insert({
           branch_id: branchId,
-          group_id: groupId,
+          group_id: opts.groupId ?? null,
+          shift_id: opts.groupId ? null : (opts.shiftId ?? null),
           name,
           sort_order: so,
         });
@@ -354,20 +344,6 @@ export function TasksPanel() {
       },
     });
 
-  const moveTask = async (t: Task, dir: -1 | 1) => {
-    const siblings = tasks
-      .filter((x) => x.group_id === t.group_id)
-      .sort((a, b) => a.sort_order - b.sort_order);
-    const idx = siblings.findIndex((x) => x.id === t.id);
-    const swap = siblings[idx + dir];
-    if (!swap) return;
-    await Promise.all([
-      supabase.from("tasks").update({ sort_order: swap.sort_order }).eq("id", t.id),
-      supabase.from("tasks").update({ sort_order: t.sort_order }).eq("id", swap.id),
-    ]);
-    reload();
-  };
-
   const toggle = (id: string) => {
     setExpanded((s) => {
       const next = new Set(s);
@@ -387,12 +363,13 @@ export function TasksPanel() {
 
   return (
     <section dir="rtl" className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <button
           onClick={addShift}
           className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-3 py-2 rounded-md glow-neon text-sm"
         >
-          <Plus className="h-4 w-4" /> משמרת חדשה
+          <Plus className="h-4 w-4" /> אזור / משמרת חדשה
         </button>
         <h2 className="font-display text-xl font-bold text-right">
           ניהול <span className="text-neon text-glow-neon">משימות קבועות</span>
@@ -400,83 +377,129 @@ export function TasksPanel() {
       </div>
 
       <div className="space-y-3">
-        {shifts.map((s) => (
-          <div key={s.id} className="border border-border rounded-lg overflow-hidden bg-card/40">
-            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/60">
-              <div className="flex items-center gap-1">
-                <button onClick={() => moveShift(s, -1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="העלה"><ChevronUp className="h-4 w-4" /></button>
-                <button onClick={() => moveShift(s, 1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="הורד"><ChevronDown className="h-4 w-4" /></button>
-                <button onClick={() => renameShift(s)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-4 w-4" /></button>
-                <button onClick={() => deleteShift(s)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-4 w-4" /></button>
-              </div>
-              <button
-                onClick={() => toggle(s.id)}
-                className="flex-1 text-right font-display text-base font-bold"
-              >
-                {s.name}
-              </button>
-            </div>
-
-            {expanded.has(s.id) && (
-              <div className="divide-y divide-border">
-                {groups.filter((g) => g.shift_id === s.id).map((g) => (
-                  <div key={g.id} className="bg-background/30">
-                    <div className="flex items-center justify-between gap-2 px-3 py-2">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => moveGroup(g, -1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronUp className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => moveGroup(g, 1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronDown className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => renameGroup(g)} className="p-1 text-muted-foreground hover:text-neon"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => deleteGroup(g)} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                        <button
-                          onClick={() => addTask(g.id, g.name)}
-                          className="p-1 text-pink-500 hover:text-pink-400"
-                          aria-label="הוסף משימה"
-                          title="הוסף משימה"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <button onClick={() => toggle(g.id)} className="flex-1 text-right text-sm font-bold">{g.name}</button>
-                    </div>
-
-                    {expanded.has(g.id) && (
-                      <ul className="border-t border-border/60 divide-y divide-border/60">
-                        {tasks.filter((t) => t.group_id === g.id).map((t) => (
-                          <TaskRow
-                            key={t.id}
-                            task={t}
-                            recipes={recipes}
-                            onMove={(dir) => moveTask(t, dir)}
-                            onUpdate={(patch) => updateTask(t, patch)}
-                            onDelete={() => deleteTask(t)}
-                          />
-                        ))}
-                        {tasks.filter((t) => t.group_id === g.id).length === 0 && (
-                          <li className="px-4 py-3 text-center text-xs text-muted-foreground">אין משימות.</li>
-                        )}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-                {groups.filter((g) => g.shift_id === s.id).length === 0 && (
-                  <div className="px-4 py-4 text-center text-xs text-muted-foreground">אין קטגוריות במשמרת זו.</div>
-                )}
-
-                <div className="p-3 bg-background/20">
-                  <button
-                    onClick={() => addGroup(s.id)}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-3 py-2 rounded-md text-sm transition-colors"
-                  >
-                    <Plus className="h-4 w-4" /> הוסף קטגוריה חדשה
-                  </button>
+        {shifts.map((s) => {
+          const shiftGroups = groups.filter((g) => g.shift_id === s.id);
+          const directTasks = tasks
+            .filter((t) => t.shift_id === s.id && !t.group_id && !t.parent_task_id)
+            .sort((a, b) => a.sort_order - b.sort_order);
+          const isOpen = expanded.has(s.id);
+          return (
+            <div key={s.id} className="border border-border rounded-lg overflow-hidden bg-card/40">
+              {/* Level 1 — Area/Shift header */}
+              <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/60">
+                <div className="flex items-center gap-1">
+                  <button onClick={() => moveShift(s, -1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="העלה"><ChevronUp className="h-4 w-4" /></button>
+                  <button onClick={() => moveShift(s, 1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="הורד"><ChevronDown className="h-4 w-4" /></button>
+                  <button onClick={() => renameShift(s)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-4 w-4" /></button>
+                  <button onClick={() => deleteShift(s)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-4 w-4" /></button>
                 </div>
+                <button
+                  onClick={() => toggle(s.id)}
+                  className="flex-1 text-right font-display text-base font-bold"
+                >
+                  {s.name}
+                </button>
               </div>
-            )}
-          </div>
-        ))}
+
+              {isOpen && (
+                <div className="p-3 space-y-3 bg-background/20">
+                  {/* Direct tasks (Level 3 under Area) */}
+                  {directTasks.length > 0 && (
+                    <ul className="pr-3 border-r-2 border-pink-500/40 divide-y divide-border/60 bg-background/30 rounded-md">
+                      {directTasks.map((t) => (
+                        <TaskRow
+                          key={t.id}
+                          task={t}
+                          recipes={recipes}
+                          onUpdate={(patch) => updateTask(t, patch)}
+                          onDelete={() => deleteTask(t)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Categories (Level 2) — indented */}
+                  {shiftGroups.length > 0 && (
+                    <div className="pr-3 space-y-2 border-r-2 border-neon/40">
+                      {shiftGroups.map((g) => {
+                        const groupTasks = tasks
+                          .filter((t) => t.group_id === g.id && !t.parent_task_id)
+                          .sort((a, b) => a.sort_order - b.sort_order);
+                        const gOpen = expanded.has(g.id);
+                        return (
+                          <div key={g.id} className="rounded-md border border-border/70 bg-card/40 overflow-hidden">
+                            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/60">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => renameGroup(g)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-3.5 w-3.5" /></button>
+                                <button onClick={() => deleteGroup(g)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
+                                <button
+                                  onClick={() => addTaskTo({ groupId: g.id, parentName: g.name })}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-pink-600/90 hover:bg-pink-600 text-white text-[11px] font-bold"
+                                  aria-label="הוסף משימה לקטגוריה"
+                                >
+                                  <Plus className="h-3 w-3" /> משימה
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => toggle(g.id)}
+                                className="flex-1 text-right text-sm font-bold"
+                              >
+                                {g.name}
+                                <span className="mr-2 text-[11px] text-muted-foreground font-normal">({groupTasks.length})</span>
+                              </button>
+                            </div>
+                            {gOpen && (
+                              <ul className="pr-3 border-r-2 border-pink-500/30 divide-y divide-border/60">
+                                {groupTasks.map((t) => (
+                                  <TaskRow
+                                    key={t.id}
+                                    task={t}
+                                    recipes={recipes}
+                                    onUpdate={(patch) => updateTask(t, patch)}
+                                    onDelete={() => deleteTask(t)}
+                                  />
+                                ))}
+                                {groupTasks.length === 0 && (
+                                  <li className="px-3 py-2 text-center text-[11px] text-muted-foreground">אין משימות בקטגוריה זו.</li>
+                                )}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {directTasks.length === 0 && shiftGroups.length === 0 && (
+                    <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+                      עדיין אין קטגוריות או משימות כאן.
+                    </div>
+                  )}
+
+                  {/* Inline action buttons */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                    <button
+                      onClick={() => addGroup(s.id)}
+                      className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 h-11 px-3 rounded-md bg-neon/15 border border-neon/40 text-neon hover:bg-neon/25 text-sm font-bold"
+                    >
+                      <Plus className="h-4 w-4" /> קטגוריה חדשה
+                    </button>
+                    <button
+                      onClick={() => addTaskTo({ shiftId: s.id, parentName: s.name })}
+                      className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 h-11 px-3 rounded-md bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold"
+                    >
+                      <Plus className="h-4 w-4" /> משימה חדשה
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
         {shifts.length === 0 && (
           <div className="p-6 text-center text-sm text-muted-foreground border border-border rounded-md">
-            אין משמרות עדיין.
+            עדיין אין אזורים או משמרות. לחצו על "אזור / משמרת חדשה" כדי להתחיל.
           </div>
         )}
       </div>
@@ -496,13 +519,11 @@ export function TasksPanel() {
 function TaskRow({
   task,
   recipes,
-  onMove,
   onUpdate,
   onDelete,
 }: {
   task: Task;
   recipes: { id: string; nameHebrew: string }[];
-  onMove: (dir: -1 | 1) => void;
   onUpdate: (patch: Partial<Task>) => void;
   onDelete: () => void;
 }) {
@@ -516,15 +537,13 @@ function TaskRow({
   }, [task.id, task.name, task.recipe_id]);
 
   return (
-    <li className="px-4 py-2 bg-background/40">
+    <li className="px-3 py-2 bg-background/40">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-0.5">
-          <button onClick={() => onMove(-1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronUp className="h-3 w-3" /></button>
-          <button onClick={() => onMove(1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronDown className="h-3 w-3" /></button>
-          <button onClick={() => setEditing((v) => !v)} className="p-1 text-muted-foreground hover:text-neon">
-            {editing ? <X className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
+          <button onClick={() => setEditing((v) => !v)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך">
+            {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
           </button>
-          <button onClick={onDelete} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          <button onClick={onDelete} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
         {editing ? (
           <input
