@@ -147,7 +147,7 @@ function ShiftBriefingPage() {
         shiftName: shift?.name ?? "—",
         logId: log.id,
         logDate: log.log_date,
-        createdAt: log.created_at ?? yesterdayIso,
+        createdAt: (log as any).created_at ?? yesterdayIso,
         comments: log.comments ?? "",
       });
     }
