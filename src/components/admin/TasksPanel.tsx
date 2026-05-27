@@ -519,13 +519,11 @@ export function TasksPanel() {
 function TaskRow({
   task,
   recipes,
-  onMove,
   onUpdate,
   onDelete,
 }: {
   task: Task;
   recipes: { id: string; nameHebrew: string }[];
-  onMove: (dir: -1 | 1) => void;
   onUpdate: (patch: Partial<Task>) => void;
   onDelete: () => void;
 }) {
@@ -539,15 +537,13 @@ function TaskRow({
   }, [task.id, task.name, task.recipe_id]);
 
   return (
-    <li className="px-4 py-2 bg-background/40">
+    <li className="px-3 py-2 bg-background/40">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-0.5">
-          <button onClick={() => onMove(-1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronUp className="h-3 w-3" /></button>
-          <button onClick={() => onMove(1)} className="p-1 text-muted-foreground hover:text-neon"><ChevronDown className="h-3 w-3" /></button>
-          <button onClick={() => setEditing((v) => !v)} className="p-1 text-muted-foreground hover:text-neon">
-            {editing ? <X className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
+          <button onClick={() => setEditing((v) => !v)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך">
+            {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
           </button>
-          <button onClick={onDelete} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          <button onClick={onDelete} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
         {editing ? (
           <input
