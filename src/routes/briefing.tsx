@@ -219,8 +219,8 @@ function ShiftBriefingPage() {
         .update({
           completed: true,
           completed_at: new Date().toISOString(),
-          completed_by: user?.email ?? "briefing",
-          completed_by_user_id: user?.id ?? null,
+          completed_by: userLabel,
+          completed_by_user_id: userId,
           comments: `ARCHIVED: ${reason}`,
         })
         .eq("id", archiveTarget.logId!);
