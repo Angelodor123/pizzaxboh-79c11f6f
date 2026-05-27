@@ -120,6 +120,29 @@ export function DoughStatusCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
 
+  // Auto-reset the displayed counts when the operational day rolls over
+  // at 5am Asia/Jerusalem, or when the user returns to the tab afterwards.
+  useEffect(() => {
+    if (!branchId) return;
+    const check = async () => {
+      const { data: today } = await supabase.rpc("operational_today");
+      const dateStr = today as string;
+      if (dateStr && dateStr !== logDate) {
+        await load();
+      }
+    };
+    const onVis = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    const id = window.setInterval(() => void check(), 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId, logDate]);
+
   const openHistory = async () => {
     if (!item || !branchId) return;
     setHistoryOpen(true);
