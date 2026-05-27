@@ -84,8 +84,18 @@ export function CurrentShiftProgressCard() {
           .filter((g) => g.shift_id === matchedShift.id)
           .map((g) => g.id),
       );
-      const shiftTaskIds = ((tasks ?? []) as Array<{ id: string; group_id: string | null; shift_id: string | null }>)
+      const todayDate = new Date();
+      const dow = todayDate.getDay();
+      const dom = todayDate.getDate();
+      const shiftTaskIds = ((tasks ?? []) as Array<{ id: string; group_id: string | null; shift_id: string | null; recurrence_type: string | null; recurrence_day: number | null }>)
         .filter((t) => (t.group_id && shiftGroupIds.has(t.group_id)) || t.shift_id === matchedShift.id)
+        .filter((t) => {
+          const rt = t.recurrence_type ?? "daily";
+          if (rt === "daily") return true;
+          if (rt === "weekly") return (t.recurrence_day ?? dow) === dow;
+          if (rt === "monthly") return (t.recurrence_day ?? 1) === dom;
+          return false;
+        })
         .map((t) => t.id);
       const totalCount = shiftTaskIds.length;
       let doneCount = 0;
