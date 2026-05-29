@@ -190,6 +190,30 @@ function useSevereWeather() {
   return severe;
 }
 
+function SortableTaskItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <button
+        type="button"
+        aria-label="גרור לסידור"
+        className="absolute top-2 left-2 z-10 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/40 cursor-grab active:cursor-grabbing touch-none"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      {children}
+    </div>
+  );
+}
+
 function TasksPage() {
   const { fullName, session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
@@ -208,6 +232,45 @@ function TasksPage() {
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleGroupDragEnd = (groupId: string) => async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const current = tasksForGroup(groupId);
+    const oldIndex = current.findIndex((t) => t.id === active.id);
+    const newIndex = current.findIndex((t) => t.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(current, oldIndex, newIndex);
+    // Optimistic state update with new manual_order_index
+    setTasks((prev) => {
+      const map = new Map(prev.map((t) => [t.id, t]));
+      reordered.forEach((t, idx) => {
+        const existing = map.get(t.id);
+        if (existing) map.set(t.id, { ...existing, manual_order_index: idx + 1 });
+      });
+      return Array.from(map.values());
+    });
+    triggerHaptic("light");
+    // Persist bulk update — skip virtual placeholders
+    const updates = reordered
+      .filter((t) => !t.id.startsWith("__virtual_"))
+      .map((t, idx) =>
+        supabase.from("tasks").update({ manual_order_index: idx + 1 }).eq("id", t.id),
+      );
+    try {
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) toast.error("שמירת הסדר נכשלה: " + failed.error.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שמירת הסדר נכשלה");
+    }
+  };
+
 
   // Refs for smooth scroll-into-view on accordion open
   const shiftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
