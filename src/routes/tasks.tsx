@@ -903,6 +903,7 @@ function TasksPage() {
                                       })}
                                     </div>
                                   </div>
+                                  </SortableTaskItem>
                                 );
                               }
                               const log = logs.get(t.id);
@@ -916,8 +917,8 @@ function TasksPage() {
                                 ? recipes.find((r) => r.id === t.recipe_id)
                                 : null;
                               return (
+                                <SortableTaskItem key={t.id} id={t.id} showHandle={isSuperAdmin && !t.id.startsWith("__virtual_")}>
                                 <div
-                                  key={t.id}
                                   className={`rounded-xl border p-4 transition-all duration-300 ${
                                     done
                                       ? "bg-card/40 border-border"
@@ -1036,8 +1037,11 @@ function TasksPage() {
                                     </div>
                                   </div>
                                 </div>
+                                </SortableTaskItem>
                               );
                             })}
+                              </SortableContext>
+                            </DndContext>
                             {gTasks.length === 0 && (
                               <div className="px-5 py-4 text-center text-xs text-muted-foreground">
                                 אין משימות בקבוצה זו.
