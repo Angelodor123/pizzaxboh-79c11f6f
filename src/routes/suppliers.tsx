@@ -408,6 +408,9 @@ function SupplierForm({
       notes: notes.trim().slice(0, 2000) || null,
       active,
       logo_url: logoUrl,
+      order_days: orderDays,
+      order_cutoff_time: orderCutoff || null,
+      delivery_days: deliveryDays,
     };
     let error;
     if (existing) {
