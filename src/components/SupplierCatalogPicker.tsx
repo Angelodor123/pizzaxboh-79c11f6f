@@ -63,13 +63,16 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
     return () => { cancelled = true; };
   }, [open, supplierId]);
 
-  const matchedIds = useMemo(() => {
-    const ids = new Set<string>();
+  const shortageByProduct = useMemo(() => {
+    const map = new Map<string, ShortageRow>();
     for (const p of products) {
-      if (shortages.some((s) => fuzzyMatch(p.name, s.name))) ids.add(p.id);
+      const match = shortages.find((s) => fuzzyMatch(p.name, s.name));
+      if (match) map.set(p.id, match);
     }
-    return ids;
+    return map;
   }, [products, shortages]);
+
+  const matchedIds = useMemo(() => new Set(shortageByProduct.keys()), [shortageByProduct]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
