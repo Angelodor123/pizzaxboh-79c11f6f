@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector } from "lucide-react";
+import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector, ClipboardCheck } from "lucide-react";
+import { DeliveryChecklistModal, type ChecklistItem } from "@/components/DeliveryChecklistModal";
+
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
@@ -28,6 +30,12 @@ const eventTypeColor = (id?: string | null): string | null =>
 
 type EventCategory = "delivery" | "event";
 
+interface ExpectedItem {
+  id: string;
+  name: string;
+  is_received?: boolean;
+}
+
 interface CalendarEvent {
   id: string;
   title: string;
@@ -43,6 +51,7 @@ interface CalendarEvent {
   supplier_id?: string | null;
   is_auto?: boolean;
   projector_broadcast?: boolean | null;
+  expected_items?: ExpectedItem[] | null;
 }
 
 
@@ -56,11 +65,13 @@ interface EventOverride {
   end_time: string | null;
   notes: string | null;
   high_priority: boolean | null;
+  expected_items?: ExpectedItem[] | null;
 }
+
 
 // Effective event = base event + per-instance override fields for that date.
 // Returns null if the instance is canceled.
-type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string; _missingInvoice?: boolean };
+type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string; _missingInvoice?: boolean; _overrideItems?: ExpectedItem[] | null };
 
 const WEEKDAYS_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const MONTHS_HE = [
@@ -92,6 +103,7 @@ function CalendarPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [instanceEdit, setInstanceEdit] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
+  const [checklistFor, setChecklistFor] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
 
   // Load events + overrides
   useEffect(() => {
@@ -169,6 +181,7 @@ function CalendarPage() {
         notes: ov.notes ?? e.notes,
         high_priority: ov.high_priority ?? e.high_priority,
         _overrideId: ov.id,
+        _overrideItems: ov.expected_items ?? null,
         _isOverride: true,
         _occurrenceDate: isoDate,
       }));
@@ -262,6 +275,7 @@ function CalendarPage() {
             setFormOpen(true);
           }}
           onInstanceEdit={(ev, date) => setInstanceEdit({ ev, date })}
+          onOpenChecklist={(ev, date) => setChecklistFor({ ev, date })}
         />
       )}
 
@@ -289,6 +303,22 @@ function CalendarPage() {
           ev={instanceEdit.ev}
           date={instanceEdit.date}
           onClose={() => setInstanceEdit(null)}
+        />
+      )}
+
+      {checklistFor && (
+        <DeliveryChecklistModal
+          eventId={checklistFor.ev.id}
+          eventTitle={checklistFor.ev.title}
+          date={checklistFor.date}
+          templateItems={(checklistFor.ev.expected_items ?? []).map((it) => ({
+            id: it.id,
+            name: it.name,
+            is_received: false,
+          })) as ChecklistItem[]}
+          initialItems={(checklistFor.ev._overrideItems ?? null) as ChecklistItem[] | null}
+          overrideId={checklistFor.ev._overrideId ?? null}
+          onClose={() => setChecklistFor(null)}
         />
       )}
     </div>
@@ -671,6 +701,7 @@ function DayDetails({
   onAdd,
   onEdit,
   onInstanceEdit,
+  onOpenChecklist,
 }: {
   isoDate: string;
   events: EffectiveEvent[];
@@ -678,6 +709,7 @@ function DayDetails({
   onAdd: () => void;
   onEdit: (ev: CalendarEvent) => void;
   onInstanceEdit: (ev: EffectiveEvent, date: string) => void;
+  onOpenChecklist: (ev: EffectiveEvent, date: string) => void;
 }) {
   const d = new Date(isoDate + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
@@ -771,6 +803,15 @@ function DayDetails({
                     </div>
                     {ev.notes && (
                       <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{ev.notes}</p>
+                    )}
+                    {ev.category === "delivery" && (ev.expected_items?.length ?? 0) > 0 && (
+                      <button
+                        onClick={() => onOpenChecklist(ev, isoDate)}
+                        className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-neon/40 text-neon text-xs font-bold hover:bg-neon/10 active:scale-95 transition"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        צ׳קליסט פריקה ({ev.expected_items!.length})
+                      </button>
                     )}
                   </div>
                   {canEdit && (
@@ -1056,6 +1097,8 @@ function EventForm({
   const [highPriority, setHighPriority] = useState(existing?.high_priority ?? false);
   const [projectorBroadcast, setProjectorBroadcast] = useState(existing?.projector_broadcast ?? true);
   const [notes, setNotes] = useState(existing?.notes ?? "");
+  const [items, setItems] = useState<ExpectedItem[]>(existing?.expected_items ?? []);
+  const [newItem, setNewItem] = useState("");
   const [saving, setSaving] = useState(false);
   const [conflictAck, setConflictAck] = useState(false);
 
@@ -1107,6 +1150,7 @@ function EventForm({
       high_priority: highPriority,
       projector_broadcast: eventType === "sports_match" ? projectorBroadcast : false,
       notes: notes.trim() || null,
+      expected_items: category === "delivery" ? items : [],
     };
 
     let error;
@@ -1295,6 +1339,62 @@ function EventForm({
             maxLength={2000}
           />
         </Field>
+
+        {category === "delivery" && (
+          <Field label="פריטים צפויים (צ׳קליסט פריקה)">
+            <div className="space-y-2">
+              {items.length > 0 && (
+                <ul className="space-y-1">
+                  {items.map((it, idx) => (
+                    <li key={it.id} className="flex items-center gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5">
+                      <span className="flex-1 text-sm text-right">{it.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setItems(items.filter((_, i) => i !== idx))}
+                        className="h-7 w-7 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
+                        aria-label="הסר"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex gap-2">
+                <input
+                  value={newItem}
+                  onChange={(e) => setNewItem(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const name = newItem.trim();
+                      if (!name) return;
+                      setItems([...items, { id: crypto.randomUUID(), name }]);
+                      setNewItem("");
+                    }
+                  }}
+                  className="input flex-1"
+                  placeholder="לדוגמה: 1 סן מרזנו"
+                  dir="rtl"
+                  maxLength={120}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = newItem.trim();
+                    if (!name) return;
+                    setItems([...items, { id: crypto.randomUUID(), name }]);
+                    setNewItem("");
+                  }}
+                  className="h-10 px-3 rounded-md border border-neon/40 text-neon font-bold text-sm hover:bg-neon/10"
+                >
+                  הוסף
+                </button>
+              </div>
+            </div>
+          </Field>
+        )}
+
 
         {conflicts.length > 0 && (
           <div className="rounded-lg border border-neon/70 bg-neon/10 p-3 text-right space-y-2">
