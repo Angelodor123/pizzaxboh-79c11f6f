@@ -180,6 +180,7 @@ function CalendarPage() {
         notes: ov.notes ?? e.notes,
         high_priority: ov.high_priority ?? e.high_priority,
         _overrideId: ov.id,
+        _overrideItems: ov.expected_items ?? null,
         _isOverride: true,
         _occurrenceDate: isoDate,
       }));
