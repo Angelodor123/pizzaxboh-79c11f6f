@@ -706,11 +706,13 @@ function TaskRow({
   recipes,
   onUpdate,
   onDelete,
+  dragHandle,
 }: {
   task: Task;
   recipes: { id: string; nameHebrew: string }[];
   onUpdate: (patch: Partial<Task>) => void;
   onDelete: () => void;
+  dragHandle?: ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(task.name);
