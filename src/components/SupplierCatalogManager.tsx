@@ -105,6 +105,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         supplier_id: supplierId,
         branch_id: branchId,
         name: draft.name.trim(),
+        sku: draft.sku.trim() || null,
+        unit_size: draft.unit_size.trim() || null,
         unit: draft.unit.trim(),
         default_qty: Number(draft.default_qty) || 1,
         price: draft.price.trim() ? Number(draft.price) : null,
