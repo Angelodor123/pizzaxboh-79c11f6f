@@ -6,13 +6,26 @@ import { Loader2, Minus, Send, ListChecks, Package, AlertTriangle, ArrowLeft } f
 import { askCopilot, type CopilotAction } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
-import {
-  fetchDailyBriefing,
-  hasOpenedToday,
-  markOpenedToday,
-  randomGreeting,
-} from "@/lib/daily-briefing";
 import { cn } from "@/lib/utils";
+
+const COPILOT_OPENED_KEY = "pizzax-copilot-opened-date";
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+function hasOpenedToday() {
+  try { return localStorage.getItem(COPILOT_OPENED_KEY) === todayKey(); } catch { return false; }
+}
+function markOpenedToday() {
+  try { localStorage.setItem(COPILOT_OPENED_KEY, todayKey()); } catch { /* noop */ }
+}
+const GREETINGS = [
+  "ג'וני כאן. מה קורה? 💬",
+  "ג'וני זמין. מה צריך?",
+  "כאן ג'וני. דברו אליי.",
+];
+function randomGreeting() {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+}
 
 
 type Msg = { role: "user" | "model"; content: string; actions?: CopilotAction[] };
