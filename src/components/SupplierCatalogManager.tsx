@@ -16,6 +16,8 @@ interface Props {
 type Draft = {
   id?: string;
   name: string;
+  sku: string;
+  unit_size: string;
   unit: string;
   default_qty: string;
   price: string;
@@ -23,7 +25,7 @@ type Draft = {
   image_url: string | null;
 };
 
-const EMPTY_DRAFT: Draft = { name: "", unit: "", default_qty: "1", price: "", category: "", image_url: null };
+const EMPTY_DRAFT: Draft = { name: "", sku: "", unit_size: "", unit: "", default_qty: "1", price: "", category: "", image_url: null };
 
 export function SupplierCatalogManager({ supplierId, supplierName, open, onClose }: Props) {
   const [items, setItems] = useState<SupplierProduct[]>([]);
