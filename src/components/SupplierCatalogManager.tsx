@@ -16,6 +16,8 @@ interface Props {
 type Draft = {
   id?: string;
   name: string;
+  sku: string;
+  unit_size: string;
   unit: string;
   default_qty: string;
   price: string;
@@ -23,7 +25,7 @@ type Draft = {
   image_url: string | null;
 };
 
-const EMPTY_DRAFT: Draft = { name: "", unit: "", default_qty: "1", price: "", category: "", image_url: null };
+const EMPTY_DRAFT: Draft = { name: "", sku: "", unit_size: "", unit: "", default_qty: "1", price: "", category: "", image_url: null };
 
 export function SupplierCatalogManager({ supplierId, supplierName, open, onClose }: Props) {
   const [items, setItems] = useState<SupplierProduct[]>([]);
@@ -76,6 +78,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     setDraft({
       id: p.id,
       name: p.name,
+      sku: p.sku ?? "",
+      unit_size: p.unit_size ?? "",
       unit: p.unit ?? "",
       default_qty: String(p.default_qty ?? 1),
       price: p.price != null ? String(p.price) : "",
@@ -101,6 +105,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         supplier_id: supplierId,
         branch_id: branchId,
         name: draft.name.trim(),
+        sku: draft.sku.trim() || null,
+        unit_size: draft.unit_size.trim() || null,
         unit: draft.unit.trim(),
         default_qty: Number(draft.default_qty) || 1,
         price: draft.price.trim() ? Number(draft.price) : null,
@@ -155,12 +161,27 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               maxLength={120}
             />
             <input
+              value={draft.sku}
+              onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+              placeholder="מק״ט / SKU"
+              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+              maxLength={64}
+            />
+            <input
+              value={draft.unit_size}
+              onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
+              placeholder='גודל אריזה (כגון: ארגז - 1 יח׳ × 2 ק״ג)'
+              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+              maxLength={80}
+            />
+            <input
               value={draft.category}
               onChange={(e) => setDraft({ ...draft, category: e.target.value })}
               placeholder="קטגוריה (אופציונלי)"
               className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
               maxLength={60}
             />
+
             <input
               value={draft.unit}
               onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
@@ -239,39 +260,42 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               אין מוצרים בקטלוג. הוסף את הראשון מעל.
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="flex flex-col gap-1.5">
               {items.map((p) => (
-                <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex flex-col gap-1.5">
-                  <div className="aspect-square rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
+                <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex items-center gap-3">
+                  <div className="h-14 w-14 shrink-0 rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
-                      <ImageIcon className="h-8 w-8 text-zinc-700" />
+                      <ImageIcon className="h-6 w-6 text-zinc-700" />
                     )}
                   </div>
-                  <div className="text-sm font-bold leading-tight line-clamp-2">{p.name}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {p.unit && <span>{p.unit}</span>}
-                    {p.unit && p.price != null && <span> · </span>}
-                    {p.price != null && <span>₪{p.price}</span>}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold leading-tight">{p.name}</div>
+                    {p.sku && <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku}</div>}
+                    <div className="text-[11px] text-muted-foreground">
+                      {p.unit_size || p.unit}
+                      {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                    </div>
                   </div>
-                  <div className="flex gap-1 mt-auto">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => startEdit(p)}
-                      className="flex-1 h-7 inline-flex items-center justify-center gap-1 rounded border border-border text-xs hover:text-neon hover:border-neon"
+                      className="h-8 w-8 grid place-content-center rounded border border-border hover:text-neon hover:border-neon"
                     >
-                      <Pencil className="h-3 w-3" /> ערוך
+                      <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => remove(p.id)}
-                      className="h-7 w-7 grid place-content-center rounded border border-border text-xs hover:text-destructive hover:border-destructive"
+                      className="h-8 w-8 grid place-content-center rounded border border-border hover:text-destructive hover:border-destructive"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
+
           )}
         </div>
       </DialogContent>
