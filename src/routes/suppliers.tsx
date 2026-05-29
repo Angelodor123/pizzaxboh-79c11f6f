@@ -536,6 +536,60 @@ function SupplierForm({
           </Field>
         </div>
 
+        {/* Order time settings */}
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-3">
+          <div className="text-xs font-bold text-destructive text-right">⏰ הגדרות זמני הזמנה</div>
+
+          <div>
+            <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי הזמנה (אזהרה בדשבורד)</span>
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS_HE.map((w, i) => {
+                const on = orderDays.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleOrderDay(i)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
+                      on ? "bg-destructive/20 border-destructive text-destructive" : "border-border text-foreground hover:border-destructive"
+                    }`}
+                  >
+                    {on && <Check className="inline h-3 w-3 ms-1" />}
+                    {w}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <Field label="שעת קאט-אוף להזמנה">
+            <input type="time" value={orderCutoff} onChange={(e) => setOrderCutoff(e.target.value)} className="sup-input" />
+          </Field>
+
+          <div>
+            <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי הגעת המשלוח</span>
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS_HE.map((w, i) => {
+                const on = deliveryDays.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleDeliveryDay(i)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
+                      on ? "bg-success/20 border-success text-success" : "border-border text-foreground hover:border-neon"
+                    }`}
+                  >
+                    {on && <Check className="inline h-3 w-3 ms-1" />}
+                    {w}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+
         <Field label="איש קשר / טלפון">
           <input value={contact} onChange={(e) => setContact(e.target.value)} className="sup-input" maxLength={200} dir="rtl" />
         </Field>
