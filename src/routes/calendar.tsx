@@ -804,6 +804,15 @@ function DayDetails({
                     {ev.notes && (
                       <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{ev.notes}</p>
                     )}
+                    {ev.category === "delivery" && (ev.expected_items?.length ?? 0) > 0 && (
+                      <button
+                        onClick={() => onOpenChecklist(ev, isoDate)}
+                        className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-neon/40 text-neon text-xs font-bold hover:bg-neon/10 active:scale-95 transition"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        צ׳קליסט פריקה ({ev.expected_items!.length})
+                      </button>
+                    )}
                   </div>
                   {canEdit && (
                     <div className="flex flex-col gap-1 shrink-0">
