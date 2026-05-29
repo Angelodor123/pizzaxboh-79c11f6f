@@ -1,74 +1,87 @@
-# תכנית הטמעה — חבילת עדכון מקיפה
+תוכנית מפורטת לפי 3 החלקים בבקשה. לפני שאתחיל ביישום, יש כמה החלטות שכדאי לאשר.
 
-הבקשה רחבה מאוד וכוללת תשתיות חדשות (Web Push, WebAuthn, Service Worker מלא). לפני שאני קופץ למימוש, חשוב שנסכים על ההיקף והגישה — חלק מהרכיבים דורשים מפתחות/קונפיגורציה ייעודית.
+## חלק 1 — חיפוש גלובלי ממוקד (Header)
 
----
+- **רכיב חדש:** `src/components/GlobalSearch.tsx` — שדה חיפוש בהדר עם dropdown תוצאות.
+- **Debounce:** 250ms (`useDebouncedValue`).
+- **Scope:** רק `recipes` (לפי `name_hebrew`) ו-`tasks` (לפי `name`) — מסונן לפי `branch_id` של המשתמש.
+- **קליק על תוצאה:**
+  - מתכון → ניווט ל-`/recipes` עם פתיחת המתכון (דרך `useUIStore.setLastRecipe`).
+  - משימה → ניווט ל-`/tasks` ופתיחת ה-`QuickEditTaskDialog` של המשימה (state בראוטר/URL param).
+- **מיקום:** משולב ב-Header הראשי (אצטרך לאתר את ה-Header — כנראה בתוך `__root.tsx`).
 
-## חלק 1 — אזור אישי `/my-profile` ✅ פשוט
+## חלק 2 — גמישות ניהול משימות
 
-- ראוט חדש תחת `_authenticated/my-profile.tsx`
-- ברכה אישית עם השם מ-`profiles.full_name`
-- כרטיס סיכום: התפקיד, הסניף, תאריך הצטרפות, סטטוס NDA
-- קישורים מהירים: "מדריך לעובד" → `/guide`, "ה-NDA שלי" (מודאל קריאה בלבד של מסמך ה-NDA)
-- כפתור גישה מסרגל הניווט הראשי
+### 2.1 Toggle "דחוף" ב-Quick-Edit
+- DB: הוספת `is_urgent boolean default false` לטבלת `tasks`.
+- UI: Switch ב-`QuickEditTaskDialog.tsx` שמעדכן את השדה.
 
-**עלות:** קובץ ראוט אחד + עדכון תפריט. ללא מיגרציה.
+### 2.2 Drag & Drop ל-`/tasks`
+- DB: הוספת `manual_order_index integer default 0` ל-`tasks`.
+- ספרייה: `@dnd-kit/core` + `@dnd-kit/sortable` (להתקין).
+- Sort: `is_urgent DESC, manual_order_index ASC, sort_order ASC`.
+- שמירת הסדר ב-DB אחרי drop (bulk update).
 
----
+**שאלה:** ה-Drag&Drop צריך לעבוד **בתוך כל קטגוריה/קבוצה בנפרד**, או על כל המשימות של המשמרת כרשימה שטוחה אחת? (אני אניח: בתוך כל קבוצה בנפרד — מתאים ללוגיקת ההיררכיה הקיימת.)
 
-## חלק 2 — ביומטרי + אופליין ⚠️ מורכב
+## חלק 3 — קיצורים ולמידת AI
 
-### 2A — WebAuthn / Passkeys
-Supabase Auth **לא** תומך ב-passkeys נטיב. האפשרויות:
-- **(מומלץ)** WebAuthn מקומי — נשמור credential ID ב-localStorage + טבלה `user_passkeys`, ולאחר אימות ביומטרי מוצלח נשלוף refresh token שמור ונחדש סשן. דורש זהירות אבטחתית.
-- **חלופה פשוטה:** "Quick Unlock" — לאחר התחברות רגילה, נשמור flag מוצפן ונפעיל `navigator.credentials.get()` עם PublicKey רק כדי לבטל-נעילה של סשן קיים שעדיין תקף ב-Supabase (refresh token חי ~30 ימים).
+### 3.1 FAB גרירה לפנקס
+- רכיב חדש: `src/components/DraggableNotepadFab.tsx`.
+- ממוקם רק במסך `/tasks`.
+- Drag חופשי, מיקום נשמר ב-`localStorage` (`pizzax-notepad-fab-pos`).
+- קליק → `navigate({ to: "/notebook" })`.
 
-**הצעה:** ניישם את החלופה הפשוטה (Quick Unlock) — מציג FaceID/טביעה רק כשיש סשן Supabase תקף; חוסך תשתית קריפטוגרפית מלאה. אם רוצים passkeys אמיתיים — נצטרך שיחה נפרדת.
+### 3.2 טבלת `ai_learning_dictionary`
+עמודות:
+- `id`, `user_id`, `branch_id`
+- `user_input text` — מה שהמשתמש כתב
+- `resolved_intent jsonb` — התוצאה הסופית שהמשתמש בחר (task_id / recipe_id / מחרוזת)
+- `context text` — מאיפה זה הגיע (`task_linking`, `invoice_parsing`, וכו')
+- `ai_suggestion jsonb` — מה Gemini הציע במקור
+- `created_at`
+- RLS: קריאה/כתיבה למשתמשים עם תפקיד בסניף שלהם.
 
-### 2B — Service Worker אופליין
-**אזהרה:** ה-SW הנוכחי (`public/sw.js`) הוא kill-switch בלבד (מנקה caches). הוספת caching מלא תשבור עדכונים בתצוגה המקדימה של Lovable וגם עלולה להגיש תוכן ישן באתר המפורסם.
+### 3.3 לולאת פידבק
+**שאלה חשובה:** איפה בדיוק היום קורה "task linking" אוטומטי של Gemini במערכת? אני רואה `copilot.functions.ts` ו-`invoice-ocr.functions.ts`, אבל לא בטוח איפה יש קישור משימות אוטומטי שצריך תיקון.
+- ברירת המחדל שלי: אוסיף תשתית `logAiCorrection()` ב-`src/lib/ai-learning.functions.ts`, ואקרא לה מ-Quick-Edit כאשר משימה משתנה לאחר הצעת AI. נצטרך להגדיר מתי בדיוק "הצעה" קיימת.
 
-**הצעה מאוזנת:**
-- App Shell cache (HTML, JS, CSS) רק בפרודקשן (`pizzaxboh.lovable.app`), בגישת `NetworkFirst` עם timeout 3 שניות
-- React Query: כבר משתמש ב-cache ב-memory; נוסיף `persistQueryClient` ל-localStorage עבור הקריאות החשובות
-- לא ניגע ב-`id-preview--*` ובאייפריימים
-
-### 2C — באנר אופליין + חסימת mutations
-- hook `useOnlineStatus` עם listener על `online`/`offline`
-- באנר ענברי קבוע למעלה כשאין רשת
-- wrapper סביב mutations שמציג toast בעברית אם `!navigator.onLine`
-
----
-
-## חלק 3 — פאנל התראות מנהל ⚠️ מורכב מאוד
-
-### 3A — Web Push Notifications
-דורש:
-1. **VAPID keys** — צריך לייצר זוג מפתחות (`bun add web-push` + סקריפט) ולהוסיף כ-secrets: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
-2. **טבלה חדשה** `push_subscriptions` (user_id, endpoint, p256dh, auth, branch_id, created_at)
-3. **SW push handler** — מאזין ל-`push` event ומציג notification
-4. **Server function** `subscribeToPush` — שומר subscription
-5. **Server function** `sendPushToUsers` — שולח ל-endpoints (דרך `web-push` בספריית Worker-compatible — ייתכן שנצטרך fetch ידני ל-FCM/Apple עם VAPID JWT, כי `web-push` הוא Node-only)
-
-**הערה קריטית:** ה-Worker runtime לא תומך ב-`web-push` המקורי. נצטרך מימוש VAPID JWT ידני עם `crypto.subtle` — אפשרי אבל ~150 שורות.
-
-### 3B — מסך `/admin/alerts`
-- ראוט חדש תחת `_authenticated/admin/alerts.tsx`, מוגן ל-`admin`+`super_admin`
-- שדה לסף מגשי בצק (נשמר ב-`app_settings` בקליד `dough_alert_threshold`, ברירת מחדל 15)
-- טופס broadcast: textarea + select יעד ("כל הצוות"/"מנהלים בלבד") + כפתור שליחה
-
-### 3C — טריגר אוטומטי
-- Database trigger על `dough_updates_log` אחרי INSERT
-- אם `trays_count < threshold` — `pg_net.http_post` ל-`/api/public/hooks/dough-alert`
-- ה-route שולח push לכל המנהלים+super_admins הרשומים
-- צריך להפעיל `pg_net` extension
+### 3.4 הזרקת הקשר ל-Prompt
+- ב-`copilot.functions.ts` (ובכל קריאה ל-Gemini), לפני בניית ה-system prompt:
+  ```ts
+  const dict = await supabase.from('ai_learning_dictionary')
+    .select('user_input, resolved_intent, context')
+    .eq('branch_id', branchId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  ```
+- להוסיף לסיסטם פרומפט בלוק "מילון מונחי המטבח המקומי" עם הזוגות.
 
 ---
 
-## שאלות לפני שאני מתחיל
+## קבצים שייווצרו/ישונו
 
-1. **WebAuthn:** האם להסתפק ב-"Quick Unlock" (פשוט, יציב) או דרוש passkeys מלא (מורכב יותר, שבועיים+ פיתוח)?
-2. **Web Push:** האם להמשיך עם מימוש VAPID ידני ב-Worker? לחילופין — להשתמש ב-`notify()` הקיים (`src/lib/notifications.ts`) שעובד רק כשהטאב פתוח, אבל בלי backend push?
-3. **היקף:** האם להגיש את כל שלושת החלקים בבת אחת (גדול, סיכון לבאגים), או לפצל לסבבים — קודם חלק 1 + חלק 2C (פשוטים), אחר כך 2A+2B, ואחרון 3?
+**חדשים:**
+- `src/components/GlobalSearch.tsx`
+- `src/components/DraggableNotepadFab.tsx`
+- `src/hooks/use-debounced-value.ts`
+- `src/lib/ai-learning.functions.ts`
+- `supabase/migrations/*` (2 מיגרציות)
 
-ההמלצה שלי: **פיצול לשלושה PRs** כדי לוודא שכל חלק נבדק ויציב לפני המעבר לבא.
+**מעודכנים:**
+- `src/routes/__root.tsx` (הוספת GlobalSearch להדר)
+- `src/routes/tasks.tsx` (DnD + FAB)
+- `src/components/QuickEditTaskDialog.tsx` (Urgent toggle + AI log)
+- `src/lib/tasks.ts` (סדר מיון, manual_order_index)
+- `src/lib/copilot.functions.ts` (הזרקת dictionary)
+- `package.json` (הוספת `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`)
+
+---
+
+## שאלות לפני שאתחיל
+
+1. **Drag&Drop scope:** בתוך כל קטגוריה בנפרד (מומלץ) או רשימה שטוחה אחת לכל המשמרת?
+2. **AI Learning trigger:** איפה היום יש "קישור משימות אוטומטי" של Gemini שהמשתמש יכול לתקן? (אם אין — אבנה את התשתית ואחכה להפנייה ספציפית מאוחר יותר.)
+3. **GlobalSearch — מובייל:** ההדר במובייל מאוד צר (360px). להציג את שדה החיפוש כאייקון שנפתח למודאל בלחיצה, או שדה תמיד גלוי מצומצם?
+
+אחרי שתאשר/תענה — אבצע הכל ברצף.
