@@ -997,6 +997,9 @@ function TasksPage() {
         onDeleted={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
       />
 
+      {/* Draggable shortcut to the notepad */}
+      <DraggableNotepadFab />
+
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>
         <SheetContent
