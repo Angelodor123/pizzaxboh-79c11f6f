@@ -466,14 +466,24 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addRow}
-            className="w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-sm font-bold"
-          >
-            <Plus className="h-4 w-4" />
-            הוסף שורה
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setCatalogOpen(true)}
+              className="h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-neon/50 text-neon hover:bg-neon/10 text-sm font-bold"
+            >
+              <Package className="h-4 w-4" />
+              בחר מהקטלוג
+            </button>
+            <button
+              type="button"
+              onClick={addRow}
+              className="h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-sm font-bold"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף שורה
+            </button>
+          </div>
         </div>
 
         <div>
