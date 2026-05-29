@@ -464,6 +464,42 @@ export function TasksPanel() {
     });
   };
 
+  // Bulk reorder: assigns sort_order = 10, 20, 30, ... to the new sequence.
+  const persistOrder = async <T extends { id: string }>(
+    table: "shifts" | "task_groups" | "tasks",
+    reordered: T[],
+  ) => {
+    const updates = reordered.map((it, idx) =>
+      supabase.from(table).update({ sort_order: (idx + 1) * 10 }).eq("id", it.id),
+    );
+    const results = await Promise.all(updates);
+    const err = results.find((r) => r.error);
+    if (err?.error) {
+      toast.error("שמירת סדר נכשלה: " + err.error.message);
+    }
+  };
+
+  const reorderShifts = async (next: Shift[]) => {
+    setShifts(next.map((s, i) => ({ ...s, sort_order: (i + 1) * 10 })));
+    await persistOrder("shifts", next);
+    reload();
+  };
+  const reorderGroups = async (shiftId: string, nextGroups: TaskGroup[]) => {
+    const others = groups.filter((g) => g.shift_id !== shiftId);
+    const renumbered = nextGroups.map((g, i) => ({ ...g, sort_order: (i + 1) * 10 }));
+    setGroups([...others, ...renumbered]);
+    await persistOrder("task_groups", nextGroups);
+    reload();
+  };
+  const reorderTasks = async (nextTasks: Task[], scopeFilter: (t: Task) => boolean) => {
+    const others = tasks.filter((t) => !scopeFilter(t));
+    const renumbered = nextTasks.map((t, i) => ({ ...t, sort_order: (i + 1) * 10 }));
+    setTasks([...others, ...renumbered]);
+    await persistOrder("tasks", nextTasks);
+    reload();
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10 text-muted-foreground">
