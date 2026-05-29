@@ -28,6 +28,12 @@ const eventTypeColor = (id?: string | null): string | null =>
 
 type EventCategory = "delivery" | "event";
 
+interface ExpectedItem {
+  id: string;
+  name: string;
+  is_received?: boolean;
+}
+
 interface CalendarEvent {
   id: string;
   title: string;
@@ -43,6 +49,7 @@ interface CalendarEvent {
   supplier_id?: string | null;
   is_auto?: boolean;
   projector_broadcast?: boolean | null;
+  expected_items?: ExpectedItem[] | null;
 }
 
 
@@ -56,7 +63,9 @@ interface EventOverride {
   end_time: string | null;
   notes: string | null;
   high_priority: boolean | null;
+  expected_items?: ExpectedItem[] | null;
 }
+
 
 // Effective event = base event + per-instance override fields for that date.
 // Returns null if the instance is canceled.
