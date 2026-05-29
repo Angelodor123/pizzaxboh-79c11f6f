@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_learning_dictionary: {
+        Row: {
+          ai_suggestion: Json
+          branch_id: string | null
+          context: string
+          created_at: string
+          id: string
+          resolved_intent: Json
+          user_id: string | null
+          user_input: string
+        }
+        Insert: {
+          ai_suggestion?: Json
+          branch_id?: string | null
+          context?: string
+          created_at?: string
+          id?: string
+          resolved_intent?: Json
+          user_id?: string | null
+          user_input: string
+        }
+        Update: {
+          ai_suggestion?: Json
+          branch_id?: string | null
+          context?: string
+          created_at?: string
+          id?: string
+          resolved_intent?: Json
+          user_id?: string | null
+          user_input?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -1493,6 +1526,8 @@ export type Database = {
           id: string
           ingredient_name: string | null
           is_purchased_good: boolean
+          is_urgent: boolean
+          manual_order_index: number
           name: string
           parent_task_id: string | null
           prep_item_id: string | null
@@ -1512,6 +1547,8 @@ export type Database = {
           id?: string
           ingredient_name?: string | null
           is_purchased_good?: boolean
+          is_urgent?: boolean
+          manual_order_index?: number
           name: string
           parent_task_id?: string | null
           prep_item_id?: string | null
@@ -1531,6 +1568,8 @@ export type Database = {
           id?: string
           ingredient_name?: string | null
           is_purchased_good?: boolean
+          is_urgent?: boolean
+          manual_order_index?: number
           name?: string
           parent_task_id?: string | null
           prep_item_id?: string | null
