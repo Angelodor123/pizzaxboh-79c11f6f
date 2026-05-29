@@ -233,6 +233,14 @@ function SuppliersPage() {
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
+                      onClick={() => setCatalogFor(s)}
+                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
+                      aria-label="קטלוג מוצרים"
+                      title="קטלוג מוצרים"
+                    >
+                      <Package className="h-3.5 w-3.5" />
+                    </button>
+                    <button
                       onClick={() => handleArchive(s)}
                       className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-amber-brand hover:border-amber-brand"
                       aria-label={s.is_archived ? "שחזר" : "העבר לארכיון"}
