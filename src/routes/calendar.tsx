@@ -1150,6 +1150,7 @@ function EventForm({
       high_priority: highPriority,
       projector_broadcast: eventType === "sports_match" ? projectorBroadcast : false,
       notes: notes.trim() || null,
+      expected_items: category === "delivery" ? items : [],
     };
 
     let error;
