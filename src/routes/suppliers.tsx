@@ -30,6 +30,9 @@ interface Supplier {
   active: boolean;
   logo_url: string | null;
   is_archived: boolean;
+  order_days: number[];
+  order_cutoff_time: string | null;
+  delivery_days: number[];
 }
 
 function SuppliersPage() {
@@ -338,6 +341,13 @@ function SupplierForm({
   const [name, setName] = useState(existing?.name ?? "");
   const [category, setCategory] = useState(existing?.category ?? "כללי");
   const [weekdays, setWeekdays] = useState<number[]>(existing?.delivery_weekdays ?? []);
+  const [orderDays, setOrderDays] = useState<number[]>(existing?.order_days ?? []);
+  const [orderCutoff, setOrderCutoff] = useState(existing?.order_cutoff_time?.slice(0, 5) ?? "");
+  const [deliveryDays, setDeliveryDays] = useState<number[]>(
+    (existing?.delivery_days && existing.delivery_days.length > 0)
+      ? existing.delivery_days
+      : (existing?.delivery_weekdays ?? []),
+  );
   const [startTime, setStartTime] = useState(existing?.default_start_time?.slice(0, 5) ?? "");
   const [endTime, setEndTime] = useState(existing?.default_end_time?.slice(0, 5) ?? "");
   const [contact, setContact] = useState(existing?.contact ?? "");
@@ -348,6 +358,13 @@ function SupplierForm({
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const previewLogo = logoUrl || resolveSupplierLogo(name, null);
+
+  const toggleDay = (i: number) =>
+    setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+  const toggleOrderDay = (i: number) =>
+    setOrderDays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+  const toggleDeliveryDay = (i: number) =>
+    setDeliveryDays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
 
   const toggleDay = (i: number) =>
     setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
