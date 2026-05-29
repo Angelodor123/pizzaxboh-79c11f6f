@@ -261,6 +261,32 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved, onDelete
               </div>
             </div>
 
+            <div>
+              <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+                דחיפות
+              </label>
+              <label
+                className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 cursor-pointer border transition ${
+                  isUrgent
+                    ? "bg-red-500/10 border-red-500/60 text-red-200"
+                    : "bg-input border-border text-foreground"
+                }`}
+              >
+                <span className="text-sm font-bold flex items-center gap-2">
+                  <Flame
+                    className={`h-4 w-4 ${isUrgent ? "text-red-400" : "text-muted-foreground"}`}
+                  />
+                  {isUrgent ? "משימה דחופה — תוצמד לראש הרשימה" : "משימה רגילה"}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={isUrgent}
+                  onChange={(e) => setIsUrgent(e.target.checked)}
+                  className="accent-red-500 h-4 w-4"
+                />
+              </label>
+            </div>
+
             <div className="flex items-center justify-between gap-2 pt-2">
               <ModalDeleteButton
                 title={`מחיקת משימה "${task.name}"`}
