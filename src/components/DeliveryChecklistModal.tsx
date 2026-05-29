@@ -56,7 +56,7 @@ export function DeliveryChecklistModal({
       event_id: eventId,
       override_date: date,
       deleted: false,
-      expected_items: next,
+      expected_items: next as unknown as never,
     };
     const { error } = await supabase
       .from("calendar_event_overrides")
