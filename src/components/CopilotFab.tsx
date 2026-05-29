@@ -166,9 +166,6 @@ export function CopilotFab() {
         return;
       }
 
-      // First open today — compose the briefing greeting LOCALLY so Johnny
-      // never opens with "אני לא יודע" (the AI fallback) before the user
-      // has even said a word.
       const hour = new Date().getHours();
       const timeGreeting =
         hour >= 5 && hour < 12
@@ -177,51 +174,12 @@ export function CopilotFab() {
             ? "צהריים טובים"
             : "ערב טוב";
 
-      // Show an immediate, friendly opener so the chat is never empty.
       setMessages([
         {
           role: "model",
-          content: `${timeGreeting}, ג'וני כאן. מושך תדריך יומי... ⏳`,
+          content: `${timeGreeting}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬`,
         },
       ]);
-
-      try {
-        const briefing = await fetchDailyBriefing();
-        const lines: string[] = [
-          `${timeGreeting}, ג'וני כאן. היום ${briefing.weekdayHebrew}.`,
-        ];
-
-        if (briefing.suppliers.length) {
-          lines.push(
-            `🚚 ספקים אמורים להגיע היום: ${briefing.suppliers.join(", ")}. תוודאו שמישהו פנוי לקלוט.`,
-          );
-        } else {
-          lines.push("🚚 אין הגעות ספקים מתוכננות להיום.");
-        }
-
-        if (briefing.events.length) {
-          const evTxt = briefing.events
-            .map(
-              (e) =>
-                `${e.title}${e.time ? ` (${e.time.slice(0, 5)})` : ""}${e.highPriority ? " ⚠️" : ""}`,
-            )
-            .join("; ");
-          lines.push(`📅 על הפרק: ${evTxt}.`);
-        } else {
-          lines.push("📅 אין אירועים מיוחדים בלוח.");
-        }
-
-        lines.push("מה צריך לקדם קודם? 💬");
-
-        setMessages([{ role: "model", content: lines.join("\n") }]);
-      } catch {
-        setMessages([
-          {
-            role: "model",
-            content: `${timeGreeting}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬`,
-          },
-        ]);
-      }
     },
     [],
   );
