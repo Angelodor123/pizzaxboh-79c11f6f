@@ -343,11 +343,11 @@ function TasksPage() {
       const sid = groupId.slice(DIRECT_PREFIX.length);
       return allTasks
         .filter((t) => t.shift_id === sid && !t.group_id && !t.parent_task_id)
-        .sort((a, b) => a.name.localeCompare(b.name, "he"));
+        .sort(compareTasks);
     }
     return allTasks
       .filter((t) => t.group_id === groupId && !t.parent_task_id)
-      .sort((a, b) => a.name.localeCompare(b.name, "he"));
+      .sort(compareTasks);
   };
   const subtasksFor = (parentId: string) =>
     allTasks
