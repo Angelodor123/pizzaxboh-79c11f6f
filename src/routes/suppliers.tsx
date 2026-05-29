@@ -9,6 +9,8 @@ import { confirmDelete } from "@/lib/confirm";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
+import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
+import { Package } from "lucide-react";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
