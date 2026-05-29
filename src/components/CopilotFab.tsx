@@ -249,7 +249,7 @@ export function CopilotFab() {
 
   return (
     <>
-      {/* Daily briefing tooltip — only when user hasn't opened today */}
+      {/* Daily greeting tooltip — only when user hasn't opened today */}
       {showDailyCta && !open && (
         <div
           dir="rtl"
@@ -261,7 +261,7 @@ export function CopilotFab() {
           }}
         >
           <div className="relative bg-gradient-to-br from-[#ff3d8a] to-[#c4006a] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_8px_24px_-4px_rgba(255,61,138,0.6)] whitespace-nowrap">
-            תדריך יומי ממתין לך! 👇
+            ג'וני זמין לעזרה 👇
             <span className="absolute -bottom-1.5 right-6 w-3 h-3 bg-[#c4006a] rotate-45" />
           </div>
         </div>
