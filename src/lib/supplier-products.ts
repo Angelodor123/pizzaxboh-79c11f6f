@@ -14,6 +14,8 @@ export type SupplierProduct = {
   notes: string | null;
   sort_order: number;
   active: boolean;
+  sku: string | null;
+  unit_size: string | null;
 };
 
 export async function loadSupplierProducts(supplierId: string): Promise<SupplierProduct[]> {
