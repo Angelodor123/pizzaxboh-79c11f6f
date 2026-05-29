@@ -61,6 +61,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     recurrence_type: "daily",
     recurrence_day: null,
     shift_id: null,
+    is_urgent: false,
+    manual_order_index: 0,
   },
   {
     id: "__virtual_winter_t2__",
@@ -78,6 +80,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     recurrence_type: "daily",
     recurrence_day: null,
     shift_id: null,
+    is_urgent: false,
+    manual_order_index: 0,
   },
   {
     id: "__virtual_winter_t3__",
@@ -95,6 +99,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     recurrence_type: "daily",
     recurrence_day: null,
     shift_id: null,
+    is_urgent: false,
+    manual_order_index: 0,
   },
 ];
 
