@@ -315,6 +315,15 @@ function SuppliersPage() {
           }}
         />
       )}
+
+      {catalogFor && (
+        <SupplierCatalogManager
+          supplierId={catalogFor.id}
+          supplierName={catalogFor.name}
+          open={!!catalogFor}
+          onClose={() => setCatalogFor(null)}
+        />
+      )}
     </div>
   );
 }
