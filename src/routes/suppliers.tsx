@@ -30,6 +30,9 @@ interface Supplier {
   active: boolean;
   logo_url: string | null;
   is_archived: boolean;
+  order_days: number[];
+  order_cutoff_time: string | null;
+  delivery_days: number[];
 }
 
 function SuppliersPage() {
@@ -338,6 +341,13 @@ function SupplierForm({
   const [name, setName] = useState(existing?.name ?? "");
   const [category, setCategory] = useState(existing?.category ?? "כללי");
   const [weekdays, setWeekdays] = useState<number[]>(existing?.delivery_weekdays ?? []);
+  const [orderDays, setOrderDays] = useState<number[]>(existing?.order_days ?? []);
+  const [orderCutoff, setOrderCutoff] = useState(existing?.order_cutoff_time?.slice(0, 5) ?? "");
+  const [deliveryDays, setDeliveryDays] = useState<number[]>(
+    (existing?.delivery_days && existing.delivery_days.length > 0)
+      ? existing.delivery_days
+      : (existing?.delivery_weekdays ?? []),
+  );
   const [startTime, setStartTime] = useState(existing?.default_start_time?.slice(0, 5) ?? "");
   const [endTime, setEndTime] = useState(existing?.default_end_time?.slice(0, 5) ?? "");
   const [contact, setContact] = useState(existing?.contact ?? "");
@@ -351,6 +361,11 @@ function SupplierForm({
 
   const toggleDay = (i: number) =>
     setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+  const toggleOrderDay = (i: number) =>
+    setOrderDays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+  const toggleDeliveryDay = (i: number) =>
+    setDeliveryDays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
+
 
   const handleLogoUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -393,6 +408,9 @@ function SupplierForm({
       notes: notes.trim().slice(0, 2000) || null,
       active,
       logo_url: logoUrl,
+      order_days: orderDays,
+      order_cutoff_time: orderCutoff || null,
+      delivery_days: deliveryDays,
     };
     let error;
     if (existing) {
@@ -517,6 +535,60 @@ function SupplierForm({
             <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="sup-input" />
           </Field>
         </div>
+
+        {/* Order time settings */}
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-3">
+          <div className="text-xs font-bold text-destructive text-right">⏰ הגדרות זמני הזמנה</div>
+
+          <div>
+            <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי הזמנה (אזהרה בדשבורד)</span>
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS_HE.map((w, i) => {
+                const on = orderDays.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleOrderDay(i)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
+                      on ? "bg-destructive/20 border-destructive text-destructive" : "border-border text-foreground hover:border-destructive"
+                    }`}
+                  >
+                    {on && <Check className="inline h-3 w-3 ms-1" />}
+                    {w}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <Field label="שעת קאט-אוף להזמנה">
+            <input type="time" value={orderCutoff} onChange={(e) => setOrderCutoff(e.target.value)} className="sup-input" />
+          </Field>
+
+          <div>
+            <span className="block text-xs font-bold text-muted-foreground mb-1 text-right">ימי הגעת המשלוח</span>
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS_HE.map((w, i) => {
+                const on = deliveryDays.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleDeliveryDay(i)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-bold border transition ${
+                      on ? "bg-success/20 border-success text-success" : "border-border text-foreground hover:border-neon"
+                    }`}
+                  >
+                    {on && <Check className="inline h-3 w-3 ms-1" />}
+                    {w}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
 
         <Field label="איש קשר / טלפון">
           <input value={contact} onChange={(e) => setContact(e.target.value)} className="sup-input" maxLength={200} dir="rtl" />

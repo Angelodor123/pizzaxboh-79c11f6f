@@ -9,6 +9,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
+import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 
 
 export const Route = createFileRoute("/")({
@@ -126,6 +127,11 @@ function OperationalDashboard() {
       <div className="mb-6">
         <EvChargingWidget />
       </div>
+
+      {/* Supplier ordering alerts — must order today */}
+      <SupplierAlertsBanner />
+
+
 
       {/* Live operational telemetry */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 items-stretch">
