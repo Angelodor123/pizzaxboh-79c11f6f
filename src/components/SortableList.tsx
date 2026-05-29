@@ -92,17 +92,25 @@ function SortableRow({
   id: string;
   children: (handle: ReactNode) => ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 50 : "auto" as const,
+    zIndex: isDragging ? 50 : ("auto" as const),
     opacity: isDragging ? 0.85 : 1,
   };
   const handle = (
     <button
       type="button"
-      ref={setNodeRef as never}
+      ref={setActivatorNodeRef}
       {...attributes}
       {...listeners}
       className="p-1.5 text-muted-foreground hover:text-neon cursor-grab active:cursor-grabbing touch-none"
@@ -113,8 +121,9 @@ function SortableRow({
     </button>
   );
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style}>
       {children(handle)}
     </div>
   );
 }
+
