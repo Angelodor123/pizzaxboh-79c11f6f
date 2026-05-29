@@ -103,6 +103,7 @@ function CalendarPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [instanceEdit, setInstanceEdit] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
+  const [checklistFor, setChecklistFor] = useState<{ ev: EffectiveEvent; date: string } | null>(null);
 
   // Load events + overrides
   useEffect(() => {
