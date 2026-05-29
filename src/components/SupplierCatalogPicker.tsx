@@ -74,7 +74,11 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return products;
-    return products.filter((p) => p.name.toLowerCase().includes(q) || (p.category ?? "").toLowerCase().includes(q));
+    return products.filter((p) =>
+      p.name.toLowerCase().includes(q) ||
+      (p.sku ?? "").toLowerCase().includes(q) ||
+      (p.category ?? "").toLowerCase().includes(q),
+    );
   }, [products, search]);
 
   const setQ = (id: string, v: number) => {
