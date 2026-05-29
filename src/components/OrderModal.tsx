@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown, Eye, Pencil, Image as ImageIcon } from "lucide-react";
+import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown, Eye, Pencil, Image as ImageIcon, Package } from "lucide-react";
+import { SupplierCatalogPicker } from "@/components/SupplierCatalogPicker";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
@@ -74,6 +75,7 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
@@ -464,14 +466,24 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addRow}
-            className="w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-sm font-bold"
-          >
-            <Plus className="h-4 w-4" />
-            הוסף שורה
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setCatalogOpen(true)}
+              className="h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-neon/50 text-neon hover:bg-neon/10 text-sm font-bold"
+            >
+              <Package className="h-4 w-4" />
+              בחר מהקטלוג
+            </button>
+            <button
+              type="button"
+              onClick={addRow}
+              className="h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-sm font-bold"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף שורה
+            </button>
+          </div>
         </div>
 
         <div>
@@ -829,6 +841,21 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {catalogOpen && (
+        <SupplierCatalogPicker
+          supplierId={supplier.id}
+          supplierName={supplier.name}
+          open={catalogOpen}
+          onClose={() => setCatalogOpen(false)}
+          onAdd={(newRows) => {
+            setRows((prev) => {
+              const cleaned = prev.filter((r) => r.name.trim() || r.qty.trim());
+              return [...cleaned, ...newRows];
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

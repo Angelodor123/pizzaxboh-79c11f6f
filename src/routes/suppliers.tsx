@@ -9,6 +9,8 @@ import { confirmDelete } from "@/lib/confirm";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
+import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
+import { Package } from "lucide-react";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
@@ -38,6 +40,7 @@ function SuppliersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [catalogFor, setCatalogFor] = useState<Supplier | null>(null);
   const bulk = useBulkSelection();
 
   useEffect(() => {
@@ -230,6 +233,14 @@ function SuppliersPage() {
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
+                      onClick={() => setCatalogFor(s)}
+                      className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
+                      aria-label="קטלוג מוצרים"
+                      title="קטלוג מוצרים"
+                    >
+                      <Package className="h-3.5 w-3.5" />
+                    </button>
+                    <button
                       onClick={() => handleArchive(s)}
                       className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-amber-brand hover:border-amber-brand"
                       aria-label={s.is_archived ? "שחזר" : "העבר לארכיון"}
@@ -302,6 +313,15 @@ function SuppliersPage() {
             setFormOpen(false);
             setEditing(null);
           }}
+        />
+      )}
+
+      {catalogFor && (
+        <SupplierCatalogManager
+          supplierId={catalogFor.id}
+          supplierName={catalogFor.name}
+          open={!!catalogFor}
+          onClose={() => setCatalogFor(null)}
         />
       )}
     </div>
