@@ -6,13 +6,26 @@ import { Loader2, Minus, Send, ListChecks, Package, AlertTriangle, ArrowLeft } f
 import { askCopilot, type CopilotAction } from "@/lib/copilot.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
-import {
-  fetchDailyBriefing,
-  hasOpenedToday,
-  markOpenedToday,
-  randomGreeting,
-} from "@/lib/daily-briefing";
 import { cn } from "@/lib/utils";
+
+const COPILOT_OPENED_KEY = "pizzax-copilot-opened-date";
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+function hasOpenedToday() {
+  try { return localStorage.getItem(COPILOT_OPENED_KEY) === todayKey(); } catch { return false; }
+}
+function markOpenedToday() {
+  try { localStorage.setItem(COPILOT_OPENED_KEY, todayKey()); } catch { /* noop */ }
+}
+const GREETINGS = [
+  "ג'וני כאן. מה קורה? 💬",
+  "ג'וני זמין. מה צריך?",
+  "כאן ג'וני. דברו אליי.",
+];
+function randomGreeting() {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+}
 
 
 type Msg = { role: "user" | "model"; content: string; actions?: CopilotAction[] };
@@ -153,9 +166,6 @@ export function CopilotFab() {
         return;
       }
 
-      // First open today — compose the briefing greeting LOCALLY so Johnny
-      // never opens with "אני לא יודע" (the AI fallback) before the user
-      // has even said a word.
       const hour = new Date().getHours();
       const timeGreeting =
         hour >= 5 && hour < 12
@@ -164,51 +174,12 @@ export function CopilotFab() {
             ? "צהריים טובים"
             : "ערב טוב";
 
-      // Show an immediate, friendly opener so the chat is never empty.
       setMessages([
         {
           role: "model",
-          content: `${timeGreeting}, ג'וני כאן. מושך תדריך יומי... ⏳`,
+          content: `${timeGreeting}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬`,
         },
       ]);
-
-      try {
-        const briefing = await fetchDailyBriefing();
-        const lines: string[] = [
-          `${timeGreeting}, ג'וני כאן. היום ${briefing.weekdayHebrew}.`,
-        ];
-
-        if (briefing.suppliers.length) {
-          lines.push(
-            `🚚 ספקים אמורים להגיע היום: ${briefing.suppliers.join(", ")}. תוודאו שמישהו פנוי לקלוט.`,
-          );
-        } else {
-          lines.push("🚚 אין הגעות ספקים מתוכננות להיום.");
-        }
-
-        if (briefing.events.length) {
-          const evTxt = briefing.events
-            .map(
-              (e) =>
-                `${e.title}${e.time ? ` (${e.time.slice(0, 5)})` : ""}${e.highPriority ? " ⚠️" : ""}`,
-            )
-            .join("; ");
-          lines.push(`📅 על הפרק: ${evTxt}.`);
-        } else {
-          lines.push("📅 אין אירועים מיוחדים בלוח.");
-        }
-
-        lines.push("מה צריך לקדם קודם? 💬");
-
-        setMessages([{ role: "model", content: lines.join("\n") }]);
-      } catch {
-        setMessages([
-          {
-            role: "model",
-            content: `${timeGreeting}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬`,
-          },
-        ]);
-      }
     },
     [],
   );
@@ -278,7 +249,7 @@ export function CopilotFab() {
 
   return (
     <>
-      {/* Daily briefing tooltip — only when user hasn't opened today */}
+      {/* Daily greeting tooltip — only when user hasn't opened today */}
       {showDailyCta && !open && (
         <div
           dir="rtl"
@@ -290,7 +261,7 @@ export function CopilotFab() {
           }}
         >
           <div className="relative bg-gradient-to-br from-[#ff3d8a] to-[#c4006a] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_8px_24px_-4px_rgba(255,61,138,0.6)] whitespace-nowrap">
-            תדריך יומי ממתין לך! 👇
+            ג'וני זמין לעזרה 👇
             <span className="absolute -bottom-1.5 right-6 w-3 h-3 bg-[#c4006a] rotate-45" />
           </div>
         </div>

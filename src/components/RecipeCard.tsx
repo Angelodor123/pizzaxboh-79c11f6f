@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pencil, Clock, CheckCircle2 } from "lucide-react";
+import { Pencil, Clock, CheckCircle2, Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   categoryLabels,
@@ -8,6 +8,7 @@ import {
   DEFAULT_SHELF_LIFE,
   type Recipe,
 } from "@/lib/cookbook";
+import { formatRecipeText, buildWhatsAppShareUrl } from "@/lib/recipe-share";
 
 
 import { useAuth } from "@/lib/auth";
@@ -130,6 +131,37 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
       {expanded && (
         <>
+          {/* Share actions — Copy + WhatsApp */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(formatRecipeText(recipe));
+                  toast.success("המתכון הועתק בהצלחה");
+                } catch {
+                  toast.error("העתקה נכשלה");
+                }
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-card/50 text-sm font-bold text-foreground hover:border-neon hover:text-neon transition"
+              aria-label="העתק מתכון"
+            >
+              <Copy className="h-4 w-4" />
+              העתק
+            </button>
+            <a
+              href={buildWhatsAppShareUrl(recipe)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-emerald-500/50 bg-emerald-500/10 text-sm font-bold text-emerald-300 hover:bg-emerald-500/20 transition"
+              aria-label="שתף בוואטסאפ"
+            >
+              <MessageCircle className="h-4 w-4" />
+              וואטסאפ
+            </a>
+          </div>
+
+
           <div
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
               isServiceMode
