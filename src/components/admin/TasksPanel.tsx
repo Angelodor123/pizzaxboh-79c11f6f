@@ -744,7 +744,7 @@ function TaskRow({
           : "bg-amber-500/15 text-amber-300 border border-amber-500/30";
 
   return (
-    <li className="px-3 py-2 bg-background/40">
+    <div className="px-3 py-2 bg-background/40">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-0.5">
           {dragHandle}
@@ -828,6 +828,6 @@ function TaskRow({
           </div>
         </div>
       )}
-    </li>
+    </div>
   );
 }
