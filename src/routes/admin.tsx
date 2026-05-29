@@ -27,6 +27,7 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { SortableList } from "@/components/SortableList";
 import {
   useSiteTextsStore,
   useSupplierReminderSettings,
