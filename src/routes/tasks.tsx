@@ -1,7 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle, GripVertical, Flame } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +33,7 @@ import {
   upsertLogs,
   extractIngredientName,
   isTaskActiveOn,
+  compareTasks,
   type Shift,
   type TaskGroup,
   type Task,
@@ -24,13 +42,19 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
+import { DraggableNotepadFab } from "@/components/DraggableNotepadFab";
 import { triggerHaptic } from "@/lib/haptics";
 import { celebrate } from "@/lib/celebrate";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { TaskPhotoButton } from "@/components/TaskPhotoEvidence";
 
+type TasksSearch = { edit?: string };
+
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
+  validateSearch: (search: Record<string, unknown>): TasksSearch => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
 });
 
 type LogState = {
