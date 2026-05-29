@@ -15,6 +15,7 @@ import { QuickBackBubble } from "@/components/QuickBackBubble";
 import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { PageTransition } from "@/components/PageTransition";
 
 import { lazy, Suspense, useEffect } from "react";
@@ -297,6 +298,7 @@ function AuthedShell() {
             </span>
           </Link>
           <div className="flex items-center gap-1.5 shrink-0">
+            <GlobalSearch />
             {showServiceToggle && <ServiceModeToggle />}
             <MaintenanceBell />
             <BranchSwitcher />
