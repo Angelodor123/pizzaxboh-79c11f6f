@@ -841,6 +841,21 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {catalogOpen && (
+        <SupplierCatalogPicker
+          supplierId={supplier.id}
+          supplierName={supplier.name}
+          open={catalogOpen}
+          onClose={() => setCatalogOpen(false)}
+          onAdd={(newRows) => {
+            setRows((prev) => {
+              const cleaned = prev.filter((r) => r.name.trim() || r.qty.trim());
+              return [...cleaned, ...newRows];
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
