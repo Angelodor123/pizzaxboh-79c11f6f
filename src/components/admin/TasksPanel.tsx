@@ -523,20 +523,26 @@ export function TasksPanel() {
         </h2>
       </div>
 
-      <div className="space-y-3">
-        {shifts.map((s) => {
-          const shiftGroups = groups.filter((g) => g.shift_id === s.id);
+      <SortableList
+        items={[...shifts].sort((a, b) => a.sort_order - b.sort_order)}
+        getId={(s) => s.id}
+        onReorder={reorderShifts}
+        className="space-y-3"
+      >
+        {(s, shiftHandle) => {
+          const shiftGroups = groups
+            .filter((g) => g.shift_id === s.id)
+            .sort((a, b) => a.sort_order - b.sort_order);
           const directTasks = tasks
             .filter((t) => t.shift_id === s.id && !t.group_id && !t.parent_task_id)
             .sort((a, b) => a.sort_order - b.sort_order);
           const isOpen = expanded.has(s.id);
           return (
-            <div key={s.id} className="border border-border rounded-lg overflow-hidden bg-card/40">
+            <div className="border border-border rounded-lg overflow-hidden bg-card/40">
               {/* Level 1 — Area/Shift header */}
               <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/60">
                 <div className="flex items-center gap-1">
-                  <button onClick={() => moveShift(s, -1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="העלה"><ChevronUp className="h-4 w-4" /></button>
-                  <button onClick={() => moveShift(s, 1)} className="p-1 text-muted-foreground hover:text-neon" aria-label="הורד"><ChevronDown className="h-4 w-4" /></button>
+                  {shiftHandle}
                   <button onClick={() => renameShift(s)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-4 w-4" /></button>
                   <button onClick={() => deleteShift(s)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-4 w-4" /></button>
                 </div>
@@ -552,68 +558,95 @@ export function TasksPanel() {
                 <div className="p-3 space-y-3 bg-background/20">
                   {/* Direct tasks (Level 3 under Area) */}
                   {directTasks.length > 0 && (
-                    <ul className="pr-3 border-r-2 border-pink-500/40 divide-y divide-border/60 bg-background/30 rounded-md">
-                      {directTasks.map((t) => (
-                        <TaskRow
-                          key={t.id}
-                          task={t}
-                          recipes={recipes}
-                          onUpdate={(patch) => updateTask(t, patch)}
-                          onDelete={() => deleteTask(t)}
-                        />
-                      ))}
-                    </ul>
+                    <div className="pr-3 border-r-2 border-pink-500/40 bg-background/30 rounded-md">
+                      <SortableList
+                        items={directTasks}
+                        getId={(t) => t.id}
+                        onReorder={(next) =>
+                          reorderTasks(next, (t) => t.shift_id === s.id && !t.group_id && !t.parent_task_id)
+                        }
+                        className="divide-y divide-border/60"
+                      >
+                        {(t, handle) => (
+                          <TaskRow
+                            task={t}
+                            recipes={recipes}
+                            onUpdate={(patch) => updateTask(t, patch)}
+                            onDelete={() => deleteTask(t)}
+                            dragHandle={handle}
+                          />
+                        )}
+                      </SortableList>
+                    </div>
                   )}
 
                   {/* Categories (Level 2) — indented */}
                   {shiftGroups.length > 0 && (
-                    <div className="pr-3 space-y-2 border-r-2 border-neon/40">
-                      {shiftGroups.map((g) => {
-                        const groupTasks = tasks
-                          .filter((t) => t.group_id === g.id && !t.parent_task_id)
-                          .sort((a, b) => a.sort_order - b.sort_order);
-                        const gOpen = expanded.has(g.id);
-                        return (
-                          <div key={g.id} className="rounded-md border border-border/70 bg-card/40 overflow-hidden">
-                            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/60">
-                              <div className="flex items-center gap-1">
-                                <button onClick={() => renameGroup(g)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-3.5 w-3.5" /></button>
-                                <button onClick={() => deleteGroup(g)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
+                    <div className="pr-3 border-r-2 border-neon/40">
+                      <SortableList
+                        items={shiftGroups}
+                        getId={(g) => g.id}
+                        onReorder={(next) => reorderGroups(s.id, next)}
+                        className="space-y-2"
+                      >
+                        {(g, groupHandle) => {
+                          const groupTasks = tasks
+                            .filter((t) => t.group_id === g.id && !t.parent_task_id)
+                            .sort((a, b) => a.sort_order - b.sort_order);
+                          const gOpen = expanded.has(g.id);
+                          return (
+                            <div className="rounded-md border border-border/70 bg-card/40 overflow-hidden">
+                              <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/60">
+                                <div className="flex items-center gap-1">
+                                  {groupHandle}
+                                  <button onClick={() => renameGroup(g)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך"><Pencil className="h-3.5 w-3.5" /></button>
+                                  <button onClick={() => deleteGroup(g)} className="p-1 text-muted-foreground hover:text-destructive" aria-label="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
+                                  <button
+                                    onClick={() => addTaskTo({ groupId: g.id, parentName: g.name })}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-pink-600/90 hover:bg-pink-600 text-white text-[11px] font-bold"
+                                    aria-label="הוסף משימה לקטגוריה"
+                                  >
+                                    <Plus className="h-3 w-3" /> משימה
+                                  </button>
+                                </div>
                                 <button
-                                  onClick={() => addTaskTo({ groupId: g.id, parentName: g.name })}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-pink-600/90 hover:bg-pink-600 text-white text-[11px] font-bold"
-                                  aria-label="הוסף משימה לקטגוריה"
+                                  onClick={() => toggle(g.id)}
+                                  className="flex-1 text-right text-sm font-bold"
                                 >
-                                  <Plus className="h-3 w-3" /> משימה
+                                  {g.name}
+                                  <span className="mr-2 text-[11px] text-muted-foreground font-normal">({groupTasks.length})</span>
                                 </button>
                               </div>
-                              <button
-                                onClick={() => toggle(g.id)}
-                                className="flex-1 text-right text-sm font-bold"
-                              >
-                                {g.name}
-                                <span className="mr-2 text-[11px] text-muted-foreground font-normal">({groupTasks.length})</span>
-                              </button>
+                              {gOpen && (
+                                <div className="pr-3 border-r-2 border-pink-500/30">
+                                  {groupTasks.length === 0 ? (
+                                    <div className="px-3 py-2 text-center text-[11px] text-muted-foreground">אין משימות בקטגוריה זו.</div>
+                                  ) : (
+                                    <SortableList
+                                      items={groupTasks}
+                                      getId={(t) => t.id}
+                                      onReorder={(next) =>
+                                        reorderTasks(next, (t) => t.group_id === g.id && !t.parent_task_id)
+                                      }
+                                      className="divide-y divide-border/60"
+                                    >
+                                      {(t, handle) => (
+                                        <TaskRow
+                                          task={t}
+                                          recipes={recipes}
+                                          onUpdate={(patch) => updateTask(t, patch)}
+                                          onDelete={() => deleteTask(t)}
+                                          dragHandle={handle}
+                                        />
+                                      )}
+                                    </SortableList>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                            {gOpen && (
-                              <ul className="pr-3 border-r-2 border-pink-500/30 divide-y divide-border/60">
-                                {groupTasks.map((t) => (
-                                  <TaskRow
-                                    key={t.id}
-                                    task={t}
-                                    recipes={recipes}
-                                    onUpdate={(patch) => updateTask(t, patch)}
-                                    onDelete={() => deleteTask(t)}
-                                  />
-                                ))}
-                                {groupTasks.length === 0 && (
-                                  <li className="px-3 py-2 text-center text-[11px] text-muted-foreground">אין משימות בקטגוריה זו.</li>
-                                )}
-                              </ul>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        }}
+                      </SortableList>
                     </div>
                   )}
 
@@ -642,14 +675,15 @@ export function TasksPanel() {
               )}
             </div>
           );
-        })}
+        }}
+      </SortableList>
 
-        {shifts.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground border border-border rounded-md">
-            עדיין אין אזורים או משמרות. לחצו על "אזור / משמרת חדשה" כדי להתחיל.
-          </div>
-        )}
-      </div>
+      {shifts.length === 0 && (
+        <div className="p-6 text-center text-sm text-muted-foreground border border-border rounded-md">
+          עדיין אין אזורים או משמרות. לחצו על "אזור / משמרת חדשה" כדי להתחיל.
+        </div>
+      )}
+
 
       <PromptModal
         state={promptState}
