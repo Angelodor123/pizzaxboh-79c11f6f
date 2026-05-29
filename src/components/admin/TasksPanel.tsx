@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Plus, Trash2, Pencil, Save, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { SortableList } from "@/components/SortableList";
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
