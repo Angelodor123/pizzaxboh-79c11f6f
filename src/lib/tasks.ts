@@ -35,6 +35,20 @@ export interface Task {
   parent_task_id: string | null;
   recurrence_type: RecurrenceType;
   recurrence_day: number | null;
+  is_urgent: boolean;
+  manual_order_index: number;
+}
+
+/**
+ * Canonical leaf-task sort: urgent first, then manual order, then existing sort_order,
+ * then name. Used both by the Tasks page and the briefing screen.
+ */
+export function compareTasks(a: Task, b: Task): number {
+  if (a.is_urgent !== b.is_urgent) return a.is_urgent ? -1 : 1;
+  if (a.manual_order_index !== b.manual_order_index)
+    return a.manual_order_index - b.manual_order_index;
+  if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+  return a.name.localeCompare(b.name, "he");
 }
 
 export const WEEKDAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"] as const;

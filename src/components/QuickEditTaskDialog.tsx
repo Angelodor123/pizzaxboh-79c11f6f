@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Flame } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCookbookStore } from "@/lib/store";
 import type { Task } from "@/lib/tasks";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
+import { logAiCorrection } from "@/lib/ai-learning.functions";
 
 interface PrepItemLite {
   id: string;
@@ -33,6 +34,7 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved, onDelete
   const [prepItemId, setPrepItemId] = useState("");
   const [sortOrder, setSortOrder] = useState<number>(0);
   const [active, setActive] = useState(true);
+  const [isUrgent, setIsUrgent] = useState(false);
   const [ingredientName, setIngredientName] = useState("");
   const [itemCategory, setItemCategory] = useState<"raw_material" | "in_house_prep">("in_house_prep");
   const [prepItems, setPrepItems] = useState<PrepItemLite[]>([]);
@@ -46,6 +48,7 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved, onDelete
     setPrepItemId(task.prep_item_id ?? "");
     setSortOrder(task.sort_order);
     setActive(task.active);
+    setIsUrgent(task.is_urgent ?? false);
     setIngredientName(task.ingredient_name ?? "");
     setItemCategory(task.is_purchased_good ? "raw_material" : "in_house_prep");
   }, [task]);
@@ -89,14 +92,38 @@ export function QuickEditTaskDialog({ task, branchId, onClose, onSaved, onDelete
       prep_item_id: prepItemId || null,
       sort_order: Number.isFinite(sortOrder) ? sortOrder : task.sort_order,
       active,
+      is_urgent: isUrgent,
       ingredient_name: ingredientName.trim() || null,
       is_purchased_good: itemCategory === "raw_material",
     };
-    const { error } = await supabase.from("tasks").update(patch).eq("id", task.id);
+    const { error } = await supabase.from("tasks").update(patch as any).eq("id", task.id);
     setSaving(false);
     if (error) {
       toast.error(error.message);
       return;
+    }
+    // AI learning: log overrides of recipe / prep-item links so Gemini learns the kitchen's terminology.
+    if ((recipeId || null) !== (task.recipe_id || null)) {
+      void logAiCorrection({
+        data: {
+          user_input: trimmed,
+          ai_suggestion: { recipe_id: task.recipe_id ?? null },
+          resolved_intent: { recipe_id: recipeId || null },
+          context: "task_recipe_link",
+          branch_id: task.branch_id || null,
+        },
+      } as any).catch(() => {});
+    }
+    if ((prepItemId || null) !== (task.prep_item_id || null)) {
+      void logAiCorrection({
+        data: {
+          user_input: trimmed,
+          ai_suggestion: { prep_item_id: task.prep_item_id ?? null },
+          resolved_intent: { prep_item_id: prepItemId || null },
+          context: "task_prep_link",
+          branch_id: task.branch_id || null,
+        },
+      } as any).catch(() => {});
     }
     toast.success("המשימה עודכנה");
     onSaved({ ...task, ...patch });

@@ -1,7 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle, GripVertical, Flame } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +33,7 @@ import {
   upsertLogs,
   extractIngredientName,
   isTaskActiveOn,
+  compareTasks,
   type Shift,
   type TaskGroup,
   type Task,
@@ -24,13 +42,19 @@ import {
 import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
+import { DraggableNotepadFab } from "@/components/DraggableNotepadFab";
 import { triggerHaptic } from "@/lib/haptics";
 import { celebrate } from "@/lib/celebrate";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { TaskPhotoButton } from "@/components/TaskPhotoEvidence";
 
+type TasksSearch = { edit?: string };
+
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
+  validateSearch: (search: Record<string, unknown>): TasksSearch => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
 });
 
 type LogState = {
@@ -61,6 +85,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     recurrence_type: "daily",
     recurrence_day: null,
     shift_id: null,
+    is_urgent: false,
+    manual_order_index: 0,
   },
   {
     id: "__virtual_winter_t2__",
@@ -78,6 +104,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     recurrence_type: "daily",
     recurrence_day: null,
     shift_id: null,
+    is_urgent: false,
+    manual_order_index: 0,
   },
   {
     id: "__virtual_winter_t3__",
@@ -95,6 +123,8 @@ const VIRTUAL_WINTER_TASKS: Task[] = [
     recurrence_type: "daily",
     recurrence_day: null,
     shift_id: null,
+    is_urgent: false,
+    manual_order_index: 0,
   },
 ];
 
@@ -225,6 +255,9 @@ function TasksPage() {
     return dateStr;
   };
 
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
   useEffect(() => {
     if (!branchId) return;
     let abort = false;
@@ -244,6 +277,16 @@ function TasksPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
+
+  // Open Quick-Edit when arriving with ?edit=<taskId> (e.g. from GlobalSearch)
+  useEffect(() => {
+    if (!search.edit || tasks.length === 0) return;
+    const found = tasks.find((t) => t.id === search.edit);
+    if (found) {
+      setEditingTask(found);
+      navigate({ search: {} as any, replace: true });
+    }
+  }, [search.edit, tasks, navigate]);
 
   // Auto-refresh when the operational day rolls over (5am Asia/Jerusalem),
   // or when the user returns to the tab after the boundary.
@@ -313,11 +356,11 @@ function TasksPage() {
       const sid = groupId.slice(DIRECT_PREFIX.length);
       return allTasks
         .filter((t) => t.shift_id === sid && !t.group_id && !t.parent_task_id)
-        .sort((a, b) => a.name.localeCompare(b.name, "he"));
+        .sort(compareTasks);
     }
     return allTasks
       .filter((t) => t.group_id === groupId && !t.parent_task_id)
-      .sort((a, b) => a.name.localeCompare(b.name, "he"));
+      .sort(compareTasks);
   };
   const subtasksFor = (parentId: string) =>
     allTasks
@@ -953,6 +996,9 @@ function TasksPage() {
         }
         onDeleted={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
       />
+
+      {/* Draggable shortcut to the notepad */}
+      <DraggableNotepadFab />
 
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>
