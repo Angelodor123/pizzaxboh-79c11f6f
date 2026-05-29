@@ -255,6 +255,9 @@ function TasksPage() {
     return dateStr;
   };
 
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
   useEffect(() => {
     if (!branchId) return;
     let abort = false;
@@ -274,6 +277,16 @@ function TasksPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
+
+  // Open Quick-Edit when arriving with ?edit=<taskId> (e.g. from GlobalSearch)
+  useEffect(() => {
+    if (!search.edit || tasks.length === 0) return;
+    const found = tasks.find((t) => t.id === search.edit);
+    if (found) {
+      setEditingTask(found);
+      navigate({ search: {} as any, replace: true });
+    }
+  }, [search.edit, tasks, navigate]);
 
   // Auto-refresh when the operational day rolls over (5am Asia/Jerusalem),
   // or when the user returns to the tab after the boundary.
