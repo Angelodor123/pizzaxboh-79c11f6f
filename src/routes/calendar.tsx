@@ -305,6 +305,22 @@ function CalendarPage() {
           onClose={() => setInstanceEdit(null)}
         />
       )}
+
+      {checklistFor && (
+        <DeliveryChecklistModal
+          eventId={checklistFor.ev.id}
+          eventTitle={checklistFor.ev.title}
+          date={checklistFor.date}
+          templateItems={(checklistFor.ev.expected_items ?? []).map((it) => ({
+            id: it.id,
+            name: it.name,
+            is_received: false,
+          })) as ChecklistItem[]}
+          initialItems={(checklistFor.ev._overrideItems ?? null) as ChecklistItem[] | null}
+          overrideId={checklistFor.ev._overrideId ?? null}
+          onClose={() => setChecklistFor(null)}
+        />
+      )}
     </div>
   );
 }
