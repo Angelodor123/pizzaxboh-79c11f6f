@@ -22,7 +22,6 @@ import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as BriefingRouteImport } from './routes/briefing'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
@@ -96,11 +95,6 @@ const CalendarRoute = CalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BriefingRoute = BriefingRouteImport.update({
-  id: '/briefing',
-  path: '/briefing',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -142,7 +136,6 @@ const ApiPublicHooksDoughAlertRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/briefing': typeof BriefingRoute
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
@@ -165,7 +158,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/briefing': typeof BriefingRoute
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
@@ -189,7 +181,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/briefing': typeof BriefingRoute
   '/calendar': typeof CalendarRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
@@ -214,7 +205,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/briefing'
     | '/calendar'
     | '/guide'
     | '/invoices'
@@ -237,7 +227,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
-    | '/briefing'
     | '/calendar'
     | '/guide'
     | '/invoices'
@@ -260,7 +249,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
-    | '/briefing'
     | '/calendar'
     | '/guide'
     | '/invoices'
@@ -284,7 +272,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  BriefingRoute: typeof BriefingRoute
   CalendarRoute: typeof CalendarRoute
   GuideRoute: typeof GuideRoute
   InvoicesRoute: typeof InvoicesRoute
@@ -395,13 +382,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/briefing': {
-      id: '/briefing'
-      path: '/briefing'
-      fullPath: '/briefing'
-      preLoaderRoute: typeof BriefingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -471,7 +451,6 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  BriefingRoute: BriefingRoute,
   CalendarRoute: CalendarRoute,
   GuideRoute: GuideRoute,
   InvoicesRoute: InvoicesRoute,
