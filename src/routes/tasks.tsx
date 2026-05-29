@@ -190,6 +190,44 @@ function useSevereWeather() {
   return severe;
 }
 
+function SortableTaskItem({
+  id,
+  showHandle,
+  children,
+}: {
+  id: string;
+  showHandle: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: !showHandle,
+  });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {showHandle && (
+        <button
+          type="button"
+          aria-label="גרור לסידור"
+          className="absolute top-2 left-2 z-10 p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent/40 cursor-grab active:cursor-grabbing touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+      {children}
+    </div>
+  );
+}
+
+
 function TasksPage() {
   const { fullName, session, isSuperAdmin } = useAuth();
   const userId = session?.user?.id ?? null;
@@ -208,6 +246,45 @@ function TasksPage() {
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleGroupDragEnd = (groupId: string) => async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const current = tasksForGroup(groupId);
+    const oldIndex = current.findIndex((t) => t.id === active.id);
+    const newIndex = current.findIndex((t) => t.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(current, oldIndex, newIndex);
+    // Optimistic state update with new manual_order_index
+    setTasks((prev) => {
+      const map = new Map(prev.map((t) => [t.id, t]));
+      reordered.forEach((t, idx) => {
+        const existing = map.get(t.id);
+        if (existing) map.set(t.id, { ...existing, manual_order_index: idx + 1 });
+      });
+      return Array.from(map.values());
+    });
+    triggerHaptic("light");
+    // Persist bulk update — skip virtual placeholders
+    const updates = reordered
+      .filter((t) => !t.id.startsWith("__virtual_"))
+      .map((t, idx) =>
+        supabase.from("tasks").update({ manual_order_index: idx + 1 }).eq("id", t.id),
+      );
+    try {
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) toast.error("שמירת הסדר נכשלה: " + failed.error.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שמירת הסדר נכשלה");
+    }
+  };
+
 
   // Refs for smooth scroll-into-view on accordion open
   const shiftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
@@ -736,14 +813,23 @@ function TasksPage() {
 
                         {isGroupOpen && (
                           <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
+                            <DndContext
+                              sensors={sensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={handleGroupDragEnd(g.id)}
+                            >
+                              <SortableContext
+                                items={gTasks.map((t) => t.id)}
+                                strategy={verticalListSortingStrategy}
+                              >
                             {gTasks.map((t) => {
                               const subs = subtasksFor(t.id);
                               if (subs.length > 0) {
                                 const subsDone = subs.filter((s) => logs.get(s.id)?.completed).length;
                                 const allDone = subsDone === subs.length;
                                 return (
+                                  <SortableTaskItem key={t.id} id={t.id} showHandle={isSuperAdmin && !t.id.startsWith("__virtual_")}>
                                   <div
-                                    key={t.id}
                                     className={`rounded-xl border p-4 transition-all duration-300 ${
                                       allDone
                                         ? "bg-card/40 border-border"
@@ -817,6 +903,7 @@ function TasksPage() {
                                       })}
                                     </div>
                                   </div>
+                                  </SortableTaskItem>
                                 );
                               }
                               const log = logs.get(t.id);
@@ -830,8 +917,8 @@ function TasksPage() {
                                 ? recipes.find((r) => r.id === t.recipe_id)
                                 : null;
                               return (
+                                <SortableTaskItem key={t.id} id={t.id} showHandle={isSuperAdmin && !t.id.startsWith("__virtual_")}>
                                 <div
-                                  key={t.id}
                                   className={`rounded-xl border p-4 transition-all duration-300 ${
                                     done
                                       ? "bg-card/40 border-border"
@@ -950,8 +1037,11 @@ function TasksPage() {
                                     </div>
                                   </div>
                                 </div>
+                                </SortableTaskItem>
                               );
                             })}
+                              </SortableContext>
+                            </DndContext>
                             {gTasks.length === 0 && (
                               <div className="px-5 py-4 text-center text-xs text-muted-foreground">
                                 אין משימות בקבוצה זו.

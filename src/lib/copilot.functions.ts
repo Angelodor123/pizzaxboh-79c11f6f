@@ -3,6 +3,7 @@ import { generateText, tool, stepCountIs } from "ai";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { loadLearningDictionary } from "@/lib/ai-learning.functions";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 const MessageSchema = z.object({
@@ -771,6 +772,26 @@ export const askCopilot = createServerFn({ method: "POST" })
     const kb = await buildKnowledgeContext(supabase, data.context?.branchId);
     const knowledgeBlock = kb ? `\n\n==== שכבת ידע סטטית (Pizza X) ====\n${kb}\n==== סוף שכבת הידע ====` : "";
 
+    // Inject the local AI learning dictionary so Gemini honours past user
+    // corrections (kitchen-specific terminology, task↔recipe overrides, etc.)
+    let dictionaryBlock = "";
+    try {
+      const dict = await loadLearningDictionary(supabase, data.context?.branchId, 60);
+      if (dict.length > 0) {
+        const lines = dict
+          .map((d) => {
+            const intent = (() => {
+              try { return JSON.stringify(d.resolved_intent); } catch { return "{}"; }
+            })();
+            return `- [${d.context}] "${d.user_input}" → ${intent}`;
+          })
+          .join("\n");
+        dictionaryBlock = `\n\n==== מילון תיקונים מקומי (User Corrections) ====\nאלה תיקונים שהמשתמשים בסניף ביצעו ידנית לשיוכים אוטומטיים בעבר. כבד אותם כמקור אמת מקומי כשאתה מציע שיוך דומה:\n${lines}\n==== סוף המילון ====`;
+      }
+    } catch (e) {
+      console.error("[copilot] dictionary load failed", e);
+    }
+
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
 
@@ -782,7 +803,7 @@ export const askCopilot = createServerFn({ method: "POST" })
     try {
       const result = await generateText({
         model,
-        system: SYSTEM_PROMPT + contextLine + knowledgeBlock + snapshotBlock,
+        system: SYSTEM_PROMPT + contextLine + knowledgeBlock + dictionaryBlock + snapshotBlock,
         messages: sdkMessages,
         tools: buildTools(supabase, data.context?.branchId, userId),
         stopWhen: stepCountIs(50),
