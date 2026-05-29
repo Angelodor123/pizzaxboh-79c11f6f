@@ -40,6 +40,7 @@ function SuppliersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [catalogFor, setCatalogFor] = useState<Supplier | null>(null);
   const bulk = useBulkSelection();
 
   useEffect(() => {
