@@ -103,7 +103,8 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
       const q = qty[p.id];
       if (!q || q <= 0) continue;
       const qtyStr = p.unit ? `${q} ${p.unit}` : String(q);
-      rows.push({ name: p.name, qty: qtyStr });
+      const name = p.sku ? `${p.name} [${p.sku}]` : p.name;
+      rows.push({ name, qty: qtyStr });
     }
     // Also add unmatched shortages as free-text rows, so the user doesn't lose them.
     for (const s of unmatchedShortages) {
