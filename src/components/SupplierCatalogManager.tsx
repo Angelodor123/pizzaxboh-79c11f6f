@@ -161,12 +161,27 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               maxLength={120}
             />
             <input
+              value={draft.sku}
+              onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+              placeholder="מק״ט / SKU"
+              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+              maxLength={64}
+            />
+            <input
+              value={draft.unit_size}
+              onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
+              placeholder='גודל אריזה (כגון: ארגז - 1 יח׳ × 2 ק״ג)'
+              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+              maxLength={80}
+            />
+            <input
               value={draft.category}
               onChange={(e) => setDraft({ ...draft, category: e.target.value })}
               placeholder="קטגוריה (אופציונלי)"
               className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
               maxLength={60}
             />
+
             <input
               value={draft.unit}
               onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
