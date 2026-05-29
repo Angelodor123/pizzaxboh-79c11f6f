@@ -102,6 +102,7 @@ export type Database = {
           deleted: boolean
           end_time: string | null
           event_id: string
+          expected_items: Json | null
           high_priority: boolean | null
           id: string
           notes: string | null
@@ -116,6 +117,7 @@ export type Database = {
           deleted?: boolean
           end_time?: string | null
           event_id: string
+          expected_items?: Json | null
           high_priority?: boolean | null
           id?: string
           notes?: string | null
@@ -130,6 +132,7 @@ export type Database = {
           deleted?: boolean
           end_time?: string | null
           event_id?: string
+          expected_items?: Json | null
           high_priority?: boolean | null
           id?: string
           notes?: string | null
