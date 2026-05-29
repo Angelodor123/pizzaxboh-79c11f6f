@@ -260,39 +260,42 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               אין מוצרים בקטלוג. הוסף את הראשון מעל.
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="flex flex-col gap-1.5">
               {items.map((p) => (
-                <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex flex-col gap-1.5">
-                  <div className="aspect-square rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
+                <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex items-center gap-3">
+                  <div className="h-14 w-14 shrink-0 rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
-                      <ImageIcon className="h-8 w-8 text-zinc-700" />
+                      <ImageIcon className="h-6 w-6 text-zinc-700" />
                     )}
                   </div>
-                  <div className="text-sm font-bold leading-tight line-clamp-2">{p.name}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {p.unit && <span>{p.unit}</span>}
-                    {p.unit && p.price != null && <span> · </span>}
-                    {p.price != null && <span>₪{p.price}</span>}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold leading-tight">{p.name}</div>
+                    {p.sku && <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku}</div>}
+                    <div className="text-[11px] text-muted-foreground">
+                      {p.unit_size || p.unit}
+                      {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                    </div>
                   </div>
-                  <div className="flex gap-1 mt-auto">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => startEdit(p)}
-                      className="flex-1 h-7 inline-flex items-center justify-center gap-1 rounded border border-border text-xs hover:text-neon hover:border-neon"
+                      className="h-8 w-8 grid place-content-center rounded border border-border hover:text-neon hover:border-neon"
                     >
-                      <Pencil className="h-3 w-3" /> ערוך
+                      <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => remove(p.id)}
-                      className="h-7 w-7 grid place-content-center rounded border border-border text-xs hover:text-destructive hover:border-destructive"
+                      className="h-8 w-8 grid place-content-center rounded border border-border hover:text-destructive hover:border-destructive"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
+
           )}
         </div>
       </DialogContent>
