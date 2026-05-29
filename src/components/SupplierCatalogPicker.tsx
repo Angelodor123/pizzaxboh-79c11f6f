@@ -171,7 +171,8 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           <div className="flex flex-col gap-1.5">
             {visible.map((p) => {
               const q = qty[p.id] ?? 0;
-              const isMatch = matchedIds.has(p.id);
+              const shortage = shortageByProduct.get(p.id);
+              const isMatch = !!shortage;
               return (
                 <div
                   key={p.id}
@@ -198,7 +199,15 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
                       {p.unit_size || p.unit}
                       {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
                     </div>
+                    {shortage && (
+                      <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold bg-amber-brand/15 text-amber-brand border border-amber-brand/40 rounded px-1.5 py-0.5">
+                        <AlertTriangle className="h-3 w-3" />
+                        חסרות {shortage.quantity}
+                        {shortage.unit ? ` ${shortage.unit}` : ""} ברשימת החוסרים
+                      </div>
+                    )}
                   </div>
+
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => dec(p)}
