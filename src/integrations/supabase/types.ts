@@ -1408,6 +1408,63 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_products: {
+        Row: {
+          active: boolean
+          barcode: string | null
+          branch_id: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          default_qty: number
+          id: string
+          image_url: string | null
+          name: string
+          notes: string | null
+          price: number | null
+          sort_order: number
+          supplier_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          barcode?: string | null
+          branch_id: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_qty?: number
+          id?: string
+          image_url?: string | null
+          name: string
+          notes?: string | null
+          price?: number | null
+          sort_order?: number
+          supplier_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          barcode?: string | null
+          branch_id?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_qty?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          notes?: string | null
+          price?: number | null
+          sort_order?: number
+          supplier_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           active: boolean
