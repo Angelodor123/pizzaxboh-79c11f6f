@@ -1340,6 +1340,62 @@ function EventForm({
           />
         </Field>
 
+        {category === "delivery" && (
+          <Field label="פריטים צפויים (צ׳קליסט פריקה)">
+            <div className="space-y-2">
+              {items.length > 0 && (
+                <ul className="space-y-1">
+                  {items.map((it, idx) => (
+                    <li key={it.id} className="flex items-center gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5">
+                      <span className="flex-1 text-sm text-right">{it.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setItems(items.filter((_, i) => i !== idx))}
+                        className="h-7 w-7 grid place-content-center rounded-md border border-border hover:text-destructive hover:border-destructive"
+                        aria-label="הסר"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex gap-2">
+                <input
+                  value={newItem}
+                  onChange={(e) => setNewItem(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const name = newItem.trim();
+                      if (!name) return;
+                      setItems([...items, { id: crypto.randomUUID(), name }]);
+                      setNewItem("");
+                    }
+                  }}
+                  className="input flex-1"
+                  placeholder="לדוגמה: 1 סן מרזנו"
+                  dir="rtl"
+                  maxLength={120}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = newItem.trim();
+                    if (!name) return;
+                    setItems([...items, { id: crypto.randomUUID(), name }]);
+                    setNewItem("");
+                  }}
+                  className="h-10 px-3 rounded-md border border-neon/40 text-neon font-bold text-sm hover:bg-neon/10"
+                >
+                  הוסף
+                </button>
+              </div>
+            </div>
+          </Field>
+        )}
+
+
         {conflicts.length > 0 && (
           <div className="rounded-lg border border-neon/70 bg-neon/10 p-3 text-right space-y-2">
             <div className="flex items-center gap-1.5 font-bold text-neon text-sm">
