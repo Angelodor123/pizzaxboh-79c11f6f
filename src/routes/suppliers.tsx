@@ -366,8 +366,6 @@ function SupplierForm({
   const toggleDeliveryDay = (i: number) =>
     setDeliveryDays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
 
-  const toggleDay = (i: number) =>
-    setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()));
 
   const handleLogoUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
