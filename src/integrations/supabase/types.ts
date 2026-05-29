@@ -157,6 +157,7 @@ export type Database = {
           end_time: string | null
           event_date: string | null
           event_type: string | null
+          expected_items: Json
           high_priority: boolean
           id: string
           is_auto: boolean
@@ -177,6 +178,7 @@ export type Database = {
           end_time?: string | null
           event_date?: string | null
           event_type?: string | null
+          expected_items?: Json
           high_priority?: boolean
           id?: string
           is_auto?: boolean
@@ -197,6 +199,7 @@ export type Database = {
           end_time?: string | null
           event_date?: string | null
           event_type?: string | null
+          expected_items?: Json
           high_priority?: boolean
           id?: string
           is_auto?: boolean
@@ -1475,6 +1478,7 @@ export type Database = {
           created_by: string | null
           default_end_time: string | null
           default_start_time: string | null
+          delivery_days: number[]
           delivery_weekdays: number[]
           id: string
           is_archived: boolean
@@ -1482,6 +1486,8 @@ export type Database = {
           logo_url: string | null
           name: string
           notes: string | null
+          order_cutoff_time: string | null
+          order_days: number[]
           parsing_instructions: string | null
           updated_at: string
         }
@@ -1494,6 +1500,7 @@ export type Database = {
           created_by?: string | null
           default_end_time?: string | null
           default_start_time?: string | null
+          delivery_days?: number[]
           delivery_weekdays?: number[]
           id?: string
           is_archived?: boolean
@@ -1501,6 +1508,8 @@ export type Database = {
           logo_url?: string | null
           name: string
           notes?: string | null
+          order_cutoff_time?: string | null
+          order_days?: number[]
           parsing_instructions?: string | null
           updated_at?: string
         }
@@ -1513,6 +1522,7 @@ export type Database = {
           created_by?: string | null
           default_end_time?: string | null
           default_start_time?: string | null
+          delivery_days?: number[]
           delivery_weekdays?: number[]
           id?: string
           is_archived?: boolean
@@ -1520,6 +1530,8 @@ export type Database = {
           logo_url?: string | null
           name?: string
           notes?: string | null
+          order_cutoff_time?: string | null
+          order_days?: number[]
           parsing_instructions?: string | null
           updated_at?: string
         }
