@@ -701,6 +701,7 @@ function DayDetails({
   onAdd,
   onEdit,
   onInstanceEdit,
+  onOpenChecklist,
 }: {
   isoDate: string;
   events: EffectiveEvent[];
@@ -708,6 +709,7 @@ function DayDetails({
   onAdd: () => void;
   onEdit: (ev: CalendarEvent) => void;
   onInstanceEdit: (ev: EffectiveEvent, date: string) => void;
+  onOpenChecklist: (ev: EffectiveEvent, date: string) => void;
 }) {
   const d = new Date(isoDate + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
