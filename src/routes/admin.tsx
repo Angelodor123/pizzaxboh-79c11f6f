@@ -504,73 +504,87 @@ function AdminPage() {
                 </span>
               </div>
               <ul className="space-y-2">
-                {editing.ingredients.map((ing, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setEditing({
-                          ...editing,
-                          ingredients: editing.ingredients.filter((_, i) => i !== idx),
-                        })
-                      }
-                      className="p-1.5 rounded-md text-muted-foreground hover:text-destructive"
-                      aria-label="מחק מרכיב"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    <select
-                      value={ing.unit}
-                      onChange={(e) => {
-                        const next: Ingredient[] = [...editing.ingredients];
-                        next[idx] = { ...ing, unit: e.target.value };
-                        setEditing({ ...editing, ingredients: next });
-                      }}
-                      className="w-16 shrink-0 bg-input border border-border rounded-md px-1 py-1.5 text-xs text-right"
-                    >
-                      {UNIT_OPTIONS.map((u) => (
-                        <option key={u} value={u}>
-                          {u}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={ing.quantity === 0 ? "" : String(ing.quantity)}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        const next: Ingredient[] = [...editing.ingredients];
-                        const n = raw === "" ? 0 : Number(raw);
-                        next[idx] = {
-                          ...ing,
-                          quantity: Number.isFinite(n) ? n : 0,
-                        };
-                        setEditing({ ...editing, ingredients: next });
-                      }}
-                      placeholder="כמות"
-                      size={4}
-                      className="min-w-[3rem] max-w-[6rem] shrink-0 bg-input border border-border rounded-md px-2 py-1.5 text-center text-neon font-bold tabular-nums [field-sizing:content]"
-                    />
-                    <input
-                      type="text"
-                      value={ing.name}
-                      onChange={(e) => {
-                        const next: Ingredient[] = [...editing.ingredients];
-                        next[idx] = { ...ing, name: e.target.value };
-                        setEditing({ ...editing, ingredients: next });
-                      }}
-                      placeholder="שם המרכיב"
-                      className="flex-1 min-w-0 bg-input border border-border rounded-md px-2 py-1.5 text-right"
-                    />
-                  </li>
-                ))}
                 {editing.ingredients.length === 0 && (
                   <li className="text-xs text-muted-foreground text-center py-2 border border-dashed border-border rounded-md">
                     אין מרכיבים. לחץ "הוסף מרכיב" כדי להתחיל.
                   </li>
                 )}
+                <SortableList
+                  items={editing.ingredients.map((ing, i) => ({ ing, key: `${i}-${ing.name}` }))}
+                  getId={(it) => it.key}
+                  onReorder={(next) =>
+                    setEditing({ ...editing, ingredients: next.map((x) => x.ing) })
+                  }
+                  className="space-y-2"
+                >
+                  {({ ing }, handle) => {
+                    const idx = editing.ingredients.indexOf(ing);
+                    return (
+                      <li className="flex items-center gap-2">
+                        {handle}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditing({
+                              ...editing,
+                              ingredients: editing.ingredients.filter((_, i) => i !== idx),
+                            })
+                          }
+                          className="p-1.5 rounded-md text-muted-foreground hover:text-destructive"
+                          aria-label="מחק מרכיב"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <select
+                          value={ing.unit}
+                          onChange={(e) => {
+                            const next: Ingredient[] = [...editing.ingredients];
+                            next[idx] = { ...ing, unit: e.target.value };
+                            setEditing({ ...editing, ingredients: next });
+                          }}
+                          className="w-16 shrink-0 bg-input border border-border rounded-md px-1 py-1.5 text-xs text-right"
+                        >
+                          {UNIT_OPTIONS.map((u) => (
+                            <option key={u} value={u}>
+                              {u}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={ing.quantity === 0 ? "" : String(ing.quantity)}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const next: Ingredient[] = [...editing.ingredients];
+                            const n = raw === "" ? 0 : Number(raw);
+                            next[idx] = {
+                              ...ing,
+                              quantity: Number.isFinite(n) ? n : 0,
+                            };
+                            setEditing({ ...editing, ingredients: next });
+                          }}
+                          placeholder="כמות"
+                          size={4}
+                          className="min-w-[3rem] max-w-[6rem] shrink-0 bg-input border border-border rounded-md px-2 py-1.5 text-center text-neon font-bold tabular-nums [field-sizing:content]"
+                        />
+                        <input
+                          type="text"
+                          value={ing.name}
+                          onChange={(e) => {
+                            const next: Ingredient[] = [...editing.ingredients];
+                            next[idx] = { ...ing, name: e.target.value };
+                            setEditing({ ...editing, ingredients: next });
+                          }}
+                          placeholder="שם המרכיב"
+                          className="flex-1 min-w-0 bg-input border border-border rounded-md px-2 py-1.5 text-right"
+                        />
+                      </li>
+                    );
+                  }}
+                </SortableList>
               </ul>
+
             </div>
 
             <label className="block text-right">
