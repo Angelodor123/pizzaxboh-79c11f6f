@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown, Eye, Pencil, Image as ImageIcon } from "lucide-react";
+import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown, Eye, Pencil, Image as ImageIcon, Package } from "lucide-react";
+import { SupplierCatalogPicker } from "@/components/SupplierCatalogPicker";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
