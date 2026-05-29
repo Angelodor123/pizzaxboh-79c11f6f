@@ -747,6 +747,7 @@ function TaskRow({
     <li className="px-3 py-2 bg-background/40">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-0.5">
+          {dragHandle}
           <button onClick={() => setEditing((v) => !v)} className="p-1 text-muted-foreground hover:text-neon" aria-label="ערוך">
             {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
           </button>
