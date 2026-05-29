@@ -275,6 +275,7 @@ function CalendarPage() {
             setFormOpen(true);
           }}
           onInstanceEdit={(ev, date) => setInstanceEdit({ ev, date })}
+          onOpenChecklist={(ev, date) => setChecklistFor({ ev, date })}
         />
       )}
 
