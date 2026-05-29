@@ -190,8 +190,19 @@ function useSevereWeather() {
   return severe;
 }
 
-function SortableTaskItem({ id, children }: { id: string; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortableTaskItem({
+  id,
+  showHandle,
+  children,
+}: {
+  id: string;
+  showHandle: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: !showHandle,
+  });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -200,19 +211,22 @@ function SortableTaskItem({ id, children }: { id: string; children: React.ReactN
   };
   return (
     <div ref={setNodeRef} style={style}>
-      <button
-        type="button"
-        aria-label="גרור לסידור"
-        className="absolute top-2 left-2 z-10 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/40 cursor-grab active:cursor-grabbing touch-none"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      {showHandle && (
+        <button
+          type="button"
+          aria-label="גרור לסידור"
+          className="absolute top-2 left-2 z-10 p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent/40 cursor-grab active:cursor-grabbing touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
       {children}
     </div>
   );
 }
+
 
 function TasksPage() {
   const { fullName, session, isSuperAdmin } = useAuth();
