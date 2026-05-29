@@ -354,17 +354,8 @@ export function TasksPanel() {
       },
     });
 
-  const moveShift = async (s: Shift, dir: -1 | 1) => {
-    const sorted = [...shifts].sort((a, b) => a.sort_order - b.sort_order);
-    const idx = sorted.findIndex((x) => x.id === s.id);
-    const swap = sorted[idx + dir];
-    if (!swap) return;
-    await Promise.all([
-      supabase.from("shifts").update({ sort_order: swap.sort_order }).eq("id", s.id),
-      supabase.from("shifts").update({ sort_order: s.sort_order }).eq("id", swap.id),
-    ]);
-    reload();
-  };
+
+
 
   const addGroup = (shiftId: string) =>
     askPrompt({
