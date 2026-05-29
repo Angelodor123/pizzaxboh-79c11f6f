@@ -1428,9 +1428,11 @@ export type Database = {
           name: string
           notes: string | null
           price: number | null
+          sku: string | null
           sort_order: number
           supplier_id: string
           unit: string
+          unit_size: string | null
           updated_at: string
         }
         Insert: {
@@ -1446,9 +1448,11 @@ export type Database = {
           name: string
           notes?: string | null
           price?: number | null
+          sku?: string | null
           sort_order?: number
           supplier_id: string
           unit?: string
+          unit_size?: string | null
           updated_at?: string
         }
         Update: {
@@ -1464,9 +1468,11 @@ export type Database = {
           name?: string
           notes?: string | null
           price?: number | null
+          sku?: string | null
           sort_order?: number
           supplier_id?: string
           unit?: string
+          unit_size?: string | null
           updated_at?: string
         }
         Relationships: []
