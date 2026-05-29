@@ -78,6 +78,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     setDraft({
       id: p.id,
       name: p.name,
+      sku: p.sku ?? "",
+      unit_size: p.unit_size ?? "",
       unit: p.unit ?? "",
       default_qty: String(p.default_qty ?? 1),
       price: p.price != null ? String(p.price) : "",
