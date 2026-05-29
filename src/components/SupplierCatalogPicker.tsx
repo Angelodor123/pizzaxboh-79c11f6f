@@ -165,40 +165,38 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
               : "לא נמצאו מוצרים התואמים לחיפוש."}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="flex flex-col gap-1.5">
             {visible.map((p) => {
               const q = qty[p.id] ?? 0;
               const isMatch = matchedIds.has(p.id);
               return (
                 <div
                   key={p.id}
-                  className={`border rounded-lg p-2 flex flex-col gap-1.5 bg-background/30 ${
+                  className={`relative border rounded-lg p-2 flex items-center gap-3 bg-background/30 ${
                     q > 0 ? "border-neon shadow-[0_0_0_1px_var(--color-neon)]" : isMatch ? "border-amber-brand/60" : "border-border"
                   }`}
                 >
-                  <div className="relative aspect-square rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
+                  <div className="relative h-16 w-16 shrink-0 rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
-                      <ImageIcon className="h-8 w-8 text-zinc-700" />
+                      <ImageIcon className="h-7 w-7 text-zinc-700" />
                     )}
                     {isMatch && (
-                      <span className="absolute top-1 right-1 text-[9px] font-bold bg-amber-brand text-black rounded px-1.5 py-0.5">
+                      <span className="absolute top-0.5 right-0.5 text-[9px] font-bold bg-amber-brand text-black rounded px-1 py-0.5">
                         חוסר
                       </span>
                     )}
-                    {q > 0 && (
-                      <span className="absolute top-1 left-1 text-[10px] font-bold bg-neon text-black rounded-full h-5 min-w-5 px-1.5 grid place-content-center">
-                        <Check className="h-3 w-3" />
-                      </span>
-                    )}
                   </div>
-                  <div className="text-sm font-bold leading-tight line-clamp-2">{p.name}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {p.unit}
-                    {p.price != null && <> · ₪{p.price}</>}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold leading-tight line-clamp-2">{p.name}</div>
+                    {p.sku && <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku}</div>}
+                    <div className="text-[11px] text-muted-foreground">
+                      {p.unit_size || p.unit}
+                      {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 mt-auto">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => dec(p)}
                       disabled={q <= 0}
@@ -211,7 +209,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
                       onChange={(e) => setQ(p.id, Math.max(0, Number(e.target.value) || 0))}
                       placeholder="0"
                       inputMode="decimal"
-                      className="flex-1 h-8 rounded border border-border bg-background text-center text-sm focus:border-neon outline-none"
+                      className="w-12 h-8 rounded border border-border bg-background text-center text-sm focus:border-neon outline-none"
                     />
                     <button
                       onClick={() => inc(p)}
@@ -220,10 +218,16 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
+                  {q > 0 && (
+                    <span className="absolute -top-1.5 -left-1.5 text-[10px] font-bold bg-neon text-black rounded-full h-5 min-w-5 px-1.5 grid place-content-center">
+                      <Check className="h-3 w-3" />
+                    </span>
+                  )}
                 </div>
               );
             })}
           </div>
+
         )}
 
         <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-1 bg-card border-t border-border flex items-center justify-between">
