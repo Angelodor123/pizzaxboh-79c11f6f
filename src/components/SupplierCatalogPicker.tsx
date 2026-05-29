@@ -149,7 +149,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש מוצר…"
+            placeholder="חיפוש לפי SKU / שם מוצר…"
             className="w-full h-10 rounded-md bg-background border border-border pr-9 pl-3 text-sm focus:border-neon outline-none"
           />
         </div>
