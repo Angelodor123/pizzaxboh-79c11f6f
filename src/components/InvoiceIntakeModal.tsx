@@ -1011,6 +1011,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                     : `נותרו ${pendingCount} שדות לאימות (סמן ✓ או ✗ לכל אחד)`}
                 </div>
               )}
+              {trainingMode && !allValidated && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHeaderVal((p) => {
+                      const next = { ...p };
+                      (Object.keys(next) as HeaderKey[]).forEach((k) => {
+                        if (next[k] === "pending") next[k] = "approved";
+                      });
+                      return next;
+                    });
+                    setItemVal((p) => p.map((s) => (s === "pending" ? "approved" : s)));
+                  }}
+                  className="w-full h-9 inline-flex items-center justify-center gap-2 rounded-md font-semibold text-xs border border-emerald-500/40 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15 transition"
+                >
+                  ✓ אשר הכל ({pendingCount})
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleConfirm}
