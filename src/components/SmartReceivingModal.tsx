@@ -392,9 +392,15 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         }
       }
 
-      toast.success("החשבונית נקלטה והמלאי עודכן");
+      if (isPerfect) {
+        celebrate();
+        toast.success("🎉 קליטה מושלמת! ה-AI קיבל XP נוסף.");
+      } else {
+        toast.success("החשבונית נקלטה והמלאי עודכן");
+      }
       onSaved();
       onClose();
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : "שגיאה בקליטה";
       toast.error(msg);
