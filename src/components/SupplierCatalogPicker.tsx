@@ -128,8 +128,9 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
 
   return (
     <>
-    <Dialog open={open && !manageOpen} onOpenChange={(v) => { if (!v && !manageOpen) onClose(); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto" dir="rtl">
+
         <DialogHeader>
           <DialogTitle className="font-display text-xl">📦 בחירה מהקטלוג — {supplierName}</DialogTitle>
         </DialogHeader>

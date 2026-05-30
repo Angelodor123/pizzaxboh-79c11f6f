@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
-import { Flame, Trophy, Sparkles } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Flame, Trophy, Sparkles, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
+import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
+import { celebrate } from "@/lib/celebrate";
+
 
 interface SupplierOpt { id: string; name: string }
 interface Props { suppliers: SupplierOpt[]; isSuperAdmin: boolean }
@@ -55,60 +58,60 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
   const [stats, setStats] = useState<SupplierStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trainingSupplierId, setTrainingSupplierId] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      let q = supabase
-        .from("invoice_ocr_feedback")
-        .select("supplier_id,diff_summary,created_at,raw_ocr,final_data")
-        .order("created_at", { ascending: false })
-        .limit(2000);
-      if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
-      const { data } = await q;
-      if (cancelled) return;
-      const rows = ((data as unknown) as FeedbackRow[]) ?? [];
-      const bySup = new Map<string, FeedbackRow[]>();
-      for (const r of rows) {
-        if (!r.supplier_id) continue;
-        const arr = bySup.get(r.supplier_id) ?? [];
-        arr.push(r);
-        bySup.set(r.supplier_id, arr);
+  const loadStats = useCallback(async () => {
+    setLoading(true);
+    let q = supabase
+      .from("invoice_ocr_feedback")
+      .select("supplier_id,diff_summary,created_at,raw_ocr,final_data")
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
+    const { data } = await q;
+    const rows = ((data as unknown) as FeedbackRow[]) ?? [];
+    const bySup = new Map<string, FeedbackRow[]>();
+    for (const r of rows) {
+      if (!r.supplier_id) continue;
+      const arr = bySup.get(r.supplier_id) ?? [];
+      arr.push(r);
+      bySup.set(r.supplier_id, arr);
+    }
+    const result: SupplierStat[] = [];
+    for (const [sid, arr] of bySup) {
+      const xp = arr.reduce((a, r) => a + xpFromRow(r), 0);
+      let streak = 0;
+      for (const r of arr) {
+        if (r.diff_summary === "perfect") streak += 1;
+        else break;
       }
-      const result: SupplierStat[] = [];
-      for (const [sid, arr] of bySup) {
-        const xp = arr.reduce((a, r) => a + xpFromRow(r), 0);
-        // arr is already DESC by created_at
-        let streak = 0;
-        for (const r of arr) {
-          if (r.diff_summary === "perfect") streak += 1;
-          else break;
-        }
-        result.push({
-          supplier_id: sid,
-          name: suppliers.find((s) => s.id === sid)?.name ?? "ספק לא ידוע",
-          xp,
-          invoices: arr.length,
-          streak,
-        });
+      result.push({
+        supplier_id: sid,
+        name: suppliers.find((s) => s.id === sid)?.name ?? "ספק לא ידוע",
+        xp,
+        invoices: arr.length,
+        streak,
+      });
+    }
+    for (const s of suppliers) {
+      if (!bySup.has(s.id)) {
+        result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0 });
       }
-      // Add suppliers with no feedback yet
-      for (const s of suppliers) {
-        if (!bySup.has(s.id)) {
-          result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0 });
-        }
-      }
-      result.sort((a, b) => b.xp - a.xp);
-      setStats(result);
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    }
+    result.sort((a, b) => b.xp - a.xp);
+    setStats(result);
+    setLoading(false);
   }, [branchId, isSuperAdmin, suppliers]);
 
+  useEffect(() => {
+    void loadStats();
+  }, [loadStats, reloadKey]);
+
   if (loading) return <div className="text-center text-muted-foreground py-12">טוען…</div>;
+
 
   return (
     <div className="space-y-4">
@@ -170,10 +173,32 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
                     {s.streak} ברצף מושלם
                   </div>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => setTrainingSupplierId(s.supplier_id)}
+                  className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg bg-neon text-black font-bold text-sm active:scale-[0.98] transition shadow-[0_0_18px_rgba(255,45,180,0.3)]"
+                >
+                  <Upload className="h-4 w-4" />
+                  📤 העלה קבלה לאימון
+                </button>
               </div>
             );
           })}
         </div>
+      )}
+
+      {trainingSupplierId && (
+        <InvoiceIntakeModal
+          suppliers={suppliers}
+          initialSupplierId={trainingSupplierId}
+          onClose={() => setTrainingSupplierId(null)}
+          onSaved={() => {
+            setTrainingSupplierId(null);
+            void celebrate();
+            setReloadKey((k) => k + 1);
+          }}
+        />
       )}
     </div>
   );
