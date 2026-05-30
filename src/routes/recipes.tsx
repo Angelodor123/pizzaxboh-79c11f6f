@@ -95,7 +95,13 @@ function KitchenDashboard() {
     } else {
       setCategory("all");
     }
+    setQ("");
     setForcedOpenRecipeId(id);
+    // Scroll the target card into view after it mounts
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-recipe-row="${id}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   }, [search.openRecipeId, activeAll, setCategory, setMenuCat]);
 
   // Treat any menu-item category selection as the dishes view so legacy
