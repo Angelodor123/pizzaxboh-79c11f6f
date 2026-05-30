@@ -4,6 +4,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type CatalogMatch = {
   id: string;
