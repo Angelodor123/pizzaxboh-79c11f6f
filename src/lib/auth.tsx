@@ -93,8 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hasAdmin = roles.some((row) => row.role === "admin");
     const hasViewer = roles.some((row) => row.role === "viewer");
     const hasSuper = roles.some((row) => row.role === "super_admin");
-    // super_admin implicitly has full admin access (even without an explicit admin row)
-    setRole(hasAdmin || hasSuper ? "admin" : hasViewer ? "viewer" : null);
+    const hasShiftManager = roles.some((row) => row.role === "shift_manager");
+    // super_admin and shift_manager implicitly have full admin access
+    setRole(hasAdmin || hasSuper || hasShiftManager ? "admin" : hasViewer ? "viewer" : null);
     setIsSuperAdmin(hasSuper);
     setAssignedBranchId(
       roles.find((row) => row.role !== "super_admin" && row.assigned_branch_id)?.assigned_branch_id ??
