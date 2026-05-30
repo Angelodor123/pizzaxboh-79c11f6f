@@ -335,7 +335,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         branch_id: branchId,
         supplier_id: supplierId,
         invoice_id: invoiceRow!.id,
-        raw_ocr: (parsed as unknown as Record<string, unknown>) ?? {},
+        raw_ocr: (parsed as unknown) as never,
         final_data: {
           invoice_number: invoiceNumber.trim(),
           total_amount: totalNum,
