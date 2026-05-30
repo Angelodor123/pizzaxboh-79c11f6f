@@ -190,7 +190,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           </div>
           <button
             type="button"
-            onClick={() => setManageOpen(true)}
+            onClick={() => { if (onAddNewProduct) onAddNewProduct(); else setManageOpen(true); }}
             title="הוסף מוצר חדש לספק"
             aria-label="הוסף מוצר חדש לספק"
             className="h-11 w-11 grid place-content-center rounded-md border border-neon/40 text-neon hover:bg-neon/10 active:scale-95 transition shrink-0"
