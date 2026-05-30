@@ -931,12 +931,67 @@ function InstanceOverrideForm({
   date: string;
   onClose: () => void;
 }) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const [title, setTitle] = useState(ev.title);
   const [startTime, setStartTime] = useState(ev.start_time?.slice(0, 5) ?? "");
   const [endTime, setEndTime] = useState(ev.end_time?.slice(0, 5) ?? "");
   const [highPriority, setHighPriority] = useState(!!ev.high_priority);
   const [notes, setNotes] = useState(ev.notes ?? "");
   const [saving, setSaving] = useState(false);
+
+  // Checklist state — merge master template with per-day override items.
+  const isDelivery = ev.category === "delivery" || ev.event_type === "inventory_delivery";
+  const [items, setItems] = useState<ExpectedItem[]>(() => {
+    const base = (ev.expected_items ?? []).map((t) => ({ ...t, is_received: false }));
+    const saved = ev._overrideItems ?? [];
+    if (saved.length > 0) {
+      for (const s of saved) {
+        const i = base.findIndex((b) => b.id === s.id);
+        if (i >= 0) base[i] = { ...base[i], is_received: !!s.is_received, name: s.name };
+        else base.push({ id: s.id, name: s.name, is_received: !!s.is_received });
+      }
+    }
+    return base;
+  });
+  const [newItemName, setNewItemName] = useState("");
+  const [itemsBusy, setItemsBusy] = useState(false);
+
+  const persistItems = async (next: ExpectedItem[]) => {
+    setItemsBusy(true);
+    const payload = {
+      event_id: ev.id,
+      override_date: date,
+      deleted: false,
+      expected_items: next as unknown as never,
+    };
+    const { error } = await supabase
+      .from("calendar_event_overrides")
+      .upsert(payload, { onConflict: "event_id,override_date" });
+    setItemsBusy(false);
+    if (error) toast.error("שמירה נכשלה: " + error.message);
+  };
+
+  const toggleItem = (idx: number) => {
+    const next = items.map((it, i) => (i === idx ? { ...it, is_received: !it.is_received } : it));
+    setItems(next);
+    void persistItems(next);
+  };
+
+  const addItem = () => {
+    const name = newItemName.trim();
+    if (!name) return;
+    const next = [...items, { id: crypto.randomUUID(), name, is_received: false }];
+    setItems(next);
+    setNewItemName("");
+    void persistItems(next);
+  };
+
+  const removeItem = (idx: number) => {
+    const next = items.filter((_, i) => i !== idx);
+    setItems(next);
+    void persistItems(next);
+  };
 
   const d = new Date(date + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
@@ -953,6 +1008,7 @@ function InstanceOverrideForm({
       end_time: endTime || null,
       high_priority: highPriority,
       notes: notes.trim().slice(0, 2000) || null,
+      expected_items: isDelivery ? (items as unknown as never) : ([] as unknown as never),
     };
     const { error } = await supabase
       .from("calendar_event_overrides")
@@ -985,6 +1041,7 @@ function InstanceOverrideForm({
       onClose();
     }
   };
+
 
   return (
     <div
