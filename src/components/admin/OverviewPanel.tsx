@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, RefreshCw, CalendarDays, Projector } from "lucide-react";
+import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, CalendarDays, Projector } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
-import { syncSportsEvents } from "@/lib/sports-sync.functions";
-import { toast } from "sonner";
 
 interface Metrics {
   doughShop: number | null;
@@ -207,8 +204,8 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
   const [m, setM] = useState<Metrics>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [sportsEvents, setSportsEvents] = useState<Array<{ id: string; title: string; event_date: string; start_time: string | null; notes: string | null; projector_broadcast: boolean | null }>>([]);
-  const [syncing, setSyncing] = useState(false);
-  const syncFn = useServerFn(syncSportsEvents);
+
+
 
   const loadSports = async () => {
     const today = new Date().toISOString().slice(0, 10);
@@ -242,18 +239,6 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     };
   }, []);
 
-  const handleSyncSports = async () => {
-    setSyncing(true);
-    try {
-      const res = await syncFn();
-      toast.success(`סנכרון הושלם — נוספו ${res.inserted} משחקים, ${res.skipped} כבר קיימים`);
-      await loadSports();
-    } catch (e) {
-      toast.error(`סנכרון נכשל: ${e instanceof Error ? e.message : "שגיאה"}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const doughTotal =
     m.doughShop == null && m.doughWarehouse == null
@@ -356,15 +341,6 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
               <div className="text-[11px] text-muted-foreground">משחקי כדורגל גדולים שמשודרים בפיצה</div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleSyncSports}
-            disabled={syncing}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neon/60 text-neon font-bold px-3 h-11 text-xs hover:bg-neon/10 transition disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "מסנכרן…" : "סנכרן משחקים"}
-          </button>
         </div>
         {sportsEvents.length === 0 ? (
           <div className="text-sm text-muted-foreground text-center py-4">
