@@ -423,9 +423,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       invoiceQty: Number(oi.qty.replace(/[^\d.]/g, "")) || 0,
                       unitPrice: 0,
                       totalPrice: 0,
+                      category: lookupCategory(oi.name),
                     })));
                   } else {
-                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }]);
+                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "" }]);
+
                   }
                   setStage("manual");
                 }}
