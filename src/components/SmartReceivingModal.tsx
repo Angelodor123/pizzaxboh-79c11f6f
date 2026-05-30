@@ -5,6 +5,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { ocrInvoice } from "@/lib/receiving.functions";
+import { celebrate } from "@/lib/celebrate";
+
+export const EXPENSE_CATEGORIES = [
+  "חומרי גלם",
+  "ניקיון ותחזוקה",
+  "אריזה וחד־פעמי",
+  "משקאות",
+  "אחר",
+] as const;
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
 
 interface SupplierOpt { id: string; name: string }
 interface Props {
