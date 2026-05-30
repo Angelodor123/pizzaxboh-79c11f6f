@@ -84,7 +84,7 @@ export function GlobalSearch() {
     setQ("");
     setHits([]);
     if (h.kind === "recipe") {
-      navigate({ to: "/recipes", hash: `recipe-${h.id}` });
+      navigate({ to: "/recipes", search: { openRecipeId: h.id } as any });
     } else {
       navigate({ to: "/tasks", search: { edit: h.id } as any });
     }
@@ -94,7 +94,7 @@ export function GlobalSearch() {
   const taskHits = useMemo(() => hits.filter((h) => h.kind === "task"), [hits]);
 
   return (
-    <div ref={wrapRef} className="relative shrink-0">
+    <div ref={wrapRef} className="relative w-9 max-w-9 shrink-0 data-[open=true]:w-48 data-[open=true]:max-w-[48vw] sm:data-[open=true]:w-64 sm:data-[open=true]:max-w-64" data-open={open}>
       {!open ? (
         <button
           type="button"
@@ -109,7 +109,7 @@ export function GlobalSearch() {
           <Search className="h-4 w-4" />
         </button>
       ) : (
-        <div className="flex items-center gap-1 bg-card/80 border border-neon/60 rounded-md px-2 h-9 w-[160px] sm:w-[260px] max-w-[55vw] shrink-0 shadow-[0_0_8px_rgba(57,255,20,0.25)]">
+        <div className="flex h-9 w-full min-w-0 shrink-0 items-center gap-1 rounded-md border border-neon/60 bg-card/80 px-2 shadow-[0_0_8px_rgba(57,255,20,0.25)]">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
@@ -143,7 +143,7 @@ export function GlobalSearch() {
       {open && q.trim().length >= 2 && (
         <div
           dir="rtl"
-          className="absolute top-full mt-2 right-0 w-[300px] sm:w-[380px] max-h-[60vh] overflow-y-auto rounded-lg border border-border bg-popover shadow-xl z-50"
+          className="absolute top-full right-0 z-50 mt-2 max-h-[60vh] w-[min(82vw,320px)] overflow-y-auto rounded-lg border border-border bg-popover shadow-xl sm:w-[380px]"
         >
           {loading && (
             <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
