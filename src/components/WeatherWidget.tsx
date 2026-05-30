@@ -152,7 +152,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
         };
       }),
     };
-  }, []);
+  }, [cityLabel]);
 
   const fetchOnce = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=6&timezone=Asia%2FJerusalem`;
