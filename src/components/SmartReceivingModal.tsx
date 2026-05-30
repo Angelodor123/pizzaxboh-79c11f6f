@@ -287,7 +287,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       if (error) throw error;
 
 
-      // Invoice items
+      // Invoice items (with financial category)
       const cleanItems = rows.filter((r) => r.name.trim());
       if (cleanItems.length && invoiceRow) {
         await supabase.from("invoice_items").insert(cleanItems.map((r, idx) => ({
@@ -296,9 +296,55 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           quantity: r.invoiceQty,
           unit_price: r.unitPrice,
           total_price: r.totalPrice || r.invoiceQty * r.unitPrice,
+          category: r.category || null,
           sort_order: idx,
         })));
       }
+
+      // === AI MEMORY: persist item→category mappings ===
+      const newMappings = cleanItems.filter((r) => r.category && lookupCategory(r.name) !== r.category);
+      if (newMappings.length) {
+        await supabase.from("ai_learning_dictionary").insert(newMappings.map((r) => ({
+          branch_id: branchId,
+          context: "invoice_category",
+          user_input: r.name.trim().slice(0, 200),
+          ai_suggestion: {},
+          resolved_intent: { category: r.category },
+        })));
+      }
+
+      // === GAMIFICATION: OCR feedback row for XP/streak tracking ===
+      // Diff counts: compare each editable field to its OCR-parsed value
+      let edits = 0;
+      const numEq = (a: number | null | undefined, b: number | null | undefined) =>
+        Math.abs((Number(a) || 0) - (Number(b) || 0)) < 0.01;
+      if (parsed) {
+        if ((parsed.invoice_number ?? "").trim() !== invoiceNumber.trim()) edits++;
+        if (!numEq(parsed.total_amount, totalNum)) edits++;
+        if ((parsed.document_date ?? "") !== docDate) edits++;
+        const ocrItems = parsed.items ?? [];
+        for (const r of cleanItems) {
+          const match = ocrItems.find((it) => looseEq(it.name, r.name));
+          if (!match) { edits++; continue; }
+          if (!numEq(match.quantity, r.invoiceQty)) edits++;
+          if (!numEq(match.unit_price, r.unitPrice)) edits++;
+        }
+      }
+      const isPerfect = parsed != null && edits === 0;
+      await supabase.from("invoice_ocr_feedback").insert({
+        branch_id: branchId,
+        supplier_id: supplierId,
+        invoice_id: invoiceRow!.id,
+        raw_ocr: (parsed as unknown as Record<string, unknown>) ?? {},
+        final_data: {
+          invoice_number: invoiceNumber.trim(),
+          total_amount: totalNum,
+          document_date: docDate,
+          items: cleanItems.map((r) => ({ name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category })),
+        },
+        diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
+      });
+
 
       // Mark order received + update inventory
       if (chosenMatch) {
