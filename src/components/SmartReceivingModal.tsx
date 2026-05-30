@@ -86,7 +86,44 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [totalAmount, setTotalAmount] = useState("");
   const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [submitting, setSubmitting] = useState(false);
+  const [categoryMemory, setCategoryMemory] = useState<Map<string, ExpenseCategory>>(new Map());
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Load category dictionary (item name → category) for the current branch
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("ai_learning_dictionary")
+        .select("user_input, resolved_intent")
+        .eq("context", "invoice_category")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (cancelled || !data) return;
+      const map = new Map<string, ExpenseCategory>();
+      for (const r of data as Array<{ user_input: string; resolved_intent: { category?: string } }>) {
+        const cat = r.resolved_intent?.category as ExpenseCategory | undefined;
+        const k = norm(r.user_input);
+        if (cat && k && !map.has(k) && (EXPENSE_CATEGORIES as readonly string[]).includes(cat)) {
+          map.set(k, cat);
+        }
+      }
+      setCategoryMemory(map);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const lookupCategory = (name: string): ExpenseCategory | "" => {
+    const k = norm(name);
+    if (!k) return "";
+    if (categoryMemory.has(k)) return categoryMemory.get(k)!;
+    // loose match
+    for (const [key, val] of categoryMemory) {
+      if (key.includes(k) || k.includes(key)) return val;
+    }
+    return "";
+  };
+
 
   // Preload the linked order (when receiving was launched contextually)
   useEffect(() => {
