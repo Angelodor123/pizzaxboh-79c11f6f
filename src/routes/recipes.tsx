@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Trash2, FolderInput, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { RecipeCard } from "@/components/RecipeCard";
@@ -29,7 +29,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+type RecipesSearch = { openRecipeId?: string };
+
 export const Route = createFileRoute("/recipes")({
+  validateSearch: (search: Record<string, unknown>): RecipesSearch => ({
+    openRecipeId: typeof search.openRecipeId === "string" ? search.openRecipeId : undefined,
+  }),
   component: KitchenDashboard,
 });
 
@@ -49,6 +54,8 @@ const CATEGORY_EMOJI: Record<RecipeCategory, string> = {
 };
 
 function KitchenDashboard() {
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/recipes" });
   const recipes = useCookbookStore((s) => s.recipes);
   const cat = useUIStore((s) => s.category);
   const setCategory = useUIStore((s) => s.setCategory);
@@ -60,6 +67,7 @@ function KitchenDashboard() {
 
   const bulk = useBulkSelection();
   const [moveOpen, setMoveOpen] = useState(false);
+  const [forcedOpenRecipeId, setForcedOpenRecipeId] = useState<string | null>(null);
 
   const activeAll = useMemo(() => recipes.filter((r) => !r.deleted), [recipes]);
   // "מתכונים" = back-of-house only (sauces, bases, spices, aiolis, jams).
@@ -75,6 +83,20 @@ function KitchenDashboard() {
     () => activeAll.filter((r) => isMenuItem(r)),
     [activeAll],
   );
+
+  useEffect(() => {
+    const id = search.openRecipeId;
+    if (!id || activeAll.length === 0) return;
+    const found = activeAll.find((r) => r.id === id);
+    if (!found) return;
+    if (isMenuItem(found)) {
+      setCategory("dishes");
+      setMenuCat("all");
+    } else {
+      setCategory("all");
+    }
+    setForcedOpenRecipeId(id);
+  }, [search.openRecipeId, activeAll, setCategory, setMenuCat]);
 
   // Treat any menu-item category selection as the dishes view so legacy
   // persisted state (e.g. cat === "pastas") doesn't strand items off-screen.
