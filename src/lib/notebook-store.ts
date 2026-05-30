@@ -99,13 +99,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   refresh: async () => {
     const { data } = await supabase
       .from("notebook_items")
-      .select("id,list_key,text,done,priority,created_at")
+      .select("id,list_key,text,done,priority,created_at,catalog_product_id,current_stock,unit")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
     set({ lists: groupRows((data ?? []) as DbRow[]), loading: false, initialized: true });
   },
 
-  addItem: async (list, text, priority = "normal") => {
+  addItem: async (list, text, options = {}) => {
+    const { priority = "normal", catalogProductId = null, currentStock = null, unit = null } = options;
     const clean = text.trim().slice(0, 500);
     if (!clean) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -116,6 +117,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       done: false,
       priority,
       createdAt: new Date().toISOString(),
+      catalogProductId,
+      currentStock,
+      unit,
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
     const branchId = await requireCurrentBranchId();
@@ -125,6 +129,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       priority,
       created_by: user.id,
       branch_id: branchId,
+      catalog_product_id: catalogProductId,
+      current_stock: currentStock,
+      unit,
     });
   },
 
