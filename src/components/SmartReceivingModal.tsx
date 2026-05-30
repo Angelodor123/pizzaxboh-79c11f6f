@@ -48,9 +48,11 @@ type RowPair = {
   invoiceQty: number;
   unitPrice: number;
   totalPrice: number;
+  category: ExpenseCategory | "";
 };
 
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
+
 
 const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
   const r = new FileReader();
