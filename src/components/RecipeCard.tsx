@@ -46,7 +46,7 @@ export function RecipeCard({
 }: {
   recipe: Recipe;
   forceOpen?: boolean;
-  onForcedOpen?: () => void;
+  onForcedOpen?: (recipeId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(forceOpen);
   const [alarming, setAlarming] = useState(false);
@@ -59,7 +59,7 @@ export function RecipeCard({
     if (!forceOpen) return;
     setExpanded(true);
     useUIStore.getState().setLastRecipe(recipe.id, recipe.nameHebrew);
-    onForcedOpen?.();
+    onForcedOpen?.(recipe.id);
   }, [forceOpen, onForcedOpen, recipe.id, recipe.nameHebrew]);
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
