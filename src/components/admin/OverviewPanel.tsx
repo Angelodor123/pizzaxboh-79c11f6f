@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, RefreshCw, CalendarDays, Projector } from "lucide-react";
+import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, CalendarDays, Projector } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
-import { syncSportsEvents } from "@/lib/sports-sync.functions";
-import { toast } from "sonner";
 
 interface Metrics {
   doughShop: number | null;
