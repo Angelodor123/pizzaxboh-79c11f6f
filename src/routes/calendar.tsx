@@ -8,7 +8,7 @@ import { requireCurrentBranchId } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
