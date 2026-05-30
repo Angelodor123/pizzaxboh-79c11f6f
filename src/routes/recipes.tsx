@@ -100,7 +100,8 @@ function KitchenDashboard() {
 
   // Treat any menu-item category selection as the dishes view so legacy
   // persisted state (e.g. cat === "pastas") doesn't strand items off-screen.
-  const isDishesView = cat === "dishes" || (cat !== "all" && MENU_ITEM_CATEGORIES.includes(cat));
+  const isDishesView =
+    cat === "dishes" || (cat !== "all" && cat !== "desserts" && MENU_ITEM_CATEGORIES.includes(cat));
 
 
   const dishesWithMenuCat = useMemo(

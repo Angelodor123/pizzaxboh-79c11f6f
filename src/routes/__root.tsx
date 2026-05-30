@@ -241,7 +241,7 @@ function AuthedShell() {
   const isDishesView =
     isRecipesPage &&
     (category === "dishes" ||
-      (category !== "all" && MENU_ITEM_CATEGORIES.includes(category)));
+      (category !== "all" && category !== "desserts" && MENU_ITEM_CATEGORIES.includes(category)));
   const showQuickBack = !isRecipesPage;
 
 
