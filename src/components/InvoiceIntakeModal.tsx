@@ -38,7 +38,8 @@ interface Props {
   trainingMode?: boolean;
 }
 
-const DRAFT_KEY = "invoice-intake-draft";
+const DRAFT_KEY_OPERATIONAL = "invoice-intake-draft";
+const DRAFT_KEY_TRAINING = "invoice-intake-draft-training";
 const HARD_LIMIT = 15000;
 
 export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId, trainingMode = false }: Props) {
@@ -129,31 +130,42 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     return () => { cancelled = true; };
   }, [isEdit, editInvoice]);
 
-  // Restore draft (skip in edit mode)
+  // Restore draft (skip in edit mode). Use separate keys for training vs operational
+  // so the two flows never cross-contaminate state.
+  const DRAFT_KEY = trainingMode ? DRAFT_KEY_TRAINING : DRAFT_KEY_OPERATIONAL;
   useEffect(() => {
     if (isEdit) return;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        setSupplierId(d.supplierId ?? "");
+        // Only restore supplierId from draft if no initialSupplierId was passed in,
+        // otherwise the prop (e.g. selected supplier from previous screen) gets wiped.
+        if (!initialSupplierId && d.supplierId) setSupplierId(d.supplierId);
         setInvoiceNumber(d.invoiceNumber ?? "");
         setTotalAmount(d.totalAmount ?? "");
         setDocDate(d.docDate ?? new Date().toISOString().slice(0, 10));
         if (Array.isArray(d.items) && d.items.length) setItems(d.items);
+        // Restore image preview (base64 data URL) so it survives app backgrounding
+        // and tab unload on mobile.
+        if (typeof d.previewUrl === "string" && d.previewUrl.startsWith("data:")) {
+          setPreviewUrl(d.previewUrl);
+        }
       }
     } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit]);
 
   useEffect(() => {
     if (isEdit) return;
     const id = setTimeout(() => {
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ supplierId, invoiceNumber, totalAmount, docDate, items }));
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ supplierId, invoiceNumber, totalAmount, docDate, items, previewUrl }));
       } catch { /* ignore */ }
     }, 200);
     return () => clearTimeout(id);
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supplierId, invoiceNumber, totalAmount, docDate, items, previewUrl, isEdit]);
 
   // Note: preview is stored as a base64 data URL (not blob:) so it survives
   // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
