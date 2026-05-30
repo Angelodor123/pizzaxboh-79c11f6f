@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector, ClipboardCheck } from "lucide-react";
+import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector, ClipboardCheck, Check } from "lucide-react";
 import { DeliveryChecklistModal, type ChecklistItem } from "@/components/DeliveryChecklistModal";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -931,12 +931,67 @@ function InstanceOverrideForm({
   date: string;
   onClose: () => void;
 }) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const [title, setTitle] = useState(ev.title);
   const [startTime, setStartTime] = useState(ev.start_time?.slice(0, 5) ?? "");
   const [endTime, setEndTime] = useState(ev.end_time?.slice(0, 5) ?? "");
   const [highPriority, setHighPriority] = useState(!!ev.high_priority);
   const [notes, setNotes] = useState(ev.notes ?? "");
   const [saving, setSaving] = useState(false);
+
+  // Checklist state — merge master template with per-day override items.
+  const isDelivery = ev.category === "delivery" || ev.event_type === "inventory_delivery";
+  const [items, setItems] = useState<ExpectedItem[]>(() => {
+    const base = (ev.expected_items ?? []).map((t) => ({ ...t, is_received: false }));
+    const saved = ev._overrideItems ?? [];
+    if (saved.length > 0) {
+      for (const s of saved) {
+        const i = base.findIndex((b) => b.id === s.id);
+        if (i >= 0) base[i] = { ...base[i], is_received: !!s.is_received, name: s.name };
+        else base.push({ id: s.id, name: s.name, is_received: !!s.is_received });
+      }
+    }
+    return base;
+  });
+  const [newItemName, setNewItemName] = useState("");
+  const [itemsBusy, setItemsBusy] = useState(false);
+
+  const persistItems = async (next: ExpectedItem[]) => {
+    setItemsBusy(true);
+    const payload = {
+      event_id: ev.id,
+      override_date: date,
+      deleted: false,
+      expected_items: next as unknown as never,
+    };
+    const { error } = await supabase
+      .from("calendar_event_overrides")
+      .upsert(payload, { onConflict: "event_id,override_date" });
+    setItemsBusy(false);
+    if (error) toast.error("שמירה נכשלה: " + error.message);
+  };
+
+  const toggleItem = (idx: number) => {
+    const next = items.map((it, i) => (i === idx ? { ...it, is_received: !it.is_received } : it));
+    setItems(next);
+    void persistItems(next);
+  };
+
+  const addItem = () => {
+    const name = newItemName.trim();
+    if (!name) return;
+    const next = [...items, { id: crypto.randomUUID(), name, is_received: false }];
+    setItems(next);
+    setNewItemName("");
+    void persistItems(next);
+  };
+
+  const removeItem = (idx: number) => {
+    const next = items.filter((_, i) => i !== idx);
+    setItems(next);
+    void persistItems(next);
+  };
 
   const d = new Date(date + "T00:00:00");
   const label = `${WEEKDAYS_HE[d.getDay()]}, ${d.getDate()} ${MONTHS_HE[d.getMonth()]}`;
@@ -953,6 +1008,7 @@ function InstanceOverrideForm({
       end_time: endTime || null,
       high_priority: highPriority,
       notes: notes.trim().slice(0, 2000) || null,
+      expected_items: isDelivery ? (items as unknown as never) : ([] as unknown as never),
     };
     const { error } = await supabase
       .from("calendar_event_overrides")
@@ -985,6 +1041,7 @@ function InstanceOverrideForm({
       onClose();
     }
   };
+
 
   return (
     <div
@@ -1050,6 +1107,94 @@ function InstanceOverrideForm({
             dir="rtl"
           />
         </Field>
+
+        {isDelivery && (
+          <div className="rounded-xl border border-success/40 bg-success/5 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <ClipboardCheck className="h-4 w-4 text-success" />
+                צ׳קליסט פריקת סחורה
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {items.filter((i) => i.is_received).length} / {items.length} התקבל
+                {itemsBusy && <span className="mr-1 text-neon">שומר…</span>}
+              </span>
+            </div>
+
+            {items.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                לא הוגדרו פריטים — {isAdmin ? "הוסף פריטים צפויים מטה" : "אין פריטים לסימון"}
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {items.map((it, idx) => (
+                  <li key={it.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleItem(idx)}
+                      className={`flex-1 flex items-center gap-2 rounded-lg border-2 px-3 h-11 text-right transition active:scale-[0.98] ${
+                        it.is_received
+                          ? "border-success bg-success/15"
+                          : "border-white/15 bg-white/5 hover:border-neon"
+                      }`}
+                    >
+                      <span
+                        className={`h-6 w-6 shrink-0 rounded-md border-2 grid place-content-center ${
+                          it.is_received ? "bg-success border-success text-background" : "border-white/30"
+                        }`}
+                      >
+                        {it.is_received && <Check className="h-4 w-4" strokeWidth={3} />}
+                      </span>
+                      <span className={`flex-1 text-sm font-bold ${it.is_received ? "line-through text-muted-foreground" : ""}`}>
+                        {it.name}
+                      </span>
+                    </button>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        className="h-11 w-11 grid place-content-center rounded-lg border border-white/15 bg-white/5 hover:border-destructive hover:text-destructive"
+                        aria-label="הסר פריט"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {isAdmin && (
+              <div className="flex gap-2 pt-1">
+                <input
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addItem();
+                    }
+                  }}
+                  placeholder="למשל: קמח, רסק עגבניות"
+                  className="input flex-1"
+                  maxLength={120}
+                  dir="rtl"
+                />
+                <button
+                  type="button"
+                  onClick={addItem}
+                  disabled={!newItemName.trim()}
+                  className="h-11 px-3 rounded-md bg-success text-success-foreground font-bold disabled:opacity-50 flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  הוסף
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+
 
         <div className="flex gap-2">
           <button
