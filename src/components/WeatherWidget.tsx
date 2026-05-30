@@ -51,7 +51,7 @@ function isRainCode(code: number) {
   return (code >= 51 && code <= 67) || (code >= 80 && code <= 86) || code >= 95;
 }
 
-const CACHE_KEY = "weather_widget_cache_v1";
+const CACHE_KEY_PREFIX = "weather_widget_cache_v2:";
 const MAX_RETRIES = 3;
 const REQUEST_TIMEOUT_MS = 6_000;
 
