@@ -33,7 +33,7 @@ const ParsedSchema = z.object({
         quantity: z.number().nullable().optional(),
         unit_price: z.number().nullable().optional(),
         total_price: z.number().nullable().optional(),
-        discount: z.union([z.string().max(40), z.number()]).nullable().optional().transform((v) => (v == null ? null : typeof v === "number" ? `${v}` : v)),
+        discount: z.coerce.string().max(40).nullable().optional(),
       }),
     )
     .max(80),
