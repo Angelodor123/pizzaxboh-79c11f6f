@@ -64,57 +64,54 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
   const loadStats = useCallback(async () => {
-
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      let q = supabase
-        .from("invoice_ocr_feedback")
-        .select("supplier_id,diff_summary,created_at,raw_ocr,final_data")
-        .order("created_at", { ascending: false })
-        .limit(2000);
-      if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
-      const { data } = await q;
-      if (cancelled) return;
-      const rows = ((data as unknown) as FeedbackRow[]) ?? [];
-      const bySup = new Map<string, FeedbackRow[]>();
-      for (const r of rows) {
-        if (!r.supplier_id) continue;
-        const arr = bySup.get(r.supplier_id) ?? [];
-        arr.push(r);
-        bySup.set(r.supplier_id, arr);
+    setLoading(true);
+    let q = supabase
+      .from("invoice_ocr_feedback")
+      .select("supplier_id,diff_summary,created_at,raw_ocr,final_data")
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
+    const { data } = await q;
+    const rows = ((data as unknown) as FeedbackRow[]) ?? [];
+    const bySup = new Map<string, FeedbackRow[]>();
+    for (const r of rows) {
+      if (!r.supplier_id) continue;
+      const arr = bySup.get(r.supplier_id) ?? [];
+      arr.push(r);
+      bySup.set(r.supplier_id, arr);
+    }
+    const result: SupplierStat[] = [];
+    for (const [sid, arr] of bySup) {
+      const xp = arr.reduce((a, r) => a + xpFromRow(r), 0);
+      let streak = 0;
+      for (const r of arr) {
+        if (r.diff_summary === "perfect") streak += 1;
+        else break;
       }
-      const result: SupplierStat[] = [];
-      for (const [sid, arr] of bySup) {
-        const xp = arr.reduce((a, r) => a + xpFromRow(r), 0);
-        // arr is already DESC by created_at
-        let streak = 0;
-        for (const r of arr) {
-          if (r.diff_summary === "perfect") streak += 1;
-          else break;
-        }
-        result.push({
-          supplier_id: sid,
-          name: suppliers.find((s) => s.id === sid)?.name ?? "ספק לא ידוע",
-          xp,
-          invoices: arr.length,
-          streak,
-        });
+      result.push({
+        supplier_id: sid,
+        name: suppliers.find((s) => s.id === sid)?.name ?? "ספק לא ידוע",
+        xp,
+        invoices: arr.length,
+        streak,
+      });
+    }
+    for (const s of suppliers) {
+      if (!bySup.has(s.id)) {
+        result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0 });
       }
-      // Add suppliers with no feedback yet
-      for (const s of suppliers) {
-        if (!bySup.has(s.id)) {
-          result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0 });
-        }
-      }
-      result.sort((a, b) => b.xp - a.xp);
-      setStats(result);
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    }
+    result.sort((a, b) => b.xp - a.xp);
+    setStats(result);
+    setLoading(false);
   }, [branchId, isSuperAdmin, suppliers]);
 
+  useEffect(() => {
+    void loadStats();
+  }, [loadStats, reloadKey]);
+
   if (loading) return <div className="text-center text-muted-foreground py-12">טוען…</div>;
+
 
   return (
     <div className="space-y-4">
