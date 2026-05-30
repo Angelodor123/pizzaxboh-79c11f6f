@@ -242,18 +242,6 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     };
   }, []);
 
-  const handleSyncSports = async () => {
-    setSyncing(true);
-    try {
-      const res = await syncFn();
-      toast.success(`סנכרון הושלם — נוספו ${res.inserted} משחקים, ${res.skipped} כבר קיימים`);
-      await loadSports();
-    } catch (e) {
-      toast.error(`סנכרון נכשל: ${e instanceof Error ? e.message : "שגיאה"}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const doughTotal =
     m.doughShop == null && m.doughWarehouse == null
