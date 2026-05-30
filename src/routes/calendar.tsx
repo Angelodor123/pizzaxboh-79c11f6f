@@ -403,8 +403,8 @@ function MonthView({
           const isToday = c.iso === todayIso;
           const isSelected = c.iso === selectedDate;
           const hasPriority = dayEvents.some((e) => e.high_priority);
-          const dotEvents = dayEvents.slice(0, 3);
-          const extraCount = Math.max(0, dayEvents.length - 3);
+          const hasEvents = dayEvents.length > 0;
+
 
           const cellClass = `relative min-h-[56px] sm:min-h-[72px] rounded-md p-1 sm:p-1.5 border text-right transition overflow-hidden ${
             isSelected
