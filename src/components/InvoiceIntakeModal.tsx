@@ -256,7 +256,11 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   const onFileSelected = async (f: File | null) => {
     setFile(f);
-    if (!f) { setPreviewUrl(null); return; }
+    if (!f) {
+      setPreviewUrl(null);
+      saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
+      return;
+    }
 
     setUploading(true);
     setOcrLoading(true);
@@ -265,6 +269,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
       setPreviewUrl(dataUrl);
+      saveDraftImage(DRAFT_KEY, dataUrl).catch(() => { /* ignore */ });
 
       const catalogPayload = supplierCatalog.slice(0, 200).map((p) => ({
         name: p.name,
@@ -286,6 +291,11 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       setRawOcr(parsed);
 
       // Populate header fields when present
+      let nextInvoiceNumber = invoiceNumber;
+      let nextDocDate = docDate;
+      let nextTotalAmount = totalAmount;
+      let nextSupplierId = supplierId;
+      let nextItems = items;
       if (parsed.invoice_number) setInvoiceNumber(parsed.invoice_number);
       if (parsed.document_date && /^\d{4}-\d{2}-\d{2}$/.test(parsed.document_date)) {
         setDocDate(parsed.document_date);
@@ -293,25 +303,32 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       if (typeof parsed.total_amount === "number" && parsed.total_amount > 0) {
         setTotalAmount(String(parsed.total_amount));
       }
+      if (parsed.invoice_number) nextInvoiceNumber = parsed.invoice_number;
+      if (parsed.document_date && /^\d{4}-\d{2}-\d{2}$/.test(parsed.document_date)) nextDocDate = parsed.document_date;
+      if (typeof parsed.total_amount === "number" && parsed.total_amount > 0) nextTotalAmount = String(parsed.total_amount);
       // Suggest supplier by fuzzy name match
       if (parsed.supplier_guess) {
         const guess = parsed.supplier_guess.trim().toLowerCase();
         const match = suppliers.find((s) => s.name.toLowerCase().includes(guess) || guess.includes(s.name.toLowerCase()));
-        if (match) setSupplierId(match.id);
+        if (match) {
+          setSupplierId(match.id);
+          nextSupplierId = match.id;
+        }
       }
       // Populate item rows
       if (Array.isArray(parsed.items) && parsed.items.length > 0) {
-        setItems(
-          parsed.items.map((it) => ({
-            item_name: it.item_name ?? "",
-            quantity: it.quantity != null ? String(it.quantity) : "",
-            unit_price: it.unit_price != null ? String(it.unit_price) : "",
-            total_price: it.total_price != null ? String(it.total_price) : "",
-            discount: it.discount ?? "",
-          })),
-        );
+        nextItems = parsed.items.map((it) => ({
+          item_name: it.item_name ?? "",
+          quantity: it.quantity != null ? String(it.quantity) : "",
+          unit_price: it.unit_price != null ? String(it.unit_price) : "",
+          total_price: it.total_price != null ? String(it.total_price) : "",
+          discount: it.discount ?? "",
+        }));
+        setItems(nextItems);
+        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
       } else {
+        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems });
         toast.message("לא זוהו פריטים — מלא ידנית");
       }
     } catch (e) {
@@ -376,6 +393,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           .catch(() => { /* silent */ });
         toast.success("האימון נשמר — ה-AI ילמד מהתיקונים שלך");
         try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
         onSaved();
         onClose();
         return;
@@ -448,6 +466,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
       if (!isEdit) {
         try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
       }
       toast.success(isEdit ? "החשבונית עודכנה בהצלחה" : "החשבונית נקלטה בהצלחה");
 
