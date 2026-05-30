@@ -5,6 +5,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { ocrInvoice } from "@/lib/receiving.functions";
+import { celebrate } from "@/lib/celebrate";
+
+export const EXPENSE_CATEGORIES = [
+  "חומרי גלם",
+  "ניקיון ותחזוקה",
+  "אריזה וחד־פעמי",
+  "משקאות",
+  "אחר",
+] as const;
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
 
 interface SupplierOpt { id: string; name: string }
 interface Props {
@@ -37,9 +48,11 @@ type RowPair = {
   invoiceQty: number;
   unitPrice: number;
   totalPrice: number;
+  category: ExpenseCategory | "";
 };
 
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
+
 
 const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
   const r = new FileReader();
@@ -73,7 +86,44 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [totalAmount, setTotalAmount] = useState("");
   const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [submitting, setSubmitting] = useState(false);
+  const [categoryMemory, setCategoryMemory] = useState<Map<string, ExpenseCategory>>(new Map());
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Load category dictionary (item name → category) for the current branch
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("ai_learning_dictionary")
+        .select("user_input, resolved_intent")
+        .eq("context", "invoice_category")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (cancelled || !data) return;
+      const map = new Map<string, ExpenseCategory>();
+      for (const r of data as Array<{ user_input: string; resolved_intent: { category?: string } }>) {
+        const cat = r.resolved_intent?.category as ExpenseCategory | undefined;
+        const k = norm(r.user_input);
+        if (cat && k && !map.has(k) && (EXPENSE_CATEGORIES as readonly string[]).includes(cat)) {
+          map.set(k, cat);
+        }
+      }
+      setCategoryMemory(map);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const lookupCategory = (name: string): ExpenseCategory | "" => {
+    const k = norm(name);
+    if (!k) return "";
+    if (categoryMemory.has(k)) return categoryMemory.get(k)!;
+    // loose match
+    for (const [key, val] of categoryMemory) {
+      if (key.includes(k) || k.includes(key)) return val;
+    }
+    return "";
+  };
+
 
   // Preload the linked order (when receiving was launched contextually)
   useEffect(() => {
@@ -166,7 +216,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         up = Number(ocrItems[idx].unit_price) || 0;
         tp = Number(ocrItems[idx].total_price) || invQty * up;
       }
-      return { name: oi.name, orderedQty, invoiceQty: invQty, unitPrice: up, totalPrice: tp };
+      return { name: oi.name, orderedQty, invoiceQty: invQty, unitPrice: up, totalPrice: tp, category: lookupCategory(oi.name) };
     });
     // Extra invoice items not on the order
     ocrItems.forEach((it, i) => {
@@ -176,7 +226,9 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         invoiceQty: Number(it.quantity) || 0,
         unitPrice: Number(it.unit_price) || 0,
         totalPrice: Number(it.total_price) || 0,
+        category: lookupCategory(it.name),
       });
+
     });
     setRows(pairs);
     setStage("verify");
@@ -190,7 +242,9 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       invoiceQty: Number(it.quantity) || 0,
       unitPrice: Number(it.unit_price) || 0,
       totalPrice: Number(it.total_price) || 0,
+      category: lookupCategory(it.name),
     })));
+
     setStage("manual");
   };
 
@@ -233,7 +287,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       if (error) throw error;
 
 
-      // Invoice items
+      // Invoice items (with financial category)
       const cleanItems = rows.filter((r) => r.name.trim());
       if (cleanItems.length && invoiceRow) {
         await supabase.from("invoice_items").insert(cleanItems.map((r, idx) => ({
@@ -242,9 +296,55 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           quantity: r.invoiceQty,
           unit_price: r.unitPrice,
           total_price: r.totalPrice || r.invoiceQty * r.unitPrice,
+          category: r.category || null,
           sort_order: idx,
         })));
       }
+
+      // === AI MEMORY: persist item→category mappings ===
+      const newMappings = cleanItems.filter((r) => r.category && lookupCategory(r.name) !== r.category);
+      if (newMappings.length) {
+        await supabase.from("ai_learning_dictionary").insert(newMappings.map((r) => ({
+          branch_id: branchId,
+          context: "invoice_category",
+          user_input: r.name.trim().slice(0, 200),
+          ai_suggestion: {},
+          resolved_intent: { category: r.category },
+        })));
+      }
+
+      // === GAMIFICATION: OCR feedback row for XP/streak tracking ===
+      // Diff counts: compare each editable field to its OCR-parsed value
+      let edits = 0;
+      const numEq = (a: number | null | undefined, b: number | null | undefined) =>
+        Math.abs((Number(a) || 0) - (Number(b) || 0)) < 0.01;
+      if (parsed) {
+        if ((parsed.invoice_number ?? "").trim() !== invoiceNumber.trim()) edits++;
+        if (!numEq(parsed.total_amount, totalNum)) edits++;
+        if ((parsed.document_date ?? "") !== docDate) edits++;
+        const ocrItems = parsed.items ?? [];
+        for (const r of cleanItems) {
+          const match = ocrItems.find((it) => looseEq(it.name, r.name));
+          if (!match) { edits++; continue; }
+          if (!numEq(match.quantity, r.invoiceQty)) edits++;
+          if (!numEq(match.unit_price, r.unitPrice)) edits++;
+        }
+      }
+      const isPerfect = parsed != null && edits === 0;
+      await supabase.from("invoice_ocr_feedback").insert({
+        branch_id: branchId,
+        supplier_id: supplierId,
+        invoice_id: invoiceRow!.id,
+        raw_ocr: (parsed as unknown) as never,
+        final_data: {
+          invoice_number: invoiceNumber.trim(),
+          total_amount: totalNum,
+          document_date: docDate,
+          items: cleanItems.map((r) => ({ name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category })),
+        },
+        diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
+      });
+
 
       // Mark order received + update inventory
       if (chosenMatch) {
@@ -292,9 +392,15 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         }
       }
 
-      toast.success("החשבונית נקלטה והמלאי עודכן");
+      if (isPerfect) {
+        celebrate();
+        toast.success("🎉 קליטה מושלמת! ה-AI קיבל XP נוסף.");
+      } else {
+        toast.success("החשבונית נקלטה והמלאי עודכן");
+      }
       onSaved();
       onClose();
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : "שגיאה בקליטה";
       toast.error(msg);
@@ -369,9 +475,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       invoiceQty: Number(oi.qty.replace(/[^\d.]/g, "")) || 0,
                       unitPrice: 0,
                       totalPrice: 0,
+                      category: lookupCategory(oi.name),
                     })));
                   } else {
-                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }]);
+                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "" }]);
+
                   }
                   setStage("manual");
                 }}
@@ -496,8 +604,18 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                 <div>
                                   <input value={r.name} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
                                     className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none" />
+                                  <select
+                                    value={r.category}
+                                    onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, category: e.target.value as ExpenseCategory | "" } : x))}
+                                    className={`mt-1 w-full h-9 rounded bg-background border px-2 text-[11px] leading-none focus:border-neon outline-none ${r.category ? "border-neon/50 text-neon" : "border-border text-muted-foreground"}`}
+                                    aria-label="שיוך חשבונאי"
+                                  >
+                                    <option value="">שיוך חשבונאי…</option>
+                                    {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                                  </select>
                                   {isExtra && <div className="text-[10px] text-amber-brand mt-0.5">פריט לא בהזמנה</div>}
                                 </div>
+
                                 {chosenMatch && (
                                   <div className="text-center text-xs tabular-nums text-muted-foreground">{r.orderedQty ?? "—"}</div>
                                 )}
@@ -520,7 +638,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 </div>
                 <button
                   type="button"
-                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }])}
+                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "" }])}
                   className="mt-3 w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
                 >
                   + הוסף שורה

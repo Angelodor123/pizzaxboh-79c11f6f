@@ -1,87 +1,54 @@
-תוכנית מפורטת לפי 3 החלקים בבקשה. לפני שאתחיל ביישום, יש כמה החלטות שכדאי לאשר.
+## מטרה
+להוסיף שכבת גיימיפיקציה ל-OCR החשבוניות + טור "שיוך חשבונאי" בטבלת הפריטים, עם זיכרון אוטומטי של ה-AI.
 
-## חלק 1 — חיפוש גלובלי ממוקד (Header)
+## חלק 1 — טאב חדש "🎮 אימון AI" ב-`/invoices`
 
-- **רכיב חדש:** `src/components/GlobalSearch.tsx` — שדה חיפוש בהדר עם dropdown תוצאות.
-- **Debounce:** 250ms (`useDebouncedValue`).
-- **Scope:** רק `recipes` (לפי `name_hebrew`) ו-`tasks` (לפי `name`) — מסונן לפי `branch_id` של המשתמש.
-- **קליק על תוצאה:**
-  - מתכון → ניווט ל-`/recipes` עם פתיחת המתכון (דרך `useUIStore.setLastRecipe`).
-  - משימה → ניווט ל-`/tasks` ופתיחת ה-`QuickEditTaskDialog` של המשימה (state בראוטר/URL param).
-- **מיקום:** משולב ב-Header הראשי (אצטרך לאתר את ה-Header — כנראה בתוך `__root.tsx`).
+קומפוננטה חדשה: `src/components/AiTrainingSandbox.tsx`.
 
-## חלק 2 — גמישות ניהול משימות
+מקור נתונים: טבלת `invoice_ocr_feedback` (קיימת — `raw_ocr`, `final_data`, `diff_summary`).
 
-### 2.1 Toggle "דחוף" ב-Quick-Edit
-- DB: הוספת `is_urgent boolean default false` לטבלת `tasks`.
-- UI: Switch ב-`QuickEditTaskDialog.tsx` שמעדכן את השדה.
+לכל ספק נחשב מתוך הפידבק:
+- **XP** = סה"כ שדות שזוהו נכון (לא תוקנו ידנית). נספור מהשוואה raw_ocr↔final_data לכל שדה (invoice_number, total_amount, document_date, items[*].name/quantity/unit_price).
+- **Level** = `floor(XP/50) + 1` (מקסימום 5):
+  - 1 מתחיל · 2 חניך · 3 מומחה · 4 וירטואוז · 5 מאסטר
+- **XP bar** = `(XP % 50) / 50 × 100%`
+- **Streak** 🔥 = מספר חשבוניות אחרונות רצופות עם `diff_summary='perfect'` (אפס תיקונים) באותו ספק.
 
-### 2.2 Drag & Drop ל-`/tasks`
-- DB: הוספת `manual_order_index integer default 0` ל-`tasks`.
-- ספרייה: `@dnd-kit/core` + `@dnd-kit/sortable` (להתקין).
-- Sort: `is_urgent DESC, manual_order_index ASC, sort_order ASC`.
-- שמירת הסדר ב-DB אחרי drop (bulk update).
+UI: כרטיס לכל ספק (גריד דו־טורי במובייל=טור יחיד), עם:
+- שם ספק + תג Level צבעוני
+- פס XP מלא (gradient ניאון) + מספר XP / next level
+- 🔥 streak אם > 0
+- מד "חשבוניות שעובדו"
 
-**שאלה:** ה-Drag&Drop צריך לעבוד **בתוך כל קטגוריה/קבוצה בנפרד**, או על כל המשימות של המשמרת כרשימה שטוחה אחת? (אני אניח: בתוך כל קבוצה בנפרד — מתאים ללוגיקת ההיררכיה הקיימת.)
+## חלק 2 — שיוך חשבונאי + זיכרון AI
 
-## חלק 3 — קיצורים ולמידת AI
+### Migration
+1. הוספת `category text` ל-`invoice_items` (nullable).
+2. שימוש ב-`ai_learning_dictionary` הקיים, עם `context='invoice_category'`, `user_input=שם פריט מנורמל`, `resolved_intent={category}`.
 
-### 3.1 FAB גרירה לפנקס
-- רכיב חדש: `src/components/DraggableNotepadFab.tsx`.
-- ממוקם רק במסך `/tasks`.
-- Drag חופשי, מיקום נשמר ב-`localStorage` (`pizzax-notepad-fab-pos`).
-- קליק → `navigate({ to: "/notebook" })`.
+### קטגוריות קבועות (Hebrew):
+- חומרי גלם (Food Cost)
+- ניקיון ותחזוקה
+- אריזה וחד־פעמי
+- משקאות
+- אחר
 
-### 3.2 טבלת `ai_learning_dictionary`
-עמודות:
-- `id`, `user_id`, `branch_id`
-- `user_input text` — מה שהמשתמש כתב
-- `resolved_intent jsonb` — התוצאה הסופית שהמשתמש בחר (task_id / recipe_id / מחרוזת)
-- `context text` — מאיפה זה הגיע (`task_linking`, `invoice_parsing`, וכו')
-- `ai_suggestion jsonb` — מה Gemini הציע במקור
-- `created_at`
-- RLS: קריאה/כתיבה למשתמשים עם תפקיד בסניף שלהם.
+### שינויים ב-`SmartReceivingModal`:
+- בטבלת ה-verify/manual — טור חדש "שיוך חשבונאי" (dropdown 44px).
+- כשמגיע OCR: שליפת מילון לפי `branch_id` + `context='invoice_category'` → לכל שורה, אם השם תואם (looseEq) — מילוי אוטומטי של הקטגוריה.
+- בעת שמירה:
+  - שמירת `category` בעמודה החדשה של `invoice_items`.
+  - לכל פריט עם קטגוריה — `INSERT` ל-`ai_learning_dictionary` (דרך `logAiCorrection`) עם `context='invoice_category'`.
+  - שמירת רשומת `invoice_ocr_feedback` עם `diff_summary` = `'perfect'` אם 0 תיקונים, אחרת `'edits:<N>'`.
+  - אם perfect → קריאה ל-`celebrate()` מ-`@/lib/celebrate` (קונפטי קיים).
 
-### 3.3 לולאת פידבק
-**שאלה חשובה:** איפה בדיוק היום קורה "task linking" אוטומטי של Gemini במערכת? אני רואה `copilot.functions.ts` ו-`invoice-ocr.functions.ts`, אבל לא בטוח איפה יש קישור משימות אוטומטי שצריך תיקון.
-- ברירת המחדל שלי: אוסיף תשתית `logAiCorrection()` ב-`src/lib/ai-learning.functions.ts`, ואקרא לה מ-Quick-Edit כאשר משימה משתנה לאחר הצעת AI. נצטרך להגדיר מתי בדיוק "הצעה" קיימת.
+## חלק 3 — קבצים שמשתנים
+- **חדש**: `src/components/AiTrainingSandbox.tsx`
+- **עריכה**: `src/routes/invoices.tsx` — הוספת `TabsTrigger` שלישי + `TabsContent`
+- **עריכה**: `src/components/SmartReceivingModal.tsx` — טור קטגוריה, prefill ממילון, שמירת feedback + confetti
+- **Migration**: `ALTER TABLE invoice_items ADD COLUMN category text;`
 
-### 3.4 הזרקת הקשר ל-Prompt
-- ב-`copilot.functions.ts` (ובכל קריאה ל-Gemini), לפני בניית ה-system prompt:
-  ```ts
-  const dict = await supabase.from('ai_learning_dictionary')
-    .select('user_input, resolved_intent, context')
-    .eq('branch_id', branchId)
-    .order('created_at', { ascending: false })
-    .limit(50);
-  ```
-- להוסיף לסיסטם פרומפט בלוק "מילון מונחי המטבח המקומי" עם הזוגות.
-
----
-
-## קבצים שייווצרו/ישונו
-
-**חדשים:**
-- `src/components/GlobalSearch.tsx`
-- `src/components/DraggableNotepadFab.tsx`
-- `src/hooks/use-debounced-value.ts`
-- `src/lib/ai-learning.functions.ts`
-- `supabase/migrations/*` (2 מיגרציות)
-
-**מעודכנים:**
-- `src/routes/__root.tsx` (הוספת GlobalSearch להדר)
-- `src/routes/tasks.tsx` (DnD + FAB)
-- `src/components/QuickEditTaskDialog.tsx` (Urgent toggle + AI log)
-- `src/lib/tasks.ts` (סדר מיון, manual_order_index)
-- `src/lib/copilot.functions.ts` (הזרקת dictionary)
-- `package.json` (הוספת `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`)
-
----
-
-## שאלות לפני שאתחיל
-
-1. **Drag&Drop scope:** בתוך כל קטגוריה בנפרד (מומלץ) או רשימה שטוחה אחת לכל המשמרת?
-2. **AI Learning trigger:** איפה היום יש "קישור משימות אוטומטי" של Gemini שהמשתמש יכול לתקן? (אם אין — אבנה את התשתית ואחכה להפנייה ספציפית מאוחר יותר.)
-3. **GlobalSearch — מובייל:** ההדר במובייל מאוד צר (360px). להציג את שדה החיפוש כאייקון שנפתח למודאל בלחיצה, או שדה תמיד גלוי מצומצם?
-
-אחרי שתאשר/תענה — אבצע הכל ברצף.
+## מחוץ לסקופ
+- שינוי ב-DnD
+- שינוי לוגיקת OCR בצד שרת (`receiving.functions.ts`) — נשתמש בקיים.
+- אינטגרציה של הקטגוריה לדוחות פיננסיים (נשמר ל-DB בלבד; ויזואליזציה בעתיד).

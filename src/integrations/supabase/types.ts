@@ -525,6 +525,7 @@ export type Database = {
       }
       invoice_items: {
         Row: {
+          category: string | null
           created_at: string
           id: string
           invoice_id: string
@@ -535,6 +536,7 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
           invoice_id: string
@@ -545,6 +547,7 @@ export type Database = {
           unit_price?: number
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: string
           invoice_id?: string
