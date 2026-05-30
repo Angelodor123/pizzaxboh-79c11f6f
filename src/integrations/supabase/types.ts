@@ -74,22 +74,37 @@ export type Database = {
       branches: {
         Row: {
           active: boolean
+          address: string | null
           created_at: string
+          features: Json
           id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           updated_at: string
         }
         Insert: {
           active?: boolean
+          address?: string | null
           created_at?: string
+          features?: Json
           id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name: string
           updated_at?: string
         }
         Update: {
           active?: boolean
+          address?: string | null
           created_at?: string
+          features?: Json
           id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           updated_at?: string
         }
@@ -1771,6 +1786,14 @@ export type Database = {
         Returns: {
           full_name: string
           user_id: string
+        }[]
+      }
+      network_dough_summary: {
+        Args: never
+        Returns: {
+          branch_id: string
+          branch_name: string
+          total_trays: number
         }[]
       }
       notebook_daily_reset: { Args: never; Returns: undefined }
