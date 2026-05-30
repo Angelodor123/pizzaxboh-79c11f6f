@@ -417,9 +417,11 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           });
         });
         setItems(nextItems);
+        resetValidation(nextItems.length);
         persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
       } else {
+        resetValidation(1);
         persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.message("לא זוהו פריטים — מלא ידנית");
       }
