@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId } from "@/lib/current-branch";
+import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 
 export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse" | "shortages";
 
