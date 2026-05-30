@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
-import { Flame, Trophy, Sparkles } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Flame, Trophy, Sparkles, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
+import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
+import { celebrate } from "@/lib/celebrate";
+
 
 interface SupplierOpt { id: string; name: string }
 interface Props { suppliers: SupplierOpt[]; isSuperAdmin: boolean }
