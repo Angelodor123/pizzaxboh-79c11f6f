@@ -114,6 +114,21 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [supplierCatalog, setSupplierCatalog] = useState<SupplierProduct[]>([]);
   const runOcr = useServerFn(parseInvoiceImage);
   const runLearn = useServerFn(learnFromCorrection);
+  const DRAFT_KEY = trainingMode ? DRAFT_KEY_TRAINING : DRAFT_KEY_OPERATIONAL;
+
+  const persistDraft = (overrides: Partial<InvoiceDraft> = {}) => {
+    if (isEdit) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        supplierId,
+        invoiceNumber,
+        totalAmount,
+        docDate,
+        items,
+        ...overrides,
+      } satisfies InvoiceDraft));
+    } catch { /* ignore */ }
+  };
 
   // Load supplier catalog whenever supplier is selected — used as RAG context for OCR.
   useEffect(() => {
@@ -179,9 +194,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   // Restore draft (skip in edit mode). Use separate keys for training vs operational
   // so the two flows never cross-contaminate state.
-  const DRAFT_KEY = trainingMode ? DRAFT_KEY_TRAINING : DRAFT_KEY_OPERATIONAL;
   useEffect(() => {
     if (isEdit) return;
+    let cancelled = false;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
@@ -193,26 +208,25 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         setTotalAmount(d.totalAmount ?? "");
         setDocDate(d.docDate ?? new Date().toISOString().slice(0, 10));
         if (Array.isArray(d.items) && d.items.length) setItems(d.items);
-        // Restore image preview (base64 data URL) so it survives app backgrounding
-        // and tab unload on mobile.
-        if (typeof d.previewUrl === "string" && d.previewUrl.startsWith("data:")) {
-          setPreviewUrl(d.previewUrl);
-        }
       }
     } catch { /* ignore */ }
+    loadDraftImage(DRAFT_KEY)
+      .then((storedPreview) => {
+        if (!cancelled && storedPreview?.startsWith("data:")) setPreviewUrl(storedPreview);
+      })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit]);
 
   useEffect(() => {
     if (isEdit) return;
     const id = setTimeout(() => {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ supplierId, invoiceNumber, totalAmount, docDate, items, previewUrl }));
-      } catch { /* ignore */ }
+      persistDraft();
     }, 200);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items, previewUrl, isEdit]);
+  }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
 
   // Note: preview is stored as a base64 data URL (not blob:) so it survives
   // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
