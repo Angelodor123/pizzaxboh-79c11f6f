@@ -11,6 +11,8 @@ import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
 import { Package } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
@@ -113,6 +115,12 @@ function SuppliersPage() {
         )}
       </div>
 
+      <Tabs defaultValue="list" dir="rtl" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-11 mb-4">
+          <TabsTrigger value="list" className="font-bold">רשימת ספקים</TabsTrigger>
+          <TabsTrigger value="training" className="font-bold">🎮 אימון AI</TabsTrigger>
+        </TabsList>
+        <TabsContent value="list">
       {canEdit && list.length > 0 && (
         <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
           <button
@@ -259,6 +267,13 @@ function SuppliersPage() {
           })}
         </ul>
       )}
+        </TabsContent>
+        <TabsContent value="training">
+          <AiTrainingSandbox suppliers={list.filter((s) => !s.is_archived).map((s) => ({ id: s.id, name: s.name }))} isSuperAdmin={isSuperAdmin} />
+        </TabsContent>
+      </Tabs>
+
+
 
 
       {canEdit && (

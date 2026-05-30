@@ -8,7 +8,6 @@ import { InvoiceIntakeModal, type EditInvoiceData } from "@/components/InvoiceIn
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 
 import {
   AlertDialog,
@@ -197,10 +196,9 @@ function InvoicesPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="recent" dir="rtl" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-11">
+        <TabsList className="grid w-full grid-cols-2 h-11">
           <TabsTrigger value="recent" className="font-bold">קליטות אחרונות</TabsTrigger>
           <TabsTrigger value="archive" className="font-bold">ארכיון</TabsTrigger>
-          <TabsTrigger value="training" className="font-bold">🎮 אימון AI</TabsTrigger>
         </TabsList>
 
 
@@ -280,10 +278,6 @@ function InvoicesPage() {
               </div>
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="training" className="mt-4">
-          <AiTrainingSandbox suppliers={suppliers} isSuperAdmin={isSuperAdmin} />
         </TabsContent>
       </Tabs>
 
