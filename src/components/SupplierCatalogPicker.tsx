@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Minus, Image as ImageIcon, AlertTriangle, Search, Check } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Loader2, Plus, Minus, Image as ImageIcon, AlertTriangle, Search, Check, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadSupplierProducts, fuzzyMatch, type SupplierProduct } from "@/lib/supplier-products";
 import type { OrderRow } from "@/lib/order-template";
+import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
 
 interface Props {
   supplierId: string;
@@ -24,44 +25,47 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   const [qty, setQty] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [manageOpen, setManageOpen] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const branchId = await requireCurrentBranchId();
-        const [prods, shortRes] = await Promise.all([
-          loadSupplierProducts(supplierId),
-          supabase
-            .from("shortage_items")
-            .select("id, name, quantity, unit")
-            .eq("branch_id", branchId)
-            .eq("completed", false),
-        ]);
-        if (cancelled) return;
-        setProducts(prods);
-        const sh = (shortRes.data ?? []) as ShortageRow[];
-        setShortages(sh);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const branchId = await requireCurrentBranchId();
+      const [prods, shortRes] = await Promise.all([
+        loadSupplierProducts(supplierId),
+        supabase
+          .from("shortage_items")
+          .select("id, name, quantity, unit")
+          .eq("branch_id", branchId)
+          .eq("completed", false),
+      ]);
+      setProducts(prods);
+      const sh = (shortRes.data ?? []) as ShortageRow[];
+      setShortages(sh);
 
-        // Auto-match: pre-fill qty for products matching open shortages.
-        const initial: Record<string, number> = {};
+      // Auto-match: pre-fill qty for products matching open shortages.
+      setQty((prev) => {
+        const initial: Record<string, number> = { ...prev };
         for (const p of prods) {
+          if (initial[p.id] != null) continue;
           const match = sh.find((s) => fuzzyMatch(p.name, s.name));
           if (match) {
             initial[p.id] = Math.max(Number(match.quantity) || 0, p.default_qty || 1);
           }
         }
-        setQty(initial);
-      } catch (e: any) {
-        toast.error("טעינה נכשלה: " + (e?.message ?? ""));
-      } finally {
-        setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [open, supplierId]);
+        return initial;
+      });
+    } catch (e: any) {
+      toast.error("טעינה נכשלה: " + (e?.message ?? ""));
+    } finally {
+      setLoading(false);
+    }
+  }, [supplierId]);
+
+  useEffect(() => {
+    if (!open) return;
+    reload();
+  }, [open, reload]);
 
   const shortageByProduct = useMemo(() => {
     const map = new Map<string, ShortageRow>();
@@ -146,15 +150,26 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           </div>
         )}
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש לפי SKU / שם מוצר…"
-            className="w-full h-10 rounded-md bg-background border border-border pr-9 pl-3 text-sm focus:border-neon outline-none"
-          />
+        {/* Search + quick add */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="חיפוש לפי SKU / שם מוצר…"
+              className="w-full h-11 rounded-md bg-background border border-border pr-9 pl-3 text-sm focus:border-neon outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setManageOpen(true)}
+            title="הוסף מוצר חדש לספק"
+            aria-label="הוסף מוצר חדש לספק"
+            className="h-11 w-11 grid place-content-center rounded-md border border-neon/40 text-neon hover:bg-neon/10 active:scale-95 transition shrink-0"
+          >
+            <PackagePlus className="h-5 w-5" />
+          </button>
         </div>
 
         {loading ? (
@@ -162,10 +177,20 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
             <Loader2 className="h-4 w-4 animate-spin" /> טוען קטלוג…
           </div>
         ) : visible.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-12 text-center border border-dashed border-border rounded-xl">
-            {products.length === 0
-              ? "אין מוצרים בקטלוג של ספק זה. הוסף מוצרים דרך ניהול הספקים."
-              : "לא נמצאו מוצרים התואמים לחיפוש."}
+          <div className="py-10 text-center border border-dashed border-border rounded-xl flex flex-col items-center gap-3 px-4">
+            <div className="text-sm text-muted-foreground">
+              {products.length === 0
+                ? "אין מוצרים בקטלוג של ספק זה."
+                : "לא נמצאו מוצרים התואמים לחיפוש."}
+            </div>
+            <button
+              type="button"
+              onClick={() => setManageOpen(true)}
+              className="h-10 px-4 inline-flex items-center gap-2 rounded-md bg-neon text-black font-bold text-sm active:scale-95 transition"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף מוצר חדש לספק
+            </button>
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
@@ -257,6 +282,19 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           </button>
         </div>
       </DialogContent>
+
+      {manageOpen && (
+        <SupplierCatalogManager
+          supplierId={supplierId}
+          supplierName={supplierName}
+          open={manageOpen}
+          onClose={() => {
+            setManageOpen(false);
+            // Seamlessly refresh the catalog so newly-added products appear
+            void reload();
+          }}
+        />
+      )}
     </Dialog>
   );
 }
