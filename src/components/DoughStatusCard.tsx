@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pizza, X, History, Store, Warehouse } from "lucide-react";
+import { Pizza, X, History, Store, Warehouse, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
