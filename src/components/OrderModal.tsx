@@ -856,6 +856,23 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
               return [...cleaned, ...newRows];
             });
           }}
+          onAddNewProduct={() => {
+            // Close the picker first to avoid nested-dialog stacking, then open the manager.
+            setCatalogOpen(false);
+            setCatalogManagerOpen(true);
+          }}
+        />
+      )}
+      {catalogManagerOpen && (
+        <SupplierCatalogManager
+          supplierId={supplier.id}
+          supplierName={supplier.name}
+          open={catalogManagerOpen}
+          onClose={() => {
+            setCatalogManagerOpen(false);
+            // Re-open the picker so the user lands back where they were, with fresh data.
+            setCatalogOpen(true);
+          }}
         />
       )}
     </div>
