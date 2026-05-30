@@ -380,12 +380,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   const handleConfirm = async () => {
     if (!formValid || submitting) return;
-    if (await checkAnomaly()) {
+    // Skip anomaly checks in training mode — no operational impact.
+    if (!trainingMode && (await checkAnomaly())) {
       setShowAnomaly(true);
       return;
     }
     doSubmit();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
