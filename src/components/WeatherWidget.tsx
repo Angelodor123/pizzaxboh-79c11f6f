@@ -124,7 +124,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
   const [reloadKey, setReloadKey] = useState(0);
 
   const fetchFallback = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
-    const j = await fetchJsonWithTimeout("https://wttr.in/Modiin?format=j1", signal);
+    const j = await fetchJsonWithTimeout(`https://wttr.in/${cityLabel}?format=j1`, signal);
     const current = j?.current_condition?.[0];
     const hourly = (j?.weather ?? []).flatMap((day: { date?: string; hourly?: Array<Record<string, unknown>> }) =>
       (day.hourly ?? []).map((hour) => ({ ...hour, date: day.date })),
