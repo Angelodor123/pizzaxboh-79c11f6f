@@ -224,9 +224,12 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         .eq("invoice_id", editInvoice.id)
         .order("sort_order");
       if (cancelled) return;
-      const rows = (data ?? []).map((r) => ({
+      const rows: ItemRow[] = (data ?? []).map((r) => ({
         item_name: r.item_name ?? "",
         quantity: r.quantity != null ? String(r.quantity) : "",
+        // Existing invoices store only the net unit_price — treat it as the base
+        // (no discount info was persisted). Discount stays empty so net == base.
+        base_unit_price: r.unit_price != null ? String(r.unit_price) : "",
         unit_price: r.unit_price != null ? String(r.unit_price) : "",
         total_price: r.total_price != null ? String(r.total_price) : "",
         discount: "",
