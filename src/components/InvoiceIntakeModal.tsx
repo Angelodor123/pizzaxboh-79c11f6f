@@ -1124,7 +1124,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 שים לב: הסכום שהוזן גבוה מהרגיל
               </div>
               <p className="text-sm text-muted-foreground">
-                הסכום ₪{totalNum.toLocaleString("he-IL")} חורג מהממוצע ההיסטורי של הספק או עובר את התקרה. האם ברצונך להמשיך?
+                הסכום ₪{(totalNum ?? 0).toLocaleString("he-IL")} חורג מהממוצע ההיסטורי של הספק או עובר את התקרה. האם ברצונך להמשיך?
               </p>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => { setShowAnomaly(false); doSubmit(); }} className="flex-1 h-10 rounded-md bg-neon text-primary-foreground font-bold">אישור</button>
