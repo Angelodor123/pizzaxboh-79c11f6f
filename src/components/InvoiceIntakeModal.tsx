@@ -150,7 +150,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [docDate, setDocDate] = useState(
     editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
   );
-  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
+  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
