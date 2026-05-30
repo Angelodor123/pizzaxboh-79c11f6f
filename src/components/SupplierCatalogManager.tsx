@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, Upload, X, Loader2, Image as ImageIcon, Pencil, Check } from "lucide-react";
+import { Package, Trash2, Upload, Loader2, Image as ImageIcon, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
