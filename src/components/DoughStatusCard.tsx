@@ -188,13 +188,20 @@ export function DoughStatusCard() {
 
   const submit = async () => {
     if (!item || !logDate || !branchId) return;
-    const shopN = parseCount(shopDraft);
-    const whN = parseCount(warehouseDraft);
+    const shopN = valueOrZero(shopDraft);
+    const whN = valueOrZero(warehouseDraft);
     if (!Number.isFinite(shopN) || !Number.isFinite(whN)) {
       toast.error("יש להזין מספרים תקינים");
       return;
     }
     const totalN = shopN + whN;
+    await persistCounts(shopN, whN, totalN);
+    setOpen(false);
+    toast.success(`עודכן: ${totalN} מגשים (פיצה ${shopN} · מחסן ${whN})`);
+  };
+
+  const persistCounts = async (shopN: number, whN: number, totalN: number) => {
+    if (!item || !logDate || !branchId) return;
     setSaving(true);
     const { error } = await supabase.from("prep_log").upsert(
       {
