@@ -218,29 +218,54 @@ export const learnFromCorrection = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => LearnInput.parse(data))
   .handler(async ({ data, context }) => {
     const { data: role } = await context.supabase.rpc("current_user_role");
-    if (role !== "admin") return { skipped: true };
-
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) return { skipped: true };
-
-    const rawStr = JSON.stringify(data.raw ?? {}, null, 2).slice(0, 8000);
-    const finalStr = JSON.stringify(data.final ?? {}, null, 2).slice(0, 8000);
-
-    // Quick equality check — skip if no meaningful change
-    if (rawStr === finalStr) return { skipped: true };
+    if (role !== "admin") return { skipped: true, reason: "role" };
 
     const { data: sup } = await context.supabase
       .from("suppliers")
       .select("name, parsing_instructions, branch_id")
       .eq("id", data.supplierId)
       .maybeSingle();
-    if (!sup) return { skipped: true };
+    if (!sup) return { skipped: true, reason: "supplier" };
+
+    // Derive a deterministic diff_summary from the validation breakdown the UI sent.
+    // This guarantees XP/streak update even when the AI gateway is unavailable.
+    const finalObj = (data.final ?? {}) as Record<string, unknown>;
+    const validation = (finalObj._validation ?? {}) as {
+      summary?: { approved?: number; corrected?: number };
+    };
+    const approved = Number(validation.summary?.approved) || 0;
+    const corrected = Number(validation.summary?.corrected) || 0;
+    const diffSummary = corrected === 0 && approved > 0 ? "perfect" : `edits:${corrected}`;
+
+    // 1) ALWAYS insert the feedback row first — this is the source of truth for XP/history.
+    const { data: inserted, error: insertErr } = await context.supabase
+      .from("invoice_ocr_feedback")
+      .insert({
+        supplier_id: data.supplierId,
+        invoice_id: data.invoiceId ?? null,
+        branch_id: sup.branch_id,
+        raw_ocr: data.raw as unknown as never,
+        final_data: data.final as unknown as never,
+        diff_summary: diffSummary,
+      })
+      .select("id")
+      .maybeSingle();
+    if (insertErr) return { skipped: true, reason: "insert", error: insertErr.message };
+
+    // 2) Optionally enrich supplier parsing_instructions via AI. Failure here
+    // does NOT cancel the training event — the feedback row is already saved.
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) return { learned: false, feedbackId: inserted?.id, diff: diffSummary };
+
+    const rawStr = JSON.stringify(data.raw ?? {}, null, 2).slice(0, 8000);
+    const finalStr = JSON.stringify(data.final ?? {}, null, 2).slice(0, 8000);
+    if (rawStr === finalStr) {
+      return { learned: false, feedbackId: inserted?.id, diff: diffSummary, reason: "no-diff" };
+    }
 
     const existing = (sup.parsing_instructions ?? "").slice(0, 4000);
-
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-2.5-flash-lite");
-
     const Schema = z.object({
       updated_instructions: z.string().max(2000),
       diff_summary: z.string().max(500),
@@ -252,8 +277,7 @@ export const learnFromCorrection = createServerFn({ method: "POST" })
         system:
           'אתה מנתח דפוסי שגיאה ב-OCR של חשבוניות בעברית. מטרתך לבנות הנחיות ספציפיות לספק שיגרמו ל-OCR לבצע פחות טעויות. ' +
           'נתח את ההבדלים בין הפלט הגולמי של ה-OCR לבין הנתונים המתוקנים על ידי המשתמש. ' +
-          'הפק הנחיות קצרות וברורות בעברית (עד 10 שורות), לדוגמה: "מחיר ליחידה נמצא בעמודה השלישית מימין, לא השנייה", "תמיד יש עמודת הנחה אחרי המחיר — חשב נטו". ' +
-          'אם קיימות כבר הנחיות — מזג עם החדשות, השאר רלוונטיות והסר סותרות. החזר JSON עם updated_instructions ו-diff_summary.',
+          'הפק הנחיות קצרות וברורות בעברית (עד 10 שורות). אם קיימות כבר הנחיות — מזג עם החדשות, השאר רלוונטיות והסר סותרות. החזר JSON עם updated_instructions ו-diff_summary.',
         output: Output.object({ schema: Schema }),
         messages: [
           {
@@ -275,17 +299,17 @@ export const learnFromCorrection = createServerFn({ method: "POST" })
         .update({ parsing_instructions: output.updated_instructions })
         .eq("id", data.supplierId);
 
-      await context.supabase.from("invoice_ocr_feedback").insert({
-        supplier_id: data.supplierId,
-        invoice_id: data.invoiceId ?? null,
-        branch_id: sup.branch_id,
-        raw_ocr: data.raw as unknown as never,
-        final_data: data.final as unknown as never,
-        diff_summary: output.diff_summary,
-      });
+      // Enrich the feedback row with the human-readable AI diff summary.
+      if (inserted?.id) {
+        await context.supabase
+          .from("invoice_ocr_feedback")
+          .update({ diff_summary: `${diffSummary} · ${output.diff_summary}` })
+          .eq("id", inserted.id);
+      }
 
-      return { learned: true, summary: output.diff_summary };
-    } catch {
-      return { skipped: true };
+      return { learned: true, feedbackId: inserted?.id, diff: diffSummary, summary: output.diff_summary };
+    } catch (e) {
+      return { learned: false, feedbackId: inserted?.id, diff: diffSummary, reason: "ai-error", error: (e as Error).message };
     }
   });
+
