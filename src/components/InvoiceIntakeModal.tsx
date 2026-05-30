@@ -40,7 +40,54 @@ interface Props {
 
 const DRAFT_KEY_OPERATIONAL = "invoice-intake-draft";
 const DRAFT_KEY_TRAINING = "invoice-intake-draft-training";
+const DRAFT_IMAGE_DB = "invoice-intake-drafts";
+const DRAFT_IMAGE_STORE = "images";
 const HARD_LIMIT = 15000;
+
+interface InvoiceDraft {
+  supplierId: string;
+  invoiceNumber: string;
+  totalAmount: string;
+  docDate: string;
+  items: ItemRow[];
+}
+
+const openDraftDb = (): Promise<IDBDatabase> =>
+  new Promise((resolve, reject) => {
+    const request = indexedDB.open(DRAFT_IMAGE_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(DRAFT_IMAGE_STORE)) {
+        request.result.createObjectStore(DRAFT_IMAGE_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+const saveDraftImage = async (key: string, dataUrl: string | null) => {
+  const db = await openDraftDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(DRAFT_IMAGE_STORE, "readwrite");
+    const store = tx.objectStore(DRAFT_IMAGE_STORE);
+    if (dataUrl) store.put(dataUrl, key);
+    else store.delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+};
+
+const loadDraftImage = async (key: string): Promise<string | null> => {
+  const db = await openDraftDb();
+  const value = await new Promise<string | null>((resolve, reject) => {
+    const tx = db.transaction(DRAFT_IMAGE_STORE, "readonly");
+    const request = tx.objectStore(DRAFT_IMAGE_STORE).get(key);
+    request.onsuccess = () => resolve(typeof request.result === "string" ? request.result : null);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return value;
+};
 
 export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId, trainingMode = false }: Props) {
   const isEdit = !!editInvoice;
