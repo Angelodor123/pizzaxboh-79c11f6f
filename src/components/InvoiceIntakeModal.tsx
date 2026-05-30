@@ -50,6 +50,7 @@ interface InvoiceDraft {
   totalAmount: string;
   docDate: string;
   items: ItemRow[];
+  rawOcr?: ParsedInvoice | null;
 }
 
 const openDraftDb = (): Promise<IDBDatabase> =>
@@ -208,6 +209,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         setTotalAmount(d.totalAmount ?? "");
         setDocDate(d.docDate ?? new Date().toISOString().slice(0, 10));
         if (Array.isArray(d.items) && d.items.length) setItems(d.items);
+        if (d.rawOcr && typeof d.rawOcr === "object") setRawOcr(d.rawOcr);
       }
     } catch { /* ignore */ }
     loadDraftImage(DRAFT_KEY)
@@ -226,7 +228,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     }, 200);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
+  }, [supplierId, invoiceNumber, totalAmount, docDate, items, rawOcr, isEdit]);
 
   // Note: preview is stored as a base64 data URL (not blob:) so it survives
   // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
@@ -253,6 +255,15 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(f);
     });
+
+  const dataUrlToBlob = (dataUrl: string) => {
+    const [meta, base64] = dataUrl.split(",");
+    const mime = meta.match(/^data:(.*?);base64$/)?.[1] || "image/jpeg";
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return { blob: new Blob([bytes], { type: mime }), mime };
+  };
 
   const onFileSelected = async (f: File | null) => {
     setFile(f);
@@ -325,10 +336,10 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           discount: it.discount ?? "",
         }));
         setItems(nextItems);
-        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems });
+        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
       } else {
-        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems });
+        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.message("לא זוהו פריטים — מלא ידנית");
       }
     } catch (e) {
