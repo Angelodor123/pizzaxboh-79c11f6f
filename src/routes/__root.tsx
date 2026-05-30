@@ -217,7 +217,7 @@ function AuthedShell() {
   useNotebookRealtime();
   useSiteTextsSync();
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
-  const isServiceMode = useUIStore((s) => s.isServiceMode);
+  const isServiceMode = false;
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const category = useUIStore((s) => s.category);
   const router = useRouter();
