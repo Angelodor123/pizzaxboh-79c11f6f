@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle, GripVertical, Flame } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle, GripVertical, Flame, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { extractIngredientFromTitle } from "@/lib/ingredient-extract.functions";
 import {
   DndContext,
   PointerSensor,
@@ -247,6 +250,12 @@ function TasksPage() {
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [extractingTaskId, setExtractingTaskId] = useState<string | null>(null);
+  const [confirmShortage, setConfirmShortage] = useState<
+    | { taskId: string; name: string; catalogProductId: string | null; unit: string | null }
+    | null
+  >(null);
+  const extractFn = useServerFn(extractIngredientFromTitle);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -620,6 +629,29 @@ function TasksPage() {
     toast.success("הערה נשמרה");
   };
 
+  const saveShortage = async (
+    name: string,
+    catalogProductId: string | null,
+    unit: string | null,
+  ) => {
+    const clean = name.trim();
+    if (!clean) {
+      toast.error("שם הפריט לא יכול להיות ריק");
+      return;
+    }
+    try {
+      await useNotebookStore.getState().addItem("shortages", clean, {
+        priority: "urgent",
+        catalogProductId: catalogProductId ?? null,
+        unit: unit ?? null,
+      });
+      triggerHaptic("light");
+      toast.success(`"${clean}" דווח לחוסרים`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "דיווח חוסר נכשל");
+    }
+  };
+
   const reportShortage = async (taskId: string) => {
     const t = allTasks.find((x) => x.id === taskId);
     if (!t) return;
@@ -627,16 +659,35 @@ function TasksPage() {
       toast.error("פריט זה אינו מוגדר כסחורה לרכישה");
       return;
     }
-    const itemName = extractIngredientName({
-      name: t.name,
-      ingredient_name: t.ingredient_name,
-    });
+    // If the task already has an explicit raw-material name, save instantly — no AI needed.
+    const explicit = (t.ingredient_name ?? "").trim();
+    if (explicit) {
+      await saveShortage(explicit, null, null);
+      return;
+    }
+
+    setExtractingTaskId(taskId);
     try {
-      await useNotebookStore.getState().addItem("shortages", itemName, { priority: "urgent" });
-      triggerHaptic("light");
-      toast.success("דווח לחוסרים בהצלחה");
+      const result = await extractFn({ data: { title: t.name } });
+      if (result.confidence === "high") {
+        await saveShortage(result.name, result.catalogProductId, result.unit);
+      } else {
+        // Ambiguous — let the user confirm/edit the AI guess.
+        const fallback = result.name || extractIngredientName({ name: t.name });
+        setConfirmShortage({
+          taskId,
+          name: fallback,
+          catalogProductId: result.catalogProductId,
+          unit: result.unit,
+        });
+      }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "דיווח חוסר נכשל");
+      // AI failed → fall back to local heuristic + confirm dialog
+      const guess = extractIngredientName({ name: t.name, ingredient_name: t.ingredient_name });
+      setConfirmShortage({ taskId, name: guess, catalogProductId: null, unit: null });
+      if (e instanceof Error) console.error("extract failed", e);
+    } finally {
+      setExtractingTaskId(null);
     }
   };
 
@@ -1016,11 +1067,21 @@ function TasksPage() {
                                         <button
                                           type="button"
                                           onClick={() => reportShortage(t.id)}
-                                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
+                                          disabled={extractingTaskId === t.id}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition disabled:opacity-60 disabled:cursor-wait"
                                           title="דווח כחוסר"
                                         >
-                                          <AlertTriangle className="h-3.5 w-3.5" />
-                                          דווח כחוסר
+                                          {extractingTaskId === t.id ? (
+                                            <>
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                              מזהה פריט…
+                                            </>
+                                          ) : (
+                                            <>
+                                              <AlertTriangle className="h-3.5 w-3.5" />
+                                              דווח כחוסר
+                                            </>
+                                          )}
                                         </button>
                                       ) : (
                                         <span />
@@ -1087,6 +1148,58 @@ function TasksPage() {
         }
         onDeleted={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
       />
+
+      {/* AI-extraction confirmation for "Report Shortage" */}
+      <Dialog
+        open={!!confirmShortage}
+        onOpenChange={(o) => { if (!o) setConfirmShortage(null); }}
+      >
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-neon" />
+              אישור שם הפריט
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              ה-AI לא היה בטוח לחלוטין. ודא או ערוך את שם חומר הגלם לפני השמירה ברשימת החוסרים.
+            </p>
+            <input
+              autoFocus
+              value={confirmShortage?.name ?? ""}
+              onChange={(e) =>
+                setConfirmShortage((c) => (c ? { ...c, name: e.target.value } : c))
+              }
+              maxLength={120}
+              dir="rtl"
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmShortage(null)}
+              className="flex-1 h-10 rounded-md border border-border text-sm hover:bg-accent"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirmShortage) return;
+                const snap = confirmShortage;
+                setConfirmShortage(null);
+                await saveShortage(snap.name, snap.catalogProductId, snap.unit);
+              }}
+              className="flex-1 h-10 rounded-md bg-neon text-primary-foreground font-bold text-sm glow-neon inline-flex items-center justify-center gap-1.5"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              שמור חוסר
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Draggable shortcut to the notepad */}
       <DraggableNotepadFab />
