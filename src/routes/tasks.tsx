@@ -629,6 +629,29 @@ function TasksPage() {
     toast.success("הערה נשמרה");
   };
 
+  const saveShortage = async (
+    name: string,
+    catalogProductId: string | null,
+    unit: string | null,
+  ) => {
+    const clean = name.trim();
+    if (!clean) {
+      toast.error("שם הפריט לא יכול להיות ריק");
+      return;
+    }
+    try {
+      await useNotebookStore.getState().addItem("shortages", clean, {
+        priority: "urgent",
+        catalogProductId: catalogProductId ?? null,
+        unit: unit ?? null,
+      });
+      triggerHaptic("light");
+      toast.success(`"${clean}" דווח לחוסרים`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "דיווח חוסר נכשל");
+    }
+  };
+
   const reportShortage = async (taskId: string) => {
     const t = allTasks.find((x) => x.id === taskId);
     if (!t) return;
@@ -636,16 +659,35 @@ function TasksPage() {
       toast.error("פריט זה אינו מוגדר כסחורה לרכישה");
       return;
     }
-    const itemName = extractIngredientName({
-      name: t.name,
-      ingredient_name: t.ingredient_name,
-    });
+    // If the task already has an explicit raw-material name, save instantly — no AI needed.
+    const explicit = (t.ingredient_name ?? "").trim();
+    if (explicit) {
+      await saveShortage(explicit, null, null);
+      return;
+    }
+
+    setExtractingTaskId(taskId);
     try {
-      await useNotebookStore.getState().addItem("shortages", itemName, { priority: "urgent" });
-      triggerHaptic("light");
-      toast.success("דווח לחוסרים בהצלחה");
+      const result = await extractFn({ data: { title: t.name } });
+      if (result.confidence === "high") {
+        await saveShortage(result.name, result.catalogProductId, result.unit);
+      } else {
+        // Ambiguous — let the user confirm/edit the AI guess.
+        const fallback = result.name || extractIngredientName({ name: t.name });
+        setConfirmShortage({
+          taskId,
+          name: fallback,
+          catalogProductId: result.catalogProductId,
+          unit: result.unit,
+        });
+      }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "דיווח חוסר נכשל");
+      // AI failed → fall back to local heuristic + confirm dialog
+      const guess = extractIngredientName({ name: t.name, ingredient_name: t.ingredient_name });
+      setConfirmShortage({ taskId, name: guess, catalogProductId: null, unit: null });
+      if (e instanceof Error) console.error("extract failed", e);
+    } finally {
+      setExtractingTaskId(null);
     }
   };
 
