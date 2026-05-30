@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Cloud, CloudRain, Sun, CloudSnow, CloudFog, CloudLightning, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { useActiveBranchData } from "@/components/BranchGate";
 
-// Modi'in, Israel
-const LAT = 31.9009;
-const LON = 35.0102;
+// Default coords (Modi'in, Israel) — used when active branch has no coords set.
+const DEFAULT_LAT = 31.9009;
+const DEFAULT_LON = 35.0102;
 
 interface HourPoint {
   time: string; // ISO
