@@ -602,7 +602,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                         </button>
                       </div>
                       {/* Row 2: numeric fields with labels above */}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
                           <input
@@ -621,6 +621,16 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                             className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
                             inputMode="decimal"
                             placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">הנחה</label>
+                          <input
+                            value={row.discount}
+                            onChange={(e) => updateItem(i, "discount", e.target.value)}
+                            className={`w-full h-10 rounded-md bg-background border px-2 text-xs text-center font-bold focus:border-neon outline-none ${row.discount ? "border-amber-brand/70 text-amber-brand" : "border-border text-muted-foreground"}`}
+                            placeholder="—"
+                            title={row.discount ? "המחיר הוזן לאחר ההנחה" : "אין הנחה"}
                           />
                         </div>
                         <div>
