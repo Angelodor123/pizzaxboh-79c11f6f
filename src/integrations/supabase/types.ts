@@ -1333,6 +1333,7 @@ export type Database = {
       shortage_items: {
         Row: {
           branch_id: string
+          catalog_item_id: string | null
           completed: boolean
           completed_at: string | null
           completed_by: string | null
@@ -1342,11 +1343,13 @@ export type Database = {
           name: string
           notes: string | null
           quantity: number
+          status: string
           unit: string
           updated_at: string
         }
         Insert: {
           branch_id: string
+          catalog_item_id?: string | null
           completed?: boolean
           completed_at?: string | null
           completed_by?: string | null
@@ -1356,11 +1359,13 @@ export type Database = {
           name: string
           notes?: string | null
           quantity?: number
+          status?: string
           unit?: string
           updated_at?: string
         }
         Update: {
           branch_id?: string
+          catalog_item_id?: string | null
           completed?: boolean
           completed_at?: string | null
           completed_by?: string | null
@@ -1370,10 +1375,19 @@ export type Database = {
           name?: string
           notes?: string | null
           quantity?: number
+          status?: string
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shortage_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_texts: {
         Row: {
@@ -1431,6 +1445,47 @@ export type Database = {
           supplier_id?: string
         }
         Relationships: []
+      }
+      supplier_product_aliases: {
+        Row: {
+          alias: string
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          source: string
+          usage_count: number
+        }
+        Insert: {
+          alias: string
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          source?: string
+          usage_count?: number
+        }
+        Update: {
+          alias?: string
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          source?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_product_aliases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_products: {
         Row: {
@@ -1757,6 +1812,15 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       daily_task_logs_reset: { Args: never; Returns: undefined }
+      find_catalog_match: {
+        Args: { _branch_id: string; _query: string; _supplier_id: string }
+        Returns: {
+          match_type: string
+          product_id: string
+          product_name: string
+          similarity: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1800,6 +1864,8 @@ export type Database = {
       operational_day_start: { Args: never; Returns: string }
       operational_today: { Args: never; Returns: string }
       rollover_daily_operations: { Args: never; Returns: undefined }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       task_active_on: {
         Args: { _date: string; _task_id: string }
         Returns: boolean
