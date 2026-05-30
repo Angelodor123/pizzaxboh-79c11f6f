@@ -382,13 +382,22 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       }
       // Populate item rows
       if (Array.isArray(parsed.items) && parsed.items.length > 0) {
-        nextItems = parsed.items.map((it) => ({
-          item_name: it.item_name ?? "",
-          quantity: it.quantity != null ? String(it.quantity) : "",
-          unit_price: it.unit_price != null ? String(it.unit_price) : "",
-          total_price: it.total_price != null ? String(it.total_price) : "",
-          discount: it.discount ?? "",
-        }));
+        nextItems = parsed.items.map((it) => {
+          // Prefer AI's explicit base_unit_price; if missing, fall back to unit_price
+          // (so the UI never shows an empty base column). Then recompute net+total
+          // locally so the math is consistent with the discount field.
+          const base = it.base_unit_price != null
+            ? String(it.base_unit_price)
+            : (it.unit_price != null ? String(it.unit_price) : "");
+          return recalcRow({
+            item_name: it.item_name ?? "",
+            quantity: it.quantity != null ? String(it.quantity) : "",
+            base_unit_price: base,
+            unit_price: it.unit_price != null ? String(it.unit_price) : base,
+            total_price: it.total_price != null ? String(it.total_price) : "",
+            discount: it.discount ?? "",
+          });
+        });
         setItems(nextItems);
         persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
