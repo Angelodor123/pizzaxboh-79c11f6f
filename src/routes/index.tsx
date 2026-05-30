@@ -126,9 +126,11 @@ function OperationalDashboard() {
       <div className="mb-4">
         <WeatherWidget title={weatherTitle} alertText={rainAlert} />
       </div>
-      <div className="mb-6">
-        <EvChargingWidget />
-      </div>
+      {vehiclesEnabled && (
+        <div className="mb-6">
+          <EvChargingWidget />
+        </div>
+      )}
 
       {/* Supplier ordering alerts — must order today */}
       <SupplierAlertsBanner />
