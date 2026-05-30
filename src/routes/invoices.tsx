@@ -68,7 +68,7 @@ function InvoicesPage() {
       .eq("is_archived", false)
       .order("document_date", { ascending: false })
       .limit(500);
-    if (isSuperAdmin && branchId) {
+    if (branchId) {
       supplierQuery = supplierQuery.eq("branch_id", branchId);
       invoiceQuery = invoiceQuery.eq("branch_id", branchId);
     }
