@@ -113,11 +113,11 @@ function SortableRow({
       ref={setActivatorNodeRef}
       {...attributes}
       {...listeners}
-      className="p-1.5 text-muted-foreground hover:text-neon cursor-grab active:cursor-grabbing touch-none"
+      className="h-9 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground/70 hover:text-neon hover:bg-accent/40 active:bg-accent/60 cursor-grab active:cursor-grabbing touch-none select-none"
       aria-label="גרור לסידור מחדש"
       title="גרור לסידור מחדש"
     >
-      <GripVertical className="h-4 w-4" />
+      <span aria-hidden className="leading-none text-[18px] font-bold tracking-[1px]">⠿</span>
     </button>
   );
   return (
