@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { pizzaXCookbook, type Recipe, type RecipeCategory, type Ingredient, type SpiceBag } from "./cookbook";
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId } from "@/lib/current-branch";
+import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 
 export interface IngredientPrice {
   name: string;
