@@ -87,7 +87,9 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   const shortageByProduct = useMemo(() => {
     const map = new Map<string, ShortageRow>();
     for (const p of products) {
-      const match = shortages.find((s) => fuzzyMatch(p.name, s.name));
+      // Prefer explicit catalog link, then fall back to fuzzy name match for legacy items
+      const linked = shortages.find((s) => s.catalog_product_id === p.id);
+      const match = linked ?? shortages.find((s) => !s.catalog_product_id && fuzzyMatch(p.name, s.name));
       if (match) map.set(p.id, match);
     }
     return map;
