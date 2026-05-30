@@ -942,7 +942,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                       </div>
                       {/* Row 2: 5-col math grid — quantity · base · discount · net · total.
                           Base + discount are user-editable; net + total auto-recalc. */}
-                      <div className="grid grid-cols-5 gap-1.5">
+                      <div className="grid grid-cols-5 gap-1 min-w-0">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
                           <input
