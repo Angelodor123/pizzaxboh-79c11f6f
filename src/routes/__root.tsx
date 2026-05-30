@@ -310,7 +310,6 @@ function AuthedShell() {
           </Link>
           <div className="flex items-center gap-1 shrink-0">
             <GlobalSearch />
-            {showServiceToggle && <ServiceModeToggle />}
             <MaintenanceBell />
             <BranchSwitcher />
             <Link
