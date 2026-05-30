@@ -4,7 +4,7 @@ import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, 
 import { DeliveryChecklistModal, type ChecklistItem } from "@/components/DeliveryChecklistModal";
 
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId } from "@/lib/current-branch";
+import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
@@ -109,10 +109,13 @@ function CalendarPage() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
+      const branchId = getActiveBranchIdSync();
+      const evQ = supabase.from("calendar_events").select("*").order("event_date", { ascending: true });
+      const invQ = supabase.from("invoices").select("supplier_id, document_date").eq("is_archived", false);
       const [ev, ov, inv] = await Promise.all([
-        supabase.from("calendar_events").select("*").order("event_date", { ascending: true }),
+        branchId ? evQ.eq("branch_id", branchId) : evQ,
         supabase.from("calendar_event_overrides").select("*"),
-        supabase.from("invoices").select("supplier_id, document_date").eq("is_archived", false),
+        branchId ? invQ.eq("branch_id", branchId) : invQ,
       ]);
       if (!mounted) return;
       if (ev.error || ov.error) {

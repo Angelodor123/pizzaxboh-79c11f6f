@@ -45,7 +45,7 @@ function OrdersPage() {
         .eq("is_archived", false)
         .eq("active", true)
         .order("name");
-      if (isSuperAdmin && branchId) supplierQuery = supplierQuery.eq("branch_id", branchId);
+      if (branchId) supplierQuery = supplierQuery.eq("branch_id", branchId);
       const { data } = await supplierQuery;
       if (mounted) setList((data as Supplier[]) ?? []);
 
@@ -56,7 +56,7 @@ function OrdersPage() {
         .from("supplier_orders_history")
         .select("id", { count: "exact", head: true })
         .gte("created_at", firstOfMonth.toISOString());
-      if (isSuperAdmin && branchId) historyQuery = historyQuery.eq("branch_id", branchId);
+      if (branchId) historyQuery = historyQuery.eq("branch_id", branchId);
       const { count } = await historyQuery;
       if (mounted) setMonthCount(count ?? 0);
       if (mounted) setLoading(false);

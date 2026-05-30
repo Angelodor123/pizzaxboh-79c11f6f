@@ -51,7 +51,7 @@ function isRainCode(code: number) {
   return (code >= 51 && code <= 67) || (code >= 80 && code <= 86) || code >= 95;
 }
 
-const CACHE_KEY = "weather_widget_cache_v1";
+const CACHE_KEY_PREFIX = "weather_widget_cache_v2:";
 const MAX_RETRIES = 3;
 const REQUEST_TIMEOUT_MS = 6_000;
 
@@ -60,9 +60,9 @@ interface CachedWeather {
   timestamp: number;
 }
 
-function readCache(): CachedWeather | null {
+function readCache(cacheKey: string): CachedWeather | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(cacheKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CachedWeather;
     if (!parsed?.data?.hours) return null;
@@ -72,9 +72,9 @@ function readCache(): CachedWeather | null {
   }
 }
 
-function writeCache(data: WeatherData) {
+function writeCache(cacheKey: string, data: WeatherData) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() } satisfies CachedWeather));
+    localStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() } satisfies CachedWeather));
   } catch {
     /* ignore */
   }
@@ -111,11 +111,14 @@ function mapWttrCode(code: number) {
   return 2;
 }
 
-export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
+export function WeatherWidget({ alertText }: { title?: string; alertText: string }) {
   const branch = useActiveBranchData();
   const LAT = branch?.latitude ?? DEFAULT_LAT;
   const LON = branch?.longitude ?? DEFAULT_LON;
+  const branchName = branch?.name ?? "—";
   const cityLabel = branch?.name ? encodeURIComponent(branch.name) : "Modiin";
+  const cacheKey = `${CACHE_KEY_PREFIX}${branch?.id ?? "default"}`;
+  const displayTitle = `מזג אוויר — ${branchName}`;
 
   const [data, setData] = useState<WeatherData | null>(null);
   const [staleAt, setStaleAt] = useState<number | null>(null);
@@ -192,8 +195,12 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
     const ctl = new AbortController();
     let active = true;
 
-    // Show cached immediately while we re-fetch
-    const cached = readCache();
+    // Reset visible state when branch (cacheKey) changes so the previous
+    // branch's weather never lingers on screen.
+    setData(null);
+    setStaleAt(null);
+
+    const cached = readCache(cacheKey);
     if (cached) {
       setData(cached.data);
       setStaleAt(cached.timestamp);
@@ -211,7 +218,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
           setStaleAt(null);
           setFailed(false);
           setLoading(false);
-          writeCache(fresh);
+          writeCache(cacheKey, fresh);
           return;
         } catch (e) {
           if (ctl.signal.aborted) return;
@@ -230,7 +237,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
       active = false;
       ctl.abort();
     };
-  }, [fetchWeather, reloadKey]);
+  }, [fetchWeather, reloadKey, cacheKey]);
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
   const staleLabel = staleAt
@@ -242,7 +249,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
       <div className="flex items-center justify-between">
         <h2 className="font-display text-base font-bold flex items-center gap-2">
           {data ? iconFor(data.currentCode, "h-5 w-5 text-neon") : <Cloud className="h-5 w-5 text-neon" />}
-          {title}
+          {displayTitle}
         </h2>
         <div className="flex items-center gap-2">
           {(failed || staleAt) && !loading && (

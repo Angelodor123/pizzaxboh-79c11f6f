@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 export type Urgency = "קריטי - משבית עבודה" | "דחוף - מפריע לעבודה" | "רגיל";
 export type TicketStatus = "open" | "in_progress" | "resolved";
@@ -33,11 +34,14 @@ export function useUnreadTicketCount(enabled: boolean) {
     let cancelled = false;
 
     const refresh = async () => {
-      const { count: c } = await supabase
+      const branchId = getActiveBranchIdSync();
+      let q = supabase
         .from("maintenance_tickets")
         .select("id", { count: "exact", head: true })
         .eq("is_read_by_admin", false)
         .neq("status", "resolved");
+      if (branchId) q = q.eq("branch_id", branchId);
+      const { count: c } = await q;
       if (!cancelled) setCount(c ?? 0);
     };
 
@@ -77,13 +81,16 @@ export function useUrgentUnreadTickets(enabled: boolean) {
     let cancelled = false;
 
     const refresh = async () => {
-      const { data } = await supabase
+      const branchId = getActiveBranchIdSync();
+      let q = supabase
         .from("maintenance_tickets")
         .select("*, equipment_types(name)")
         .eq("is_read_by_admin", false)
         .neq("status", "resolved")
         .in("urgency", ["קריטי - משבית עבודה", "דחוף - מפריע לעבודה"])
         .order("created_at", { ascending: false });
+      if (branchId) q = q.eq("branch_id", branchId);
+      const { data } = await q;
       if (cancelled) return;
       const rows = (data ?? []) as unknown as Array<
         MaintenanceTicket & { equipment_types: { name: string } | null }

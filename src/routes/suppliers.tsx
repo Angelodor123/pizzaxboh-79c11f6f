@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare, Archive, ArchiveRestore, Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId } from "@/lib/current-branch";
+import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
@@ -51,10 +51,13 @@ function SuppliersPage() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const { data, error } = await supabase
+      const branchId = getActiveBranchIdSync();
+      let q = supabase
         .from("suppliers")
         .select("*")
         .order("name", { ascending: true });
+      if (branchId) q = q.eq("branch_id", branchId);
+      const { data, error } = await q;
       if (!mounted) return;
       if (error) toast.error("שגיאה בטעינת ספקים");
       else setList((data as Supplier[]) ?? []);

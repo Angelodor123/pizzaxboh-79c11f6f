@@ -11,6 +11,7 @@ import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 import { useBranchFeature } from "@/components/BranchGate";
+import { withBranch } from "@/lib/branch-scope";
 
 
 export const Route = createFileRoute("/")({
@@ -44,10 +45,12 @@ function OperationalDashboard() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data } = await supabase
-        .from("calendar_events")
-        .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
-        .limit(200);
+      const { data } = await withBranch(
+        supabase
+          .from("calendar_events")
+          .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
+          .limit(200),
+      );
       if (mounted && data) setEvents(data as CalEvent[]);
     })();
     return () => {
@@ -93,7 +96,7 @@ function OperationalDashboard() {
     "home.subtitle",
     "מרכז הבקרה התפעולי של המטבח. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.",
   );
-  const weatherTitle = useSiteText("home.weather_title", "מזג אוויר — מודיעין");
+  // (Weather title is computed inside WeatherWidget from the active branch.)
   const rainAlert = useSiteText(
     "home.rain_alert",
     "⚠️ צפי לגשם, אין לפתוח שולחנות וכיסאות בחוץ",
@@ -124,7 +127,7 @@ function OperationalDashboard() {
 
       {/* Weather + EV grouped (related ambient widgets) */}
       <div className="mb-4">
-        <WeatherWidget title={weatherTitle} alertText={rainAlert} />
+        <WeatherWidget alertText={rainAlert} />
       </div>
       {vehiclesEnabled && (
         <div className="mb-6">

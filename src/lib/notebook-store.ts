@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId } from "@/lib/current-branch";
+import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 
 export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse" | "shortages";
 
@@ -97,11 +97,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   initialized: false,
 
   refresh: async () => {
-    const { data } = await supabase
+    const branchId = getActiveBranchIdSync();
+    let q = supabase
       .from("notebook_items")
       .select("id,list_key,text,done,priority,created_at,catalog_product_id,current_stock,unit")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
+    if (branchId) q = q.eq("branch_id", branchId);
+    const { data } = await q;
     set({ lists: groupRows((data ?? []) as DbRow[]), loading: false, initialized: true });
   },
 
