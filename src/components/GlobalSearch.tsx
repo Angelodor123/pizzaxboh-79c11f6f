@@ -84,7 +84,7 @@ export function GlobalSearch() {
     setQ("");
     setHits([]);
     if (h.kind === "recipe") {
-      navigate({ to: "/recipes", search: { recipe: h.id } as any });
+      navigate({ to: "/recipes", hash: `recipe-${h.id}` });
     } else {
       navigate({ to: "/tasks", search: { edit: h.id } as any });
     }
@@ -94,7 +94,7 @@ export function GlobalSearch() {
   const taskHits = useMemo(() => hits.filter((h) => h.kind === "task"), [hits]);
 
   return (
-    <div ref={wrapRef} className="relative">
+    <div ref={wrapRef} className="relative shrink-0">
       {!open ? (
         <button
           type="button"
@@ -102,14 +102,14 @@ export function GlobalSearch() {
             setOpen(true);
             requestAnimationFrame(() => inputRef.current?.focus());
           }}
-          className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
+          className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition shrink-0"
           aria-label="חיפוש מהיר"
           title="חיפוש מהיר"
         >
           <Search className="h-4 w-4" />
         </button>
       ) : (
-        <div className="flex items-center gap-1 bg-card/80 border border-neon/60 rounded-md px-2 h-9 w-[220px] sm:w-[280px] shadow-[0_0_8px_rgba(57,255,20,0.25)]">
+        <div className="flex items-center gap-1 bg-card/80 border border-neon/60 rounded-md px-2 h-9 w-[160px] sm:w-[260px] max-w-[55vw] shrink-0 shadow-[0_0_8px_rgba(57,255,20,0.25)]">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}

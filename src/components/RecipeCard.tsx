@@ -49,11 +49,16 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.location.hash === `#recipe-${recipe.id}`) {
+    const target = `#recipe-${recipe.id}`;
+    const tryOpen = () => {
+      if (window.location.hash !== target) return;
       setExpanded(true);
       const el = document.getElementById(`recipe-${recipe.id}`);
       if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
-    }
+    };
+    tryOpen();
+    window.addEventListener("hashchange", tryOpen);
+    return () => window.removeEventListener("hashchange", tryOpen);
   }, [recipe.id]);
 
   const scaledIngredients = recipe.ingredients.map((i) => ({

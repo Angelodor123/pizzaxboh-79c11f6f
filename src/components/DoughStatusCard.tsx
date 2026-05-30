@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pizza, X, History, Store, Warehouse } from "lucide-react";
+import { Pizza, X, History, Store, Warehouse, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
@@ -174,20 +174,34 @@ export function DoughStatusCard() {
   };
 
   const parseCount = (s: string) => {
-    if (s.trim() === "") return 0;
-    const n = Math.max(0, Math.min(999, Math.floor(Number(s))));
+    const trimmed = s.trim();
+    if (trimmed === "") return NaN;
+    const n = Math.max(0, Math.min(999, Math.floor(Number(trimmed))));
     return Number.isFinite(n) ? n : NaN;
+  };
+
+  const valueOrZero = (s: string) => {
+    if (s.trim() === "") return 0;
+    const n = parseCount(s);
+    return Number.isFinite(n) ? n : 0;
   };
 
   const submit = async () => {
     if (!item || !logDate || !branchId) return;
-    const shopN = parseCount(shopDraft);
-    const whN = parseCount(warehouseDraft);
+    const shopN = valueOrZero(shopDraft);
+    const whN = valueOrZero(warehouseDraft);
     if (!Number.isFinite(shopN) || !Number.isFinite(whN)) {
       toast.error("יש להזין מספרים תקינים");
       return;
     }
     const totalN = shopN + whN;
+    await persistCounts(shopN, whN, totalN);
+    setOpen(false);
+    toast.success(`עודכן: ${totalN} מגשים (פיצה ${shopN} · מחסן ${whN})`);
+  };
+
+  const persistCounts = async (shopN: number, whN: number, totalN: number) => {
+    if (!item || !logDate || !branchId) return;
     setSaving(true);
     const { error } = await supabase.from("prep_log").upsert(
       {
@@ -261,14 +275,19 @@ export function DoughStatusCard() {
     setSaving(false);
     setShopCount(shopN);
     setWarehouseCount(whN);
-    setOpen(false);
-    toast.success(`עודכן: ${totalN} מגשים (פיצה ${shopN} · מחסן ${whN})`);
     void loadLatest(item.id, branchId);
   };
 
+  const handleReset = async () => {
+    if (!item || !logDate || !branchId) return;
+    if (!confirm("לאפס את כמות הבצקים ל-0?")) return;
+    await persistCounts(0, 0, 0);
+    toast.success("הסטטוס אופס ל-0");
+  };
+
   const openModal = () => {
-    setShopDraft(shopCount ? String(shopCount) : "");
-    setWarehouseDraft(warehouseCount ? String(warehouseCount) : "");
+    setShopDraft(String(shopCount));
+    setWarehouseDraft(String(warehouseCount));
     setOpen(true);
   };
 
@@ -278,14 +297,26 @@ export function DoughStatusCard() {
         data-tour="dough-status"
         className="relative text-right rounded-xl border-2 border-amber-500/40 hover:border-amber-400 bg-amber-500/5 p-4 transition flex flex-col gap-1 w-full"
       >
-        <button
-          type="button"
-          onClick={openHistory}
-          aria-label="היסטוריית עדכוני בצק"
-          className="absolute top-2 left-2 h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition"
-        >
-          <History className="h-4 w-4" />
-        </button>
+        <div className="absolute top-2 left-2 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={saving}
+            aria-label="איפוס סטטוס בצקים"
+            title="איפוס לאפס"
+            className="h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition disabled:opacity-40"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={openHistory}
+            aria-label="היסטוריית עדכוני בצק"
+            className="h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition"
+          >
+            <History className="h-4 w-4" />
+          </button>
+        </div>
         <button
           type="button"
           onClick={openModal}
@@ -383,7 +414,7 @@ export function DoughStatusCard() {
             <div className="text-center text-sm text-muted-foreground">
               סה״כ:{" "}
               <span className="font-bold text-amber-300 tabular-nums">
-                {(parseCount(shopDraft) || 0) + (parseCount(warehouseDraft) || 0)}
+                {valueOrZero(shopDraft) + valueOrZero(warehouseDraft)}
               </span>{" "}
               מגשים
             </div>
