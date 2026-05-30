@@ -36,6 +36,7 @@ function todayIso() {
 
 function OperationalDashboard() {
   const { role, isSuperAdmin } = useAuth();
+  const vehiclesEnabled = useBranchFeature("vehicles", true);
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
