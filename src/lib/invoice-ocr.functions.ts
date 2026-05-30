@@ -21,19 +21,29 @@ const InputSchema = z.object({
   supplierCatalog: z.array(CatalogItemSchema).max(400).optional(),
 });
 
+const NumLike = z.preprocess((v) => {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[^\d.\-]/g, ""));
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}, z.number().nullable());
+
 const ParsedSchema = z.object({
   supplier_guess: z.string().max(120).nullable().optional(),
   invoice_number: z.string().max(60).nullable().optional(),
   document_date: z.string().max(20).nullable().optional(),
-  total_amount: z.number().nullable().optional(),
+  total_amount: NumLike.optional(),
   items: z
     .array(
       z.object({
         item_name: z.string().min(1).max(200),
-        quantity: z.number().nullable().optional(),
-        unit_price: z.number().nullable().optional(),
-        total_price: z.number().nullable().optional(),
-        discount: z.string().max(40).nullable().optional(),
+        quantity: NumLike.optional(),
+        unit_price: NumLike.optional(),
+        total_price: NumLike.optional(),
+        discount: z.coerce.string().max(40).nullable().optional(),
       }),
     )
     .max(80),
