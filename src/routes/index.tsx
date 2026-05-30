@@ -96,7 +96,7 @@ function OperationalDashboard() {
     "home.subtitle",
     "מרכז הבקרה התפעולי של המטבח. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.",
   );
-  const weatherTitle = useSiteText("home.weather_title", "מזג אוויר — מודיעין");
+  // (Weather title is computed inside WeatherWidget from the active branch.)
   const rainAlert = useSiteText(
     "home.rain_alert",
     "⚠️ צפי לגשם, אין לפתוח שולחנות וכיסאות בחוץ",
