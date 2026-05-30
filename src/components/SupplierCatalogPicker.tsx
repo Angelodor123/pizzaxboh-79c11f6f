@@ -17,7 +17,13 @@ interface Props {
   onAdd: (rows: OrderRow[]) => void;
 }
 
-type ShortageRow = { id: string; name: string; quantity: number; unit: string };
+type ShortageRow = {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  catalog_product_id: string | null;
+};
 
 export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose, onAdd }: Props) {
   const [products, setProducts] = useState<SupplierProduct[]>([]);
@@ -33,22 +39,33 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
       const branchId = await requireCurrentBranchId();
       const [prods, shortRes] = await Promise.all([
         loadSupplierProducts(supplierId),
+        // Read shortages from the notebook (list_key='shortages')
         supabase
-          .from("shortage_items")
-          .select("id, name, quantity, unit")
+          .from("notebook_items")
+          .select("id, text, current_stock, unit, catalog_product_id")
           .eq("branch_id", branchId)
-          .eq("completed", false),
+          .eq("list_key", "shortages")
+          .eq("done", false)
+          .is("archived_at", null),
       ]);
       setProducts(prods);
-      const sh = (shortRes.data ?? []) as ShortageRow[];
+      const sh: ShortageRow[] = (shortRes.data ?? []).map((r: any) => ({
+        id: r.id,
+        name: r.text,
+        quantity: Number(r.current_stock ?? 0),
+        unit: r.unit ?? "",
+        catalog_product_id: r.catalog_product_id,
+      }));
       setShortages(sh);
 
-      // Auto-match: pre-fill qty for products matching open shortages.
+      // Auto-match: pre-fill qty for products linked via catalog_product_id (exact),
+      // and fall back to fuzzy text match for legacy items without a link.
       setQty((prev) => {
         const initial: Record<string, number> = { ...prev };
         for (const p of prods) {
           if (initial[p.id] != null) continue;
-          const match = sh.find((s) => fuzzyMatch(p.name, s.name));
+          const linked = sh.find((s) => s.catalog_product_id === p.id);
+          const match = linked ?? sh.find((s) => !s.catalog_product_id && fuzzyMatch(p.name, s.name));
           if (match) {
             initial[p.id] = Math.max(Number(match.quantity) || 0, p.default_qty || 1);
           }
@@ -70,7 +87,9 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   const shortageByProduct = useMemo(() => {
     const map = new Map<string, ShortageRow>();
     for (const p of products) {
-      const match = shortages.find((s) => fuzzyMatch(p.name, s.name));
+      // Prefer explicit catalog link, then fall back to fuzzy name match for legacy items
+      const linked = shortages.find((s) => s.catalog_product_id === p.id);
+      const match = linked ?? shortages.find((s) => !s.catalog_product_id && fuzzyMatch(p.name, s.name));
       if (match) map.set(p.id, match);
     }
     return map;
@@ -101,7 +120,10 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
 
   const selectedCount = Object.values(qty).filter((v) => v > 0).length;
   const unmatchedShortages = useMemo(() => {
-    return shortages.filter((s) => !products.some((p) => fuzzyMatch(p.name, s.name)));
+    return shortages.filter((s) => {
+      if (s.catalog_product_id) return !products.some((p) => p.id === s.catalog_product_id);
+      return !products.some((p) => fuzzyMatch(p.name, s.name));
+    });
   }, [shortages, products]);
 
   const handleAdd = () => {

@@ -12,6 +12,7 @@ import {
 import { useSiteText } from "@/lib/site-texts";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
+import { ShortageCatalogInput } from "@/components/ShortageCatalogInput";
 
 export const Route = createFileRoute("/notebook")({
   component: NotebookPage,
@@ -132,7 +133,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
     const wasUrgent = urgent;
     setDraft("");
     setUrgent(false);
-    await addItem(cfg.key, text, wasUrgent ? "urgent" : "normal");
+    await addItem(cfg.key, text, { priority: wasUrgent ? "urgent" : "normal" });
   };
 
   const openItems = items.filter((i) => !i.done);
@@ -239,45 +240,61 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
         </div>
       </header>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
-        className="flex gap-2 mb-3"
-      >
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={cfg.placeholder}
-          maxLength={500}
-          aria-label={`הוסף פריט ל${cfg.title}`}
-          className="flex-1 min-w-0 bg-input border border-border rounded-md px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
-          dir="rtl"
-        />
-        <button
-          type="button"
-          onClick={() => setUrgent((u) => !u)}
-          aria-pressed={urgent}
-          aria-label={urgent ? "בטל סימון דחוף" : "סמן כדחוף"}
-          title={urgent ? "דחוף" : "סמן כדחוף"}
-          className={`shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border transition active:scale-95 ${
-            urgent
-              ? "bg-neon/15 border-neon text-neon glow-neon"
-              : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
-          }`}
+      {cfg.key === "shortages" ? (
+        <div className="mb-3">
+          <ShortageCatalogInput
+            placeholder='חפש פריט שחסר... (לדוגמה: "סוכר")'
+            onSubmit={async ({ catalogProductId, text, unit: u, currentStock, urgent: isUrgent }) => {
+              await addItem("shortages", text, {
+                priority: isUrgent ? "urgent" : "normal",
+                catalogProductId,
+                currentStock,
+                unit: u,
+              });
+            }}
+          />
+        </div>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit();
+          }}
+          className="flex gap-2 mb-3"
         >
-          <Flame className="h-4 w-4" />
-        </button>
-        <button
-          type="submit"
-          aria-label="הוסף פריט"
-          disabled={!draft.trim()}
-          className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md bg-neon text-primary-foreground glow-neon disabled:opacity-40 disabled:glow-none active:scale-95 transition"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
-      </form>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={cfg.placeholder}
+            maxLength={500}
+            aria-label={`הוסף פריט ל${cfg.title}`}
+            className="flex-1 min-w-0 bg-input border border-border rounded-md px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
+            dir="rtl"
+          />
+          <button
+            type="button"
+            onClick={() => setUrgent((u) => !u)}
+            aria-pressed={urgent}
+            aria-label={urgent ? "בטל סימון דחוף" : "סמן כדחוף"}
+            title={urgent ? "דחוף" : "סמן כדחוף"}
+            className={`shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md border transition active:scale-95 ${
+              urgent
+                ? "bg-neon/15 border-neon text-neon glow-neon"
+                : "border-border text-muted-foreground hover:text-neon hover:border-neon/60"
+            }`}
+          >
+            <Flame className="h-4 w-4" />
+          </button>
+          <button
+            type="submit"
+            aria-label="הוסף פריט"
+            disabled={!draft.trim()}
+            className="shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-md bg-neon text-primary-foreground glow-neon disabled:opacity-40 disabled:glow-none active:scale-95 transition"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+        </form>
+      )}
 
 
       {items.length === 0 ? (

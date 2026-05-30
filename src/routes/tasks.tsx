@@ -632,7 +632,7 @@ function TasksPage() {
       ingredient_name: t.ingredient_name,
     });
     try {
-      await useNotebookStore.getState().addItem("shortages", itemName, "urgent");
+      await useNotebookStore.getState().addItem("shortages", itemName, { priority: "urgent" });
       triggerHaptic("light");
       toast.success("דווח לחוסרים בהצלחה");
     } catch (e) {

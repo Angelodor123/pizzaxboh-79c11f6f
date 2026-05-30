@@ -14,6 +14,9 @@ export interface NotebookItem {
   done: boolean;
   priority: NotebookPriority;
   createdAt: string;
+  catalogProductId?: string | null;
+  currentStock?: number | null;
+  unit?: string | null;
 }
 
 interface DbRow {
@@ -23,6 +26,16 @@ interface DbRow {
   done: boolean;
   priority: NotebookPriority | null;
   created_at: string;
+  catalog_product_id: string | null;
+  current_stock: number | null;
+  unit: string | null;
+}
+
+export interface AddItemOptions {
+  priority?: NotebookPriority;
+  catalogProductId?: string | null;
+  currentStock?: number | null;
+  unit?: string | null;
 }
 
 interface NotebookState {
@@ -30,7 +43,7 @@ interface NotebookState {
   loading: boolean;
   initialized: boolean;
   refresh: () => Promise<void>;
-  addItem: (list: NotebookListKey, text: string, priority?: NotebookPriority) => Promise<void>;
+  addItem: (list: NotebookListKey, text: string, options?: AddItemOptions) => Promise<void>;
   toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
   editItem: (list: NotebookListKey, id: string, text: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
@@ -63,6 +76,9 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
       done: r.done,
       priority: (r.priority as NotebookPriority) ?? "normal",
       createdAt: r.created_at,
+      catalogProductId: r.catalog_product_id,
+      currentStock: r.current_stock,
+      unit: r.unit,
     });
   }
   for (const k of Object.keys(out) as NotebookListKey[]) {
@@ -83,13 +99,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   refresh: async () => {
     const { data } = await supabase
       .from("notebook_items")
-      .select("id,list_key,text,done,priority,created_at")
+      .select("id,list_key,text,done,priority,created_at,catalog_product_id,current_stock,unit")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
     set({ lists: groupRows((data ?? []) as DbRow[]), loading: false, initialized: true });
   },
 
-  addItem: async (list, text, priority = "normal") => {
+  addItem: async (list, text, options = {}) => {
+    const { priority = "normal", catalogProductId = null, currentStock = null, unit = null } = options;
     const clean = text.trim().slice(0, 500);
     if (!clean) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,6 +117,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       done: false,
       priority,
       createdAt: new Date().toISOString(),
+      catalogProductId,
+      currentStock,
+      unit,
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
     const branchId = await requireCurrentBranchId();
@@ -109,6 +129,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       priority,
       created_by: user.id,
       branch_id: branchId,
+      catalog_product_id: catalogProductId,
+      current_stock: currentStock,
+      unit,
     });
   },
 

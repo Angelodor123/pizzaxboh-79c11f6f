@@ -776,8 +776,10 @@ export type Database = {
         Row: {
           archived_at: string | null
           branch_id: string
+          catalog_product_id: string | null
           created_at: string
           created_by: string | null
+          current_stock: number | null
           done: boolean
           id: string
           is_urgent: boolean
@@ -785,13 +787,16 @@ export type Database = {
           priority: string
           sort_order: number
           text: string
+          unit: string | null
           updated_at: string
         }
         Insert: {
           archived_at?: string | null
           branch_id: string
+          catalog_product_id?: string | null
           created_at?: string
           created_by?: string | null
+          current_stock?: number | null
           done?: boolean
           id?: string
           is_urgent?: boolean
@@ -799,13 +804,16 @@ export type Database = {
           priority?: string
           sort_order?: number
           text: string
+          unit?: string | null
           updated_at?: string
         }
         Update: {
           archived_at?: string | null
           branch_id?: string
+          catalog_product_id?: string | null
           created_at?: string
           created_by?: string | null
+          current_stock?: number | null
           done?: boolean
           id?: string
           is_urgent?: boolean
@@ -813,6 +821,7 @@ export type Database = {
           priority?: string
           sort_order?: number
           text?: string
+          unit?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -821,6 +830,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notebook_items_catalog_product_id_fkey"
+            columns: ["catalog_product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
             referencedColumns: ["id"]
           },
         ]
