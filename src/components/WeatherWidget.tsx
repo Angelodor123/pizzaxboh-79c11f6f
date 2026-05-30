@@ -174,7 +174,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
         precipProb: probs[i] ?? 0,
       })),
     };
-  }, []);
+  }, [LAT, LON]);
 
   const fetchWeather = useCallback(
     async (signal: AbortSignal): Promise<WeatherData> => {
