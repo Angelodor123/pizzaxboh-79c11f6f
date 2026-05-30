@@ -794,11 +794,20 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           {/* Form side: independent scroll on desktop */}
           <div className="md:overflow-y-auto p-4 md:p-5 flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">ספק</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-muted-foreground">ספק</label>
+                {trainingMode && (
+                  <ValBtns
+                    state={headerVal.supplier}
+                    onApprove={() => setHV("supplier", "approved")}
+                    onReject={() => setHV("supplier", "corrected")}
+                  />
+                )}
+              </div>
               <select
                 value={supplierId}
-                onChange={(e) => setSupplierId(e.target.value)}
-                className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                onChange={(e) => { setSupplierId(e.target.value); if (trainingMode) markHeaderEdited("supplier"); }}
+                className={`w-full h-11 rounded-md bg-background border px-2.5 text-sm focus:border-neon outline-none ${trainingMode ? valBorder(headerVal.supplier) : "border-border"}`}
               >
                 <option value="">בחר ספק…</option>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -807,40 +816,67 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1">מס׳ חשבונית</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-muted-foreground">מס׳ חשבונית</label>
+                  {trainingMode && (
+                    <ValBtns
+                      state={headerVal.invoice_number}
+                      onApprove={() => setHV("invoice_number", "approved")}
+                      onReject={() => setHV("invoice_number", "corrected")}
+                    />
+                  )}
+                </div>
                 <input
                   value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  onChange={(e) => { setInvoiceNumber(e.target.value); if (trainingMode) markHeaderEdited("invoice_number"); }}
+                  className={`w-full h-11 rounded-md bg-background border px-2.5 text-sm focus:border-neon outline-none ${trainingMode ? valBorder(headerVal.invoice_number) : "border-border"}`}
                   maxLength={60}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1">
-                  תאריך חשבונית <span className="text-destructive">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-muted-foreground">
+                    תאריך <span className="text-destructive">*</span>
+                  </label>
+                  {trainingMode && (
+                    <ValBtns
+                      state={headerVal.document_date}
+                      onApprove={() => setHV("document_date", "approved")}
+                      onReject={() => setHV("document_date", "corrected")}
+                    />
+                  )}
+                </div>
                 <input
                   type="date"
                   value={docDate}
-                  onChange={(e) => setDocDate(e.target.value)}
+                  onChange={(e) => { setDocDate(e.target.value); if (trainingMode) markHeaderEdited("document_date"); }}
                   required
-                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  className={`w-full h-11 rounded-md bg-background border px-2.5 text-sm focus:border-neon outline-none ${trainingMode ? valBorder(headerVal.document_date) : "border-border"}`}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">
-                סכום כולל ₪ <span className="text-destructive">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-muted-foreground">
+                  סכום כולל ₪ <span className="text-destructive">*</span>
+                </label>
+                {trainingMode && (
+                  <ValBtns
+                    state={headerVal.total_amount}
+                    onApprove={() => setHV("total_amount", "approved")}
+                    onReject={() => setHV("total_amount", "corrected")}
+                  />
+                )}
+              </div>
               <input
                 type="number"
                 step="0.01"
                 inputMode="decimal"
                 value={totalAmount}
-                onChange={(e) => setTotalAmount(e.target.value)}
+                onChange={(e) => { setTotalAmount(e.target.value); if (trainingMode) markHeaderEdited("total_amount"); }}
                 required
-                className="w-full h-11 rounded-md bg-background border-2 border-border px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums"
+                className={`w-full h-11 rounded-md bg-background border-2 px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums ${trainingMode ? valBorder(headerVal.total_amount) : "border-border"}`}
               />
             </div>
 
