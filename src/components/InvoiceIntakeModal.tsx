@@ -246,6 +246,43 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     if (!formValid || submitting) return;
     setSubmitting(true);
     try {
+      const cleanItems = items.filter((r) => r.item_name.trim());
+
+      // ============================================================
+      // TRAINING MODE: zero impact on operational data.
+      // Only invoke AI learning so future OCR improves. No invoices,
+      // no invoice_items, no inventory mutations, no image uploads.
+      // ============================================================
+      if (trainingMode) {
+        if (!rawOcr || !supplierId) {
+          toast.error("נדרש לסרוק תמונה ולבחור ספק לפני שמירת אימון");
+          setSubmitting(false);
+          return;
+        }
+        const finalData = {
+          invoice_number: invoiceNumber.trim(),
+          document_date: docDate,
+          total_amount: totalNum,
+          items: cleanItems.map((r) => ({
+            item_name: r.item_name.trim(),
+            quantity: Number(r.quantity) || null,
+            unit_price: Number(r.unit_price) || null,
+            total_price: Number(r.total_price) || null,
+          })),
+        };
+        await runLearn({ data: { supplierId, raw: rawOcr, final: finalData } })
+          .catch(() => { /* silent */ });
+        toast.success("האימון נשמר — ה-AI ילמד מהתיקונים שלך");
+        try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        onSaved();
+        onClose();
+        return;
+      }
+
+      // ============================================================
+      // OPERATIONAL MODE: real invoice intake writes to invoices,
+      // invoice_items (and downstream inventory in other flows).
+      // ============================================================
       const branchId = await requireCurrentBranchId();
       let imageUrl: string | null = editInvoice?.image_url ?? null;
 
@@ -295,7 +332,6 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         invoiceId = invoiceRow?.id;
       }
 
-      const cleanItems = items.filter((r) => r.item_name.trim());
       if (cleanItems.length && invoiceId) {
         const rows = cleanItems.map((r, idx) => ({
           invoice_id: invoiceId,
@@ -339,6 +375,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       setSubmitting(false);
     }
   };
+
 
 
   const handleConfirm = async () => {
