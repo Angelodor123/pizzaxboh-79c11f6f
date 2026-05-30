@@ -27,7 +27,7 @@ const CopilotFab = lazy(() =>
   import("@/components/CopilotFab").then((m) => ({ default: m.CopilotFab })),
 );
 import { NdaGate } from "@/components/NdaGate";
-import { BranchGate } from "@/components/BranchGate";
+import { BranchGate, useActiveBranchData } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { MaintenanceBell } from "@/components/MaintenanceBell";
