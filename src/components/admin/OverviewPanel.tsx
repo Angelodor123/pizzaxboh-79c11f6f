@@ -356,15 +356,6 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
               <div className="text-[11px] text-muted-foreground">משחקי כדורגל גדולים שמשודרים בפיצה</div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleSyncSports}
-            disabled={syncing}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neon/60 text-neon font-bold px-3 h-11 text-xs hover:bg-neon/10 transition disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "מסנכרן…" : "סנכרן משחקים"}
-          </button>
         </div>
         {sportsEvents.length === 0 ? (
           <div className="text-sm text-muted-foreground text-center py-4">
