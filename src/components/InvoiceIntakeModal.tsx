@@ -155,12 +155,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     return () => clearTimeout(id);
   }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
 
-  // Cleanup blob URL on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  // Note: preview is stored as a base64 data URL (not blob:) so it survives
+  // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
 
   // Close on Escape
   useEffect(() => {
@@ -187,16 +183,32 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   const onFileSelected = async (f: File | null) => {
     setFile(f);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(f ? URL.createObjectURL(f) : null);
-    if (!f) return;
+    if (!f) { setPreviewUrl(null); return; }
 
     setUploading(true);
     setOcrLoading(true);
     try {
+      // Read as base64 data URL — persists across app backgrounding,
+      // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
+      setPreviewUrl(dataUrl);
+
+      const catalogPayload = supplierCatalog.slice(0, 200).map((p) => ({
+        name: p.name,
+        sku: p.sku ?? null,
+        unit: p.unit ?? null,
+        unit_size: p.unit_size ?? null,
+        price: p.price ?? null,
+        barcode: p.barcode ?? null,
+      }));
+
       const parsed = await runOcr({
-        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg", supplierId: supplierId || undefined },
+        data: {
+          imageDataUrl: dataUrl,
+          mimeType: f.type || "image/jpeg",
+          supplierId: supplierId || undefined,
+          supplierCatalog: catalogPayload.length ? catalogPayload : undefined,
+        },
       });
       setRawOcr(parsed);
 
