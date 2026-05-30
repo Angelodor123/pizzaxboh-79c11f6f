@@ -74,22 +74,37 @@ export type Database = {
       branches: {
         Row: {
           active: boolean
+          address: string | null
           created_at: string
+          features: Json
           id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           updated_at: string
         }
         Insert: {
           active?: boolean
+          address?: string | null
           created_at?: string
+          features?: Json
           id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name: string
           updated_at?: string
         }
         Update: {
           active?: boolean
+          address?: string | null
           created_at?: string
+          features?: Json
           id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           updated_at?: string
         }
@@ -1773,6 +1788,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      network_dough_summary: {
+        Args: never
+        Returns: {
+          branch_id: string
+          branch_name: string
+          total_trays: number
+        }[]
+      }
       notebook_daily_reset: { Args: never; Returns: undefined }
       operational_day_start: { Args: never; Returns: string }
       operational_today: { Args: never; Returns: string }
@@ -1783,7 +1806,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "viewer" | "super_admin" | "manager" | "employee"
+      app_role:
+        | "admin"
+        | "viewer"
+        | "super_admin"
+        | "manager"
+        | "employee"
+        | "shift_manager"
       invoice_status: "pending_review" | "approved"
       order_status: "draft" | "sent" | "received" | "cancelled"
       task_recurrence_type: "daily" | "weekly" | "monthly" | "as_needed"
@@ -1914,7 +1943,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "viewer", "super_admin", "manager", "employee"],
+      app_role: [
+        "admin",
+        "viewer",
+        "super_admin",
+        "manager",
+        "employee",
+        "shift_manager",
+      ],
       invoice_status: ["pending_review", "approved"],
       order_status: ["draft", "sent", "received", "cancelled"],
       task_recurrence_type: ["daily", "weekly", "monthly", "as_needed"],

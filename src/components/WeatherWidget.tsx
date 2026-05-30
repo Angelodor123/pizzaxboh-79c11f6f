@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Cloud, CloudRain, Sun, CloudSnow, CloudFog, CloudLightning, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { useActiveBranchData } from "@/components/BranchGate";
 
-// Modi'in, Israel
-const LAT = 31.9009;
-const LON = 35.0102;
+// Default coords (Modi'in, Israel) — used when active branch has no coords set.
+const DEFAULT_LAT = 31.9009;
+const DEFAULT_LON = 35.0102;
 
 interface HourPoint {
   time: string; // ISO
@@ -111,6 +112,11 @@ function mapWttrCode(code: number) {
 }
 
 export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
+  const branch = useActiveBranchData();
+  const LAT = branch?.latitude ?? DEFAULT_LAT;
+  const LON = branch?.longitude ?? DEFAULT_LON;
+  const cityLabel = branch?.name ? encodeURIComponent(branch.name) : "Modiin";
+
   const [data, setData] = useState<WeatherData | null>(null);
   const [staleAt, setStaleAt] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +124,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
   const [reloadKey, setReloadKey] = useState(0);
 
   const fetchFallback = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
-    const j = await fetchJsonWithTimeout("https://wttr.in/Modiin?format=j1", signal);
+    const j = await fetchJsonWithTimeout(`https://wttr.in/${cityLabel}?format=j1`, signal);
     const current = j?.current_condition?.[0];
     const hourly = (j?.weather ?? []).flatMap((day: { date?: string; hourly?: Array<Record<string, unknown>> }) =>
       (day.hourly ?? []).map((hour) => ({ ...hour, date: day.date })),
@@ -146,7 +152,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
         };
       }),
     };
-  }, []);
+  }, [cityLabel]);
 
   const fetchOnce = useCallback(async (signal: AbortSignal): Promise<WeatherData> => {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=6&timezone=Asia%2FJerusalem`;
@@ -168,7 +174,7 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
         precipProb: probs[i] ?? 0,
       })),
     };
-  }, []);
+  }, [LAT, LON]);
 
   const fetchWeather = useCallback(
     async (signal: AbortSignal): Promise<WeatherData> => {

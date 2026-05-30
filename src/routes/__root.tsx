@@ -27,7 +27,7 @@ const CopilotFab = lazy(() =>
   import("@/components/CopilotFab").then((m) => ({ default: m.CopilotFab })),
 );
 import { NdaGate } from "@/components/NdaGate";
-import { BranchGate } from "@/components/BranchGate";
+import { BranchGate, useActiveBranchData } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { ServiceModeToggle } from "@/components/ServiceModeToggle";
 import { MaintenanceBell } from "@/components/MaintenanceBell";
@@ -296,6 +296,7 @@ function AuthedShell() {
             <span className="text-[10px] sm:text-[12px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
               {serviceModeVisible ? "Service Mode" : "Back of House"}
             </span>
+            <ActiveBranchBadge />
           </Link>
           <div className="flex items-center gap-1.5 shrink-0">
             <GlobalSearch />
