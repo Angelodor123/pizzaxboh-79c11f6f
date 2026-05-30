@@ -179,10 +179,10 @@ export function WeatherWidget({ title, alertText }: { title: string; alertText: 
   const fetchWeather = useCallback(
     async (signal: AbortSignal): Promise<WeatherData> => {
       try {
-        return await fetchFallback(signal);
-      } catch (fallbackError) {
-        if (signal.aborted) throw fallbackError;
-        return fetchOnce(signal);
+        return await fetchOnce(signal);
+      } catch (primaryError) {
+        if (signal.aborted) throw primaryError;
+        return fetchFallback(signal);
       }
     },
     [fetchFallback, fetchOnce],
