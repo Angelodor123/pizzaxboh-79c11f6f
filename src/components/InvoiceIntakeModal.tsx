@@ -38,7 +38,8 @@ interface Props {
   trainingMode?: boolean;
 }
 
-const DRAFT_KEY = "invoice-intake-draft";
+const DRAFT_KEY_OPERATIONAL = "invoice-intake-draft";
+const DRAFT_KEY_TRAINING = "invoice-intake-draft-training";
 const HARD_LIMIT = 15000;
 
 export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId, trainingMode = false }: Props) {
