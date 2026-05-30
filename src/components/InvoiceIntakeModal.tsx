@@ -350,8 +350,15 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     }, [handleExplicitClose, showAnomaly]);
 
 
-  const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
-  const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
+  const totalNum = useMemo(() => {
+    const t = totalAmount.trim();
+    if (!t) return null;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }, [totalAmount]);
+  // total_amount is OPTIONAL — delivery notes (תעודת משלוח) often have no prices.
+  // Only supplier + date are required.
+  const formValid = !!supplierId && !!docDate;
 
   const fileToDataUrl = (f: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -509,6 +516,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   }, [headerVal, itemVal]);
 
   const checkAnomaly = async (): Promise<boolean> => {
+    if (totalNum == null) return false;
     if (totalNum >= HARD_LIMIT) return true;
     const { data } = await supabase
       .from("invoices")
@@ -612,7 +620,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           .update({
             supplier_id: supplierId,
             invoice_number: invoiceNumber.trim(),
-            total_amount: totalNum,
+            total_amount: totalNum ?? undefined,
             document_date: docDate,
             image_url: imageUrl,
           })
@@ -628,7 +636,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             branch_id: branchId,
             supplier_id: supplierId,
             invoice_number: invoiceNumber.trim(),
-            total_amount: totalNum,
+            total_amount: totalNum ?? undefined,
             document_date: docDate,
             image_url: imageUrl,
             status: "pending_review",
@@ -1116,7 +1124,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 שים לב: הסכום שהוזן גבוה מהרגיל
               </div>
               <p className="text-sm text-muted-foreground">
-                הסכום ₪{totalNum.toLocaleString("he-IL")} חורג מהממוצע ההיסטורי של הספק או עובר את התקרה. האם ברצונך להמשיך?
+                הסכום ₪{(totalNum ?? 0).toLocaleString("he-IL")} חורג מהממוצע ההיסטורי של הספק או עובר את התקרה. האם ברצונך להמשיך?
               </p>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => { setShowAnomaly(false); doSubmit(); }} className="flex-1 h-10 rounded-md bg-neon text-primary-foreground font-bold">אישור</button>
