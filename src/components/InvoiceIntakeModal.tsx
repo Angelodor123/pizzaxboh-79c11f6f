@@ -174,6 +174,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       next[i] = v;
       return next;
     });
+  // Keep itemVal length synced with items (e.g. when OCR populates rows without calling resetValidation).
+  useEffect(() => {
+    setItemVal((p) => {
+      if (p.length === items.length) return p;
+      if (p.length < items.length) return [...p, ...Array.from({ length: items.length - p.length }, () => "pending" as ValState)];
+      return p.slice(0, items.length);
+    });
+  }, [items.length]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
