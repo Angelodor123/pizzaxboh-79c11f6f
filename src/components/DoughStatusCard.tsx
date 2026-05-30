@@ -275,14 +275,19 @@ export function DoughStatusCard() {
     setSaving(false);
     setShopCount(shopN);
     setWarehouseCount(whN);
-    setOpen(false);
-    toast.success(`עודכן: ${totalN} מגשים (פיצה ${shopN} · מחסן ${whN})`);
     void loadLatest(item.id, branchId);
   };
 
+  const handleReset = async () => {
+    if (!item || !logDate || !branchId) return;
+    if (!confirm("לאפס את כמות הבצקים ל-0?")) return;
+    await persistCounts(0, 0, 0);
+    toast.success("הסטטוס אופס ל-0");
+  };
+
   const openModal = () => {
-    setShopDraft(shopCount ? String(shopCount) : "");
-    setWarehouseDraft(warehouseCount ? String(warehouseCount) : "");
+    setShopDraft(String(shopCount));
+    setWarehouseDraft(String(warehouseCount));
     setOpen(true);
   };
 
