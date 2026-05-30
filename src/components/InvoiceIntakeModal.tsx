@@ -719,7 +719,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-0 flex-1 md:overflow-hidden overflow-y-auto">
+        <div className="grid md:grid-cols-2 gap-0 flex-1 md:overflow-hidden overflow-y-auto overflow-x-hidden min-w-0">
           {/* Image side: sticky on both mobile (top of scroll) and desktop (side panel) */}
           <div className="bg-zinc-900/60 border-b md:border-b-0 md:border-l border-border flex flex-col sticky top-0 z-20 md:self-start md:h-full md:max-h-[94vh] max-h-[42vh] shadow-md md:shadow-none">
             <div className="p-2 md:p-3 flex items-center justify-between gap-2 border-b border-border/50 shrink-0">
