@@ -242,11 +242,7 @@ function AuthedShell() {
     isRecipesPage &&
     (category === "dishes" ||
       (category !== "all" && MENU_ITEM_CATEGORIES.includes(category)));
-  // Service Mode only applies to the back-of-house recipes view, not to the
-  // customer-facing dishes view on the same route.
-  const showServiceToggle = isRecipesPage && !isDishesView;
   const showQuickBack = !isRecipesPage;
-  const serviceModeVisible = isServiceMode && showServiceToggle;
 
 
   // Register service worker once
