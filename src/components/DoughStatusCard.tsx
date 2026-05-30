@@ -85,7 +85,7 @@ export function DoughStatusCard() {
 
   const load = async () => {
     if (!branchId) return;
-    const { data: pi } = await supabase
+    let { data: pi } = await supabase
       .from("prep_items")
       .select("id,name,unit")
       .eq("branch_id", branchId)
@@ -93,7 +93,22 @@ export function DoughStatusCard() {
       .ilike("name", "%בצק%")
       .limit(1)
       .maybeSingle();
-    if (!pi) return;
+    if (!pi) {
+      // Auto-seed a default "בצקים" prep item for this branch so the
+      // card is usable immediately on new branches.
+      const { data: created } = await supabase
+        .from("prep_items")
+        .insert({
+          branch_id: branchId,
+          name: "בצקים",
+          unit: "מגשים",
+          active: true,
+        })
+        .select("id,name,unit")
+        .maybeSingle();
+      if (!created) return;
+      pi = created;
+    }
     setItem(pi as PrepItem);
     const { data: today } = await supabase.rpc("operational_today");
     const date = today as string;
