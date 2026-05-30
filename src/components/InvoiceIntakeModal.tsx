@@ -792,7 +792,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           </div>
 
           {/* Form side: independent scroll on desktop */}
-          <div className="md:overflow-y-auto p-4 md:p-5 flex flex-col gap-4">
+          <div className="min-w-0 md:overflow-y-auto overflow-x-hidden p-3 md:p-5 flex flex-col gap-4">
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-muted-foreground">ספק</label>
