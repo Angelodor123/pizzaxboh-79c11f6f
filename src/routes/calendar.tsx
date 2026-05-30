@@ -1108,6 +1108,94 @@ function InstanceOverrideForm({
           />
         </Field>
 
+        {isDelivery && (
+          <div className="rounded-xl border border-success/40 bg-success/5 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <ClipboardCheck className="h-4 w-4 text-success" />
+                צ׳קליסט פריקת סחורה
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {items.filter((i) => i.is_received).length} / {items.length} התקבל
+                {itemsBusy && <span className="mr-1 text-neon">שומר…</span>}
+              </span>
+            </div>
+
+            {items.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                לא הוגדרו פריטים — {isAdmin ? "הוסף פריטים צפויים מטה" : "אין פריטים לסימון"}
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {items.map((it, idx) => (
+                  <li key={it.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleItem(idx)}
+                      className={`flex-1 flex items-center gap-2 rounded-lg border-2 px-3 h-11 text-right transition active:scale-[0.98] ${
+                        it.is_received
+                          ? "border-success bg-success/15"
+                          : "border-white/15 bg-white/5 hover:border-neon"
+                      }`}
+                    >
+                      <span
+                        className={`h-6 w-6 shrink-0 rounded-md border-2 grid place-content-center ${
+                          it.is_received ? "bg-success border-success text-background" : "border-white/30"
+                        }`}
+                      >
+                        {it.is_received && <Check className="h-4 w-4" strokeWidth={3} />}
+                      </span>
+                      <span className={`flex-1 text-sm font-bold ${it.is_received ? "line-through text-muted-foreground" : ""}`}>
+                        {it.name}
+                      </span>
+                    </button>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        className="h-11 w-11 grid place-content-center rounded-lg border border-white/15 bg-white/5 hover:border-destructive hover:text-destructive"
+                        aria-label="הסר פריט"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {isAdmin && (
+              <div className="flex gap-2 pt-1">
+                <input
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addItem();
+                    }
+                  }}
+                  placeholder="למשל: קמח, רסק עגבניות"
+                  className="input flex-1"
+                  maxLength={120}
+                  dir="rtl"
+                />
+                <button
+                  type="button"
+                  onClick={addItem}
+                  disabled={!newItemName.trim()}
+                  className="h-11 px-3 rounded-md bg-success text-success-foreground font-bold disabled:opacity-50 flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  הוסף
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+
+
         <div className="flex gap-2">
           <button
             type="submit"
