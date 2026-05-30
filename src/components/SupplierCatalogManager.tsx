@@ -117,13 +117,16 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         const { error } = await supabase.from("supplier_products").update(payload).eq("id", editingId);
         if (error) throw error;
         toast.success("המוצר עודכן");
+        cancelEdit();
+        await load();
       } else {
         const { error } = await supabase.from("supplier_products").insert({ ...payload, sort_order: items.length });
         if (error) throw error;
-        toast.success("המוצר נוסף");
+        toast.success("המוצר נוסף לקטלוג");
+        cancelEdit();
+        await load();
+        onClose();
       }
-      cancelEdit();
-      await load();
     } catch (e: any) {
       toast.error("שמירה נכשלה: " + (e?.message ?? ""));
     } finally {
