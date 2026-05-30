@@ -203,8 +203,3 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
     </div>
   );
 }
-
-      )}
-    </div>
-  );
-}
