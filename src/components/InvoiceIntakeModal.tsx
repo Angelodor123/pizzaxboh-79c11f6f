@@ -5,11 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { parseInvoiceImage, learnFromCorrection, type ParsedInvoice } from "@/lib/invoice-ocr.functions";
+import { loadSupplierProducts, type SupplierProduct } from "@/lib/supplier-products";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface SupplierOpt { id: string; name: string }
 
-interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string }
+interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string; discount: string }
 
 interface InventoryOpt { id: string; name: string; unit: string }
 
