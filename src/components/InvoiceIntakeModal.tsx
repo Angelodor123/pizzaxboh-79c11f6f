@@ -208,6 +208,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             quantity: it.quantity != null ? String(it.quantity) : "",
             unit_price: it.unit_price != null ? String(it.unit_price) : "",
             total_price: it.total_price != null ? String(it.total_price) : "",
+            discount: it.discount ?? "",
           })),
         );
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
