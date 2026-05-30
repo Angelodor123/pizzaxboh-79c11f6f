@@ -899,9 +899,17 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                   const netN = computeNet(baseN, row.discount);
                   const totalN = netN * qtyN;
                   const hasDiscount = !!parseDiscount(row.discount);
+                  const rowState: ValState = itemVal[i] ?? "pending";
+                  const rowBorder = trainingMode
+                    ? (rowState === "approved"
+                        ? "border-emerald-500/60"
+                        : rowState === "corrected"
+                          ? "border-rose-500/70 ring-1 ring-rose-500/20"
+                          : "border-amber-brand/40")
+                    : "border-border";
                   return (
-                    <div key={i} className="rounded-lg border border-border bg-background/40 p-2.5 space-y-2">
-                      {/* Row 1: index badge + item name (full width) + delete */}
+                    <div key={i} className={`rounded-lg border bg-background/40 p-2.5 space-y-2 ${rowBorder}`}>
+                      {/* Row 1: index badge + item name (full width) + validation + delete */}
                       <div className="flex items-center gap-2">
                         <span className="shrink-0 h-6 w-6 grid place-content-center rounded-md bg-neon/10 text-neon text-[10px] font-bold tabular-nums">
                           {i + 1}
@@ -915,6 +923,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                           dir="rtl"
                           autoComplete="off"
                         />
+                        {trainingMode && (
+                          <ValBtns
+                            state={rowState}
+                            onApprove={() => setIV(i, "approved")}
+                            onReject={() => setIV(i, "corrected")}
+                            size="md"
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => removeItem(i)}
