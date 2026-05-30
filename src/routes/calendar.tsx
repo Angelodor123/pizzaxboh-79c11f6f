@@ -109,10 +109,13 @@ function CalendarPage() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
+      const branchId = getActiveBranchIdSync();
+      const evQ = supabase.from("calendar_events").select("*").order("event_date", { ascending: true });
+      const invQ = supabase.from("invoices").select("supplier_id, document_date").eq("is_archived", false);
       const [ev, ov, inv] = await Promise.all([
-        supabase.from("calendar_events").select("*").order("event_date", { ascending: true }),
+        branchId ? evQ.eq("branch_id", branchId) : evQ,
         supabase.from("calendar_event_overrides").select("*"),
-        supabase.from("invoices").select("supplier_id, document_date").eq("is_archived", false),
+        branchId ? invQ.eq("branch_id", branchId) : invQ,
       ]);
       if (!mounted) return;
       if (ev.error || ov.error) {
