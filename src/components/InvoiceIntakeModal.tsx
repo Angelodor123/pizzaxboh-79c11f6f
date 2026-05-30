@@ -719,7 +719,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-0 flex-1 md:overflow-hidden overflow-y-auto">
+        <div className="grid md:grid-cols-2 gap-0 flex-1 md:overflow-hidden overflow-y-auto overflow-x-hidden min-w-0">
           {/* Image side: sticky on both mobile (top of scroll) and desktop (side panel) */}
           <div className="bg-zinc-900/60 border-b md:border-b-0 md:border-l border-border flex flex-col sticky top-0 z-20 md:self-start md:h-full md:max-h-[94vh] max-h-[42vh] shadow-md md:shadow-none">
             <div className="p-2 md:p-3 flex items-center justify-between gap-2 border-b border-border/50 shrink-0">
@@ -792,7 +792,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           </div>
 
           {/* Form side: independent scroll on desktop */}
-          <div className="md:overflow-y-auto p-4 md:p-5 flex flex-col gap-4">
+          <div className="min-w-0 md:overflow-y-auto overflow-x-hidden p-3 md:p-5 flex flex-col gap-4">
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-muted-foreground">ספק</label>
@@ -942,7 +942,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                       </div>
                       {/* Row 2: 5-col math grid — quantity · base · discount · net · total.
                           Base + discount are user-editable; net + total auto-recalc. */}
-                      <div className="grid grid-cols-5 gap-1.5">
+                      <div className="grid grid-cols-5 gap-1 min-w-0">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
                           <input
