@@ -112,6 +112,11 @@ function mapWttrCode(code: number) {
 }
 
 export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
+  const branch = useActiveBranchData();
+  const LAT = branch?.latitude ?? DEFAULT_LAT;
+  const LON = branch?.longitude ?? DEFAULT_LON;
+  const cityLabel = branch?.name ? encodeURIComponent(branch.name) : "Modiin";
+
   const [data, setData] = useState<WeatherData | null>(null);
   const [staleAt, setStaleAt] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
