@@ -14,6 +14,9 @@ export interface NotebookItem {
   done: boolean;
   priority: NotebookPriority;
   createdAt: string;
+  catalogProductId?: string | null;
+  currentStock?: number | null;
+  unit?: string | null;
 }
 
 interface DbRow {
@@ -23,6 +26,16 @@ interface DbRow {
   done: boolean;
   priority: NotebookPriority | null;
   created_at: string;
+  catalog_product_id: string | null;
+  current_stock: number | null;
+  unit: string | null;
+}
+
+export interface AddItemOptions {
+  priority?: NotebookPriority;
+  catalogProductId?: string | null;
+  currentStock?: number | null;
+  unit?: string | null;
 }
 
 interface NotebookState {
@@ -30,7 +43,7 @@ interface NotebookState {
   loading: boolean;
   initialized: boolean;
   refresh: () => Promise<void>;
-  addItem: (list: NotebookListKey, text: string, priority?: NotebookPriority) => Promise<void>;
+  addItem: (list: NotebookListKey, text: string, options?: AddItemOptions) => Promise<void>;
   toggleItem: (list: NotebookListKey, id: string) => Promise<void>;
   editItem: (list: NotebookListKey, id: string, text: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
