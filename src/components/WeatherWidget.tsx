@@ -249,7 +249,7 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
       <div className="flex items-center justify-between">
         <h2 className="font-display text-base font-bold flex items-center gap-2">
           {data ? iconFor(data.currentCode, "h-5 w-5 text-neon") : <Cloud className="h-5 w-5 text-neon" />}
-          {title}
+          {displayTitle}
         </h2>
         <div className="flex items-center gap-2">
           {(failed || staleAt) && !loading && (
