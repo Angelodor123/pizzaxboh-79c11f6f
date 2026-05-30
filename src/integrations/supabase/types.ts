@@ -1512,8 +1512,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_qty: number
+          expected_price: number | null
           id: string
           image_url: string | null
+          min_stock_alert: number | null
           name: string
           notes: string | null
           price: number | null
@@ -1532,8 +1534,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_qty?: number
+          expected_price?: number | null
           id?: string
           image_url?: string | null
+          min_stock_alert?: number | null
           name: string
           notes?: string | null
           price?: number | null
@@ -1552,8 +1556,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_qty?: number
+          expected_price?: number | null
           id?: string
           image_url?: string | null
+          min_stock_alert?: number | null
           name?: string
           notes?: string | null
           price?: number | null
