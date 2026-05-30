@@ -350,8 +350,15 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     }, [handleExplicitClose, showAnomaly]);
 
 
-  const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
-  const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
+  const totalNum = useMemo(() => {
+    const t = totalAmount.trim();
+    if (!t) return null;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }, [totalAmount]);
+  // total_amount is OPTIONAL — delivery notes (תעודת משלוח) often have no prices.
+  // Only supplier + date are required.
+  const formValid = !!supplierId && !!docDate;
 
   const fileToDataUrl = (f: File): Promise<string> =>
     new Promise((resolve, reject) => {
