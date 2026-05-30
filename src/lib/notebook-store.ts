@@ -76,6 +76,9 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
       done: r.done,
       priority: (r.priority as NotebookPriority) ?? "normal",
       createdAt: r.created_at,
+      catalogProductId: r.catalog_product_id,
+      currentStock: r.current_stock,
+      unit: r.unit,
     });
   }
   for (const k of Object.keys(out) as NotebookListKey[]) {
