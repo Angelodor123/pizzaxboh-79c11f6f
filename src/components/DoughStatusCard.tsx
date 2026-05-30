@@ -174,9 +174,16 @@ export function DoughStatusCard() {
   };
 
   const parseCount = (s: string) => {
-    if (s.trim() === "") return 0;
-    const n = Math.max(0, Math.min(999, Math.floor(Number(s))));
+    const trimmed = s.trim();
+    if (trimmed === "") return NaN;
+    const n = Math.max(0, Math.min(999, Math.floor(Number(trimmed))));
     return Number.isFinite(n) ? n : NaN;
+  };
+
+  const valueOrZero = (s: string) => {
+    if (s.trim() === "") return 0;
+    const n = parseCount(s);
+    return Number.isFinite(n) ? n : 0;
   };
 
   const submit = async () => {
