@@ -127,7 +127,7 @@ function KitchenDashboard() {
       } else if (cat === "all") {
         base = activeRecipes;
       } else {
-        base = activeAll.filter((r) => r.category === cat);
+        base = activeRecipes.filter((r) => r.category === cat);
       }
       return q.trim() ? base.filter((r) => r.nameHebrew.includes(q.trim())) : base;
     },
