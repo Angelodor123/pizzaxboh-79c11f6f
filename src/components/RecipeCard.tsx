@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Pencil, Clock, CheckCircle2, Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -39,27 +39,21 @@ const isScalable = (unit: string) => !NON_SCALABLE_UNITS.has(unit);
 
 const SCALE_PRESETS = [0.5, 1, 2, 3, 5, 10];
 
-export function RecipeCard({ recipe }: { recipe: Recipe }) {
-  const [expanded, setExpanded] = useState(false);
+export function RecipeCard({
+  recipe,
+  forceOpen = false,
+  onForcedOpen,
+}: {
+  recipe: Recipe;
+  forceOpen?: boolean;
+  onForcedOpen?: () => void;
+}) {
+  const [expanded, setExpanded] = useState(forceOpen);
   const [alarming, setAlarming] = useState(false);
   const [scale, setScale] = useState(1);
   const [customScale, setCustomScale] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const target = `#recipe-${recipe.id}`;
-    const tryOpen = () => {
-      if (window.location.hash !== target) return;
-      setExpanded(true);
-      const el = document.getElementById(`recipe-${recipe.id}`);
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
-    };
-    tryOpen();
-    window.addEventListener("hashchange", tryOpen);
-    return () => window.removeEventListener("hashchange", tryOpen);
-  }, [recipe.id]);
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
