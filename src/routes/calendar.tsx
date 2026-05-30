@@ -403,10 +403,10 @@ function MonthView({
           const isToday = c.iso === todayIso;
           const isSelected = c.iso === selectedDate;
           const hasPriority = dayEvents.some((e) => e.high_priority);
-          const visibleEvents = dayEvents.slice(0, 2);
-          const extraCount = Math.max(0, dayEvents.length - 2);
+          const dotEvents = dayEvents.slice(0, 3);
+          const extraCount = Math.max(0, dayEvents.length - 3);
 
-          const cellClass = `relative min-h-[68px] sm:min-h-[88px] rounded-md p-1 sm:p-1.5 border text-right transition overflow-hidden ${
+          const cellClass = `relative min-h-[56px] sm:min-h-[72px] rounded-md p-1 sm:p-1.5 border text-right transition overflow-hidden ${
             isSelected
               ? "border-neon bg-neon/15 glow-neon"
               : isToday
@@ -430,7 +430,7 @@ function MonthView({
                 {c.date.getDate()}
               </span>
 
-              {/* Click target — fills cell, sits below labels */}
+              {/* Click target — fills cell */}
               <button
                 type="button"
                 onClick={handleSelect}
@@ -438,27 +438,27 @@ function MonthView({
                 className="absolute inset-0 z-0 active:scale-[0.98] transition"
               />
 
-              {/* Event labels (1–2) */}
-              <div className="relative z-10 mt-5 sm:mt-6 space-y-0.5 pointer-events-none">
-                {visibleEvents.map((e) => {
-                  const col = eventTypeColor(e.event_type);
-                  return (
-                    <div
-                      key={e.id + c.iso}
-                      className="flex items-center gap-1 text-[9px] sm:text-[10px] leading-tight truncate"
-                      title={e.title}
-                    >
+              {/* Event dots (max 3) + overflow badge — centered at bottom */}
+              {dayEvents.length > 0 && (
+                <div className="absolute bottom-1.5 left-0 right-0 z-10 flex items-center justify-center gap-1 pointer-events-none">
+                  {dotEvents.map((e) => {
+                    const col = eventTypeColor(e.event_type);
+                    return (
                       <span
-                        className="h-1.5 w-1.5 rounded-full shrink-0"
+                        key={e.id + c.iso + "-dot"}
+                        className="h-1.5 w-1.5 rounded-full"
                         style={{ background: col ?? "var(--neon)" }}
+                        title={e.title}
                       />
-                      <span className={`truncate ${e.high_priority ? "text-destructive font-bold" : "text-foreground/90"}`}>
-                        {e.title}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                  {extraCount > 0 && (
+                    <span className="text-[9px] font-bold text-neon tabular-nums leading-none">
+                      +{extraCount}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* +N more — opens popover */}
               {extraCount > 0 && (
