@@ -8,7 +8,6 @@ import { InvoiceIntakeModal, type EditInvoiceData } from "@/components/InvoiceIn
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 
 import {
   AlertDialog,
