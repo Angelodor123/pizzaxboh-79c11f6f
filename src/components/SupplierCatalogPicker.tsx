@@ -28,7 +28,7 @@ type ShortageRow = {
   catalog_product_id: string | null;
 };
 
-export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose, onAdd }: Props) {
+export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose, onAdd, onAddNewProduct }: Props) {
   const [products, setProducts] = useState<SupplierProduct[]>([]);
   const [shortages, setShortages] = useState<ShortageRow[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
