@@ -173,10 +173,37 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
                     {s.streak} ברצף מושלם
                   </div>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => setTrainingSupplierId(s.supplier_id)}
+                  className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg bg-neon text-black font-bold text-sm active:scale-[0.98] transition shadow-[0_0_18px_rgba(255,45,180,0.3)]"
+                >
+                  <Upload className="h-4 w-4" />
+                  📤 העלה קבלה לאימון
+                </button>
               </div>
             );
           })}
         </div>
+      )}
+
+      {trainingSupplierId && (
+        <InvoiceIntakeModal
+          suppliers={suppliers}
+          initialSupplierId={trainingSupplierId}
+          onClose={() => setTrainingSupplierId(null)}
+          onSaved={() => {
+            setTrainingSupplierId(null);
+            void celebrate();
+            setReloadKey((k) => k + 1);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
       )}
     </div>
   );
