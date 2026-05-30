@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector, ClipboardCheck } from "lucide-react";
+import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, ChevronLeft, Projector, ClipboardCheck, Check } from "lucide-react";
 import { DeliveryChecklistModal, type ChecklistItem } from "@/components/DeliveryChecklistModal";
 
 import { supabase } from "@/integrations/supabase/client";
