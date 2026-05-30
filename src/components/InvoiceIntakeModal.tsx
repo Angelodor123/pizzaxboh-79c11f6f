@@ -309,42 +309,46 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         setInvoiceNumber(d.invoiceNumber ?? "");
         setTotalAmount(d.totalAmount ?? "");
         setDocDate(d.docDate ?? new Date().toISOString().slice(0, 10));
-        if (Array.isArray(d.items) && d.items.length) setItems(d.items);
-        if (d.rawOcr && typeof d.rawOcr === "object") setRawOcr(d.rawOcr);
-      }
-    } catch { /* ignore */ }
-    loadDraftImage(DRAFT_KEY)
-      .then((storedPreview) => {
-        if (!cancelled && storedPreview?.startsWith("data:")) setPreviewUrl(storedPreview);
-      })
-      .catch(() => { /* ignore */ });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit]);
+          if (Array.isArray(d.items) && d.items.length) setItems(d.items);
+          if (d.rawOcr && typeof d.rawOcr === "object") setRawOcr(d.rawOcr);
+          // Restore training validation states (✓ / ✗ markers and manual-edit gate)
+          if (d.headerVal && typeof d.headerVal === "object") setHeaderVal(d.headerVal);
+          if (Array.isArray(d.itemVal) && d.itemVal.length) setItemVal(d.itemVal);
+        }
+      } catch { /* ignore */ }
+      loadDraftImage(DRAFT_KEY)
+        .then((storedPreview) => {
+          if (!cancelled && storedPreview?.startsWith("data:")) setPreviewUrl(storedPreview);
+        })
+        .catch(() => { /* ignore */ });
+      return () => { cancelled = true; };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEdit]);
+  
+    useEffect(() => {
+      if (isEdit) return;
+      const id = setTimeout(() => {
+        persistDraft();
+      }, 200);
+      return () => clearTimeout(id);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [supplierId, invoiceNumber, totalAmount, docDate, items, rawOcr, headerVal, itemVal, isEdit]);
+  
+    // Note: preview is stored as a base64 data URL (not blob:) so it survives
+    // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
+  
+    // Close on Escape — clears the draft (explicit user dismiss)
+    useEffect(() => {
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          if (showAnomaly) setShowAnomaly(false);
+          else handleExplicitClose();
+        }
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [handleExplicitClose, showAnomaly]);
 
-  useEffect(() => {
-    if (isEdit) return;
-    const id = setTimeout(() => {
-      persistDraft();
-    }, 200);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items, rawOcr, isEdit]);
-
-  // Note: preview is stored as a base64 data URL (not blob:) so it survives
-  // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
-
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (showAnomaly) setShowAnomaly(false);
-        else onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, showAnomaly]);
 
   const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
   const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
