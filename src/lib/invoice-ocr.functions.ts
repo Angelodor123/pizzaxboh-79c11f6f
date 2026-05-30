@@ -23,18 +23,61 @@ const InputSchema = z.object({
 
 const NumLike = z.preprocess((v) => {
   if (v == null || v === "") return null;
-  if (typeof v === "number") return v;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
   if (typeof v === "string") {
-    const n = Number(v.replace(/[^\d.\-]/g, ""));
+    // Strip currency symbols (₪, ש"ח / ש״ח / שח, NIS/ILS), commas, and any non-numeric noise
+    const cleaned = v
+      .replace(/[₪$€£]/g, "")
+      .replace(/ש["״']?\s*ח/g, "")
+      .replace(/NIS|ILS/gi, "")
+      .replace(/,/g, "")
+      .replace(/[^\d.\-]/g, "")
+      .trim();
+    if (!cleaned) return null;
+    const n = Number(cleaned);
     return Number.isFinite(n) ? n : null;
   }
   return null;
 }, z.number().nullable());
 
+// Normalize dates to ISO YYYY-MM-DD. Accepts ISO, DD/MM/YYYY, DD-MM-YYYY,
+// DD.MM.YYYY (2- or 4-digit years). Returns null when unparseable so the
+// rest of the receipt still loads.
+const DateLike = z.preprocess((v) => {
+  if (v == null || v === "") return null;
+  if (typeof v !== "string") return null;
+  const s = v.trim();
+  if (!s) return null;
+
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const y = +iso[1], m = +iso[2], d = +iso[3];
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    if (dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d) {
+      return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+    return null;
+  }
+
+  const dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (dmy) {
+    const [, dStr, mStr, yStr] = dmy;
+    let y = parseInt(yStr, 10);
+    if (y < 100) y += 2000;
+    const d = parseInt(dStr, 10);
+    const m = parseInt(mStr, 10);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    if (dt.getUTCDate() !== d || dt.getUTCMonth() !== m - 1) return null;
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  return null;
+}, z.string().nullable());
+
 const ParsedSchema = z.object({
   supplier_guess: z.string().max(120).nullable().optional(),
   invoice_number: z.string().max(60).nullable().optional(),
-  document_date: z.string().max(20).nullable().optional(),
+  document_date: DateLike.optional(),
   total_amount: NumLike.optional(),
   items: z
     .array(
@@ -52,12 +95,23 @@ const ParsedSchema = z.object({
 export type ParsedInvoice = z.infer<typeof ParsedSchema>;
 
 const BASE_SYSTEM = `אתה מערכת OCR לקבלות וחשבוניות בעברית, מבוססת Google Gemini Vision.
-- קרא את כל השורות, התעלם מלוגואים, כותרות עיצוביות, חתימות וברקודים.
+- קרא את כל השורות, התעלם מלוגואים, כותרות עיצוביות, חתימות, חותמות וברקודים.
 - חלץ עבור כל שורת פריט: שם פריט נקי (בעברית אם קיים), כמות, מחיר ליחידה, וסה"כ.
-- אם ערך לא ברור — החזר null (אל תנחש מספרים).
-- מחירים בש"ח. החזר מספרים בלי סימנים (לא ₪, לא פסיקים).
-- החזר גם את שם הספק, מספר החשבונית, תאריך (YYYY-MM-DD אם אפשר) וסך הכל.
-- שדה items חייב להיות מערך, גם אם ריק.
+- אם ערך לא ברור — החזר null (אל תנחש מספרים). שדה items חייב להיות מערך, גם אם ריק.
+
+🔢 נרמול מספרים (חשוב מאוד!):
+- כל שדה מספרי (total_amount, quantity, unit_price, total_price) חייב להיות מספר float טהור.
+- הסר לחלוטין סימני מטבע (₪, $, €), המחרוזות "ש״ח"/"ש"ח"/"שח"/"NIS"/"ILS", פסיקי אלפים, רווחים וכל טקסט נלווה.
+- דוגמאות: "₪569.86" → 569.86, "569,86 ש״ח" → 569.86, "1,234.50 שח" → 1234.50.
+- חפש total_amount תחת תוויות כמו: "סה״כ לתשלום", "סה"כ", "סך הכל", "לתשלום", "Total", "Grand Total". זה תמיד הסכום הסופי הכולל מע״מ.
+- אל תחזיר אף פעם מחרוזת עם סימן מטבע או טקסט בשדה מספרי.
+
+📅 נרמול תאריך (חשוב מאוד!):
+- שדה document_date חייב להיות בפורמט ISO מחמיר YYYY-MM-DD בלבד (לדוגמה "2026-05-27").
+- המר תאריכים כמו "27/05/26", "27.5.2026", "27-05-26" לפורמט "2026-05-27" (פורמט ישראלי: יום/חודש/שנה).
+- אם השנה דו-ספרתית, הוסף לה 2000.
+- חפש את התאריך בראש המסמך, ליד מספר החשבונית, או בתחתית. תוויות נפוצות: "תאריך", "תאריך הפקה", "תאריך חשבונית", "Date".
+- אם התאריך מוסתר על ידי חותמת או אינו קריא — החזר null. אל תמציא תאריך.
 
 🟠 טיפול בהנחות (חשוב מאוד!):
 - סרוק בכל שורה אם קיימת עמודת "הנחה", "% הנחה", "Discount", "הנחה %", "הנח'" וכד׳.
