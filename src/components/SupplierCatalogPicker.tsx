@@ -212,7 +212,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
             </div>
             <button
               type="button"
-              onClick={() => setManageOpen(true)}
+              onClick={() => { if (onAddNewProduct) onAddNewProduct(); else setManageOpen(true); }}
               className="h-10 px-4 inline-flex items-center gap-2 rounded-md bg-neon text-black font-bold text-sm active:scale-95 transition"
             >
               <Plus className="h-4 w-4" />
