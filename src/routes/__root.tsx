@@ -274,14 +274,14 @@ function AuthedShell() {
       <header
         className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors"
       >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-1 sm:gap-2">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
           <div className="flex items-center gap-1 shrink-0">
             <CategoryDrawer />
           </div>
 
           <Link
             to="/"
-            className="flex flex-col items-center gap-0.5 min-w-0 flex-1 max-w-[180px] sm:max-w-none"
+            className="flex flex-col items-center gap-0.5 min-w-0 flex-1 max-w-[128px] sm:max-w-none shrink-0"
             aria-label="Pizza X — בית"
           >
             <img
@@ -299,10 +299,10 @@ function AuthedShell() {
             </span>
             <ActiveBranchBadge />
           </Link>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center justify-end gap-1 shrink-0">
             <GlobalSearch />
-            <MaintenanceBell />
-            <BranchSwitcher />
+            <div className="shrink-0"><MaintenanceBell /></div>
+            <div className="shrink-0"><BranchSwitcher /></div>
             <Link
               to="/my-profile"
               className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
