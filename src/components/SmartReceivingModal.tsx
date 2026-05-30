@@ -552,8 +552,18 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                 <div>
                                   <input value={r.name} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
                                     className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none" />
+                                  <select
+                                    value={r.category}
+                                    onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, category: e.target.value as ExpenseCategory | "" } : x))}
+                                    className={`mt-1 w-full h-9 rounded bg-background border px-2 text-[11px] leading-none focus:border-neon outline-none ${r.category ? "border-neon/50 text-neon" : "border-border text-muted-foreground"}`}
+                                    aria-label="שיוך חשבונאי"
+                                  >
+                                    <option value="">שיוך חשבונאי…</option>
+                                    {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                                  </select>
                                   {isExtra && <div className="text-[10px] text-amber-brand mt-0.5">פריט לא בהזמנה</div>}
                                 </div>
+
                                 {chosenMatch && (
                                   <div className="text-center text-xs tabular-nums text-muted-foreground">{r.orderedQty ?? "—"}</div>
                                 )}
