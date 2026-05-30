@@ -29,7 +29,7 @@ const CopilotFab = lazy(() =>
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate, useActiveBranchData } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
-import { ServiceModeToggle } from "@/components/ServiceModeToggle";
+
 import { MaintenanceBell } from "@/components/MaintenanceBell";
 import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
