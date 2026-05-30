@@ -302,6 +302,17 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
 // Quick-add dialog: minimal fields to create a supplier_product
 // ============================================================
 
+const CATEGORY_OPTIONS = [
+  "ירקות",
+  "חלבי",
+  "יבשים",
+  "אריזות",
+  "בשר",
+  "ניקיון ותחזוקה",
+];
+
+const UNIT_OPTIONS = ['ק"ג', "גרם", "ליטר", 'מ"ל', "יח'", "ארגז", "פחית", "בקבוק"];
+
 function QuickAddCatalogDialog({
   initialName,
   onClose,
@@ -314,6 +325,10 @@ function QuickAddCatalogDialog({
   const [name, setName] = useState(initialName);
   const [supplierId, setSupplierId] = useState("");
   const [unit, setUnit] = useState("יח'");
+  const [category, setCategory] = useState("");
+  const [sku, setSku] = useState("");
+  const [expectedPrice, setExpectedPrice] = useState("");
+  const [minStockAlert, setMinStockAlert] = useState("");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -334,8 +349,15 @@ function QuickAddCatalogDialog({
     e.preventDefault();
     const cleanName = name.trim();
     if (!cleanName) return toast.error("שם פריט חובה");
+    if (!category) return toast.error("בחר קטגוריה");
     if (!supplierId) return toast.error("בחר ספק");
-    if (!unit.trim()) return toast.error("יחידה חובה");
+    if (!unit.trim()) return toast.error("בחר יחידה");
+    const expectedNum = expectedPrice === "" ? null : Number(expectedPrice);
+    const minStockNum = minStockAlert === "" ? null : Number(minStockAlert);
+    if (expectedNum !== null && (Number.isNaN(expectedNum) || expectedNum < 0))
+      return toast.error("מחיר משוער לא תקין");
+    if (minStockNum !== null && (Number.isNaN(minStockNum) || minStockNum < 0))
+      return toast.error("התרעת מלאי לא תקינה");
     setSaving(true);
     try {
       const branchId = await requireCurrentBranchId();
@@ -347,10 +369,15 @@ function QuickAddCatalogDialog({
           supplier_id: supplierId,
           name: cleanName,
           unit: unit.trim(),
+          category,
+          sku: sku.trim() || null,
+          expected_price: expectedNum,
+          price: expectedNum,
+          min_stock_alert: minStockNum,
           default_qty: 1,
           active: true,
           created_by: user?.id,
-        })
+        } as any)
         .select("id, name, unit, supplier_id, image_url")
         .single();
       if (error) throw error;
@@ -371,6 +398,12 @@ function QuickAddCatalogDialog({
     }
   };
 
+  const inputCls =
+    "w-full h-10 bg-input border border-border rounded-md px-3 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon";
+  const labelCls = "block text-xs font-bold text-muted-foreground mb-1";
+  const triggerCls =
+    "w-full h-10 bg-input border-border rounded-md px-3 text-sm text-right focus:ring-2 focus:ring-neon/60 focus:border-neon";
+
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent dir="rtl" className="max-w-md">
@@ -378,49 +411,101 @@ function QuickAddCatalogDialog({
           <DialogTitle className="font-display">➕ פריט חדש לקטלוג</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
+          {/* Full width: name */}
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1">שם פריט</label>
+            <label className={labelCls}>שם פריט</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               dir="rtl"
               autoFocus
               maxLength={120}
-              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
+              className={inputCls}
             />
           </div>
+
+          {/* Full width: category */}
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1">ספק</label>
-            <select
-              value={supplierId}
-              onChange={(e) => setSupplierId(e.target.value)}
-              dir="rtl"
-              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
-            >
-              <option value="">בחר ספק…</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1">יחידת מידה</label>
-            <Select value={unit} onValueChange={setUnit} dir="rtl">
-              <SelectTrigger className="w-full bg-input border-border rounded-md px-3 text-sm text-right focus:ring-2 focus:ring-neon/60 focus:border-neon h-10">
-                <SelectValue placeholder="בחר יחידה…" />
+            <label className={labelCls}>קטגוריה</label>
+            <Select value={category} onValueChange={setCategory} dir="rtl">
+              <SelectTrigger className={triggerCls}>
+                <SelectValue placeholder="בחר קטגוריה…" />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                <SelectItem value='ק"ג' className="text-right">ק"ג</SelectItem>
-                <SelectItem value="גרם" className="text-right">גרם</SelectItem>
-                <SelectItem value="ליטר" className="text-right">ליטר</SelectItem>
-                <SelectItem value='מ"ל' className="text-right">מ"ל</SelectItem>
-                <SelectItem value="יח'" className="text-right">יח'</SelectItem>
-                <SelectItem value="ארגז" className="text-right">ארגז</SelectItem>
-                <SelectItem value="פחית" className="text-right">פחית</SelectItem>
-                <SelectItem value="בקבוק" className="text-right">בקבוק</SelectItem>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c} className="text-right">{c}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+
+          {/* 2-col row: supplier + unit */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>ספק</label>
+              <Select value={supplierId} onValueChange={setSupplierId} dir="rtl">
+                <SelectTrigger className={triggerCls}>
+                  <SelectValue placeholder="בחר ספק…" />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={s.id} className="text-right">{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className={labelCls}>יחידת מידה</label>
+              <Select value={unit} onValueChange={setUnit} dir="rtl">
+                <SelectTrigger className={triggerCls}>
+                  <SelectValue placeholder="בחר יחידה…" />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {UNIT_OPTIONS.map((u) => (
+                    <SelectItem key={u} value={u} className="text-right">{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* 2-col row: sku + expected price */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>מק"ט ספק</label>
+              <input
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                dir="rtl"
+                maxLength={64}
+                placeholder="—"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>מחיר משוער ₪</label>
+              <input
+                value={expectedPrice}
+                onChange={(e) => setExpectedPrice(e.target.value)}
+                inputMode="decimal"
+                placeholder="0.00"
+                className={`${inputCls} tabular-nums`}
+              />
+            </div>
+          </div>
+
+          {/* Full width: min stock alert */}
+          <div>
+            <label className={labelCls}>התרעת מלאי מינימום</label>
+            <input
+              value={minStockAlert}
+              onChange={(e) => setMinStockAlert(e.target.value)}
+              inputMode="decimal"
+              placeholder={`כמות מינ׳ ב${unit}`}
+              className={`${inputCls} tabular-nums`}
+            />
+          </div>
+
           <div className="flex gap-2 pt-2">
             <button
               type="button"
@@ -443,3 +528,4 @@ function QuickAddCatalogDialog({
     </Dialog>
   );
 }
+
