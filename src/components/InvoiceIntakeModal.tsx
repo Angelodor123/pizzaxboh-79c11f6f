@@ -415,9 +415,17 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
-  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
+  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
   const updateItem = (i: number, k: keyof ItemRow, v: string) =>
-    setItems((p) => p.map((row, idx) => (idx === i ? { ...row, [k]: v } : row)));
+    setItems((p) => p.map((row, idx) => {
+      if (idx !== i) return row;
+      const next: ItemRow = { ...row, [k]: v };
+      // Any change to base / discount / quantity must instantly recompute net + total.
+      if (k === "base_unit_price" || k === "discount" || k === "quantity") {
+        return recalcRow(next);
+      }
+      return next;
+    }));
   const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
 
   const checkAnomaly = async (): Promise<boolean> => {
