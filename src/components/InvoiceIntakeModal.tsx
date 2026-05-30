@@ -63,8 +63,22 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [rawOcr, setRawOcr] = useState<ParsedInvoice | null>(null);
+  const [supplierCatalog, setSupplierCatalog] = useState<SupplierProduct[]>([]);
   const runOcr = useServerFn(parseInvoiceImage);
   const runLearn = useServerFn(learnFromCorrection);
+
+  // Load supplier catalog whenever supplier is selected — used as RAG context for OCR.
+  useEffect(() => {
+    let cancelled = false;
+    if (!supplierId) { setSupplierCatalog([]); return; }
+    (async () => {
+      try {
+        const list = await loadSupplierProducts(supplierId);
+        if (!cancelled) setSupplierCatalog(list);
+      } catch { if (!cancelled) setSupplierCatalog([]); }
+    })();
+    return () => { cancelled = true; };
+  }, [supplierId]);
 
   // Load inventory list for autocomplete
   useEffect(() => {
