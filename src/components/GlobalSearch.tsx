@@ -94,7 +94,11 @@ export function GlobalSearch() {
   const taskHits = useMemo(() => hits.filter((h) => h.kind === "task"), [hits]);
 
   return (
-    <div ref={wrapRef} className="relative h-9 w-9 max-w-9 shrink-0" data-open={open}>
+    <div
+      ref={wrapRef}
+      className="relative h-9 min-w-9 flex-1 max-w-xs overflow-visible data-[open=true]:min-w-[150px] md:data-[open=true]:min-w-[200px]"
+      data-open={open}
+    >
       {!open ? (
         <button
           type="button"
@@ -109,7 +113,7 @@ export function GlobalSearch() {
           <Search className="h-4 w-4" />
         </button>
       ) : (
-        <div className="absolute right-0 top-0 z-50 flex h-9 w-40 max-w-[44vw] shrink-0 items-center gap-1 rounded-md border border-neon/60 bg-card/95 px-2 shadow-[0_0_8px_rgba(57,255,20,0.25)] sm:w-56 sm:max-w-56 md:w-64 md:max-w-64">
+        <div className="absolute right-0 top-0 z-[100] flex h-9 w-full min-w-[150px] max-w-xs shrink-0 items-center gap-1 rounded-md border border-neon/60 bg-card/95 px-2 shadow-[0_0_8px_rgba(57,255,20,0.25)] md:min-w-[200px]">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
@@ -143,7 +147,7 @@ export function GlobalSearch() {
       {open && q.trim().length >= 2 && (
         <div
           dir="rtl"
-          className="absolute top-full right-0 z-50 mt-2 max-h-[60vh] w-[min(82vw,320px)] overflow-y-auto rounded-lg border border-border bg-popover shadow-xl sm:w-[380px]"
+          className="absolute top-full right-0 z-[100] mt-2 max-h-[60vh] w-[min(82vw,320px)] overflow-y-auto rounded-lg border border-border bg-popover shadow-xl sm:w-[380px]"
         >
           {loading && (
             <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
