@@ -151,6 +151,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
   );
   const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
+  // === Training validation gate ===
+  // Each extracted field/row must be explicitly approved (✓) or corrected (✗)
+  // before "Save & Learn" is enabled. Only enforced in trainingMode.
+  type ValState = "pending" | "approved" | "corrected";
+  type HeaderKey = "supplier" | "invoice_number" | "document_date" | "total_amount";
+  const [headerVal, setHeaderVal] = useState<Record<HeaderKey, ValState>>({
+    supplier: "pending",
+    invoice_number: "pending",
+    document_date: "pending",
+    total_amount: "pending",
+  });
+  const [itemVal, setItemVal] = useState<ValState[]>(["pending"]);
+  const resetValidation = (rowCount: number) => {
+    setHeaderVal({ supplier: "pending", invoice_number: "pending", document_date: "pending", total_amount: "pending" });
+    setItemVal(Array.from({ length: Math.max(1, rowCount) }, () => "pending"));
+  };
+  const setHV = (k: HeaderKey, v: ValState) => setHeaderVal((p) => ({ ...p, [k]: v }));
+  const setIV = (i: number, v: ValState) => setItemVal((p) => p.map((x, idx) => (idx === i ? v : x)));
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
