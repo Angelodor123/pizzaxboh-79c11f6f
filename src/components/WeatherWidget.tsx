@@ -195,8 +195,12 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
     const ctl = new AbortController();
     let active = true;
 
-    // Show cached immediately while we re-fetch
-    const cached = readCache();
+    // Reset visible state when branch (cacheKey) changes so the previous
+    // branch's weather never lingers on screen.
+    setData(null);
+    setStaleAt(null);
+
+    const cached = readCache(cacheKey);
     if (cached) {
       setData(cached.data);
       setStaleAt(cached.timestamp);
@@ -214,7 +218,7 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
           setStaleAt(null);
           setFailed(false);
           setLoading(false);
-          writeCache(fresh);
+          writeCache(cacheKey, fresh);
           return;
         } catch (e) {
           if (ctl.signal.aborted) return;
@@ -233,7 +237,7 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
       active = false;
       ctl.abort();
     };
-  }, [fetchWeather, reloadKey]);
+  }, [fetchWeather, reloadKey, cacheKey]);
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
   const staleLabel = staleAt
