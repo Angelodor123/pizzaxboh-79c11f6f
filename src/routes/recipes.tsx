@@ -319,7 +319,14 @@ function KitchenDashboard() {
               onToggle={() => bulk.toggle(r.id)}
               onLongPress={() => bulk.enter(r.id)}
             >
-              <RecipeCard recipe={r} />
+              <RecipeCard
+                recipe={r}
+                forceOpen={forcedOpenRecipeId === r.id}
+                onForcedOpen={(recipeId) => {
+                  setForcedOpenRecipeId((current) => (current === recipeId ? null : current));
+                  navigate({ search: (prev) => ({ ...prev, openRecipeId: undefined }), replace: true });
+                }}
+              />
             </SelectableRecipeCard>
           ))}
         </div>
