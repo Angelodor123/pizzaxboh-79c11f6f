@@ -10,6 +10,7 @@ import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
+import { useBranchFeature } from "@/components/BranchGate";
 
 
 export const Route = createFileRoute("/")({
@@ -35,6 +36,7 @@ function todayIso() {
 
 function OperationalDashboard() {
   const { role, isSuperAdmin } = useAuth();
+  const vehiclesEnabled = useBranchFeature("vehicles", true);
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -124,9 +126,11 @@ function OperationalDashboard() {
       <div className="mb-4">
         <WeatherWidget title={weatherTitle} alertText={rainAlert} />
       </div>
-      <div className="mb-6">
-        <EvChargingWidget />
-      </div>
+      {vehiclesEnabled && (
+        <div className="mb-6">
+          <EvChargingWidget />
+        </div>
+      )}
 
       {/* Supplier ordering alerts — must order today */}
       <SupplierAlertsBanner />

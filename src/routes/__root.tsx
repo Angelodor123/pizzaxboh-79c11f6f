@@ -49,6 +49,16 @@ import {
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
 
+function ActiveBranchBadge() {
+  const branch = useActiveBranchData();
+  if (!branch?.name) return null;
+  return (
+    <span className="mt-0.5 text-[9px] sm:text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground whitespace-nowrap">
+      {branch.name}
+    </span>
+  );
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
