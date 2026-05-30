@@ -361,9 +361,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         </div>
 
         <div className="grid md:grid-cols-2 gap-0 flex-1 md:overflow-hidden overflow-y-auto">
-          {/* Image side: sticky on desktop, height-capped on mobile */}
-          <div className="bg-zinc-900/60 border-b md:border-b-0 md:border-l border-border flex flex-col md:sticky md:top-0 md:self-start md:h-full md:max-h-[94vh]">
-            <div className="p-3 flex items-center justify-between gap-2 border-b border-border/50 shrink-0">
+          {/* Image side: sticky on both mobile (top of scroll) and desktop (side panel) */}
+          <div className="bg-zinc-900/60 border-b md:border-b-0 md:border-l border-border flex flex-col sticky top-0 z-20 md:self-start md:h-full md:max-h-[94vh] max-h-[42vh] shadow-md md:shadow-none">
+            <div className="p-2 md:p-3 flex items-center justify-between gap-2 border-b border-border/50 shrink-0">
               <input
                 ref={fileInput}
                 type="file"
@@ -374,26 +374,26 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
-                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border hover:border-neon hover:text-neon text-sm font-bold"
+                className="inline-flex items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3 rounded-md border border-border hover:border-neon hover:text-neon text-xs md:text-sm font-bold"
               >
-                <Upload className="h-4 w-4" />
-                {file ? "החלף תמונה" : "העלה תמונה"}
+                <Upload className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                {file ? "החלף" : "העלה תמונה"}
               </button>
               {previewUrl && (
                 <div className="flex items-center gap-1">
-                  <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} className="h-9 w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="הקטן">
+                  <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} className="h-8 w-8 md:h-9 md:w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="הקטן">
                     <ZoomOut className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => setZoom(1)} className="h-9 w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="אפס">
+                  <button onClick={() => setZoom(1)} className="h-8 w-8 md:h-9 md:w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="אפס">
                     <RotateCcw className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => setZoom((z) => Math.min(3, z + 0.25))} className="h-9 w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="הגדל">
+                  <button onClick={() => setZoom((z) => Math.min(3, z + 0.25))} className="h-8 w-8 md:h-9 md:w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="הגדל">
                     <ZoomIn className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}
             </div>
-            <div className="relative flex-1 overflow-auto max-h-64 md:max-h-none min-h-[160px] md:min-h-[260px] grid place-items-center p-3 md:p-4">
+            <div className="relative flex-1 overflow-auto min-h-[140px] md:min-h-[260px] grid place-items-center p-2 md:p-4">
               {previewUrl ? (
                 <>
                   <img
