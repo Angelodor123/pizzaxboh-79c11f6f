@@ -296,6 +296,7 @@ function AuthedShell() {
             <span className="text-[10px] sm:text-[12px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
               {serviceModeVisible ? "Service Mode" : "Back of House"}
             </span>
+            <ActiveBranchBadge />
           </Link>
           <div className="flex items-center gap-1.5 shrink-0">
             <GlobalSearch />
