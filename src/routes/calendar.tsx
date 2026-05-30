@@ -376,9 +376,9 @@ function MonthView({
     <div className="rounded-2xl border border-border bg-card/80 backdrop-blur p-3 sm:p-4">
       <div className="flex items-center justify-between mb-3">
         <button
-          onClick={() => setCursor(new Date(year, month + 1, 1))}
+          onClick={() => setCursor(new Date(year, month - 1, 1))}
           className="h-9 w-9 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
-          aria-label="חודש הבא"
+          aria-label="חודש קודם"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -386,9 +386,9 @@ function MonthView({
           {MONTHS_HE[month]} {year}
         </div>
         <button
-          onClick={() => setCursor(new Date(year, month - 1, 1))}
+          onClick={() => setCursor(new Date(year, month + 1, 1))}
           className="h-9 w-9 grid place-content-center rounded-md border border-border hover:text-neon hover:border-neon"
-          aria-label="חודש קודם"
+          aria-label="חודש הבא"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
