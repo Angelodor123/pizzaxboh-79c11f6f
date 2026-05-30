@@ -44,10 +44,12 @@ function OperationalDashboard() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data } = await supabase
-        .from("calendar_events")
-        .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
-        .limit(200);
+      const { data } = await withBranch(
+        supabase
+          .from("calendar_events")
+          .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
+          .limit(200),
+      );
       if (mounted && data) setEvents(data as CalEvent[]);
     })();
     return () => {
