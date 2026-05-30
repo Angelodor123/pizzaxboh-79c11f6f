@@ -11,6 +11,8 @@ import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
 import { Package } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
