@@ -45,7 +45,7 @@ function OrdersPage() {
         .eq("is_archived", false)
         .eq("active", true)
         .order("name");
-      if (isSuperAdmin && branchId) supplierQuery = supplierQuery.eq("branch_id", branchId);
+      if (branchId) supplierQuery = supplierQuery.eq("branch_id", branchId);
       const { data } = await supplierQuery;
       if (mounted) setList((data as Supplier[]) ?? []);
 
