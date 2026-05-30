@@ -146,7 +146,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">📦 קטלוג מוצרים — {supplierName}</DialogTitle>
+          <DialogTitle className="font-display text-xl">📦 הוספת מוצר לקטלוג — {supplierName}</DialogTitle>
         </DialogHeader>
 
         {/* Add / Edit form */}
@@ -154,6 +154,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
           <div className="text-xs font-bold text-neon">{editingId ? "עריכת מוצר" : "הוספת מוצר חדש"}</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
+              autoFocus
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               placeholder="שם המוצר"
