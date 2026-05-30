@@ -40,7 +40,55 @@ interface Props {
 
 const DRAFT_KEY_OPERATIONAL = "invoice-intake-draft";
 const DRAFT_KEY_TRAINING = "invoice-intake-draft-training";
+const DRAFT_IMAGE_DB = "invoice-intake-drafts";
+const DRAFT_IMAGE_STORE = "images";
 const HARD_LIMIT = 15000;
+
+interface InvoiceDraft {
+  supplierId: string;
+  invoiceNumber: string;
+  totalAmount: string;
+  docDate: string;
+  items: ItemRow[];
+  rawOcr?: ParsedInvoice | null;
+}
+
+const openDraftDb = (): Promise<IDBDatabase> =>
+  new Promise((resolve, reject) => {
+    const request = indexedDB.open(DRAFT_IMAGE_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(DRAFT_IMAGE_STORE)) {
+        request.result.createObjectStore(DRAFT_IMAGE_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+const saveDraftImage = async (key: string, dataUrl: string | null) => {
+  const db = await openDraftDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(DRAFT_IMAGE_STORE, "readwrite");
+    const store = tx.objectStore(DRAFT_IMAGE_STORE);
+    if (dataUrl) store.put(dataUrl, key);
+    else store.delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+};
+
+const loadDraftImage = async (key: string): Promise<string | null> => {
+  const db = await openDraftDb();
+  const value = await new Promise<string | null>((resolve, reject) => {
+    const tx = db.transaction(DRAFT_IMAGE_STORE, "readonly");
+    const request = tx.objectStore(DRAFT_IMAGE_STORE).get(key);
+    request.onsuccess = () => resolve(typeof request.result === "string" ? request.result : null);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return value;
+};
 
 export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId, trainingMode = false }: Props) {
   const isEdit = !!editInvoice;
@@ -67,6 +115,22 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [supplierCatalog, setSupplierCatalog] = useState<SupplierProduct[]>([]);
   const runOcr = useServerFn(parseInvoiceImage);
   const runLearn = useServerFn(learnFromCorrection);
+  const DRAFT_KEY = trainingMode ? DRAFT_KEY_TRAINING : DRAFT_KEY_OPERATIONAL;
+
+  const persistDraft = (overrides: Partial<InvoiceDraft> = {}) => {
+    if (isEdit) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        supplierId,
+        invoiceNumber,
+        totalAmount,
+        docDate,
+        items,
+        rawOcr,
+        ...overrides,
+      } satisfies InvoiceDraft));
+    } catch { /* ignore */ }
+  };
 
   // Load supplier catalog whenever supplier is selected — used as RAG context for OCR.
   useEffect(() => {
@@ -132,9 +196,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   // Restore draft (skip in edit mode). Use separate keys for training vs operational
   // so the two flows never cross-contaminate state.
-  const DRAFT_KEY = trainingMode ? DRAFT_KEY_TRAINING : DRAFT_KEY_OPERATIONAL;
   useEffect(() => {
     if (isEdit) return;
+    let cancelled = false;
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
@@ -146,26 +210,26 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         setTotalAmount(d.totalAmount ?? "");
         setDocDate(d.docDate ?? new Date().toISOString().slice(0, 10));
         if (Array.isArray(d.items) && d.items.length) setItems(d.items);
-        // Restore image preview (base64 data URL) so it survives app backgrounding
-        // and tab unload on mobile.
-        if (typeof d.previewUrl === "string" && d.previewUrl.startsWith("data:")) {
-          setPreviewUrl(d.previewUrl);
-        }
+        if (d.rawOcr && typeof d.rawOcr === "object") setRawOcr(d.rawOcr);
       }
     } catch { /* ignore */ }
+    loadDraftImage(DRAFT_KEY)
+      .then((storedPreview) => {
+        if (!cancelled && storedPreview?.startsWith("data:")) setPreviewUrl(storedPreview);
+      })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit]);
 
   useEffect(() => {
     if (isEdit) return;
     const id = setTimeout(() => {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ supplierId, invoiceNumber, totalAmount, docDate, items, previewUrl }));
-      } catch { /* ignore */ }
+      persistDraft();
     }, 200);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items, previewUrl, isEdit]);
+  }, [supplierId, invoiceNumber, totalAmount, docDate, items, rawOcr, isEdit]);
 
   // Note: preview is stored as a base64 data URL (not blob:) so it survives
   // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
@@ -193,9 +257,22 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       reader.readAsDataURL(f);
     });
 
+  const dataUrlToBlob = (dataUrl: string) => {
+    const [meta, base64] = dataUrl.split(",");
+    const mime = meta.match(/^data:(.*?);base64$/)?.[1] || "image/jpeg";
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return { blob: new Blob([bytes], { type: mime }), mime };
+  };
+
   const onFileSelected = async (f: File | null) => {
     setFile(f);
-    if (!f) { setPreviewUrl(null); return; }
+    if (!f) {
+      setPreviewUrl(null);
+      saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
+      return;
+    }
 
     setUploading(true);
     setOcrLoading(true);
@@ -204,6 +281,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
       setPreviewUrl(dataUrl);
+      await saveDraftImage(DRAFT_KEY, dataUrl).catch(() => { /* ignore */ });
+      persistDraft();
 
       const catalogPayload = supplierCatalog.slice(0, 200).map((p) => ({
         name: p.name,
@@ -225,6 +304,11 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       setRawOcr(parsed);
 
       // Populate header fields when present
+      let nextInvoiceNumber = invoiceNumber;
+      let nextDocDate = docDate;
+      let nextTotalAmount = totalAmount;
+      let nextSupplierId = supplierId;
+      let nextItems = items;
       if (parsed.invoice_number) setInvoiceNumber(parsed.invoice_number);
       if (parsed.document_date && /^\d{4}-\d{2}-\d{2}$/.test(parsed.document_date)) {
         setDocDate(parsed.document_date);
@@ -232,25 +316,32 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       if (typeof parsed.total_amount === "number" && parsed.total_amount > 0) {
         setTotalAmount(String(parsed.total_amount));
       }
+      if (parsed.invoice_number) nextInvoiceNumber = parsed.invoice_number;
+      if (parsed.document_date && /^\d{4}-\d{2}-\d{2}$/.test(parsed.document_date)) nextDocDate = parsed.document_date;
+      if (typeof parsed.total_amount === "number" && parsed.total_amount > 0) nextTotalAmount = String(parsed.total_amount);
       // Suggest supplier by fuzzy name match
       if (parsed.supplier_guess) {
         const guess = parsed.supplier_guess.trim().toLowerCase();
         const match = suppliers.find((s) => s.name.toLowerCase().includes(guess) || guess.includes(s.name.toLowerCase()));
-        if (match) setSupplierId(match.id);
+        if (match) {
+          setSupplierId(match.id);
+          nextSupplierId = match.id;
+        }
       }
       // Populate item rows
       if (Array.isArray(parsed.items) && parsed.items.length > 0) {
-        setItems(
-          parsed.items.map((it) => ({
-            item_name: it.item_name ?? "",
-            quantity: it.quantity != null ? String(it.quantity) : "",
-            unit_price: it.unit_price != null ? String(it.unit_price) : "",
-            total_price: it.total_price != null ? String(it.total_price) : "",
-            discount: it.discount ?? "",
-          })),
-        );
+        nextItems = parsed.items.map((it) => ({
+          item_name: it.item_name ?? "",
+          quantity: it.quantity != null ? String(it.quantity) : "",
+          unit_price: it.unit_price != null ? String(it.unit_price) : "",
+          total_price: it.total_price != null ? String(it.total_price) : "",
+          discount: it.discount ?? "",
+        }));
+        setItems(nextItems);
+        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
       } else {
+        persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.message("לא זוהו פריטים — מלא ידנית");
       }
     } catch (e) {
@@ -315,6 +406,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           .catch(() => { /* silent */ });
         toast.success("האימון נשמר — ה-AI ילמד מהתיקונים שלך");
         try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
         onSaved();
         onClose();
         return;
@@ -327,11 +419,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       const branchId = await requireCurrentBranchId();
       let imageUrl: string | null = editInvoice?.image_url ?? null;
 
-      if (file) {
-        const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+      if (file || previewUrl?.startsWith("data:")) {
+        const restoredImage = file ? null : dataUrlToBlob(previewUrl!);
+        const uploadBody = file ?? restoredImage!.blob;
+        const uploadMime = file?.type || restoredImage?.mime || "image/jpeg";
+        const ext = file ? (file.name.split(".").pop() ?? "jpg").toLowerCase() : (uploadMime.includes("png") ? "png" : "jpg");
         const path = `${branchId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
-          contentType: file.type || "image/jpeg",
+        const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, uploadBody, {
+          contentType: uploadMime,
           upsert: false,
         });
         if (upErr) throw upErr;
@@ -387,6 +482,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
       if (!isEdit) {
         try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
       }
       toast.success(isEdit ? "החשבונית עודכנה בהצלחה" : "החשבונית נקלטה בהצלחה");
 
