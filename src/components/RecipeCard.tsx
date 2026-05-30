@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Pencil, Clock, CheckCircle2, Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -54,6 +54,13 @@ export function RecipeCard({
   const [customScale, setCustomScale] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  useEffect(() => {
+    if (!forceOpen) return;
+    setExpanded(true);
+    useUIStore.getState().setLastRecipe(recipe.id, recipe.nameHebrew);
+    onForcedOpen?.();
+  }, [forceOpen, onForcedOpen, recipe.id, recipe.nameHebrew]);
 
   const scaledIngredients = recipe.ingredients.map((i) => ({
     ...i,
