@@ -282,6 +282,19 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           </button>
         </div>
       </DialogContent>
+
+      {manageOpen && (
+        <SupplierCatalogManager
+          supplierId={supplierId}
+          supplierName={supplierName}
+          open={manageOpen}
+          onClose={() => {
+            setManageOpen(false);
+            // Seamlessly refresh the catalog so newly-added products appear
+            void reload();
+          }}
+        />
+      )}
     </Dialog>
   );
 }
