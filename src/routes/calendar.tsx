@@ -756,15 +756,54 @@ function DayDetails({
                     {ev.notes && (
                       <p className="text-sm mt-2 whitespace-pre-wrap text-foreground/90">{ev.notes}</p>
                     )}
-                    {ev.category === "delivery" && (ev.expected_items?.length ?? 0) > 0 && (
-                      <button
-                        onClick={() => onOpenChecklist(ev, isoDate)}
-                        className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-neon/40 text-neon text-xs font-bold hover:bg-neon/10 active:scale-95 transition"
-                      >
-                        <ClipboardCheck className="h-3.5 w-3.5" />
-                        צ׳קליסט פריקה ({ev.expected_items!.length})
-                      </button>
-                    )}
+                    {ev.category === "delivery" && (ev.expected_items?.length ?? 0) > 0 && (() => {
+                      const tmpl = ev.expected_items ?? [];
+                      const override = (ev._overrideItems ?? null) as ExpectedItem[] | null;
+                      // Merge: prefer override state per id when present
+                      const merged: ExpectedItem[] = tmpl.map((t) => {
+                        const o = override?.find((x) => x.id === t.id);
+                        return { ...t, is_received: o?.is_received ?? false };
+                      });
+                      const received = merged.filter((m) => m.is_received).length;
+                      return (
+                        <div className="mt-3 rounded-xl border border-neon/30 bg-neon/5 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-[11px] font-bold text-neon inline-flex items-center gap-1.5">
+                              <ClipboardCheck className="h-3.5 w-3.5" />
+                              יומן קליטת סחורה
+                            </div>
+                            <div className="text-[10px] tabular-nums text-muted-foreground">
+                              {received}/{merged.length} התקבלו
+                            </div>
+                          </div>
+                          <ul className="space-y-1 mb-2">
+                            {merged.slice(0, 6).map((it) => (
+                              <li
+                                key={it.id}
+                                className="flex items-center justify-between gap-2 text-xs bg-background/40 rounded px-2 py-1.5 border border-border/40"
+                              >
+                                <span className={`flex items-center gap-2 min-w-0 ${it.is_received ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                                  <span className={`h-3.5 w-3.5 rounded grid place-content-center border ${it.is_received ? "bg-neon border-neon text-black" : "border-border"}`}>
+                                    {it.is_received && <Check className="h-2.5 w-2.5" />}
+                                  </span>
+                                  <span className="truncate">{it.name}</span>
+                                </span>
+                              </li>
+                            ))}
+                            {merged.length > 6 && (
+                              <li className="text-[10px] text-muted-foreground text-center">+ {merged.length - 6} פריטים נוספים</li>
+                            )}
+                          </ul>
+                          <button
+                            onClick={() => onOpenChecklist(ev, isoDate)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md bg-neon text-black text-xs font-bold active:scale-95 transition"
+                          >
+                            <ClipboardCheck className="h-3.5 w-3.5" />
+                            פתח צ׳קליסט פריקה
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                   {canEdit && (
                     <div className="flex flex-col gap-1 shrink-0">
