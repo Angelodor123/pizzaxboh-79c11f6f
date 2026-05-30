@@ -34,11 +34,14 @@ export function useUnreadTicketCount(enabled: boolean) {
     let cancelled = false;
 
     const refresh = async () => {
-      const { count: c } = await supabase
+      const branchId = getActiveBranchIdSync();
+      let q = supabase
         .from("maintenance_tickets")
         .select("id", { count: "exact", head: true })
         .eq("is_read_by_admin", false)
         .neq("status", "resolved");
+      if (branchId) q = q.eq("branch_id", branchId);
+      const { count: c } = await q;
       if (!cancelled) setCount(c ?? 0);
     };
 
