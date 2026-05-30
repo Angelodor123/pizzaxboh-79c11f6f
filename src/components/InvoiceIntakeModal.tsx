@@ -516,6 +516,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   }, [headerVal, itemVal]);
 
   const checkAnomaly = async (): Promise<boolean> => {
+    if (totalNum == null) return false;
     if (totalNum >= HARD_LIMIT) return true;
     const { data } = await supabase
       .from("invoices")
