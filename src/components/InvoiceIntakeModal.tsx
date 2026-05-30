@@ -10,7 +10,56 @@ import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface SupplierOpt { id: string; name: string }
 
-interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string; discount: string }
+interface ItemRow {
+  item_name: string;
+  quantity: string;
+  /** מחיר בסיס — gross price per unit, before discount (user-editable). */
+  base_unit_price: string;
+  /** מחיר נטו ליחידה — computed = base × (1 − pct%) או base − amt. */
+  unit_price: string;
+  /** סה"כ — computed = quantity × unit_price (נטו). */
+  total_price: string;
+  /** Free-text discount, e.g. "10%" / "₪5" / "5 ש״ח". */
+  discount: string;
+}
+
+/** Parse a discount string into either a percent or a flat per-unit amount. */
+function parseDiscount(s: string): { type: "pct" | "amt"; value: number } | null {
+  if (!s) return null;
+  const trimmed = s.trim();
+  if (!trimmed) return null;
+  const hasPct = /%/.test(trimmed);
+  const cleaned = trimmed
+    .replace(/[₪$€£]/g, "")
+    .replace(/ש["״']?\s*ח/g, "")
+    .replace(/[^\d.\-]/g, "");
+  const num = Number(cleaned);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  return hasPct ? { type: "pct", value: num } : { type: "amt", value: num };
+}
+
+/** Net price per unit after discount. */
+function computeNet(base: number, discount: string): number {
+  if (!Number.isFinite(base) || base <= 0) return 0;
+  const d = parseDiscount(discount);
+  if (!d) return base;
+  if (d.type === "pct") return Math.max(0, base * (1 - Math.min(d.value, 100) / 100));
+  return Math.max(0, base - d.value);
+}
+
+const fmt2 = (n: number): string => (Number.isFinite(n) && n > 0 ? n.toFixed(2) : "");
+
+/** Recompute unit_price (net) and total_price for a row after a field changes. */
+function recalcRow(row: ItemRow): ItemRow {
+  const baseN = Number(row.base_unit_price) || 0;
+  const qtyN = Number(row.quantity) || 0;
+  const net = computeNet(baseN, row.discount);
+  return {
+    ...row,
+    unit_price: net > 0 ? fmt2(net) : "",
+    total_price: net > 0 && qtyN > 0 ? fmt2(net * qtyN) : "",
+  };
+}
 
 interface InventoryOpt { id: string; name: string; unit: string }
 
@@ -101,7 +150,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [docDate, setDocDate] = useState(
     editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
   );
-  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
+  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -175,9 +224,12 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         .eq("invoice_id", editInvoice.id)
         .order("sort_order");
       if (cancelled) return;
-      const rows = (data ?? []).map((r) => ({
+      const rows: ItemRow[] = (data ?? []).map((r) => ({
         item_name: r.item_name ?? "",
         quantity: r.quantity != null ? String(r.quantity) : "",
+        // Existing invoices store only the net unit_price — treat it as the base
+        // (no discount info was persisted). Discount stays empty so net == base.
+        base_unit_price: r.unit_price != null ? String(r.unit_price) : "",
         unit_price: r.unit_price != null ? String(r.unit_price) : "",
         total_price: r.total_price != null ? String(r.total_price) : "",
         discount: "",
@@ -330,13 +382,22 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       }
       // Populate item rows
       if (Array.isArray(parsed.items) && parsed.items.length > 0) {
-        nextItems = parsed.items.map((it) => ({
-          item_name: it.item_name ?? "",
-          quantity: it.quantity != null ? String(it.quantity) : "",
-          unit_price: it.unit_price != null ? String(it.unit_price) : "",
-          total_price: it.total_price != null ? String(it.total_price) : "",
-          discount: it.discount ?? "",
-        }));
+        nextItems = parsed.items.map((it) => {
+          // Prefer AI's explicit base_unit_price; if missing, fall back to unit_price
+          // (so the UI never shows an empty base column). Then recompute net+total
+          // locally so the math is consistent with the discount field.
+          const base = it.base_unit_price != null
+            ? String(it.base_unit_price)
+            : (it.unit_price != null ? String(it.unit_price) : "");
+          return recalcRow({
+            item_name: it.item_name ?? "",
+            quantity: it.quantity != null ? String(it.quantity) : "",
+            base_unit_price: base,
+            unit_price: it.unit_price != null ? String(it.unit_price) : base,
+            total_price: it.total_price != null ? String(it.total_price) : "",
+            discount: it.discount ?? "",
+          });
+        });
         setItems(nextItems);
         persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
@@ -354,9 +415,17 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
-  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
+  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
   const updateItem = (i: number, k: keyof ItemRow, v: string) =>
-    setItems((p) => p.map((row, idx) => (idx === i ? { ...row, [k]: v } : row)));
+    setItems((p) => p.map((row, idx) => {
+      if (idx !== i) return row;
+      const next: ItemRow = { ...row, [k]: v };
+      // Any change to base / discount / quantity must instantly recompute net + total.
+      if (k === "base_unit_price" || k === "discount" || k === "quantity") {
+        return recalcRow(next);
+      }
+      return next;
+    }));
   const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
 
   const checkAnomaly = async (): Promise<boolean> => {
@@ -682,8 +751,10 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
               <div className="space-y-2.5">
                 {items.map((row, i) => {
                   const qtyN = Number(row.quantity) || 0;
-                  const upN = Number(row.unit_price) || 0;
-                  const computed = qtyN * upN;
+                  const baseN = Number(row.base_unit_price) || 0;
+                  const netN = computeNet(baseN, row.discount);
+                  const totalN = netN * qtyN;
+                  const hasDiscount = !!parseDiscount(row.discount);
                   return (
                     <div key={i} className="rounded-lg border border-border bg-background/40 p-2.5 space-y-2">
                       {/* Row 1: index badge + item name (full width) + delete */}
@@ -709,24 +780,25 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                      {/* Row 2: numeric fields with labels above */}
-                      <div className="grid grid-cols-4 gap-2">
+                      {/* Row 2: 5-col math grid — quantity · base · discount · net · total.
+                          Base + discount are user-editable; net + total auto-recalc. */}
+                      <div className="grid grid-cols-5 gap-1.5">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
                           <input
                             value={row.quantity}
                             onChange={(e) => updateItem(i, "quantity", e.target.value)}
-                            className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
+                            className="w-full h-10 rounded-md bg-background border border-border px-1 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
                             inputMode="decimal"
                             placeholder="0"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">מחיר יח׳ ₪</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">מחיר בסיס</label>
                           <input
-                            value={row.unit_price}
-                            onChange={(e) => updateItem(i, "unit_price", e.target.value)}
-                            className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
+                            value={row.base_unit_price}
+                            onChange={(e) => updateItem(i, "base_unit_price", e.target.value)}
+                            className="w-full h-10 rounded-md bg-background border border-border px-1 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
                             inputMode="decimal"
                             placeholder="0.00"
                           />
@@ -736,20 +808,28 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                           <input
                             value={row.discount}
                             onChange={(e) => updateItem(i, "discount", e.target.value)}
-                            className={`w-full h-10 rounded-md bg-background border px-2 text-xs text-center font-bold focus:border-neon outline-none ${row.discount ? "border-amber-brand/70 text-amber-brand" : "border-border text-muted-foreground"}`}
+                            className={`w-full h-10 rounded-md bg-background border px-1 text-xs text-center font-bold focus:border-neon outline-none ${hasDiscount ? "border-amber-brand/70 text-amber-brand" : "border-border text-muted-foreground"}`}
                             placeholder="—"
-                            title={row.discount ? "המחיר הוזן לאחר ההנחה" : "אין הנחה"}
+                            title='לדוגמה: "10%" או "5" או "₪5"'
                           />
                         </div>
                         <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">נטו ליח׳</label>
+                          <div
+                            className={`w-full h-10 rounded-md border bg-zinc-900/40 px-1 text-sm text-center tabular-nums font-bold flex items-center justify-center ${hasDiscount && netN > 0 ? "border-amber-brand/50 text-amber-brand" : "border-border/60 text-muted-foreground"}`}
+                            title="מחושב אוטומטית מהבסיס וההנחה"
+                          >
+                            {netN > 0 ? netN.toFixed(2) : "—"}
+                          </div>
+                        </div>
+                        <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">סה״כ ₪</label>
-                          <input
-                            value={row.total_price}
-                            onChange={(e) => updateItem(i, "total_price", e.target.value)}
-                            className="w-full h-10 rounded-md bg-background border-2 border-border px-2 text-sm text-center tabular-nums font-bold text-neon focus:border-neon outline-none"
-                            inputMode="decimal"
-                            placeholder={computed > 0 ? computed.toFixed(2) : "0.00"}
-                          />
+                          <div
+                            className="w-full h-10 rounded-md border-2 border-border bg-zinc-900/40 px-1 text-sm text-center tabular-nums font-bold text-neon flex items-center justify-center"
+                            title="מחושב: כמות × נטו ליחידה"
+                          >
+                            {totalN > 0 ? totalN.toFixed(2) : "—"}
+                          </div>
                         </div>
                       </div>
                     </div>
