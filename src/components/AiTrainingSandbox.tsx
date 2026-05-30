@@ -213,6 +213,16 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
           }}
         />
       )}
+
+      {historySupplier && (
+        <TrainingHistoryModal
+          supplierId={historySupplier.id}
+          supplierName={historySupplier.name}
+          branchId={branchId}
+          isSuperAdmin={isSuperAdmin}
+          onClose={() => setHistorySupplier(null)}
+        />
+      )}
     </div>
   );
 }
