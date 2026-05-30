@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { X, Plus, Trash2, Copy, Send, Loader2, ChevronDown, Eye, Pencil, Image as ImageIcon, Package } from "lucide-react";
 import { SupplierCatalogPicker } from "@/components/SupplierCatalogPicker";
+import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
@@ -76,6 +77,7 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogManagerOpen, setCatalogManagerOpen] = useState(false);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
@@ -853,6 +855,23 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
               const cleaned = prev.filter((r) => r.name.trim() || r.qty.trim());
               return [...cleaned, ...newRows];
             });
+          }}
+          onAddNewProduct={() => {
+            // Close the picker first to avoid nested-dialog stacking, then open the manager.
+            setCatalogOpen(false);
+            setCatalogManagerOpen(true);
+          }}
+        />
+      )}
+      {catalogManagerOpen && (
+        <SupplierCatalogManager
+          supplierId={supplier.id}
+          supplierName={supplier.name}
+          open={catalogManagerOpen}
+          onClose={() => {
+            setCatalogManagerOpen(false);
+            // Re-open the picker so the user lands back where they were, with fresh data.
+            setCatalogOpen(true);
           }}
         />
       )}

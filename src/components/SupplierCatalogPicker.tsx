@@ -15,6 +15,9 @@ interface Props {
   onClose: () => void;
   /** Called with rows to append to the current order. */
   onAdd: (rows: OrderRow[]) => void;
+  /** Optional: lets the parent handle opening the catalog manager
+   * (closing this dialog first avoids nested-dialog stacking bugs). */
+  onAddNewProduct?: () => void;
 }
 
 type ShortageRow = {
@@ -25,7 +28,7 @@ type ShortageRow = {
   catalog_product_id: string | null;
 };
 
-export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose, onAdd }: Props) {
+export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose, onAdd, onAddNewProduct }: Props) {
   const [products, setProducts] = useState<SupplierProduct[]>([]);
   const [shortages, setShortages] = useState<ShortageRow[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -187,7 +190,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           </div>
           <button
             type="button"
-            onClick={() => setManageOpen(true)}
+            onClick={() => { if (onAddNewProduct) onAddNewProduct(); else setManageOpen(true); }}
             title="הוסף מוצר חדש לספק"
             aria-label="הוסף מוצר חדש לספק"
             className="h-11 w-11 grid place-content-center rounded-md border border-neon/40 text-neon hover:bg-neon/10 active:scale-95 transition shrink-0"
@@ -209,7 +212,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
             </div>
             <button
               type="button"
-              onClick={() => setManageOpen(true)}
+              onClick={() => { if (onAddNewProduct) onAddNewProduct(); else setManageOpen(true); }}
               className="h-10 px-4 inline-flex items-center gap-2 rounded-md bg-neon text-black font-bold text-sm active:scale-95 transition"
             >
               <Plus className="h-4 w-4" />
