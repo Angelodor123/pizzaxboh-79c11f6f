@@ -714,12 +714,12 @@ function DayDetails({
             return (
               <li
                 key={ev.id}
-                className={`rounded-xl border p-3 ${
+                className={`rounded-2xl border p-4 bg-zinc-900/70 backdrop-blur shadow-sm break-words ${
                   ev.high_priority
-                    ? "border-destructive/60 bg-destructive/5"
+                    ? "border-destructive/60 ring-1 ring-destructive/30"
                     : isAuto
-                    ? "border-success/70 bg-success/5"
-                    : "border-border bg-background/40"
+                    ? "border-success/60"
+                    : "border-border/60"
                 }`}
                 style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
               >
