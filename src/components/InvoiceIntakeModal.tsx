@@ -126,6 +126,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         totalAmount,
         docDate,
         items,
+        rawOcr,
         ...overrides,
       } satisfies InvoiceDraft));
     } catch { /* ignore */ }
@@ -417,11 +418,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       const branchId = await requireCurrentBranchId();
       let imageUrl: string | null = editInvoice?.image_url ?? null;
 
-      if (file) {
-        const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+      if (file || previewUrl?.startsWith("data:")) {
+        const restoredImage = file ? null : dataUrlToBlob(previewUrl!);
+        const uploadBody = file ?? restoredImage!.blob;
+        const uploadMime = file?.type || restoredImage?.mime || "image/jpeg";
+        const ext = file ? (file.name.split(".").pop() ?? "jpg").toLowerCase() : (uploadMime.includes("png") ? "png" : "jpg");
         const path = `${branchId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
-          contentType: file.type || "image/jpeg",
+        const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, uploadBody, {
+          contentType: uploadMime,
           upsert: false,
         });
         if (upErr) throw upErr;
