@@ -168,7 +168,20 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     setItemVal(Array.from({ length: Math.max(1, rowCount) }, () => "pending"));
   };
   const setHV = (k: HeaderKey, v: ValState) => setHeaderVal((p) => ({ ...p, [k]: v }));
-  const setIV = (i: number, v: ValState) => setItemVal((p) => p.map((x, idx) => (idx === i ? v : x)));
+  const setIV = (i: number, v: ValState) =>
+    setItemVal((p) => {
+      const next = p.length > i ? [...p] : [...p, ...Array.from({ length: i + 1 - p.length }, () => "pending" as ValState)];
+      next[i] = v;
+      return next;
+    });
+  // Keep itemVal length synced with items (e.g. when OCR populates rows without calling resetValidation).
+  useEffect(() => {
+    setItemVal((p) => {
+      if (p.length === items.length) return p;
+      if (p.length < items.length) return [...p, ...Array.from({ length: items.length - p.length }, () => "pending" as ValState)];
+      return p.slice(0, items.length);
+    });
+  }, [items.length]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
