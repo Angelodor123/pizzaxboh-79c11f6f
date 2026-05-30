@@ -101,6 +101,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         quantity: r.quantity != null ? String(r.quantity) : "",
         unit_price: r.unit_price != null ? String(r.unit_price) : "",
         total_price: r.total_price != null ? String(r.total_price) : "",
+        discount: "",
       }));
       if (rows.length) setItems(rows);
       // Load existing image preview via signed URL
