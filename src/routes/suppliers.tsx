@@ -51,10 +51,13 @@ function SuppliersPage() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const { data, error } = await supabase
+      const branchId = getActiveBranchIdSync();
+      let q = supabase
         .from("suppliers")
         .select("*")
         .order("name", { ascending: true });
+      if (branchId) q = q.eq("branch_id", branchId);
+      const { data, error } = await q;
       if (!mounted) return;
       if (error) toast.error("שגיאה בטעינת ספקים");
       else setList((data as Supplier[]) ?? []);
