@@ -460,56 +460,9 @@ function MonthView({
                 </div>
               )}
 
-              {/* +N more — opens popover */}
-              {extraCount > 0 && (
-                <div className="absolute bottom-1 right-1 z-20">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          setSelectedDate(c.iso);
-                        }}
-                        className="text-[9px] sm:text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded bg-neon/20 text-neon border border-neon/40 hover:bg-neon/30 transition"
-                      >
-                        +{extraCount}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-64 p-2 text-right" dir="rtl">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2 px-1">
-                        {c.date.getDate()}/{c.date.getMonth() + 1} · {dayEvents.length} אירועים
-                      </div>
-                      <ul className="space-y-1 max-h-72 overflow-auto">
-                        {dayEvents.map((e) => {
-                          const col = eventTypeColor(e.event_type);
-                          return (
-                            <li
-                              key={e.id + "-pop"}
-                              className="flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted/40"
-                            >
-                              <span
-                                className="h-2 w-2 rounded-full shrink-0"
-                                style={{ background: col ?? "var(--neon)" }}
-                              />
-                              <span className="truncate flex-1">{e.title}</span>
-                              {e.start_time && (
-                                <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                                  {e.start_time.slice(0, 5)}
-                                </span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
-
-              {/* Priority indicator dot — bottom-left */}
+              {/* Priority indicator dot — top-right */}
               {hasPriority && (
-                <span className="absolute bottom-1 left-1 z-10 h-1.5 w-1.5 rounded-full bg-destructive pointer-events-none" />
+                <span className="absolute top-1 right-1 z-10 h-1.5 w-1.5 rounded-full bg-destructive pointer-events-none" />
               )}
             </div>
           );
