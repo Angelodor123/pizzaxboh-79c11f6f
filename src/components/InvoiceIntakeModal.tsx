@@ -435,18 +435,44 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
-  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
-  const updateItem = (i: number, k: keyof ItemRow, v: string) =>
+  const addItem = () => {
+    setItems((p) => [...p, { item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
+    // New manual rows count as already "corrected" (user-authored) so they don't block save.
+    setItemVal((p) => [...p, "corrected"]);
+  };
+  const updateItem = (i: number, k: keyof ItemRow, v: string) => {
     setItems((p) => p.map((row, idx) => {
       if (idx !== i) return row;
       const next: ItemRow = { ...row, [k]: v };
-      // Any change to base / discount / quantity must instantly recompute net + total.
       if (k === "base_unit_price" || k === "discount" || k === "quantity") {
         return recalcRow(next);
       }
       return next;
     }));
-  const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
+    // Editing an AI-suggested row implicitly marks it as corrected.
+    setItemVal((p) => p.map((s, idx) => (idx === i && s === "pending" ? "corrected" : s)));
+  };
+  const removeItem = (i: number) => {
+    setItems((p) => p.filter((_, idx) => idx !== i));
+    setItemVal((p) => p.filter((_, idx) => idx !== i));
+  };
+
+  // Editing a header field while AI suggestion is pending → flip to corrected.
+  const markHeaderEdited = useCallback((k: HeaderKey) => {
+    setHeaderVal((p) => (p[k] === "pending" ? { ...p, [k]: "corrected" } : p));
+  }, []);
+
+  // Training-only: all header fields + all items must be resolved (approved or corrected).
+  const allValidated = useMemo(() => {
+    const headerOk = (Object.values(headerVal) as ValState[]).every((s) => s !== "pending");
+    const itemsOk = itemVal.length > 0 && itemVal.every((s) => s !== "pending");
+    return headerOk && itemsOk;
+  }, [headerVal, itemVal]);
+  const pendingCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "pending").length;
+    const it = itemVal.filter((s) => s === "pending").length;
+    return h + it;
+  }, [headerVal, itemVal]);
 
   const checkAnomaly = async (): Promise<boolean> => {
     if (totalNum >= HARD_LIMIT) return true;
