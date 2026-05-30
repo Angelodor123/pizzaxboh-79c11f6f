@@ -210,16 +210,17 @@ function SortableTaskItem({
     position: "relative",
   };
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className="pl-9">
       {showHandle && (
         <button
           type="button"
           aria-label="גרור לסידור"
-          className="absolute top-2 left-2 z-10 p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent/40 cursor-grab active:cursor-grabbing touch-none"
+          title="גרור לסידור מחדש"
+          className="absolute top-1/2 -translate-y-1/2 left-1 z-20 h-9 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground/70 hover:text-neon hover:bg-accent/40 active:bg-accent/60 cursor-grab active:cursor-grabbing touch-none select-none"
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-4 w-4" />
+          <span aria-hidden className="leading-none text-[18px] font-bold tracking-[1px]">⠿</span>
         </button>
       )}
       {children}
