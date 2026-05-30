@@ -437,27 +437,14 @@ function MonthView({
                 className="absolute inset-0 z-0 active:scale-[0.98] transition"
               />
 
-              {/* Event dots (max 3) + overflow badge — centered at bottom */}
-              {dayEvents.length > 0 && (
-                <div className="absolute bottom-1.5 left-0 right-0 z-10 flex items-center justify-center gap-1 pointer-events-none">
-                  {dotEvents.map((e) => {
-                    const col = eventTypeColor(e.event_type);
-                    return (
-                      <span
-                        key={e.id + c.iso + "-dot"}
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: col ?? "var(--neon)" }}
-                        title={e.title}
-                      />
-                    );
-                  })}
-                  {extraCount > 0 && (
-                    <span className="text-[9px] font-bold text-neon tabular-nums leading-none">
-                      +{extraCount}
-                    </span>
-                  )}
-                </div>
+              {/* Single minimal indicator — centered below the date number */}
+              {hasEvents && (
+                <span
+                  className="absolute left-1/2 -translate-x-1/2 bottom-1.5 z-10 h-1.5 w-1.5 rounded-full bg-neon pointer-events-none"
+                  aria-label={`${dayEvents.length} אירועים`}
+                />
               )}
+
 
               {/* Priority indicator dot — top-right */}
               {hasPriority && (
