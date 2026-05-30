@@ -48,7 +48,6 @@ import {
 } from "@/lib/notifications";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
-
 function ActiveBranchBadge() {
   const branch = useActiveBranchData();
   if (!branch?.name) return null;
@@ -65,9 +64,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-neon text-glow-neon">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">הדף לא נמצא</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          הדף שחיפשת לא קיים או הוסר.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">הדף שחיפשת לא קיים או הוסר.</p>
         <div className="mt-6">
           <Link
             to="/"
@@ -87,9 +84,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          תקלה בטעינת הדף
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">תקלה בטעינת הדף</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           אירעה שגיאה. אנא נסה שוב או חזור למטבח.
         </p>
@@ -115,13 +110,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Pizza X — מטבח" },
-      { name: "description", content: "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House." },
+      {
+        name: "description",
+        content:
+          "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
+      },
       { property: "og:title", content: "Pizza X — מטבח" },
       { name: "twitter:title", content: "Pizza X — מטבח" },
-      { property: "og:description", content: "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House." },
-      { name: "twitter:description", content: "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/gna0ipaNRGTI5yjH5wtF1u61HNB3/social-images/social-1778951248400-1000188452.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/gna0ipaNRGTI5yjH5wtF1u61HNB3/social-images/social-1778951248400-1000188452.webp" },
+      {
+        property: "og:description",
+        content:
+          "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/gna0ipaNRGTI5yjH5wtF1u61HNB3/social-images/social-1778951248400-1000188452.webp",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/gna0ipaNRGTI5yjH5wtF1u61HNB3/social-images/social-1778951248400-1000188452.webp",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
       { name: "theme-color", content: "#000000" },
@@ -139,15 +154,60 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "preload", as: "image", href: pizzaXLogo, fetchPriority: "high" },
       // Apple splash screens (per-resolution)
-      { rel: "apple-touch-startup-image", href: "/apple-splash-2048-2732.png", media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-1668-2388.png", media: "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-1536-2048.png", media: "(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-1290-2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-1179-2556.png", media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-1170-2532.png", media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-1125-2436.png", media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-828-1792.png", media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/apple-splash-750-1334.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-2048-2732.png",
+        media:
+          "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-1668-2388.png",
+        media:
+          "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-1536-2048.png",
+        media:
+          "(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-1290-2796.png",
+        media:
+          "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-1179-2556.png",
+        media:
+          "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-1170-2532.png",
+        media:
+          "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-1125-2436.png",
+        media:
+          "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-828-1792.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/apple-splash-750-1334.png",
+        media:
+          "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -193,7 +253,6 @@ function RootComponent() {
       </AuthProvider>
       <Toaster position="top-center" richColors closeButton />
       <ConfirmHost />
-
     </QueryClientProvider>
   );
 }
@@ -217,7 +276,7 @@ function AuthedShell() {
   useNotebookRealtime();
   useSiteTextsSync();
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
-  
+
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const category = useUIStore((s) => s.category);
   const router = useRouter();
@@ -243,7 +302,6 @@ function AuthedShell() {
     (category === "dishes" ||
       (category !== "all" && category !== "desserts" && MENU_ITEM_CATEGORIES.includes(category)));
   const showQuickBack = !isRecipesPage;
-
 
   // Register service worker once
   useEffect(() => {
@@ -271,9 +329,7 @@ function AuthedShell() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header
-        className="sticky top-0 z-40 overflow-visible backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors"
-      >
+      <header className="sticky top-0 z-40 overflow-visible backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
           <div className="flex items-center gap-2 shrink-0">
             <CategoryDrawer />
@@ -301,8 +357,12 @@ function AuthedShell() {
           </Link>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-visible sm:gap-3">
             <GlobalSearch />
-            <div className="shrink-0"><MaintenanceBell /></div>
-            <div className="shrink-0"><BranchSwitcher /></div>
+            <div className="shrink-0">
+              <MaintenanceBell />
+            </div>
+            <div className="shrink-0">
+              <BranchSwitcher />
+            </div>
             <Link
               to="/my-profile"
               className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
@@ -328,9 +388,7 @@ function AuthedShell() {
               </button>
             )}
           </div>
-
         </div>
-
       </header>
       <main
         className="flex-1"
@@ -350,9 +408,7 @@ function AuthedShell() {
       <CriticalMaintenanceInterceptor />
       {showQuickBack && <QuickBackBubble />}
       <footer className="border-t border-border py-4 px-4 text-center space-y-1">
-        <p className="text-xs text-muted-foreground/70">
-          Pizza X • Urban Jungle Kitchen OS
-        </p>
+        <p className="text-xs text-muted-foreground/70">Pizza X • Urban Jungle Kitchen OS</p>
         <p className="text-[11px] text-foreground/40 tracking-wide" dir="rtl">
           {footerCredit}
         </p>
