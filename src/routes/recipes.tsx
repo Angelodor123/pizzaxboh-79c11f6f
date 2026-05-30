@@ -324,7 +324,7 @@ function KitchenDashboard() {
                 forceOpen={forcedOpenRecipeId === r.id}
                 onForcedOpen={(recipeId) => {
                   setForcedOpenRecipeId((current) => (current === recipeId ? null : current));
-                  navigate({ search: (prev) => ({ ...prev, openRecipeId: undefined }), replace: true });
+                  navigate({ search: {} as any, replace: true });
                 }}
               />
             </SelectableRecipeCard>
