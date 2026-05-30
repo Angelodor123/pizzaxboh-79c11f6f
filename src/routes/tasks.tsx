@@ -1149,6 +1149,58 @@ function TasksPage() {
         onDeleted={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
       />
 
+      {/* AI-extraction confirmation for "Report Shortage" */}
+      <Dialog
+        open={!!confirmShortage}
+        onOpenChange={(o) => { if (!o) setConfirmShortage(null); }}
+      >
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-neon" />
+              אישור שם הפריט
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              ה-AI לא היה בטוח לחלוטין. ודא או ערוך את שם חומר הגלם לפני השמירה ברשימת החוסרים.
+            </p>
+            <input
+              autoFocus
+              value={confirmShortage?.name ?? ""}
+              onChange={(e) =>
+                setConfirmShortage((c) => (c ? { ...c, name: e.target.value } : c))
+              }
+              maxLength={120}
+              dir="rtl"
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmShortage(null)}
+              className="flex-1 h-10 rounded-md border border-border text-sm hover:bg-accent"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirmShortage) return;
+                const snap = confirmShortage;
+                setConfirmShortage(null);
+                await saveShortage(snap.name, snap.catalogProductId, snap.unit);
+              }}
+              className="flex-1 h-10 rounded-md bg-neon text-primary-foreground font-bold text-sm glow-neon inline-flex items-center justify-center gap-1.5"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              שמור חוסר
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Draggable shortcut to the notepad */}
       <DraggableNotepadFab />
 
