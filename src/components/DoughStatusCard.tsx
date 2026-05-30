@@ -297,14 +297,26 @@ export function DoughStatusCard() {
         data-tour="dough-status"
         className="relative text-right rounded-xl border-2 border-amber-500/40 hover:border-amber-400 bg-amber-500/5 p-4 transition flex flex-col gap-1 w-full"
       >
-        <button
-          type="button"
-          onClick={openHistory}
-          aria-label="היסטוריית עדכוני בצק"
-          className="absolute top-2 left-2 h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition"
-        >
-          <History className="h-4 w-4" />
-        </button>
+        <div className="absolute top-2 left-2 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={saving}
+            aria-label="איפוס סטטוס בצקים"
+            title="איפוס לאפס"
+            className="h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition disabled:opacity-40"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={openHistory}
+            aria-label="היסטוריית עדכוני בצק"
+            className="h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition"
+          >
+            <History className="h-4 w-4" />
+          </button>
+        </div>
         <button
           type="button"
           onClick={openModal}
