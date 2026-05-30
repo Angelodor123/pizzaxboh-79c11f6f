@@ -100,7 +100,10 @@ interface InvoiceDraft {
   docDate: string;
   items: ItemRow[];
   rawOcr?: ParsedInvoice | null;
+  headerVal?: Record<"supplier" | "invoice_number" | "document_date" | "total_amount", "pending" | "approved" | "corrected">;
+  itemVal?: Array<"pending" | "approved" | "corrected">;
 }
+
 
 const openDraftDb = (): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
@@ -207,10 +210,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         docDate,
         items,
         rawOcr,
+        headerVal,
+        itemVal,
         ...overrides,
       } satisfies InvoiceDraft));
     } catch { /* ignore */ }
   };
+
+  // Explicit close: user clicked X / Escape / backdrop. Clears draft so
+  // next open starts fresh. (Backgrounding the tab does NOT call this.)
+  const handleExplicitClose = useCallback(() => {
+    if (!isEdit) {
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
+    }
+    onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, onClose, DRAFT_KEY]);
+
 
   // Load supplier catalog whenever supplier is selected — used as RAG context for OCR.
   useEffect(() => {
@@ -292,42 +309,46 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         setInvoiceNumber(d.invoiceNumber ?? "");
         setTotalAmount(d.totalAmount ?? "");
         setDocDate(d.docDate ?? new Date().toISOString().slice(0, 10));
-        if (Array.isArray(d.items) && d.items.length) setItems(d.items);
-        if (d.rawOcr && typeof d.rawOcr === "object") setRawOcr(d.rawOcr);
-      }
-    } catch { /* ignore */ }
-    loadDraftImage(DRAFT_KEY)
-      .then((storedPreview) => {
-        if (!cancelled && storedPreview?.startsWith("data:")) setPreviewUrl(storedPreview);
-      })
-      .catch(() => { /* ignore */ });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit]);
+          if (Array.isArray(d.items) && d.items.length) setItems(d.items);
+          if (d.rawOcr && typeof d.rawOcr === "object") setRawOcr(d.rawOcr);
+          // Restore training validation states (✓ / ✗ markers and manual-edit gate)
+          if (d.headerVal && typeof d.headerVal === "object") setHeaderVal(d.headerVal);
+          if (Array.isArray(d.itemVal) && d.itemVal.length) setItemVal(d.itemVal);
+        }
+      } catch { /* ignore */ }
+      loadDraftImage(DRAFT_KEY)
+        .then((storedPreview) => {
+          if (!cancelled && storedPreview?.startsWith("data:")) setPreviewUrl(storedPreview);
+        })
+        .catch(() => { /* ignore */ });
+      return () => { cancelled = true; };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEdit]);
+  
+    useEffect(() => {
+      if (isEdit) return;
+      const id = setTimeout(() => {
+        persistDraft();
+      }, 200);
+      return () => clearTimeout(id);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [supplierId, invoiceNumber, totalAmount, docDate, items, rawOcr, headerVal, itemVal, isEdit]);
+  
+    // Note: preview is stored as a base64 data URL (not blob:) so it survives
+    // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
+  
+    // Close on Escape — clears the draft (explicit user dismiss)
+    useEffect(() => {
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          if (showAnomaly) setShowAnomaly(false);
+          else handleExplicitClose();
+        }
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [handleExplicitClose, showAnomaly]);
 
-  useEffect(() => {
-    if (isEdit) return;
-    const id = setTimeout(() => {
-      persistDraft();
-    }, 200);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierId, invoiceNumber, totalAmount, docDate, items, rawOcr, isEdit]);
-
-  // Note: preview is stored as a base64 data URL (not blob:) so it survives
-  // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
-
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (showAnomaly) setShowAnomaly(false);
-        else onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, showAnomaly]);
 
   const totalNum = useMemo(() => Number(totalAmount), [totalAmount]);
   const formValid = supplierId && totalAmount.trim() && !Number.isNaN(totalNum) && totalNum > 0 && docDate;
@@ -723,7 +744,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         : "border-border";
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
+    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={handleExplicitClose} dir="rtl">
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-5xl bg-card border border-border rounded-2xl overflow-hidden max-h-[94vh] flex flex-col"
@@ -733,7 +754,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">{trainingMode ? "AI Training · Sandbox" : "Goods Receiving"}</div>
             <h3 className="font-display text-xl font-bold">{trainingMode ? "אימון AI מקבלה (לא נשמר במלאי)" : isEdit ? "עריכת חשבונית" : "קליטת חשבונית חדשה"}</h3>
           </div>
-          <button onClick={onClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
+          <button onClick={handleExplicitClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
+
             <X className="h-4 w-4" />
           </button>
         </div>
