@@ -576,7 +576,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 </div>
                 <button
                   type="button"
-                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0 }])}
+                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "" }])}
                   className="mt-3 w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
                 >
                   + הוסף שורה
