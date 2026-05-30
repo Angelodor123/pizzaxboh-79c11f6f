@@ -281,7 +281,12 @@ function InvoicesPage() {
             </div>
           )}
         </TabsContent>
+
+        <TabsContent value="training" className="mt-4">
+          <AiTrainingSandbox suppliers={suppliers} isSuperAdmin={isSuperAdmin} />
+        </TabsContent>
       </Tabs>
+
 
       {/* Intake modal */}
       {open && (
