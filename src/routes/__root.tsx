@@ -272,10 +272,10 @@ function AuthedShell() {
   return (
     <div className="min-h-screen flex flex-col">
       <header
-        className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors"
+        className="sticky top-0 z-40 overflow-visible backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors"
       >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
-          <div className="flex items-center gap-1 shrink-0">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
+          <div className="flex items-center gap-2 shrink-0">
             <CategoryDrawer />
           </div>
 
@@ -299,7 +299,7 @@ function AuthedShell() {
             </span>
             <ActiveBranchBadge />
           </Link>
-          <div className="flex items-center justify-end gap-1 shrink-0">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-visible sm:gap-3">
             <GlobalSearch />
             <div className="shrink-0"><MaintenanceBell /></div>
             <div className="shrink-0"><BranchSwitcher /></div>
