@@ -207,8 +207,8 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
   const [m, setM] = useState<Metrics>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [sportsEvents, setSportsEvents] = useState<Array<{ id: string; title: string; event_date: string; start_time: string | null; notes: string | null; projector_broadcast: boolean | null }>>([]);
-  const [syncing, setSyncing] = useState(false);
-  const syncFn = useServerFn(syncSportsEvents);
+
+
 
   const loadSports = async () => {
     const today = new Date().toISOString().slice(0, 10);
