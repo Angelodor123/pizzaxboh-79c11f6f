@@ -1384,7 +1384,7 @@ export type Database = {
             foreignKeyName: "shortage_items_catalog_item_id_fkey"
             columns: ["catalog_item_id"]
             isOneToOne: false
-            referencedRelation: "supplier_catalog"
+            referencedRelation: "supplier_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1419,107 +1419,6 @@ export type Database = {
         }
         Relationships: []
       }
-      supplier_catalog: {
-        Row: {
-          active: boolean
-          barcode: string | null
-          branch_id: string
-          category: string | null
-          created_at: string
-          created_by: string | null
-          default_price: number
-          id: string
-          image_url: string | null
-          notes: string | null
-          pack_size: number
-          product_name: string
-          sku: string | null
-          sort_order: number
-          supplier_id: string
-          unit: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          barcode?: string | null
-          branch_id: string
-          category?: string | null
-          created_at?: string
-          created_by?: string | null
-          default_price?: number
-          id?: string
-          image_url?: string | null
-          notes?: string | null
-          pack_size?: number
-          product_name: string
-          sku?: string | null
-          sort_order?: number
-          supplier_id: string
-          unit?: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          barcode?: string | null
-          branch_id?: string
-          category?: string | null
-          created_at?: string
-          created_by?: string | null
-          default_price?: number
-          id?: string
-          image_url?: string | null
-          notes?: string | null
-          pack_size?: number
-          product_name?: string
-          sku?: string | null
-          sort_order?: number
-          supplier_id?: string
-          unit?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      supplier_catalog_aliases: {
-        Row: {
-          alias: string
-          branch_id: string
-          catalog_item_id: string
-          created_at: string
-          created_by: string | null
-          id: string
-          source: string
-          usage_count: number
-        }
-        Insert: {
-          alias: string
-          branch_id: string
-          catalog_item_id: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          source?: string
-          usage_count?: number
-        }
-        Update: {
-          alias?: string
-          branch_id?: string
-          catalog_item_id?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          source?: string
-          usage_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_catalog_aliases_catalog_item_id_fkey"
-            columns: ["catalog_item_id"]
-            isOneToOne: false
-            referencedRelation: "supplier_catalog"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       supplier_orders_history: {
         Row: {
           branch_id: string
@@ -1546,6 +1445,47 @@ export type Database = {
           supplier_id?: string
         }
         Relationships: []
+      }
+      supplier_product_aliases: {
+        Row: {
+          alias: string
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          source: string
+          usage_count: number
+        }
+        Insert: {
+          alias: string
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          source?: string
+          usage_count?: number
+        }
+        Update: {
+          alias?: string
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          source?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_product_aliases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_products: {
         Row: {
@@ -1875,8 +1815,8 @@ export type Database = {
       find_catalog_match: {
         Args: { _branch_id: string; _query: string; _supplier_id: string }
         Returns: {
-          catalog_item_id: string
           match_type: string
+          product_id: string
           product_name: string
           similarity: number
         }[]
