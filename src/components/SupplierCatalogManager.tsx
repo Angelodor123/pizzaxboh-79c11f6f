@@ -149,104 +149,107 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">📦 הוספת מוצר לקטלוג — {supplierName}</DialogTitle>
+          <DialogTitle className="font-display text-xl flex items-center gap-2">
+            <Package className="h-5 w-5 text-neon" />
+            {supplierName} — הוספת מוצר לקטלוג
+          </DialogTitle>
         </DialogHeader>
 
         {/* Add / Edit form */}
-        <div className="border border-border rounded-xl p-4 space-y-3 bg-background/40">
-          <div className="text-xs font-bold text-neon">{editingId ? "עריכת מוצר" : "הוספת מוצר חדש"}</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input
-              autoFocus
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="שם המוצר"
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-              maxLength={120}
-            />
-            <input
-              value={draft.sku}
-              onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
-              placeholder="מק״ט / SKU"
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-              maxLength={64}
-            />
-            <input
-              value={draft.unit_size}
-              onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
-              placeholder='גודל אריזה (כגון: ארגז - 1 יח׳ × 2 ק״ג)'
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-              maxLength={80}
-            />
-            <input
-              value={draft.category}
-              onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-              placeholder="קטגוריה (אופציונלי)"
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-              maxLength={60}
-            />
+        <div className="border border-border rounded-xl p-4 space-y-2.5 bg-background/40">
+          <div className="text-xs font-bold text-neon">{editingId ? "עריכת מוצר" : "מוצר חדש"}</div>
 
-            <input
-              value={draft.unit}
-              onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
-              placeholder="יחידה (ק״ג / יח׳ / ארגז)"
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-              maxLength={20}
-            />
-            <input
-              value={draft.default_qty}
-              onChange={(e) => setDraft({ ...draft, default_qty: e.target.value })}
-              placeholder="כמות ברירת מחדל"
-              type="number"
-              min={0}
-              step="any"
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            />
-            <input
-              value={draft.price}
-              onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-              placeholder="מחיר (אופציונלי)"
-              type="number"
-              min={0}
-              step="any"
-              className="h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            />
-            <div className="flex items-center gap-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUpload(f);
-                  if (fileRef.current) fileRef.current.value = "";
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="h-10 px-3 inline-flex items-center gap-1.5 rounded-md border border-border hover:border-neon hover:text-neon text-sm disabled:opacity-50"
-              >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {draft.image_url ? "החלף תמונה" : "העלאת תמונה"}
-              </button>
-              {draft.image_url && (
-                <img src={draft.image_url} alt="" className="h-10 w-10 rounded object-cover border border-border" />
-              )}
+          <input
+            autoFocus
+            value={draft.name}
+            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            placeholder="שם המוצר"
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+            maxLength={120}
+          />
+          <input
+            value={draft.sku}
+            onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+            placeholder='מק״ט / SKU'
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+            maxLength={64}
+          />
+          <input
+            value={draft.unit_size}
+            onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
+            placeholder='גודל אריזה (כגון: ארגז - 1 יח׳ × 2 ק״ג)'
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+            maxLength={80}
+          />
+          <input
+            value={draft.category}
+            onChange={(e) => setDraft({ ...draft, category: e.target.value })}
+            placeholder="קטגוריה (אופציונלי)"
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+            maxLength={60}
+          />
+          <input
+            value={draft.unit}
+            onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
+            placeholder='יחידה (ק״ג / יח׳ / ארגז)'
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+            maxLength={20}
+          />
+          <input
+            value={draft.default_qty}
+            onChange={(e) => setDraft({ ...draft, default_qty: e.target.value })}
+            placeholder="כמות ברירת מחדל"
+            type="number"
+            min={0}
+            step="any"
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+          />
+          <input
+            value={draft.price}
+            onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+            placeholder="מחיר (אופציונלי)"
+            type="number"
+            min={0}
+            step="any"
+            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+          />
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleUpload(f);
+              if (fileRef.current) fileRef.current.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-sm disabled:opacity-50"
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {draft.image_url ? "החלף תמונה" : "העלאת תמונה"}
+          </button>
+          {draft.image_url && (
+            <div className="flex justify-center">
+              <img src={draft.image_url} alt="" className="h-16 w-16 rounded object-cover border border-border" />
             </div>
-          </div>
-          <div className="flex gap-2 justify-end">
+          )}
+
+          <div className="flex gap-2 pt-1">
             {editingId && (
-              <button onClick={cancelEdit} className="h-9 px-3 rounded-md border border-border text-sm hover:text-neon">
+              <button onClick={cancelEdit} className="h-11 px-4 rounded-md border border-border text-sm hover:text-neon">
                 ביטול
               </button>
             )}
             <button
               onClick={save}
               disabled={saving || !draft.name.trim()}
-              className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-neon text-black font-bold text-sm disabled:opacity-50"
+              className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-md bg-neon text-black font-bold text-sm disabled:opacity-50"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {editingId ? "שמור שינויים" : "הוסף לקטלוג"}
