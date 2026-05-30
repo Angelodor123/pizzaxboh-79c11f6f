@@ -29,7 +29,7 @@ const CopilotFab = lazy(() =>
 import { NdaGate } from "@/components/NdaGate";
 import { BranchGate, useActiveBranchData } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
-import { ServiceModeToggle } from "@/components/ServiceModeToggle";
+
 import { MaintenanceBell } from "@/components/MaintenanceBell";
 import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
@@ -217,7 +217,7 @@ function AuthedShell() {
   useNotebookRealtime();
   useSiteTextsSync();
   const footerCredit = useSiteText("general.footer_credit", "© 2026 נבנה על ידי דור ברקת");
-  const isServiceMode = useUIStore((s) => s.isServiceMode);
+  
   const clearLastRecipe = useUIStore((s) => s.clearLastRecipe);
   const category = useUIStore((s) => s.category);
   const router = useRouter();
@@ -242,11 +242,7 @@ function AuthedShell() {
     isRecipesPage &&
     (category === "dishes" ||
       (category !== "all" && MENU_ITEM_CATEGORIES.includes(category)));
-  // Service Mode only applies to the back-of-house recipes view, not to the
-  // customer-facing dishes view on the same route.
-  const showServiceToggle = isRecipesPage && !isDishesView;
   const showQuickBack = !isRecipesPage;
-  const serviceModeVisible = isServiceMode && showServiceToggle;
 
 
   // Register service worker once
@@ -276,12 +272,7 @@ function AuthedShell() {
   return (
     <div className="min-h-screen flex flex-col">
       <header
-        className={`sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 transition-colors ${
-          serviceModeVisible
-            ? "border-orange-500 shadow-[0_4px_24px_-4px_rgba(255,140,0,0.6)]"
-            : "border-border"
-        }`}
-
+        className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors"
       >
         <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-1 sm:gap-2">
           <div className="flex items-center gap-1 shrink-0">
@@ -304,13 +295,12 @@ function AuthedShell() {
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
             <span className="text-[9px] sm:text-[12px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
-              {serviceModeVisible ? "Service Mode" : "Back of House"}
+              Back of House
             </span>
             <ActiveBranchBadge />
           </Link>
           <div className="flex items-center gap-1 shrink-0">
             <GlobalSearch />
-            {showServiceToggle && <ServiceModeToggle />}
             <MaintenanceBell />
             <BranchSwitcher />
             <Link
