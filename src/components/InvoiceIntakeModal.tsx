@@ -29,12 +29,18 @@ interface Props {
   editInvoice?: EditInvoiceData | null;
   onDeleted?: (id: string) => void;
   initialSupplierId?: string;
+  /**
+   * Training mode: zero impact on operational data.
+   * Only updates AI learning/mapping tables (invoice_ocr_feedback + supplier parsing_instructions).
+   * Does NOT write to invoices / invoice_items / inventory.
+   */
+  trainingMode?: boolean;
 }
 
 const DRAFT_KEY = "invoice-intake-draft";
 const HARD_LIMIT = 15000;
 
-export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId }: Props) {
+export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId, trainingMode = false }: Props) {
   const isEdit = !!editInvoice;
   const [supplierId, setSupplierId] = useState(editInvoice?.supplier_id ?? initialSupplierId ?? "");
 
