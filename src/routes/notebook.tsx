@@ -12,6 +12,7 @@ import {
 import { useSiteText } from "@/lib/site-texts";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
+import { ShortageCatalogInput } from "@/components/ShortageCatalogInput";
 
 export const Route = createFileRoute("/notebook")({
   component: NotebookPage,
