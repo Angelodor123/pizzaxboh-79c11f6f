@@ -60,9 +60,9 @@ interface CachedWeather {
   timestamp: number;
 }
 
-function readCache(): CachedWeather | null {
+function readCache(cacheKey: string): CachedWeather | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(cacheKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CachedWeather;
     if (!parsed?.data?.hours) return null;
@@ -72,9 +72,9 @@ function readCache(): CachedWeather | null {
   }
 }
 
-function writeCache(data: WeatherData) {
+function writeCache(cacheKey: string, data: WeatherData) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() } satisfies CachedWeather));
+    localStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() } satisfies CachedWeather));
   } catch {
     /* ignore */
   }
