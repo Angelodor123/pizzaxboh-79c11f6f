@@ -100,7 +100,10 @@ interface InvoiceDraft {
   docDate: string;
   items: ItemRow[];
   rawOcr?: ParsedInvoice | null;
+  headerVal?: Record<"supplier" | "invoice_number" | "document_date" | "total_amount", "pending" | "approved" | "corrected">;
+  itemVal?: Array<"pending" | "approved" | "corrected">;
 }
+
 
 const openDraftDb = (): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
