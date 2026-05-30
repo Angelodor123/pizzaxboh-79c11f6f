@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Flame, Trophy, Sparkles, Upload } from "lucide-react";
+import { Flame, Trophy, Sparkles, Upload, History, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
@@ -60,6 +60,7 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
   const [loading, setLoading] = useState(true);
   const [trainingSupplierId, setTrainingSupplierId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [historySupplier, setHistorySupplier] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
@@ -174,14 +175,25 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setTrainingSupplierId(s.supplier_id)}
-                  className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg bg-neon text-black font-bold text-sm active:scale-[0.98] transition shadow-[0_0_18px_rgba(255,45,180,0.3)]"
-                >
-                  <Upload className="h-4 w-4" />
-                  📤 העלה קבלה לאימון
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTrainingSupplierId(s.supplier_id)}
+                    className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-lg bg-neon text-black font-bold text-sm active:scale-[0.98] transition shadow-[0_0_18px_rgba(255,45,180,0.3)]"
+                  >
+                    <Upload className="h-4 w-4" />
+                    📤 אמן
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHistorySupplier({ id: s.supplier_id, name: s.name })}
+                    disabled={s.invoices === 0}
+                    className="h-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card text-foreground font-bold text-xs active:scale-[0.98] transition disabled:opacity-40"
+                  >
+                    <History className="h-4 w-4" />
+                    היסטוריה
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -201,6 +213,157 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
           }}
         />
       )}
+
+      {historySupplier && (
+        <TrainingHistoryModal
+          supplierId={historySupplier.id}
+          supplierName={historySupplier.name}
+          branchId={branchId}
+          isSuperAdmin={isSuperAdmin}
+          onClose={() => setHistorySupplier(null)}
+        />
+      )}
     </div>
   );
 }
+
+// ============================================================
+// History modal — lists every training event for one supplier.
+// Shows date, diff_summary badge, and a per-row expansion with
+// the corrected items so the user can see what the AI learned from.
+// ============================================================
+interface HistoryRow {
+  id: string;
+  created_at: string;
+  diff_summary: string | null;
+  final_data: { items?: Array<{ item_name?: string }> } | null;
+}
+
+function TrainingHistoryModal({
+  supplierId,
+  supplierName,
+  branchId,
+  isSuperAdmin,
+  onClose,
+}: {
+  supplierId: string;
+  supplierName: string;
+  branchId: string | null;
+  isSuperAdmin: boolean;
+  onClose: () => void;
+}) {
+  const [rows, setRows] = useState<HistoryRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [instructions, setInstructions] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let q = supabase
+        .from("invoice_ocr_feedback")
+        .select("id,created_at,diff_summary,final_data")
+        .eq("supplier_id", supplierId)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
+      const { data } = await q;
+      const { data: sup } = await supabase
+        .from("suppliers")
+        .select("parsing_instructions")
+        .eq("id", supplierId)
+        .maybeSingle();
+      if (cancelled) return;
+      setRows(((data as unknown) as HistoryRow[]) ?? []);
+      setInstructions((sup?.parsing_instructions as string) ?? "");
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [supplierId, branchId, isSuperAdmin]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl bg-card border border-border rounded-2xl overflow-hidden max-h-[90vh] flex flex-col"
+      >
+        <div className="flex items-center justify-between gap-2 p-4 border-b border-border">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-neon">היסטוריית אימון</div>
+            <div className="font-bold text-base truncate">{supplierName}</div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 h-9 w-9 grid place-content-center rounded-md border border-border hover:border-neon hover:text-neon transition"
+            aria-label="סגור"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-4 space-y-4">
+          {instructions && (
+            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-emerald-400 mb-1.5">
+                🧠 הנחיות פרסור שנלמדו
+              </div>
+              <pre className="text-xs whitespace-pre-wrap text-emerald-100/90 font-mono leading-relaxed">{instructions}</pre>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="text-center text-muted-foreground py-8">טוען היסטוריה…</div>
+          ) : rows.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8 text-sm">
+              עדיין לא בוצעו אימונים לספק זה.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                {rows.length} אירועי אימון
+              </div>
+              {rows.map((r) => {
+                const isPerfect = (r.diff_summary ?? "").startsWith("perfect");
+                const m = /^edits:(\d+)/.exec(r.diff_summary ?? "");
+                const edits = m ? Number(m[1]) : null;
+                const aiSummary = (r.diff_summary ?? "").split(" · ")[1] ?? null;
+                const itemCount = r.final_data?.items?.length ?? 0;
+                return (
+                  <div key={r.id} className="rounded-lg border border-border bg-background/40 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        {new Date(r.created_at).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
+                      </div>
+                      {isPerfect ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-400">
+                          ✓ מושלם
+                        </span>
+                      ) : edits !== null ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-brand/15 border border-amber-brand/40 text-amber-brand">
+                          {edits} תיקונים
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                          legacy
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-foreground/80">
+                      {itemCount} פריטים נשמרו
+                    </div>
+                    {aiSummary && (
+                      <div className="text-[11px] text-emerald-400/90 border-r-2 border-emerald-500/40 pr-2">
+                        💡 {aiSummary}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -546,9 +546,15 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           })),
           _validation: validation,
         };
-        await runLearn({ data: { supplierId, raw: rawOcr, final: finalData } })
-          .catch(() => { /* silent */ });
-        toast.success("האימון נשמר — ה-AI ילמד מהתיקונים שלך");
+        const learnRes = await runLearn({ data: { supplierId, raw: rawOcr, final: finalData } })
+          .catch((err) => ({ skipped: true, reason: "network", error: String(err) } as const));
+        if ((learnRes as { skipped?: boolean }).skipped) {
+          toast.error(`האימון לא נשמר (${(learnRes as { reason?: string }).reason ?? "שגיאה"})`);
+        } else if ((learnRes as { learned?: boolean }).learned) {
+          toast.success(`האימון נשמר ו-AI עודכן (${(learnRes as { summary?: string }).summary ?? ""})`);
+        } else {
+          toast.success("האימון נשמר — XP עודכן (AI parsing instructions לא עודכן הפעם)");
+        }
         try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
         saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
         onSaved();
