@@ -27,43 +27,45 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   const [loading, setLoading] = useState(true);
   const [manageOpen, setManageOpen] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const branchId = await requireCurrentBranchId();
-        const [prods, shortRes] = await Promise.all([
-          loadSupplierProducts(supplierId),
-          supabase
-            .from("shortage_items")
-            .select("id, name, quantity, unit")
-            .eq("branch_id", branchId)
-            .eq("completed", false),
-        ]);
-        if (cancelled) return;
-        setProducts(prods);
-        const sh = (shortRes.data ?? []) as ShortageRow[];
-        setShortages(sh);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const branchId = await requireCurrentBranchId();
+      const [prods, shortRes] = await Promise.all([
+        loadSupplierProducts(supplierId),
+        supabase
+          .from("shortage_items")
+          .select("id, name, quantity, unit")
+          .eq("branch_id", branchId)
+          .eq("completed", false),
+      ]);
+      setProducts(prods);
+      const sh = (shortRes.data ?? []) as ShortageRow[];
+      setShortages(sh);
 
-        // Auto-match: pre-fill qty for products matching open shortages.
-        const initial: Record<string, number> = {};
+      // Auto-match: pre-fill qty for products matching open shortages.
+      setQty((prev) => {
+        const initial: Record<string, number> = { ...prev };
         for (const p of prods) {
+          if (initial[p.id] != null) continue;
           const match = sh.find((s) => fuzzyMatch(p.name, s.name));
           if (match) {
             initial[p.id] = Math.max(Number(match.quantity) || 0, p.default_qty || 1);
           }
         }
-        setQty(initial);
-      } catch (e: any) {
-        toast.error("טעינה נכשלה: " + (e?.message ?? ""));
-      } finally {
-        setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [open, supplierId]);
+        return initial;
+      });
+    } catch (e: any) {
+      toast.error("טעינה נכשלה: " + (e?.message ?? ""));
+    } finally {
+      setLoading(false);
+    }
+  }, [supplierId]);
+
+  useEffect(() => {
+    if (!open) return;
+    reload();
+  }, [open, reload]);
 
   const shortageByProduct = useMemo(() => {
     const map = new Map<string, ShortageRow>();
