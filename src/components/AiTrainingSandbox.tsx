@@ -192,6 +192,7 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
         <InvoiceIntakeModal
           suppliers={suppliers}
           initialSupplierId={trainingSupplierId}
+          trainingMode
           onClose={() => setTrainingSupplierId(null)}
           onSaved={() => {
             setTrainingSupplierId(null);

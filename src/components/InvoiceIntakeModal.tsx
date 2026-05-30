@@ -29,12 +29,18 @@ interface Props {
   editInvoice?: EditInvoiceData | null;
   onDeleted?: (id: string) => void;
   initialSupplierId?: string;
+  /**
+   * Training mode: zero impact on operational data.
+   * Only updates AI learning/mapping tables (invoice_ocr_feedback + supplier parsing_instructions).
+   * Does NOT write to invoices / invoice_items / inventory.
+   */
+  trainingMode?: boolean;
 }
 
 const DRAFT_KEY = "invoice-intake-draft";
 const HARD_LIMIT = 15000;
 
-export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId }: Props) {
+export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = null, onDeleted, initialSupplierId, trainingMode = false }: Props) {
   const isEdit = !!editInvoice;
   const [supplierId, setSupplierId] = useState(editInvoice?.supplier_id ?? initialSupplierId ?? "");
 
@@ -240,6 +246,43 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     if (!formValid || submitting) return;
     setSubmitting(true);
     try {
+      const cleanItems = items.filter((r) => r.item_name.trim());
+
+      // ============================================================
+      // TRAINING MODE: zero impact on operational data.
+      // Only invoke AI learning so future OCR improves. No invoices,
+      // no invoice_items, no inventory mutations, no image uploads.
+      // ============================================================
+      if (trainingMode) {
+        if (!rawOcr || !supplierId) {
+          toast.error("נדרש לסרוק תמונה ולבחור ספק לפני שמירת אימון");
+          setSubmitting(false);
+          return;
+        }
+        const finalData = {
+          invoice_number: invoiceNumber.trim(),
+          document_date: docDate,
+          total_amount: totalNum,
+          items: cleanItems.map((r) => ({
+            item_name: r.item_name.trim(),
+            quantity: Number(r.quantity) || null,
+            unit_price: Number(r.unit_price) || null,
+            total_price: Number(r.total_price) || null,
+          })),
+        };
+        await runLearn({ data: { supplierId, raw: rawOcr, final: finalData } })
+          .catch(() => { /* silent */ });
+        toast.success("האימון נשמר — ה-AI ילמד מהתיקונים שלך");
+        try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        onSaved();
+        onClose();
+        return;
+      }
+
+      // ============================================================
+      // OPERATIONAL MODE: real invoice intake writes to invoices,
+      // invoice_items (and downstream inventory in other flows).
+      // ============================================================
       const branchId = await requireCurrentBranchId();
       let imageUrl: string | null = editInvoice?.image_url ?? null;
 
@@ -289,7 +332,6 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         invoiceId = invoiceRow?.id;
       }
 
-      const cleanItems = items.filter((r) => r.item_name.trim());
       if (cleanItems.length && invoiceId) {
         const rows = cleanItems.map((r, idx) => ({
           invoice_id: invoiceId,
@@ -335,14 +377,17 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
+
   const handleConfirm = async () => {
     if (!formValid || submitting) return;
-    if (await checkAnomaly()) {
+    // Skip anomaly checks in training mode — no operational impact.
+    if (!trainingMode && (await checkAnomaly())) {
       setShowAnomaly(true);
       return;
     }
     doSubmit();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
@@ -352,8 +397,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">Goods Receiving</div>
-            <h3 className="font-display text-xl font-bold">{isEdit ? "עריכת חשבונית" : "קליטת חשבונית חדשה"}</h3>
+            <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">{trainingMode ? "AI Training · Sandbox" : "Goods Receiving"}</div>
+            <h3 className="font-display text-xl font-bold">{trainingMode ? "אימון AI מקבלה (לא נשמר במלאי)" : isEdit ? "עריכת חשבונית" : "קליטת חשבונית חדשה"}</h3>
           </div>
           <button onClick={onClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
             <X className="h-4 w-4" />
@@ -576,7 +621,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {isEdit ? "שמור שינויים" : "אשר קליטה"}
+                {trainingMode ? "שמור אימון (ללא השפעה על מלאי)" : isEdit ? "שמור שינויים" : "אשר קליטה"}
               </button>
               {!formValid && (
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
