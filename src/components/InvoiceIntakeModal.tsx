@@ -52,7 +52,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [docDate, setDocDate] = useState(
     editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
   );
-  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "" }]);
+  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -223,7 +223,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
-  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "" }]);
+  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
   const updateItem = (i: number, k: keyof ItemRow, v: string) =>
     setItems((p) => p.map((row, idx) => (idx === i ? { ...row, [k]: v } : row)));
   const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
