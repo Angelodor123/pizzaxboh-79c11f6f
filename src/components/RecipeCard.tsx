@@ -72,7 +72,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     : undefined;
 
   const { role } = useAuth();
-  const isServiceMode = useUIStore((s) => s.isServiceMode);
+  const isServiceMode = false;
   const canEdit = role === "admin" && !isServiceMode;
   const speed = getRecipeSpeed(recipe);
   const shelfLife = recipe.shelfLifeHebrew?.trim() || DEFAULT_SHELF_LIFE;
