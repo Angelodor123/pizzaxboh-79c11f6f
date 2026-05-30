@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 export type Urgency = "קריטי - משבית עבודה" | "דחוף - מפריע לעבודה" | "רגיל";
 export type TicketStatus = "open" | "in_progress" | "resolved";
