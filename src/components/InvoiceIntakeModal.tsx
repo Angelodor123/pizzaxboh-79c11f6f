@@ -10,7 +10,56 @@ import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface SupplierOpt { id: string; name: string }
 
-interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string; discount: string }
+interface ItemRow {
+  item_name: string;
+  quantity: string;
+  /** מחיר בסיס — gross price per unit, before discount (user-editable). */
+  base_unit_price: string;
+  /** מחיר נטו ליחידה — computed = base × (1 − pct%) או base − amt. */
+  unit_price: string;
+  /** סה"כ — computed = quantity × unit_price (נטו). */
+  total_price: string;
+  /** Free-text discount, e.g. "10%" / "₪5" / "5 ש״ח". */
+  discount: string;
+}
+
+/** Parse a discount string into either a percent or a flat per-unit amount. */
+function parseDiscount(s: string): { type: "pct" | "amt"; value: number } | null {
+  if (!s) return null;
+  const trimmed = s.trim();
+  if (!trimmed) return null;
+  const hasPct = /%/.test(trimmed);
+  const cleaned = trimmed
+    .replace(/[₪$€£]/g, "")
+    .replace(/ש["״']?\s*ח/g, "")
+    .replace(/[^\d.\-]/g, "");
+  const num = Number(cleaned);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  return hasPct ? { type: "pct", value: num } : { type: "amt", value: num };
+}
+
+/** Net price per unit after discount. */
+function computeNet(base: number, discount: string): number {
+  if (!Number.isFinite(base) || base <= 0) return 0;
+  const d = parseDiscount(discount);
+  if (!d) return base;
+  if (d.type === "pct") return Math.max(0, base * (1 - Math.min(d.value, 100) / 100));
+  return Math.max(0, base - d.value);
+}
+
+const fmt2 = (n: number): string => (Number.isFinite(n) && n > 0 ? n.toFixed(2) : "");
+
+/** Recompute unit_price (net) and total_price for a row after a field changes. */
+function recalcRow(row: ItemRow): ItemRow {
+  const baseN = Number(row.base_unit_price) || 0;
+  const qtyN = Number(row.quantity) || 0;
+  const net = computeNet(baseN, row.discount);
+  return {
+    ...row,
+    unit_price: net > 0 ? fmt2(net) : "",
+    total_price: net > 0 && qtyN > 0 ? fmt2(net * qtyN) : "",
+  };
+}
 
 interface InventoryOpt { id: string; name: string; unit: string }
 
