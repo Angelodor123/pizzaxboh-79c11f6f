@@ -132,7 +132,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
     const wasUrgent = urgent;
     setDraft("");
     setUrgent(false);
-    await addItem(cfg.key, text, wasUrgent ? "urgent" : "normal");
+    await addItem(cfg.key, text, { priority: wasUrgent ? "urgent" : "normal" });
   };
 
   const openItems = items.filter((i) => !i.done);
