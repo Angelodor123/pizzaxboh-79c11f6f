@@ -89,8 +89,8 @@ export function inferMenuCategory(name: string): MenuCategory {
 /**
  * Recipe categories that represent customer-facing menu items ("דף המנות").
  * Everything else is back-of-house / "דף המתכונים" (sauces, bases, spices, etc.).
- * NOTE: "desserts" lives on the customer-facing menu — back-of-house dessert
- * recipes (cookies, ice cream) are kept under "jams_creams" instead.
+ * NOTE: most "desserts" are customer-facing dishes, but dedicated prep recipes
+ * such as "עוגיות" must stay in the back-of-house recipe book.
  */
 export const MENU_ITEM_CATEGORIES: ReadonlyArray<RecipeCategory> = [
   "dishes",
@@ -107,10 +107,16 @@ export const BACK_OF_HOUSE_CATEGORIES: ReadonlyArray<RecipeCategory> = [
   "jams_creams",
   "spices",
   "croutons",
+  "desserts",
 ];
 
 
-export function isMenuItem(recipe: Pick<Recipe, "category">): boolean {
+function isBackOfHouseDessert(recipe: Pick<Recipe, "category"> & Partial<Pick<Recipe, "id" | "nameHebrew">>): boolean {
+  return recipe.category === "desserts" && (recipe.id?.startsWith("cookies") || recipe.nameHebrew === "עוגיות");
+}
+
+export function isMenuItem(recipe: Pick<Recipe, "category"> & Partial<Pick<Recipe, "id" | "nameHebrew">>): boolean {
+  if (isBackOfHouseDessert(recipe)) return false;
   return MENU_ITEM_CATEGORIES.includes(recipe.category);
 }
 
