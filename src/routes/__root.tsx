@@ -274,8 +274,6 @@ function AuthedShell() {
       <header
         className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors"
       >
-
-      >
         <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-1 sm:gap-2">
           <div className="flex items-center gap-1 shrink-0">
             <CategoryDrawer />
