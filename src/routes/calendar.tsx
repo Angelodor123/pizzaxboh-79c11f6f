@@ -4,7 +4,7 @@ import { Plus, X, Trash2, Pencil, AlertTriangle, Truck, Sparkles, ChevronRight, 
 import { DeliveryChecklistModal, type ChecklistItem } from "@/components/DeliveryChecklistModal";
 
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId } from "@/lib/current-branch";
+import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
