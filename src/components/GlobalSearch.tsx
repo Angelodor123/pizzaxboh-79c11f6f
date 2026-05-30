@@ -84,7 +84,7 @@ export function GlobalSearch() {
     setQ("");
     setHits([]);
     if (h.kind === "recipe") {
-      navigate({ to: "/recipes", search: { recipe: h.id } as any });
+      navigate({ to: "/recipes", hash: `recipe-${h.id}` });
     } else {
       navigate({ to: "/tasks", search: { edit: h.id } as any });
     }
