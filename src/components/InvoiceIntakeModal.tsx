@@ -1000,15 +1000,26 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
 
             <div className="pt-3 border-t border-border space-y-2">
+              {trainingMode && (
+                <div className={`text-[11px] text-center font-bold tabular-nums px-3 py-2 rounded-md border ${
+                  allValidated
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+                    : "border-amber-brand/50 bg-amber-brand/10 text-amber-brand"
+                }`}>
+                  {allValidated
+                    ? "✓ כל השדות אומתו — אפשר לשמור וללמד"
+                    : `נותרו ${pendingCount} שדות לאימות (סמן ✓ או ✗ לכל אחד)`}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={!formValid || submitting}
+                disabled={!formValid || submitting || (trainingMode && !allValidated)}
                 className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {trainingMode ? "שמור אימון (ללא השפעה על מלאי)" : isEdit ? "שמור שינויים" : "אשר קליטה"}
+                {trainingMode ? "שמור ולמד" : isEdit ? "שמור שינויים" : "אשר קליטה"}
               </button>
               {!formValid && (
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
