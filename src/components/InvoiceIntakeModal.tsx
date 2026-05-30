@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,6 +151,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
   );
   const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
+  // === Training validation gate ===
+  // Each extracted field/row must be explicitly approved (✓) or corrected (✗)
+  // before "Save & Learn" is enabled. Only enforced in trainingMode.
+  type ValState = "pending" | "approved" | "corrected";
+  type HeaderKey = "supplier" | "invoice_number" | "document_date" | "total_amount";
+  const [headerVal, setHeaderVal] = useState<Record<HeaderKey, ValState>>({
+    supplier: "pending",
+    invoice_number: "pending",
+    document_date: "pending",
+    total_amount: "pending",
+  });
+  const [itemVal, setItemVal] = useState<ValState[]>(["pending"]);
+  const resetValidation = (rowCount: number) => {
+    setHeaderVal({ supplier: "pending", invoice_number: "pending", document_date: "pending", total_amount: "pending" });
+    setItemVal(Array.from({ length: Math.max(1, rowCount) }, () => "pending"));
+  };
+  const setHV = (k: HeaderKey, v: ValState) => setHeaderVal((p) => ({ ...p, [k]: v }));
+  const setIV = (i: number, v: ValState) => setItemVal((p) => p.map((x, idx) => (idx === i ? v : x)));
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -399,9 +417,11 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           });
         });
         setItems(nextItems);
+        resetValidation(nextItems.length);
         persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
       } else {
+        resetValidation(1);
         persistDraft({ supplierId: nextSupplierId, invoiceNumber: nextInvoiceNumber, totalAmount: nextTotalAmount, docDate: nextDocDate, items: nextItems, rawOcr: parsed });
         toast.message("לא זוהו פריטים — מלא ידנית");
       }
@@ -415,18 +435,44 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
-  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
-  const updateItem = (i: number, k: keyof ItemRow, v: string) =>
+  const addItem = () => {
+    setItems((p) => [...p, { item_name: "", quantity: "", base_unit_price: "", unit_price: "", total_price: "", discount: "" }]);
+    // New manual rows count as already "corrected" (user-authored) so they don't block save.
+    setItemVal((p) => [...p, "corrected"]);
+  };
+  const updateItem = (i: number, k: keyof ItemRow, v: string) => {
     setItems((p) => p.map((row, idx) => {
       if (idx !== i) return row;
       const next: ItemRow = { ...row, [k]: v };
-      // Any change to base / discount / quantity must instantly recompute net + total.
       if (k === "base_unit_price" || k === "discount" || k === "quantity") {
         return recalcRow(next);
       }
       return next;
     }));
-  const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
+    // Editing an AI-suggested row implicitly marks it as corrected.
+    setItemVal((p) => p.map((s, idx) => (idx === i && s === "pending" ? "corrected" : s)));
+  };
+  const removeItem = (i: number) => {
+    setItems((p) => p.filter((_, idx) => idx !== i));
+    setItemVal((p) => p.filter((_, idx) => idx !== i));
+  };
+
+  // Editing a header field while AI suggestion is pending → flip to corrected.
+  const markHeaderEdited = useCallback((k: HeaderKey) => {
+    setHeaderVal((p) => (p[k] === "pending" ? { ...p, [k]: "corrected" } : p));
+  }, []);
+
+  // Training-only: all header fields + all items must be resolved (approved or corrected).
+  const allValidated = useMemo(() => {
+    const headerOk = (Object.values(headerVal) as ValState[]).every((s) => s !== "pending");
+    const itemsOk = itemVal.length > 0 && itemVal.every((s) => s !== "pending");
+    return headerOk && itemsOk;
+  }, [headerVal, itemVal]);
+  const pendingCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "pending").length;
+    const it = itemVal.filter((s) => s === "pending").length;
+    return h + it;
+  }, [headerVal, itemVal]);
 
   const checkAnomaly = async (): Promise<boolean> => {
     if (totalNum >= HARD_LIMIT) return true;
@@ -460,6 +506,21 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           setSubmitting(false);
           return;
         }
+        // Build a per-field validation breakdown so the learning pipeline can
+        // distinguish AI-accurate values (approved) from human-corrected ones.
+        const validation = {
+          header: headerVal,
+          items: items.map((r, idx) => ({
+            state: itemVal[idx] ?? "pending",
+            kept: !!r.item_name.trim(),
+          })),
+          summary: {
+            approved: (Object.values(headerVal) as ValState[]).filter((s) => s === "approved").length
+              + itemVal.filter((s) => s === "approved").length,
+            corrected: (Object.values(headerVal) as ValState[]).filter((s) => s === "corrected").length
+              + itemVal.filter((s) => s === "corrected").length,
+          },
+        };
         const finalData = {
           invoice_number: invoiceNumber.trim(),
           document_date: docDate,
@@ -470,6 +531,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             unit_price: Number(r.unit_price) || null,
             total_price: Number(r.total_price) || null,
           })),
+          _validation: validation,
         };
         await runLearn({ data: { supplierId, raw: rawOcr, final: finalData } })
           .catch(() => { /* silent */ });
@@ -595,6 +657,52 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
+  // Per-field validation buttons (training only). ✓ = AI got it right, ✗ = needs fix.
+  const ValBtns = ({ state, onApprove, onReject, size = "sm" }: {
+    state: ValState;
+    onApprove: () => void;
+    onReject: () => void;
+    size?: "sm" | "md";
+  }) => {
+    const dim = size === "md" ? "h-9 w-9" : "h-7 w-7";
+    return (
+      <div className="inline-flex items-center gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={onApprove}
+          aria-label="אישור — ה-AI צדק"
+          title="ה-AI צדק"
+          className={`${dim} grid place-content-center rounded-md border transition ${
+            state === "approved"
+              ? "bg-emerald-500 border-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+              : "border-border text-muted-foreground hover:border-emerald-400 hover:text-emerald-400"
+          }`}
+        >
+          <Check className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onReject}
+          aria-label="טעות — תיקון ידני"
+          title="טעות — תקן ידנית"
+          className={`${dim} grid place-content-center rounded-md border transition ${
+            state === "corrected"
+              ? "bg-rose-500 border-rose-400 text-white shadow-[0_0_10px_rgba(244,63,94,0.5)]"
+              : "border-border text-muted-foreground hover:border-rose-400 hover:text-rose-400"
+          }`}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  };
+  const valBorder = (s: ValState) =>
+    s === "approved"
+      ? "border-emerald-500/60"
+      : s === "corrected"
+        ? "border-rose-500/70 ring-1 ring-rose-500/30"
+        : "border-border";
+
   return (
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
       <div
@@ -686,11 +794,20 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           {/* Form side: independent scroll on desktop */}
           <div className="md:overflow-y-auto p-4 md:p-5 flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">ספק</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-muted-foreground">ספק</label>
+                {trainingMode && (
+                  <ValBtns
+                    state={headerVal.supplier}
+                    onApprove={() => setHV("supplier", "approved")}
+                    onReject={() => setHV("supplier", "corrected")}
+                  />
+                )}
+              </div>
               <select
                 value={supplierId}
-                onChange={(e) => setSupplierId(e.target.value)}
-                className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                onChange={(e) => { setSupplierId(e.target.value); if (trainingMode) markHeaderEdited("supplier"); }}
+                className={`w-full h-11 rounded-md bg-background border px-2.5 text-sm focus:border-neon outline-none ${trainingMode ? valBorder(headerVal.supplier) : "border-border"}`}
               >
                 <option value="">בחר ספק…</option>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -699,40 +816,67 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1">מס׳ חשבונית</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-muted-foreground">מס׳ חשבונית</label>
+                  {trainingMode && (
+                    <ValBtns
+                      state={headerVal.invoice_number}
+                      onApprove={() => setHV("invoice_number", "approved")}
+                      onReject={() => setHV("invoice_number", "corrected")}
+                    />
+                  )}
+                </div>
                 <input
                   value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  onChange={(e) => { setInvoiceNumber(e.target.value); if (trainingMode) markHeaderEdited("invoice_number"); }}
+                  className={`w-full h-11 rounded-md bg-background border px-2.5 text-sm focus:border-neon outline-none ${trainingMode ? valBorder(headerVal.invoice_number) : "border-border"}`}
                   maxLength={60}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1">
-                  תאריך חשבונית <span className="text-destructive">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-muted-foreground">
+                    תאריך <span className="text-destructive">*</span>
+                  </label>
+                  {trainingMode && (
+                    <ValBtns
+                      state={headerVal.document_date}
+                      onApprove={() => setHV("document_date", "approved")}
+                      onReject={() => setHV("document_date", "corrected")}
+                    />
+                  )}
+                </div>
                 <input
                   type="date"
                   value={docDate}
-                  onChange={(e) => setDocDate(e.target.value)}
+                  onChange={(e) => { setDocDate(e.target.value); if (trainingMode) markHeaderEdited("document_date"); }}
                   required
-                  className="w-full h-11 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
+                  className={`w-full h-11 rounded-md bg-background border px-2.5 text-sm focus:border-neon outline-none ${trainingMode ? valBorder(headerVal.document_date) : "border-border"}`}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">
-                סכום כולל ₪ <span className="text-destructive">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-muted-foreground">
+                  סכום כולל ₪ <span className="text-destructive">*</span>
+                </label>
+                {trainingMode && (
+                  <ValBtns
+                    state={headerVal.total_amount}
+                    onApprove={() => setHV("total_amount", "approved")}
+                    onReject={() => setHV("total_amount", "corrected")}
+                  />
+                )}
+              </div>
               <input
                 type="number"
                 step="0.01"
                 inputMode="decimal"
                 value={totalAmount}
-                onChange={(e) => setTotalAmount(e.target.value)}
+                onChange={(e) => { setTotalAmount(e.target.value); if (trainingMode) markHeaderEdited("total_amount"); }}
                 required
-                className="w-full h-11 rounded-md bg-background border-2 border-border px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums"
+                className={`w-full h-11 rounded-md bg-background border-2 px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums ${trainingMode ? valBorder(headerVal.total_amount) : "border-border"}`}
               />
             </div>
 
@@ -755,9 +899,17 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                   const netN = computeNet(baseN, row.discount);
                   const totalN = netN * qtyN;
                   const hasDiscount = !!parseDiscount(row.discount);
+                  const rowState: ValState = itemVal[i] ?? "pending";
+                  const rowBorder = trainingMode
+                    ? (rowState === "approved"
+                        ? "border-emerald-500/60"
+                        : rowState === "corrected"
+                          ? "border-rose-500/70 ring-1 ring-rose-500/20"
+                          : "border-amber-brand/40")
+                    : "border-border";
                   return (
-                    <div key={i} className="rounded-lg border border-border bg-background/40 p-2.5 space-y-2">
-                      {/* Row 1: index badge + item name (full width) + delete */}
+                    <div key={i} className={`rounded-lg border bg-background/40 p-2.5 space-y-2 ${rowBorder}`}>
+                      {/* Row 1: index badge + item name (full width) + validation + delete */}
                       <div className="flex items-center gap-2">
                         <span className="shrink-0 h-6 w-6 grid place-content-center rounded-md bg-neon/10 text-neon text-[10px] font-bold tabular-nums">
                           {i + 1}
@@ -771,6 +923,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                           dir="rtl"
                           autoComplete="off"
                         />
+                        {trainingMode && (
+                          <ValBtns
+                            state={rowState}
+                            onApprove={() => setIV(i, "approved")}
+                            onReject={() => setIV(i, "corrected")}
+                            size="md"
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => removeItem(i)}
@@ -840,15 +1000,26 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
 
             <div className="pt-3 border-t border-border space-y-2">
+              {trainingMode && (
+                <div className={`text-[11px] text-center font-bold tabular-nums px-3 py-2 rounded-md border ${
+                  allValidated
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+                    : "border-amber-brand/50 bg-amber-brand/10 text-amber-brand"
+                }`}>
+                  {allValidated
+                    ? "✓ כל השדות אומתו — אפשר לשמור וללמד"
+                    : `נותרו ${pendingCount} שדות לאימות (סמן ✓ או ✗ לכל אחד)`}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={!formValid || submitting}
+                disabled={!formValid || submitting || (trainingMode && !allValidated)}
                 className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {trainingMode ? "שמור אימון (ללא השפעה על מלאי)" : isEdit ? "שמור שינויים" : "אשר קליטה"}
+                {trainingMode ? "שמור ולמד" : isEdit ? "שמור שינויים" : "אשר קליטה"}
               </button>
               {!formValid && (
                 <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
