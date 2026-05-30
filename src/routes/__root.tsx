@@ -295,7 +295,7 @@ function AuthedShell() {
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
             <span className="text-[9px] sm:text-[12px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
-              {serviceModeVisible ? "Service Mode" : "Back of House"}
+              Back of House
             </span>
             <ActiveBranchBadge />
           </Link>
