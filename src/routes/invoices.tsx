@@ -197,10 +197,12 @@ function InvoicesPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="recent" dir="rtl" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-11">
+        <TabsList className="grid w-full grid-cols-3 h-11">
           <TabsTrigger value="recent" className="font-bold">קליטות אחרונות</TabsTrigger>
-          <TabsTrigger value="archive" className="font-bold">ארכיון חשבוניות</TabsTrigger>
+          <TabsTrigger value="archive" className="font-bold">ארכיון</TabsTrigger>
+          <TabsTrigger value="training" className="font-bold">🎮 אימון AI</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="recent" className="mt-4">
           {loading ? (
