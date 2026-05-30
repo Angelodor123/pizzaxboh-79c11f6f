@@ -283,14 +283,14 @@ function AuthedShell() {
         }`}
 
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 shrink-0">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             <CategoryDrawer />
           </div>
 
           <Link
             to="/"
-            className="flex flex-col items-center gap-1 min-w-0"
+            className="flex flex-col items-center gap-0.5 min-w-0 flex-1 max-w-[180px] sm:max-w-none"
             aria-label="Pizza X — בית"
           >
             <img
@@ -300,10 +300,10 @@ function AuthedShell() {
               height={72}
               fetchPriority="high"
               decoding="async"
-              className="h-12 sm:h-[72px] w-auto object-contain"
+              className="h-9 sm:h-[72px] w-auto max-w-full object-contain"
               style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
             />
-            <span className="text-[10px] sm:text-[12px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
+            <span className="text-[9px] sm:text-[12px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
               {serviceModeVisible ? "Service Mode" : "Back of House"}
             </span>
             <ActiveBranchBadge />
