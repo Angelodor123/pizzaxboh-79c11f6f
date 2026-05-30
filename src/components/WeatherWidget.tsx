@@ -111,11 +111,14 @@ function mapWttrCode(code: number) {
   return 2;
 }
 
-export function WeatherWidget({ title, alertText }: { title: string; alertText: string }) {
+export function WeatherWidget({ alertText }: { title?: string; alertText: string }) {
   const branch = useActiveBranchData();
   const LAT = branch?.latitude ?? DEFAULT_LAT;
   const LON = branch?.longitude ?? DEFAULT_LON;
+  const branchName = branch?.name ?? "—";
   const cityLabel = branch?.name ? encodeURIComponent(branch.name) : "Modiin";
+  const cacheKey = `${CACHE_KEY_PREFIX}${branch?.id ?? "default"}`;
+  const displayTitle = `מזג אוויר — ${branchName}`;
 
   const [data, setData] = useState<WeatherData | null>(null);
   const [staleAt, setStaleAt] = useState<number | null>(null);
