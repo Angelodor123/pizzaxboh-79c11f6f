@@ -60,6 +60,7 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
   const [loading, setLoading] = useState(true);
   const [trainingSupplierId, setTrainingSupplierId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [historySupplier, setHistorySupplier] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
