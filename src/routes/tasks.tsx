@@ -250,6 +250,12 @@ function TasksPage() {
   const [recipeOpen, setRecipeOpen] = useState<string | null>(null);
   const [pulsingTaskId, setPulsingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [extractingTaskId, setExtractingTaskId] = useState<string | null>(null);
+  const [confirmShortage, setConfirmShortage] = useState<
+    | { taskId: string; name: string; catalogProductId: string | null; unit: string | null }
+    | null
+  >(null);
+  const extractFn = useServerFn(extractIngredientFromTitle);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
