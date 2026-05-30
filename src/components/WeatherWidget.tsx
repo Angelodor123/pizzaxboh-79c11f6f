@@ -299,7 +299,7 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
       )}
 
       {data && (
-        <div className="grid grid-cols-6 gap-1 text-center">
+        <div dir="ltr" className="grid grid-cols-6 gap-1 text-center">
           {data.hours.map((h) => (
             <div
               key={h.time}
