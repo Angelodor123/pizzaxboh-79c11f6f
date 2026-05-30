@@ -76,6 +76,7 @@ export function OrderModal({ supplier, onClose, onReceive }: Props) {
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogManagerOpen, setCatalogManagerOpen] = useState(false);
 
   // Load order history for this supplier — from new `orders` table (with status)
   // falling back to legacy `supplier_orders_history` when needed.
