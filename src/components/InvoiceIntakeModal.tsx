@@ -506,6 +506,21 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           setSubmitting(false);
           return;
         }
+        // Build a per-field validation breakdown so the learning pipeline can
+        // distinguish AI-accurate values (approved) from human-corrected ones.
+        const validation = {
+          header: headerVal,
+          items: items.map((r, idx) => ({
+            state: itemVal[idx] ?? "pending",
+            kept: !!r.item_name.trim(),
+          })),
+          summary: {
+            approved: (Object.values(headerVal) as ValState[]).filter((s) => s === "approved").length
+              + itemVal.filter((s) => s === "approved").length,
+            corrected: (Object.values(headerVal) as ValState[]).filter((s) => s === "corrected").length
+              + itemVal.filter((s) => s === "corrected").length,
+          },
+        };
         const finalData = {
           invoice_number: invoiceNumber.trim(),
           document_date: docDate,
@@ -516,6 +531,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             unit_price: Number(r.unit_price) || null,
             total_price: Number(r.total_price) || null,
           })),
+          _validation: validation,
         };
         await runLearn({ data: { supplierId, raw: rawOcr, final: finalData } })
           .catch(() => { /* silent */ });
