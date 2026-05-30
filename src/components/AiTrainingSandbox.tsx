@@ -58,10 +58,13 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
   const [stats, setStats] = useState<SupplierStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trainingSupplierId, setTrainingSupplierId] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
-  useEffect(() => {
+  const loadStats = useCallback(async () => {
+
     let cancelled = false;
     (async () => {
       setLoading(true);
