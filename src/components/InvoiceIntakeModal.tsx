@@ -210,10 +210,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         docDate,
         items,
         rawOcr,
+        headerVal,
+        itemVal,
         ...overrides,
       } satisfies InvoiceDraft));
     } catch { /* ignore */ }
   };
+
+  // Explicit close: user clicked X / Escape / backdrop. Clears draft so
+  // next open starts fresh. (Backgrounding the tab does NOT call this.)
+  const handleExplicitClose = useCallback(() => {
+    if (!isEdit) {
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
+    }
+    onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, onClose, DRAFT_KEY]);
+
 
   // Load supplier catalog whenever supplier is selected — used as RAG context for OCR.
   useEffect(() => {
