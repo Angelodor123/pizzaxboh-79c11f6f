@@ -281,7 +281,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
       setPreviewUrl(dataUrl);
-      saveDraftImage(DRAFT_KEY, dataUrl).catch(() => { /* ignore */ });
+      await saveDraftImage(DRAFT_KEY, dataUrl).catch(() => { /* ignore */ });
+      persistDraft();
 
       const catalogPayload = supplierCatalog.slice(0, 200).map((p) => ({
         name: p.name,
