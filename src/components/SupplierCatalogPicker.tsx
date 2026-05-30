@@ -150,15 +150,26 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
           </div>
         )}
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש לפי SKU / שם מוצר…"
-            className="w-full h-10 rounded-md bg-background border border-border pr-9 pl-3 text-sm focus:border-neon outline-none"
-          />
+        {/* Search + quick add */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="חיפוש לפי SKU / שם מוצר…"
+              className="w-full h-11 rounded-md bg-background border border-border pr-9 pl-3 text-sm focus:border-neon outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setManageOpen(true)}
+            title="הוסף מוצר חדש לספק"
+            aria-label="הוסף מוצר חדש לספק"
+            className="h-11 w-11 grid place-content-center rounded-md border border-neon/40 text-neon hover:bg-neon/10 active:scale-95 transition shrink-0"
+          >
+            <PackagePlus className="h-5 w-5" />
+          </button>
         </div>
 
         {loading ? (
@@ -166,10 +177,20 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
             <Loader2 className="h-4 w-4 animate-spin" /> טוען קטלוג…
           </div>
         ) : visible.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-12 text-center border border-dashed border-border rounded-xl">
-            {products.length === 0
-              ? "אין מוצרים בקטלוג של ספק זה. הוסף מוצרים דרך ניהול הספקים."
-              : "לא נמצאו מוצרים התואמים לחיפוש."}
+          <div className="py-10 text-center border border-dashed border-border rounded-xl flex flex-col items-center gap-3 px-4">
+            <div className="text-sm text-muted-foreground">
+              {products.length === 0
+                ? "אין מוצרים בקטלוג של ספק זה."
+                : "לא נמצאו מוצרים התואמים לחיפוש."}
+            </div>
+            <button
+              type="button"
+              onClick={() => setManageOpen(true)}
+              className="h-10 px-4 inline-flex items-center gap-2 rounded-md bg-neon text-black font-bold text-sm active:scale-95 transition"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף מוצר חדש לספק
+            </button>
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
