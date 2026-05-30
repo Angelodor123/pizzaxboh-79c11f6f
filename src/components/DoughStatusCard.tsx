@@ -414,7 +414,7 @@ export function DoughStatusCard() {
             <div className="text-center text-sm text-muted-foreground">
               סה״כ:{" "}
               <span className="font-bold text-amber-300 tabular-nums">
-                {(parseCount(shopDraft) || 0) + (parseCount(warehouseDraft) || 0)}
+                {valueOrZero(shopDraft) + valueOrZero(warehouseDraft)}
               </span>{" "}
               מגשים
             </div>
