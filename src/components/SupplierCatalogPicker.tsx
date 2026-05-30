@@ -127,7 +127,8 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <>
+    <Dialog open={open && !manageOpen} onOpenChange={(v) => { if (!v && !manageOpen) onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">📦 בחירה מהקטלוג — {supplierName}</DialogTitle>
@@ -283,18 +284,19 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
         </div>
       </DialogContent>
 
-      {manageOpen && (
-        <SupplierCatalogManager
-          supplierId={supplierId}
-          supplierName={supplierName}
-          open={manageOpen}
-          onClose={() => {
-            setManageOpen(false);
-            // Seamlessly refresh the catalog so newly-added products appear
-            void reload();
-          }}
-        />
-      )}
     </Dialog>
+    {manageOpen && (
+      <SupplierCatalogManager
+        supplierId={supplierId}
+        supplierName={supplierName}
+        open={manageOpen}
+        onClose={() => {
+          setManageOpen(false);
+          // Seamlessly refresh the catalog so newly-added products appear
+          void reload();
+        }}
+      />
+    )}
+    </>
   );
 }
