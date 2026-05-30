@@ -15,6 +15,9 @@ interface Props {
   onClose: () => void;
   /** Called with rows to append to the current order. */
   onAdd: (rows: OrderRow[]) => void;
+  /** Optional: lets the parent handle opening the catalog manager
+   * (closing this dialog first avoids nested-dialog stacking bugs). */
+  onAddNewProduct?: () => void;
 }
 
 type ShortageRow = {
