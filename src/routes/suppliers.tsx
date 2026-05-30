@@ -267,6 +267,13 @@ function SuppliersPage() {
           })}
         </ul>
       )}
+        </TabsContent>
+        <TabsContent value="training">
+          <AiTrainingSandbox suppliers={list.filter((s) => !s.is_archived).map((s) => ({ id: s.id, name: s.name }))} isSuperAdmin={isSuperAdmin} />
+        </TabsContent>
+      </Tabs>
+
+
 
 
       {canEdit && (
