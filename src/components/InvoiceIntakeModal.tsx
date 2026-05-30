@@ -360,10 +360,10 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           </button>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-0 flex-1 overflow-hidden">
-          {/* Left: image */}
-          <div className="bg-zinc-900/60 border-b lg:border-b-0 lg:border-l border-border flex flex-col">
-            <div className="p-3 flex items-center justify-between gap-2 border-b border-border/50">
+        <div className="grid md:grid-cols-2 gap-0 flex-1 md:overflow-hidden overflow-y-auto">
+          {/* Image side: sticky on desktop, height-capped on mobile */}
+          <div className="bg-zinc-900/60 border-b md:border-b-0 md:border-l border-border flex flex-col md:sticky md:top-0 md:self-start md:h-full md:max-h-[94vh]">
+            <div className="p-3 flex items-center justify-between gap-2 border-b border-border/50 shrink-0">
               <input
                 ref={fileInput}
                 type="file"
@@ -393,7 +393,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 </div>
               )}
             </div>
-            <div className="relative flex-1 overflow-auto min-h-[260px] grid place-items-center p-4">
+            <div className="relative flex-1 overflow-auto max-h-64 md:max-h-none min-h-[160px] md:min-h-[260px] grid place-items-center p-3 md:p-4">
               {previewUrl ? (
                 <>
                   <img
@@ -419,9 +419,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 <button
                   type="button"
                   onClick={() => fileInput.current?.click()}
-                  className="text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-8 hover:border-neon hover:text-neon transition"
+                  className="text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-6 md:p-8 hover:border-neon hover:text-neon transition"
                 >
-                  <Upload className="h-8 w-8 mx-auto mb-2" />
+                  <Upload className="h-7 w-7 md:h-8 md:w-8 mx-auto mb-2" />
                   לחץ להעלאת תמונת חשבונית
                 </button>
               )}
@@ -432,8 +432,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             `}</style>
           </div>
 
-          {/* Right: form */}
-          <div className="overflow-y-auto p-4 space-y-3">
+          {/* Form side: independent scroll on desktop */}
+          <div className="md:overflow-y-auto p-4 md:p-5 flex flex-col gap-4">
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-1">ספק</label>
               <select
