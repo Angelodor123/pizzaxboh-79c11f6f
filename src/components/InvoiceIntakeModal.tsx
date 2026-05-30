@@ -620,7 +620,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           .update({
             supplier_id: supplierId,
             invoice_number: invoiceNumber.trim(),
-            total_amount: totalNum,
+            total_amount: totalNum ?? undefined,
             document_date: docDate,
             image_url: imageUrl,
           })
