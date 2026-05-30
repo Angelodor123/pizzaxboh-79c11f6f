@@ -744,7 +744,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         : "border-border";
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
+    <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={handleExplicitClose} dir="rtl">
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-5xl bg-card border border-border rounded-2xl overflow-hidden max-h-[94vh] flex flex-col"
@@ -754,7 +754,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">{trainingMode ? "AI Training · Sandbox" : "Goods Receiving"}</div>
             <h3 className="font-display text-xl font-bold">{trainingMode ? "אימון AI מקבלה (לא נשמר במלאי)" : isEdit ? "עריכת חשבונית" : "קליטת חשבונית חדשה"}</h3>
           </div>
-          <button onClick={onClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
+          <button onClick={handleExplicitClose} className="h-8 w-8 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="סגור">
+
             <X className="h-4 w-4" />
           </button>
         </div>
