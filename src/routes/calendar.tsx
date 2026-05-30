@@ -416,7 +416,6 @@ function MonthView({
 
           const handleSelect = () => {
             setSelectedDate(c.iso);
-            if (canEdit && dayEvents.length === 0) onAddForDate(c.iso);
           };
 
           return (
@@ -430,11 +429,11 @@ function MonthView({
                 {c.date.getDate()}
               </span>
 
-              {/* Click target — fills cell */}
+              {/* Click target — fills cell. Tapping a day only selects it; creation happens via the agenda button. */}
               <button
                 type="button"
                 onClick={handleSelect}
-                aria-label={canEdit && dayEvents.length === 0 ? `הוסף אירוע ל-${c.iso}` : c.iso}
+                aria-label={`בחר ${c.iso}`}
                 className="absolute inset-0 z-0 active:scale-[0.98] transition"
               />
 
