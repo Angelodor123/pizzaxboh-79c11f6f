@@ -10,6 +10,7 @@ import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
+import { useBranchFeature } from "@/components/BranchGate";
 
 
 export const Route = createFileRoute("/")({
