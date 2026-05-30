@@ -4,6 +4,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type CatalogMatch = {
   id: string;
@@ -398,14 +405,21 @@ function QuickAddCatalogDialog({
           </div>
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1">יחידת מידה</label>
-            <input
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              dir="rtl"
-              placeholder="ק״ג / יח׳ / ארגז…"
-              maxLength={30}
-              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60 focus:border-neon"
-            />
+            <Select value={unit} onValueChange={setUnit} dir="rtl">
+              <SelectTrigger className="w-full bg-input border-border rounded-md px-3 text-sm text-right focus:ring-2 focus:ring-neon/60 focus:border-neon h-10">
+                <SelectValue placeholder="בחר יחידה…" />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value='ק"ג' className="text-right">ק"ג</SelectItem>
+                <SelectItem value="גרם" className="text-right">גרם</SelectItem>
+                <SelectItem value="ליטר" className="text-right">ליטר</SelectItem>
+                <SelectItem value='מ"ל' className="text-right">מ"ל</SelectItem>
+                <SelectItem value="יח'" className="text-right">יח'</SelectItem>
+                <SelectItem value="ארגז" className="text-right">ארגז</SelectItem>
+                <SelectItem value="פחית" className="text-right">פחית</SelectItem>
+                <SelectItem value="בקבוק" className="text-right">בקבוק</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex gap-2 pt-2">
             <button
