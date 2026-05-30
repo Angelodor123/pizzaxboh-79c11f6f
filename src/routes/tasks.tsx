@@ -1067,11 +1067,21 @@ function TasksPage() {
                                         <button
                                           type="button"
                                           onClick={() => reportShortage(t.id)}
-                                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition"
+                                          disabled={extractingTaskId === t.id}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold border border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-400 transition disabled:opacity-60 disabled:cursor-wait"
                                           title="דווח כחוסר"
                                         >
-                                          <AlertTriangle className="h-3.5 w-3.5" />
-                                          דווח כחוסר
+                                          {extractingTaskId === t.id ? (
+                                            <>
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                              מזהה פריט…
+                                            </>
+                                          ) : (
+                                            <>
+                                              <AlertTriangle className="h-3.5 w-3.5" />
+                                              דווח כחוסר
+                                            </>
+                                          )}
                                         </button>
                                       ) : (
                                         <span />
