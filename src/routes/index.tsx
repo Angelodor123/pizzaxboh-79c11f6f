@@ -127,7 +127,7 @@ function OperationalDashboard() {
 
       {/* Weather + EV grouped (related ambient widgets) */}
       <div className="mb-4">
-        <WeatherWidget title={weatherTitle} alertText={rainAlert} />
+        <WeatherWidget alertText={rainAlert} />
       </div>
       {vehiclesEnabled && (
         <div className="mb-6">
