@@ -1783,7 +1783,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "viewer" | "super_admin" | "manager" | "employee"
+      app_role:
+        | "admin"
+        | "viewer"
+        | "super_admin"
+        | "manager"
+        | "employee"
+        | "shift_manager"
       invoice_status: "pending_review" | "approved"
       order_status: "draft" | "sent" | "received" | "cancelled"
       task_recurrence_type: "daily" | "weekly" | "monthly" | "as_needed"
@@ -1914,7 +1920,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "viewer", "super_admin", "manager", "employee"],
+      app_role: [
+        "admin",
+        "viewer",
+        "super_admin",
+        "manager",
+        "employee",
+        "shift_manager",
+      ],
       invoice_status: ["pending_review", "approved"],
       order_status: ["draft", "sent", "received", "cancelled"],
       task_recurrence_type: ["daily", "weekly", "monthly", "as_needed"],
