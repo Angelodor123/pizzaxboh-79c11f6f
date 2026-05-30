@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Flame, Trophy, Sparkles, Upload } from "lucide-react";
+import { Flame, Trophy, Sparkles, Upload, History, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 import { InvoiceIntakeModal } from "@/components/InvoiceIntakeModal";
