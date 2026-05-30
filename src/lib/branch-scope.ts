@@ -2,18 +2,14 @@ import { getActiveBranchIdSync } from "./current-branch";
 
 /**
  * Adds a `branch_id = <active>` filter to a Supabase query when an active
- * branch is selected (always true once BranchGate has mounted — both branch
- * staff and super-admins get an active branch id at that point).
- *
- * This guarantees that super-admins (who bypass RLS) only see rows from the
- * currently selected branch, providing full per-branch isolation in the UI.
+ * branch is selected. Use on SELECT queries against branch-scoped tables to
+ * guarantee per-branch isolation in the UI (including for super-admins who
+ * bypass RLS).
  */
-export function withBranch<T extends { eq: (col: string, val: unknown) => T }>(query: T): T {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withBranch<T>(query: T): T {
   const id = getActiveBranchIdSync();
-  return id ? query.eq("branch_id", id) : query;
-}
-
-/** Convenience: returns the active branch id or throws — use at write sites. */
-export function activeBranchOrNull(): string | null {
-  return getActiveBranchIdSync();
+  if (!id) return query;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (query as any).eq("branch_id", id) as T;
 }
