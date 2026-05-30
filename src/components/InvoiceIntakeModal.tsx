@@ -751,8 +751,10 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
               <div className="space-y-2.5">
                 {items.map((row, i) => {
                   const qtyN = Number(row.quantity) || 0;
-                  const upN = Number(row.unit_price) || 0;
-                  const computed = qtyN * upN;
+                  const baseN = Number(row.base_unit_price) || 0;
+                  const netN = computeNet(baseN, row.discount);
+                  const totalN = netN * qtyN;
+                  const hasDiscount = !!parseDiscount(row.discount);
                   return (
                     <div key={i} className="rounded-lg border border-border bg-background/40 p-2.5 space-y-2">
                       {/* Row 1: index badge + item name (full width) + delete */}
@@ -778,24 +780,25 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                      {/* Row 2: numeric fields with labels above */}
-                      <div className="grid grid-cols-4 gap-2">
+                      {/* Row 2: 5-col math grid — quantity · base · discount · net · total.
+                          Base + discount are user-editable; net + total auto-recalc. */}
+                      <div className="grid grid-cols-5 gap-1.5">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
                           <input
                             value={row.quantity}
                             onChange={(e) => updateItem(i, "quantity", e.target.value)}
-                            className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
+                            className="w-full h-10 rounded-md bg-background border border-border px-1 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
                             inputMode="decimal"
                             placeholder="0"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">מחיר יח׳ ₪</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">מחיר בסיס</label>
                           <input
-                            value={row.unit_price}
-                            onChange={(e) => updateItem(i, "unit_price", e.target.value)}
-                            className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
+                            value={row.base_unit_price}
+                            onChange={(e) => updateItem(i, "base_unit_price", e.target.value)}
+                            className="w-full h-10 rounded-md bg-background border border-border px-1 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
                             inputMode="decimal"
                             placeholder="0.00"
                           />
@@ -805,20 +808,28 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                           <input
                             value={row.discount}
                             onChange={(e) => updateItem(i, "discount", e.target.value)}
-                            className={`w-full h-10 rounded-md bg-background border px-2 text-xs text-center font-bold focus:border-neon outline-none ${row.discount ? "border-amber-brand/70 text-amber-brand" : "border-border text-muted-foreground"}`}
+                            className={`w-full h-10 rounded-md bg-background border px-1 text-xs text-center font-bold focus:border-neon outline-none ${hasDiscount ? "border-amber-brand/70 text-amber-brand" : "border-border text-muted-foreground"}`}
                             placeholder="—"
-                            title={row.discount ? "המחיר הוזן לאחר ההנחה" : "אין הנחה"}
+                            title='לדוגמה: "10%" או "5" או "₪5"'
                           />
                         </div>
                         <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">נטו ליח׳</label>
+                          <div
+                            className={`w-full h-10 rounded-md border bg-zinc-900/40 px-1 text-sm text-center tabular-nums font-bold flex items-center justify-center ${hasDiscount && netN > 0 ? "border-amber-brand/50 text-amber-brand" : "border-border/60 text-muted-foreground"}`}
+                            title="מחושב אוטומטית מהבסיס וההנחה"
+                          >
+                            {netN > 0 ? netN.toFixed(2) : "—"}
+                          </div>
+                        </div>
+                        <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">סה״כ ₪</label>
-                          <input
-                            value={row.total_price}
-                            onChange={(e) => updateItem(i, "total_price", e.target.value)}
-                            className="w-full h-10 rounded-md bg-background border-2 border-border px-2 text-sm text-center tabular-nums font-bold text-neon focus:border-neon outline-none"
-                            inputMode="decimal"
-                            placeholder={computed > 0 ? computed.toFixed(2) : "0.00"}
-                          />
+                          <div
+                            className="w-full h-10 rounded-md border-2 border-border bg-zinc-900/40 px-1 text-sm text-center tabular-nums font-bold text-neon flex items-center justify-center"
+                            title="מחושב: כמות × נטו ליחידה"
+                          >
+                            {totalN > 0 ? totalN.toFixed(2) : "—"}
+                          </div>
                         </div>
                       </div>
                     </div>
