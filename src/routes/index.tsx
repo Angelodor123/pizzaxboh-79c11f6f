@@ -11,6 +11,7 @@ import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 import { useBranchFeature } from "@/components/BranchGate";
+import { withBranch } from "@/lib/branch-scope";
 
 
 export const Route = createFileRoute("/")({
