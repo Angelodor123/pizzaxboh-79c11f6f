@@ -25,6 +25,7 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
   const [qty, setQty] = useState<Record<string, number>>({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
