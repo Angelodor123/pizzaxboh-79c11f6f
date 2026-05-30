@@ -5,11 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { parseInvoiceImage, learnFromCorrection, type ParsedInvoice } from "@/lib/invoice-ocr.functions";
+import { loadSupplierProducts, type SupplierProduct } from "@/lib/supplier-products";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 interface SupplierOpt { id: string; name: string }
 
-interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string }
+interface ItemRow { item_name: string; quantity: string; unit_price: string; total_price: string; discount: string }
 
 interface InventoryOpt { id: string; name: string; unit: string }
 
@@ -51,7 +52,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [docDate, setDocDate] = useState(
     editInvoice?.document_date ?? new Date().toISOString().slice(0, 10),
   );
-  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "" }]);
+  const [items, setItems] = useState<ItemRow[]>([{ item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -62,8 +63,22 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [rawOcr, setRawOcr] = useState<ParsedInvoice | null>(null);
+  const [supplierCatalog, setSupplierCatalog] = useState<SupplierProduct[]>([]);
   const runOcr = useServerFn(parseInvoiceImage);
   const runLearn = useServerFn(learnFromCorrection);
+
+  // Load supplier catalog whenever supplier is selected — used as RAG context for OCR.
+  useEffect(() => {
+    let cancelled = false;
+    if (!supplierId) { setSupplierCatalog([]); return; }
+    (async () => {
+      try {
+        const list = await loadSupplierProducts(supplierId);
+        if (!cancelled) setSupplierCatalog(list);
+      } catch { if (!cancelled) setSupplierCatalog([]); }
+    })();
+    return () => { cancelled = true; };
+  }, [supplierId]);
 
   // Load inventory list for autocomplete
   useEffect(() => {
@@ -100,6 +115,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
         quantity: r.quantity != null ? String(r.quantity) : "",
         unit_price: r.unit_price != null ? String(r.unit_price) : "",
         total_price: r.total_price != null ? String(r.total_price) : "",
+        discount: "",
       }));
       if (rows.length) setItems(rows);
       // Load existing image preview via signed URL
@@ -139,12 +155,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     return () => clearTimeout(id);
   }, [supplierId, invoiceNumber, totalAmount, docDate, items, isEdit]);
 
-  // Cleanup blob URL on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  // Note: preview is stored as a base64 data URL (not blob:) so it survives
+  // tab backgrounding, app minimize, and OS memory pressure. No revoke needed.
 
   // Close on Escape
   useEffect(() => {
@@ -171,16 +183,32 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   const onFileSelected = async (f: File | null) => {
     setFile(f);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(f ? URL.createObjectURL(f) : null);
-    if (!f) return;
+    if (!f) { setPreviewUrl(null); return; }
 
     setUploading(true);
     setOcrLoading(true);
     try {
+      // Read as base64 data URL — persists across app backgrounding,
+      // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
+      setPreviewUrl(dataUrl);
+
+      const catalogPayload = supplierCatalog.slice(0, 200).map((p) => ({
+        name: p.name,
+        sku: p.sku ?? null,
+        unit: p.unit ?? null,
+        unit_size: p.unit_size ?? null,
+        price: p.price ?? null,
+        barcode: p.barcode ?? null,
+      }));
+
       const parsed = await runOcr({
-        data: { imageDataUrl: dataUrl, mimeType: f.type || "image/jpeg", supplierId: supplierId || undefined },
+        data: {
+          imageDataUrl: dataUrl,
+          mimeType: f.type || "image/jpeg",
+          supplierId: supplierId || undefined,
+          supplierCatalog: catalogPayload.length ? catalogPayload : undefined,
+        },
       });
       setRawOcr(parsed);
 
@@ -206,6 +234,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             quantity: it.quantity != null ? String(it.quantity) : "",
             unit_price: it.unit_price != null ? String(it.unit_price) : "",
             total_price: it.total_price != null ? String(it.total_price) : "",
+            discount: it.discount ?? "",
           })),
         );
         toast.success(`פוענחו ${parsed.items.length} שורות מהקבלה`);
@@ -222,7 +251,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   };
 
 
-  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "" }]);
+  const addItem = () => setItems((p) => [...p, { item_name: "", quantity: "", unit_price: "", total_price: "", discount: "" }]);
   const updateItem = (i: number, k: keyof ItemRow, v: string) =>
     setItems((p) => p.map((row, idx) => (idx === i ? { ...row, [k]: v } : row)));
   const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
@@ -573,7 +602,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                         </button>
                       </div>
                       {/* Row 2: numeric fields with labels above */}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
                           <input
@@ -592,6 +621,16 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                             className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
                             inputMode="decimal"
                             placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">הנחה</label>
+                          <input
+                            value={row.discount}
+                            onChange={(e) => updateItem(i, "discount", e.target.value)}
+                            className={`w-full h-10 rounded-md bg-background border px-2 text-xs text-center font-bold focus:border-neon outline-none ${row.discount ? "border-amber-brand/70 text-amber-brand" : "border-border text-muted-foreground"}`}
+                            placeholder="—"
+                            title={row.discount ? "המחיר הוזן לאחר ההנחה" : "אין הנחה"}
                           />
                         </div>
                         <div>
