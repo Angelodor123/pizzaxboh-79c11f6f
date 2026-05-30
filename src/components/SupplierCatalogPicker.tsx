@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Minus, Image as ImageIcon, AlertTriangle, Search, Check } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Loader2, Plus, Minus, Image as ImageIcon, AlertTriangle, Search, Check, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadSupplierProducts, fuzzyMatch, type SupplierProduct } from "@/lib/supplier-products";
 import type { OrderRow } from "@/lib/order-template";
+import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
 
 interface Props {
   supplierId: string;
