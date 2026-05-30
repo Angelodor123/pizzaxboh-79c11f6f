@@ -486,9 +486,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             </div>
 
             <div className="pt-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-muted-foreground">פריטים</span>
-                <button type="button" onClick={addItem} className="text-xs font-bold text-neon inline-flex items-center gap-1 h-11 px-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">פריטים ({items.length})</span>
+                <button type="button" onClick={addItem} className="text-xs font-bold text-neon inline-flex items-center gap-1 h-9 px-2.5 rounded-md border border-neon/40 hover:bg-neon/10">
                   <Plus className="h-4 w-4" /> הוסף פריט
                 </button>
               </div>
@@ -497,57 +497,72 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                   <option key={it.id} value={it.name}>{it.unit}</option>
                 ))}
               </datalist>
-              <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center px-0.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                <span>שם פריט</span>
-                <span className="text-center">כמות</span>
-                <span className="text-center">מחיר יח׳</span>
-                <span className="text-center">סה״כ</span>
-                <span />
-              </div>
-              <div className="space-y-2">
-                {items.map((row, i) => (
-                  <div key={i} className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px_44px] gap-1.5 items-center">
-                    <input
-                      placeholder="שם פריט"
-                      list="inventory-items-list"
-                      value={row.item_name}
-                      onChange={(e) => updateItem(i, "item_name", e.target.value)}
-                      className="h-11 rounded-md bg-background border border-border px-3 text-sm focus:border-neon outline-none truncate"
-                      dir="rtl"
-                      autoComplete="off"
-                    />
-                    <input
-                      placeholder="כמות"
-                      value={row.quantity}
-                      onChange={(e) => updateItem(i, "quantity", e.target.value)}
-                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
-                      inputMode="decimal"
-                    />
-                    <input
-                      placeholder="יח'"
-                      value={row.unit_price}
-                      onChange={(e) => updateItem(i, "unit_price", e.target.value)}
-                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
-                      inputMode="decimal"
-                      title="מחיר ליחידה"
-                    />
-                    <input
-                      placeholder="סה״כ"
-                      value={row.total_price}
-                      onChange={(e) => updateItem(i, "total_price", e.target.value)}
-                      className="h-11 rounded-md bg-background border border-border px-1.5 text-xs text-center tabular-nums focus:border-neon outline-none"
-                      inputMode="decimal"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeItem(i)}
-                      className="h-11 w-11 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
-                      aria-label="מחק שורה"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
+              <div className="space-y-2.5">
+                {items.map((row, i) => {
+                  const qtyN = Number(row.quantity) || 0;
+                  const upN = Number(row.unit_price) || 0;
+                  const computed = qtyN * upN;
+                  return (
+                    <div key={i} className="rounded-lg border border-border bg-background/40 p-2.5 space-y-2">
+                      {/* Row 1: index badge + item name (full width) + delete */}
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0 h-6 w-6 grid place-content-center rounded-md bg-neon/10 text-neon text-[10px] font-bold tabular-nums">
+                          {i + 1}
+                        </span>
+                        <input
+                          placeholder="שם פריט"
+                          list="inventory-items-list"
+                          value={row.item_name}
+                          onChange={(e) => updateItem(i, "item_name", e.target.value)}
+                          className="flex-1 min-w-0 h-10 rounded-md bg-background border border-border px-3 text-sm font-bold focus:border-neon outline-none"
+                          dir="rtl"
+                          autoComplete="off"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeItem(i)}
+                          className="shrink-0 h-10 w-10 grid place-content-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                          aria-label="מחק שורה"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {/* Row 2: numeric fields with labels above */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">כמות</label>
+                          <input
+                            value={row.quantity}
+                            onChange={(e) => updateItem(i, "quantity", e.target.value)}
+                            className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
+                            inputMode="decimal"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">מחיר יח׳ ₪</label>
+                          <input
+                            value={row.unit_price}
+                            onChange={(e) => updateItem(i, "unit_price", e.target.value)}
+                            className="w-full h-10 rounded-md bg-background border border-border px-2 text-sm text-center tabular-nums font-bold focus:border-neon outline-none"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">סה״כ ₪</label>
+                          <input
+                            value={row.total_price}
+                            onChange={(e) => updateItem(i, "total_price", e.target.value)}
+                            className="w-full h-10 rounded-md bg-background border-2 border-border px-2 text-sm text-center tabular-nums font-bold text-neon focus:border-neon outline-none"
+                            inputMode="decimal"
+                            placeholder={computed > 0 ? computed.toFixed(2) : "0.00"}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
