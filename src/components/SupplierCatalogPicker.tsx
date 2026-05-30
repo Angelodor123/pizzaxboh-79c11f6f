@@ -120,7 +120,10 @@ export function SupplierCatalogPicker({ supplierId, supplierName, open, onClose,
 
   const selectedCount = Object.values(qty).filter((v) => v > 0).length;
   const unmatchedShortages = useMemo(() => {
-    return shortages.filter((s) => !products.some((p) => fuzzyMatch(p.name, s.name)));
+    return shortages.filter((s) => {
+      if (s.catalog_product_id) return !products.some((p) => p.id === s.catalog_product_id);
+      return !products.some((p) => fuzzyMatch(p.name, s.name));
+    });
   }, [shortages, products]);
 
   const handleAdd = () => {
