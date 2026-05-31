@@ -1073,7 +1073,7 @@ function TasksPage() {
                                       <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
-                                          onClick={() => setVerification(t.id, "verified", null)}
+                                          onClick={() => setVerification(t.id, log?.admin_verification_status === "verified" ? "none" : "verified", null)}
                                           className={`p-1.5 rounded-md transition border ${
                                             log?.admin_verification_status === "verified"
                                               ? "bg-emerald-500/20 border-emerald-500/60 text-emerald-300"
