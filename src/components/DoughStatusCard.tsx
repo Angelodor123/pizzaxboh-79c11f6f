@@ -113,22 +113,14 @@ export function DoughStatusCard() {
     const { data: today } = await supabase.rpc("operational_today");
     const date = today as string;
     setLogDate(date);
-    const { data: log } = await supabase
-      .from("prep_log")
-      .select("current_stock")
-      .eq("prep_item_id", (pi as PrepItem).id)
-      .eq("log_date", date)
-      .maybeSingle();
-    const fallbackTotal = Number(log?.current_stock ?? 0);
-    const { latestShop, latestWh } = await loadLatest(
-      (pi as PrepItem).id,
-      branchId,
-    );
-    // If we have no per-location history yet, seed shop with the existing total.
-    if (!latestShop && !latestWh && fallbackTotal > 0) {
-      setShopCount(fallbackTotal);
-    }
+
+
+    await loadLatest((pi as PrepItem).id, branchId);
+    // NOTE: We intentionally do NOT seed shopCount from prep_log.current_stock
+    // anymore — that total can include warehouse trays and caused a data swap
+    // (warehouse entries appearing under "בפיצה" after refresh).
   };
+
 
   useEffect(() => {
     void load();
@@ -270,13 +262,21 @@ export function DoughStatusCard() {
         location: "shop",
       });
     }
-    await supabase.from("dough_updates_log").insert(rows);
+    const { data: inserted } = await supabase
+      .from("dough_updates_log")
+      .insert(rows)
+      .select("id,trays_count,updated_by_name,created_at,location");
 
     setSaving(false);
+    // Optimistic UI: reflect new numbers immediately without waiting for refetch.
     setShopCount(shopN);
     setWarehouseCount(whN);
-    void loadLatest(item.id, branchId);
+    const newest = (inserted as DoughLogRow[] | null)?.sort(
+      (a, b) => +new Date(b.created_at) - +new Date(a.created_at),
+    )[0];
+    if (newest) setLastUpdate(newest);
   };
+
 
   const handleReset = async () => {
     if (!item || !logDate || !branchId) return;
