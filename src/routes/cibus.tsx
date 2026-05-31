@@ -151,8 +151,17 @@ function CibusPage() {
               </li>
             ))}
             {filtered.length === 0 && !showCreateBtn && (
-              <li className="text-center text-muted-foreground py-8 text-sm">
-                {q ? "לא נמצאו תוצאות" : "אין ארנקים במערכת"}
+              <li className="text-center py-10 space-y-3">
+                <div className="text-muted-foreground text-sm">
+                  {q ? "לא נמצאו תוצאות" : "אין ארנקים במערכת"}
+                </div>
+                <Button
+                  onClick={() => setShowCreate(true)}
+                  className="h-11 px-6 bg-amber-brand text-amber-brand-foreground hover:opacity-90 font-bold"
+                >
+                  <UserPlus className="h-4 w-4 ml-2" />
+                  צור ארנק ראשון
+                </Button>
               </li>
             )}
           </ul>
