@@ -25,19 +25,19 @@ const STATUS_STYLES: Record<
   { badge: string; column: string; dot: string }
 > = {
   new: {
-    badge: "bg-tomato text-tomato-foreground",
-    column: "border-tomato/40",
-    dot: "bg-tomato",
+    badge: "bg-destructive text-destructive-foreground",
+    column: "border-destructive/40",
+    dot: "bg-destructive",
   },
   in_progress: {
-    badge: "bg-brand-gold text-brand-gold-foreground",
-    column: "border-brand-gold/40",
-    dot: "bg-brand-gold",
+    badge: "bg-amber-brand text-amber-brand-foreground",
+    column: "border-amber-brand/40",
+    dot: "bg-amber-brand",
   },
   resolved: {
-    badge: "bg-olive text-olive-foreground",
-    column: "border-olive/40",
-    dot: "bg-olive",
+    badge: "bg-success text-success-foreground",
+    column: "border-success/40",
+    dot: "bg-success",
   },
 };
 
@@ -265,13 +265,13 @@ function ComplaintDetailDialog({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-brand-gold mb-1 block">פיצוי שניתן ללקוח</label>
+              <label className="text-xs font-bold text-amber-brand mb-1 block">פיצוי שניתן ללקוח</label>
               <Textarea
                 value={comp}
                 onChange={(e) => setComp(e.target.value)}
                 rows={2}
                 dir="rtl"
-                className="text-right resize-none border-brand-gold/40"
+                className="text-right resize-none border-amber-brand/40"
                 placeholder="לדוגמא: זיכוי 50₪, פיצה חינם בהזמנה הבאה..."
               />
             </div>
@@ -281,7 +281,7 @@ function ComplaintDetailDialog({
                 variant="outline"
                 onClick={del}
                 disabled={deleting || saving}
-                className="border-tomato/50 text-tomato hover:bg-tomato/10"
+                className="border-destructive/50 text-destructive hover:bg-destructive/10"
               >
                 {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               </Button>
@@ -291,7 +291,7 @@ function ComplaintDetailDialog({
               <Button
                 onClick={save}
                 disabled={saving || deleting}
-                className="flex-1 bg-olive text-olive-foreground hover:opacity-90 font-bold"
+                className="flex-1 bg-success text-success-foreground hover:opacity-90 font-bold"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "שמור"}
               </Button>

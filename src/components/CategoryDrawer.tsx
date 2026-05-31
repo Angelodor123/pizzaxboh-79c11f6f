@@ -414,7 +414,7 @@ export function CategoryDrawer() {
                   <Link to="/admin/complaints" onClick={close} className={itemClass}>
                     <span className="flex-1 text-right flex items-center gap-2 justify-end">
                       {newComplaintCount > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-tomato text-tomato-foreground text-[10px] font-black">
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-black">
                           {newComplaintCount}
                         </span>
                       )}

@@ -64,7 +64,7 @@ function CibusPage() {
           <ArrowRight className="h-5 w-5" />
         </Link>
         <div className="flex-1 flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-brand-gold" />
+          <Wallet className="h-5 w-5 text-amber-brand" />
           <h1 className="text-lg font-bold text-foreground">ארנק סיבוס</h1>
         </div>
       </header>
@@ -84,7 +84,7 @@ function CibusPage() {
         {showCreateBtn && (
           <Button
             onClick={() => setShowCreate(true)}
-            className="w-full h-12 bg-brand-gold text-brand-gold-foreground hover:opacity-90 font-bold"
+            className="w-full h-12 bg-amber-brand text-amber-brand-foreground hover:opacity-90 font-bold"
           >
             <UserPlus className="h-4 w-4 ml-2" />
             צור ארנק חדש ללקוח
@@ -99,7 +99,7 @@ function CibusPage() {
               <li key={w.id}>
                 <button
                   onClick={() => setSelected(w)}
-                  className="w-full text-right p-4 rounded-xl bg-card border border-zinc-800 hover:border-brand-gold/40 transition flex items-center gap-3"
+                  className="w-full text-right p-4 rounded-xl bg-card border border-zinc-800 hover:border-amber-brand/40 transition flex items-center gap-3"
                 >
                   <div className="flex-1 text-right">
                     <div className="font-bold text-foreground">{w.customer_name}</div>
@@ -107,7 +107,7 @@ function CibusPage() {
                   </div>
                   <div
                     className={`text-2xl font-black tabular-nums ${
-                      w.balance > 0 ? "text-olive" : w.balance < 0 ? "text-tomato" : "text-muted-foreground"
+                      w.balance > 0 ? "text-success" : w.balance < 0 ? "text-destructive" : "text-muted-foreground"
                     }`}
                   >
                     ₪{Number(w.balance).toFixed(2)}
@@ -184,7 +184,7 @@ function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () 
           <div className="text-xs text-muted-foreground mb-2">יתרה נוכחית</div>
           <div
             className={`text-5xl font-black tabular-nums ${
-              wallet.balance > 0 ? "text-olive" : wallet.balance < 0 ? "text-tomato" : "text-foreground"
+              wallet.balance > 0 ? "text-success" : wallet.balance < 0 ? "text-destructive" : "text-foreground"
             }`}
           >
             ₪{Number(wallet.balance).toFixed(2)}
@@ -206,7 +206,7 @@ function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () 
           <Button
             onClick={() => apply(-1)}
             disabled={busy}
-            className="h-14 bg-tomato text-tomato-foreground hover:opacity-90 font-bold text-base"
+            className="h-14 bg-destructive text-destructive-foreground hover:opacity-90 font-bold text-base"
           >
             <Minus className="h-5 w-5 ml-2" />
             מימוש יתרה
@@ -214,7 +214,7 @@ function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () 
           <Button
             onClick={() => apply(1)}
             disabled={busy}
-            className="h-14 bg-olive text-olive-foreground hover:opacity-90 font-bold text-base"
+            className="h-14 bg-success text-success-foreground hover:opacity-90 font-bold text-base"
           >
             <Plus className="h-5 w-5 ml-2" />
             הוסף צבירה
@@ -305,7 +305,7 @@ function CreateWalletDialog({
         </div>
         <div className="flex gap-2 pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 border-zinc-700">ביטול</Button>
-          <Button onClick={submit} disabled={busy} className="flex-1 bg-brand-gold text-brand-gold-foreground hover:opacity-90 font-bold">
+          <Button onClick={submit} disabled={busy} className="flex-1 bg-amber-brand text-amber-brand-foreground hover:opacity-90 font-bold">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "צור ארנק"}
           </Button>
         </div>
