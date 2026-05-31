@@ -67,19 +67,14 @@
   --ring: oklch(0.65 0.31 5);
   --jungle: oklch(0.4 0.13 145); /* #228B22 */
   --jungle-foreground: oklch(0.98 0 0);
-  --amber-brand: oklch(0.62 0.14 55); /* #D2691E */
+  --amber-brand: oklch(0.78 0.15 85); /* warm gold/amber — EV + in-progress status */
+  --amber-brand-foreground: oklch(0.2 0.05 85);
   --neon: oklch(0.65 0.31 5);
   --neon-soft: oklch(0.72 0.25 8); /* #FF69B4 */
   --info: oklch(0.72 0.14 235); /* sky/winter accent */
   --info-foreground: oklch(0.98 0 0);
-  --success: oklch(0.72 0.17 155); /* emerald */
-  --success-foreground: oklch(0.15 0.04 155);
-  --tomato: oklch(0.62 0.22 28); /* tomato red — complaint status */
-  --tomato-foreground: oklch(0.98 0 0);
-  --olive: oklch(0.62 0.14 125); /* olive green — resolved/positive */
-  --olive-foreground: oklch(0.15 0.04 125);
-  --brand-gold: oklch(0.78 0.15 85); /* warm gold — in-progress */
-  --brand-gold-foreground: oklch(0.2 0.05 85);
+  --success: oklch(0.62 0.14 125); /* olive/emerald — resolved/positive */
+  --success-foreground: oklch(0.15 0.04 125);
 }
 
 
