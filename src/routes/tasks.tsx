@@ -67,6 +67,8 @@ type LogState = {
   completed_by_user_id: string | null;
   comments: string;
   photo_url: string | null;
+  admin_verification_status: "none" | "verified" | "rejected";
+  rejection_note: string | null;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
@@ -256,6 +258,8 @@ function TasksPage() {
     | null
   >(null);
   const extractFn = useServerFn(extractIngredientFromTitle);
+  const [rejectingTask, setRejectingTask] = useState<{ id: string; name: string } | null>(null);
+  const [rejectNoteDraft, setRejectNoteDraft] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -336,6 +340,8 @@ function TasksPage() {
         completed_by_user_id: l.completed_by_user_id,
         comments: l.comments ?? "",
         photo_url: l.photo_url ?? null,
+        admin_verification_status: l.admin_verification_status ?? "none",
+        rejection_note: l.rejection_note ?? null,
       });
     });
     setLogs(map);
@@ -500,6 +506,8 @@ function TasksPage() {
           completed_by_user_id: state.completed_by_user_id,
           comments: state.comments,
           photo_url: state.photo_url,
+          admin_verification_status: state.admin_verification_status,
+          rejection_note: state.rejection_note,
         },
       ]);
     } catch (e) {
@@ -523,6 +531,9 @@ function TasksPage() {
       completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
       comments: prev?.comments ?? "",
       photo_url: prev?.photo_url ?? null,
+      // Re-completing after rejection clears the verification cycle
+      admin_verification_status: completed && prev?.admin_verification_status === "rejected" ? "none" : prev?.admin_verification_status ?? "none",
+      rejection_note: completed && prev?.admin_verification_status === "rejected" ? null : prev?.rejection_note ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -541,6 +552,32 @@ function TasksPage() {
     }
   };
 
+  // Super admin: verify or reject a completed task.
+  const setVerification = async (
+    taskId: string,
+    status: "verified" | "rejected",
+    note: string | null,
+  ) => {
+    const prev = logs.get(taskId);
+    if (!prev) return;
+    const nextState: LogState = {
+      ...prev,
+      // Rejection un-completes the task so the employee must redo it.
+      completed: status === "verified" ? prev.completed : false,
+      completed_at: status === "verified" ? prev.completed_at : null,
+      admin_verification_status: status,
+      rejection_note: status === "rejected" ? note : null,
+    };
+    setLogs((m) => {
+      const next = new Map(m);
+      next.set(taskId, nextState);
+      return next;
+    });
+    await persistTask(taskId, nextState);
+    triggerHaptic("light");
+    toast.success(status === "verified" ? "המשימה אומתה" : "המשימה נפסלה והעובד יקבל הערה");
+  };
+
   const handlePhotoUploaded = (taskId: string, path: string) => {
     const prev = logs.get(taskId);
     const nextState: LogState = {
@@ -550,6 +587,8 @@ function TasksPage() {
       completed_by_user_id: prev?.completed_by_user_id ?? null,
       comments: prev?.comments ?? "",
       photo_url: path,
+      admin_verification_status: prev?.admin_verification_status ?? "none",
+      rejection_note: prev?.rejection_note ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -616,6 +655,8 @@ function TasksPage() {
         completed_by_user_id: prev?.completed_by_user_id ?? null,
         comments: value,
         photo_url: prev?.photo_url ?? null,
+        admin_verification_status: prev?.admin_verification_status ?? "none",
+        rejection_note: prev?.rejection_note ?? null,
       });
       return next;
     });
@@ -1001,6 +1042,36 @@ function TasksPage() {
                                         )}
                                       </div>
                                     </label>
+                                    {isSuperAdmin && done && !t.id.startsWith("__virtual_") && (
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => setVerification(t.id, "verified", null)}
+                                          className={`p-1.5 rounded-md transition border ${
+                                            log?.admin_verification_status === "verified"
+                                              ? "bg-emerald-500/20 border-emerald-500/60 text-emerald-300"
+                                              : "border-transparent text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10"
+                                          }`}
+                                          aria-label="אשר ביצוע"
+                                          title="אישור מנהל"
+                                        >
+                                          <span className="text-base leading-none">✓</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { setRejectingTask({ id: t.id, name: t.name }); setRejectNoteDraft(log?.rejection_note ?? ""); }}
+                                          className={`p-1.5 rounded-md transition border ${
+                                            log?.admin_verification_status === "rejected"
+                                              ? "bg-rose-500/20 border-rose-500/60 text-rose-300"
+                                              : "border-transparent text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                                          }`}
+                                          aria-label="פסול ביצוע"
+                                          title="פסילת מנהל"
+                                        >
+                                          <span className="text-base leading-none">✗</span>
+                                        </button>
+                                      </div>
+                                    )}
                                     {recipe && (
                                       <button
                                         type="button"
@@ -1024,6 +1095,17 @@ function TasksPage() {
                                       </button>
                                     )}
                                   </div>
+
+                                  {log?.admin_verification_status === "rejected" && log.rejection_note && (
+                                    <div className="mt-3 rounded-lg border-2 border-rose-500/60 bg-rose-500/10 p-3 flex items-start gap-2">
+                                      <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                                      <div className="text-right flex-1">
+                                        <div className="text-[11px] font-bold text-rose-300 mb-1">⚠️ הערת מנהל — המשימה נפסלה</div>
+                                        <div className="text-sm text-rose-100 leading-snug whitespace-pre-wrap">{log.rejection_note}</div>
+                                      </div>
+                                    </div>
+                                  )}
+
 
                                   {t.requires_photo && !t.id.startsWith("__virtual_") && branchId && (
                                     <div className="mt-3 rounded-lg border border-pink-500/30 bg-pink-500/5 p-3">
@@ -1200,6 +1282,60 @@ function TasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Super-admin rejection-note prompt */}
+      <Dialog
+        open={!!rejectingTask}
+        onOpenChange={(o) => { if (!o) { setRejectingTask(null); setRejectNoteDraft(""); } }}
+      >
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">פסילת ביצוע משימה</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-right">
+            <div className="text-sm text-muted-foreground">
+              {rejectingTask?.name}
+            </div>
+            <label className="block text-xs font-bold text-foreground">סיבת פסילה (תוצג לעובד)</label>
+            <textarea
+              value={rejectNoteDraft}
+              onChange={(e) => setRejectNoteDraft(e.target.value.slice(0, 500))}
+              rows={4}
+              autoFocus
+              placeholder="לדוגמה: התמונה לא ברורה, יש לחזור ולנקות את האזור…"
+              className="w-full bg-background border border-border focus:border-rose-500/60 focus:outline-none rounded-md px-3 py-2 text-sm resize-y"
+            />
+            <div className="text-[10px] text-muted-foreground tabular-nums text-end" dir="ltr">
+              {rejectNoteDraft.length}/500
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => { setRejectingTask(null); setRejectNoteDraft(""); }}
+              className="px-3 py-1.5 rounded-md text-xs font-bold border border-border hover:bg-accent"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              disabled={!rejectNoteDraft.trim()}
+              onClick={async () => {
+                if (!rejectingTask || !rejectNoteDraft.trim()) return;
+                const id = rejectingTask.id;
+                const note = rejectNoteDraft.trim();
+                setRejectingTask(null);
+                setRejectNoteDraft("");
+                await setVerification(id, "rejected", note);
+              }}
+              className="px-3 py-1.5 rounded-md text-xs font-bold bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              פסול ושלח הערה
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Draggable shortcut to the notepad */}
       <DraggableNotepadFab />
