@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/admin/complaints")({
+export const Route = createFileRoute("/complaints")({
   component: ComplaintsAdminPage,
 });
 

@@ -21,12 +21,12 @@ import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as CibusRouteImport } from './routes/cibus'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
-import { Route as AdminComplaintsRouteImport } from './routes/admin.complaints'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
 import { Route as ApiPublicHooksSportsSyncRouteImport } from './routes/api/public/hooks/sports-sync'
@@ -92,6 +92,11 @@ const GuideRoute = GuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComplaintsRoute = ComplaintsRouteImport.update({
+  id: '/complaints',
+  path: '/complaints',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CibusRoute = CibusRouteImport.update({
   id: '/cibus',
   path: '/cibus',
@@ -115,11 +120,6 @@ const IndexRoute = IndexRouteImport.update({
 const AdminHistoryRoute = AdminHistoryRouteImport.update({
   id: '/history',
   path: '/history',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminComplaintsRoute = AdminComplaintsRouteImport.update({
-  id: '/complaints',
-  path: '/complaints',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAlertsRoute = AdminAlertsRouteImport.update({
@@ -150,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
+  '/complaints': typeof ComplaintsRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
@@ -163,7 +164,6 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
-  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -174,6 +174,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
+  '/complaints': typeof ComplaintsRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
@@ -187,7 +188,6 @@ export interface FileRoutesByTo {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
-  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -199,6 +199,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
+  '/complaints': typeof ComplaintsRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
@@ -212,7 +213,6 @@ export interface FileRoutesById {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
-  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -225,6 +225,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/cibus'
+    | '/complaints'
     | '/guide'
     | '/invoices'
     | '/maintenance'
@@ -238,7 +239,6 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
-    | '/admin/complaints'
     | '/admin/history'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -249,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/cibus'
+    | '/complaints'
     | '/guide'
     | '/invoices'
     | '/maintenance'
@@ -262,7 +263,6 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
-    | '/admin/complaints'
     | '/admin/history'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -273,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/cibus'
+    | '/complaints'
     | '/guide'
     | '/invoices'
     | '/maintenance'
@@ -286,7 +287,6 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
-    | '/admin/complaints'
     | '/admin/history'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -298,6 +298,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   CibusRoute: typeof CibusRoute
+  ComplaintsRoute: typeof ComplaintsRoute
   GuideRoute: typeof GuideRoute
   InvoicesRoute: typeof InvoicesRoute
   MaintenanceRoute: typeof MaintenanceRoute
@@ -400,6 +401,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/complaints': {
+      id: '/complaints'
+      path: '/complaints'
+      fullPath: '/complaints'
+      preLoaderRoute: typeof ComplaintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cibus': {
       id: '/cibus'
       path: '/cibus'
@@ -435,13 +443,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHistoryRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/complaints': {
-      id: '/admin/complaints'
-      path: '/complaints'
-      fullPath: '/admin/complaints'
-      preLoaderRoute: typeof AdminComplaintsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/alerts': {
       id: '/admin/alerts'
       path: '/alerts'
@@ -475,14 +476,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAlertsRoute: typeof AdminAlertsRoute
-  AdminComplaintsRoute: typeof AdminComplaintsRoute
   AdminHistoryRoute: typeof AdminHistoryRoute
   AdminSettingsEquipmentRoute: typeof AdminSettingsEquipmentRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAlertsRoute: AdminAlertsRoute,
-  AdminComplaintsRoute: AdminComplaintsRoute,
   AdminHistoryRoute: AdminHistoryRoute,
   AdminSettingsEquipmentRoute: AdminSettingsEquipmentRoute,
 }
@@ -494,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CalendarRoute: CalendarRoute,
   CibusRoute: CibusRoute,
+  ComplaintsRoute: ComplaintsRoute,
   GuideRoute: GuideRoute,
   InvoicesRoute: InvoicesRoute,
   MaintenanceRoute: MaintenanceRoute,
