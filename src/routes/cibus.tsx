@@ -37,7 +37,14 @@ interface Transaction {
   balance_after: number;
   note: string | null;
   created_at: string;
+  transaction_date: string | null;
 }
+
+const todayLocal = () => {
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60_000).toISOString().slice(0, 10);
+};
 
 function CibusPage() {
   const { session } = useAuth();
@@ -193,6 +200,7 @@ function WalletDetail({
   userId: string | null;
 }) {
   const [amount, setAmount] = useState("");
+  const [txDate, setTxDate] = useState<string>(todayLocal());
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Transaction[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -200,6 +208,7 @@ function WalletDetail({
   useEffect(() => {
     if (!wallet) {
       setAmount("");
+      setTxDate(todayLocal());
       setHistory([]);
       return;
     }
@@ -264,11 +273,13 @@ function WalletDetail({
       type: sign === 1 ? "add" : "deduct",
       balance_after: newBalance,
       created_by: userId,
+      transaction_date: txDate || todayLocal(),
     });
 
     setBusy(false);
     toast.success(sign === 1 ? `נוספו ₪${num.toFixed(2)}` : `נוצלו ₪${num.toFixed(2)}`);
     setAmount("");
+    setTxDate(todayLocal());
   };
 
   return (
@@ -295,15 +306,27 @@ function WalletDetail({
           </div>
         </div>
 
-        <div>
-          <label className="text-xs font-bold text-muted-foreground mb-1 block">סכום (₪)</label>
-          <Input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputMode="decimal"
-            placeholder="0.00"
-            className="text-center text-xl font-bold h-14"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-muted-foreground mb-1 block">תאריך קבלה/צבירה</label>
+            <Input
+              type="date"
+              value={txDate}
+              onChange={(e) => setTxDate(e.target.value)}
+              className="h-14 text-center text-sm font-bold"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground mb-1 block">סכום (₪)</label>
+            <Input
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              inputMode="decimal"
+              placeholder="0.00"
+              className="text-center text-xl font-bold h-14"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -359,15 +382,16 @@ function WalletDetail({
                       <div className={`font-bold tabular-nums ${isAdd ? "text-success" : "text-destructive"}`}>
                         {isAdd ? "+" : "-"}₪{Number(tx.amount).toFixed(2)}
                       </div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {tx.type === "initial" ? "יתרת פתיחה" : isAdd ? "הוספה" : "מימוש"} ·{" "}
-                        {new Date(tx.created_at).toLocaleString("he-IL", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-amber-brand">
+                          📅 {new Date(((tx.transaction_date ?? tx.created_at.slice(0, 10)) as string) + "T00:00:00").toLocaleDateString("he-IL", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "2-digit",
+                          })}
+                        </span>
+                        <span>·</span>
+                        <span>{tx.type === "initial" ? "יתרת פתיחה" : isAdd ? "הוספה" : "מימוש"}</span>
                       </div>
                     </div>
                     <div className="text-[10px] text-muted-foreground tabular-nums shrink-0">
