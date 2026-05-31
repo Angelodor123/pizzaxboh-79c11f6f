@@ -120,6 +120,29 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
               <label className="text-xs font-bold text-muted-foreground mb-1 block">כתובת</label>
               <Input value={address} onChange={(e) => setAddress(e.target.value)} dir="rtl" className="text-right" />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1 block">תאריך הזמנה</label>
+                <Input
+                  type="date"
+                  value={orderDate}
+                  onChange={(e) => setOrderDate(e.target.value)}
+                  dir="rtl"
+                  className="text-right"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1 block">מספר הזמנה</label>
+                <Input
+                  value={orderNumber}
+                  onChange={(e) => setOrderNumber(e.target.value)}
+                  inputMode="numeric"
+                  dir="ltr"
+                  className="text-left"
+                  placeholder="#1234"
+                />
+              </div>
+            </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground mb-1 block">תיאור התלונה *</label>
               <Textarea
