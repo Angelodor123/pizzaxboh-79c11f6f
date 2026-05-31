@@ -344,6 +344,8 @@ function TasksPage() {
         photo_url: l.photo_url ?? null,
         admin_verification_status: l.admin_verification_status ?? "none",
         rejection_note: l.rejection_note ?? null,
+        verified_by_name: null,
+        verified_at: l.verified_at ?? null,
       });
     });
     setLogs(map);
