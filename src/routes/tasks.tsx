@@ -593,7 +593,6 @@ function TasksPage() {
           : "האישור בוטל",
     );
   };
-  };
 
   const handlePhotoUploaded = (taskId: string, path: string) => {
     const prev = logs.get(taskId);
