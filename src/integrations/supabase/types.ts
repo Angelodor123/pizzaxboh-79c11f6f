@@ -247,6 +247,78 @@ export type Database = {
           },
         ]
       }
+      cibus_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          created_by: string | null
+          customer_name: string
+          id: string
+          last_updated: string
+          phone_number: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          customer_name: string
+          id?: string
+          last_updated?: string
+          phone_number: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string
+          id?: string
+          last_updated?: string
+          phone_number?: string
+        }
+        Relationships: []
+      }
+      customer_complaints: {
+        Row: {
+          address: string | null
+          compensation_notes: string | null
+          created_at: string
+          created_by: string | null
+          customer_name: string
+          description: string
+          id: string
+          manager_notes: string | null
+          phone_number: string
+          status: Database["public"]["Enums"]["complaint_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          compensation_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name: string
+          description: string
+          id?: string
+          manager_notes?: string | null
+          phone_number: string
+          status?: Database["public"]["Enums"]["complaint_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          compensation_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string
+          description?: string
+          id?: string
+          manager_notes?: string | null
+          phone_number?: string
+          status?: Database["public"]["Enums"]["complaint_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_operational_history: {
         Row: {
           branch_id: string | null
@@ -1901,6 +1973,7 @@ export type Database = {
         | "manager"
         | "employee"
         | "shift_manager"
+      complaint_status: "new" | "in_progress" | "resolved"
       invoice_status: "pending_review" | "approved"
       order_status: "draft" | "sent" | "received" | "cancelled"
       task_recurrence_type: "daily" | "weekly" | "monthly" | "as_needed"
@@ -2039,6 +2112,7 @@ export const Constants = {
         "employee",
         "shift_manager",
       ],
+      complaint_status: ["new", "in_progress", "resolved"],
       invoice_status: ["pending_review", "approved"],
       order_status: ["draft", "sent", "received", "cancelled"],
       task_recurrence_type: ["daily", "weekly", "monthly", "as_needed"],
