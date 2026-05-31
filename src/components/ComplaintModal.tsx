@@ -57,8 +57,10 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       return;
     }
     setSubmitting(true);
+    const branchId = await getCurrentBranchId();
     const { error } = await supabase.from("customer_complaints").insert({
       created_by: uid,
+      branch_id: branchId,
       customer_name: name.trim(),
       phone_number: phone.trim(),
       address: address.trim() || null,
