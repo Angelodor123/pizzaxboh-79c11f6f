@@ -288,22 +288,25 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
 
     });
     setRows(pairs);
+    resetValidation(pairs.length);
     setStage("verify");
   };
 
   const skipMatch = () => {
     // populate rows from OCR only
     const ocrItems = parsed?.items ?? [];
-    setRows(ocrItems.map((it) => ({
+    const newRows = ocrItems.map((it) => ({
       name: it.name, orderedQty: null,
       invoiceQty: Number(it.quantity) || 0,
       unitPrice: Number(it.unit_price) || 0,
       totalPrice: Number(it.total_price) || 0,
-      category: lookupCategory(it.name),
-    })));
-
+      category: lookupCategory(it.name) as ExpenseCategory | "",
+    }));
+    setRows(newRows);
+    resetValidation(newRows.length);
     setStage("manual");
   };
+
 
   const totalNum = Number(totalAmount);
   const canSubmit = supplierId && !Number.isNaN(totalNum) && totalNum > 0 && docDate && !submitting;
