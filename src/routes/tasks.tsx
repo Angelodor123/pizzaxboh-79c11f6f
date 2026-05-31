@@ -338,6 +338,8 @@ function TasksPage() {
         completed_by_user_id: l.completed_by_user_id,
         comments: l.comments ?? "",
         photo_url: l.photo_url ?? null,
+        admin_verification_status: l.admin_verification_status ?? "none",
+        rejection_note: l.rejection_note ?? null,
       });
     });
     setLogs(map);
@@ -502,6 +504,8 @@ function TasksPage() {
           completed_by_user_id: state.completed_by_user_id,
           comments: state.comments,
           photo_url: state.photo_url,
+          admin_verification_status: state.admin_verification_status,
+          rejection_note: state.rejection_note,
         },
       ]);
     } catch (e) {
@@ -525,6 +529,9 @@ function TasksPage() {
       completed_by_user_id: completed ? userId : prev?.completed_by_user_id ?? null,
       comments: prev?.comments ?? "",
       photo_url: prev?.photo_url ?? null,
+      // Re-completing after rejection clears the verification cycle
+      admin_verification_status: completed && prev?.admin_verification_status === "rejected" ? "none" : prev?.admin_verification_status ?? "none",
+      rejection_note: completed && prev?.admin_verification_status === "rejected" ? null : prev?.rejection_note ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -552,6 +559,8 @@ function TasksPage() {
       completed_by_user_id: prev?.completed_by_user_id ?? null,
       comments: prev?.comments ?? "",
       photo_url: path,
+      admin_verification_status: prev?.admin_verification_status ?? "none",
+      rejection_note: prev?.rejection_note ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -618,6 +627,8 @@ function TasksPage() {
         completed_by_user_id: prev?.completed_by_user_id ?? null,
         comments: value,
         photo_url: prev?.photo_url ?? null,
+        admin_verification_status: prev?.admin_verification_status ?? "none",
+        rejection_note: prev?.rejection_note ?? null,
       });
       return next;
     });
