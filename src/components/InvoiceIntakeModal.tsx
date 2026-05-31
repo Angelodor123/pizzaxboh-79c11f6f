@@ -775,7 +775,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
               <input
                 ref={fileInput}
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 className="hidden"
                 onChange={(e) => onFileSelected(e.target.files?.[0] ?? null)}
               />
