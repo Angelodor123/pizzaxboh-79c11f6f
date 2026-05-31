@@ -388,8 +388,15 @@ export function DoughStatusCard() {
                   min={0}
                   max={999}
                   placeholder="0"
-                  value={shopDraft}
+                  value={shopDraft === "0" ? "" : shopDraft}
+                  onFocus={(e) => {
+                    if (shopDraft === "0") setShopDraft("");
+                    e.currentTarget.select();
+                  }}
                   onChange={(e) => setShopDraft(e.target.value)}
+                  onBlur={() => {
+                    if (shopDraft.trim() === "") setShopDraft("0");
+                  }}
                   autoFocus
                   className="w-full h-11 bg-background border-2 border-border focus:border-amber-400 focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums"
                 />
@@ -404,8 +411,15 @@ export function DoughStatusCard() {
                   min={0}
                   max={999}
                   placeholder="0"
-                  value={warehouseDraft}
+                  value={warehouseDraft === "0" ? "" : warehouseDraft}
+                  onFocus={(e) => {
+                    if (warehouseDraft === "0") setWarehouseDraft("");
+                    e.currentTarget.select();
+                  }}
                   onChange={(e) => setWarehouseDraft(e.target.value)}
+                  onBlur={() => {
+                    if (warehouseDraft.trim() === "") setWarehouseDraft("0");
+                  }}
                   className="w-full h-11 bg-background border-2 border-border focus:border-sky-400 focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums"
                 />
               </label>

@@ -37,16 +37,17 @@ function statusClasses(s: EvStatus) {
   return "bg-foreground/5 text-foreground/70 border-border";
 }
 
-function fmtCountdown(targetIso: string | null): { text: string; expired: boolean } {
+function fmtTargetClock(targetIso: string | null): { text: string; expired: boolean } {
   if (!targetIso) return { text: "—", expired: false };
-  const ms = new Date(targetIso).getTime() - Date.now();
+  const target = new Date(targetIso);
+  const ms = target.getTime() - Date.now();
   if (ms <= 0) return { text: "עכשיו!", expired: true };
-  const total = Math.floor(ms / 1000);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return { text: `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`, expired: false };
-  return { text: `${m}:${String(s).padStart(2, "0")}`, expired: false };
+  const text = target.toLocaleTimeString("he-IL", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return { text, expired: false };
 }
 
 export function EvChargingWidget() {
@@ -64,9 +65,10 @@ export function EvChargingWidget() {
   const [issueDialogId, setIssueDialogId] = useState<string | null>(null);
   const [issueDraft, setIssueDraft] = useState("");
 
-  // Tick every second for countdowns
+  // Tick every 30 seconds (slow) — only to detect expiration for alarm/badge.
+  // The displayed time is a static target clock, not a live countdown.
   useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 1000);
+    const t = setInterval(() => setTick((x) => x + 1), 30_000);
     return () => clearInterval(t);
   }, []);
 
@@ -206,7 +208,7 @@ export function EvChargingWidget() {
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {vehicles.map((v) => {
-            const cd = fmtCountdown(v.swap_at);
+            const cd = fmtTargetClock(v.swap_at);
             const isExpired = cd.expired && v.status === "בטעינה";
             const isCharging = v.status === "בטעינה" && !isExpired;
             const hasIssue = !!v.issue_note;
@@ -332,7 +334,7 @@ export function EvChargingWidget() {
 
                 {/* Countdown */}
                 <div className="px-3 mt-2.5 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">זמן להחלפה</span>
+                  <span className="text-muted-foreground">מוכן בטענה מלאה:</span>
                   <span
                     className={`font-bold tabular-nums ${isExpired ? "text-neon" : "text-foreground/90"}`}
                     dir="ltr"
