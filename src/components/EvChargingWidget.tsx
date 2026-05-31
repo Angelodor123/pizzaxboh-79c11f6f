@@ -334,7 +334,7 @@ export function EvChargingWidget() {
 
                 {/* Countdown */}
                 <div className="px-3 mt-2.5 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">זמן להחלפה</span>
+                  <span className="text-muted-foreground">מוכן בטענה מלאה:</span>
                   <span
                     className={`font-bold tabular-nums ${isExpired ? "text-neon" : "text-foreground/90"}`}
                     dir="ltr"
