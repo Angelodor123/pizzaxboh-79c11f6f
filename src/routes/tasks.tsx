@@ -595,6 +595,8 @@ function TasksPage() {
       photo_url: path,
       admin_verification_status: prev?.admin_verification_status ?? "none",
       rejection_note: prev?.rejection_note ?? null,
+      verified_by_name: prev?.verified_by_name ?? null,
+      verified_at: prev?.verified_at ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
