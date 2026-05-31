@@ -39,6 +39,22 @@ interface Transaction {
   note: string | null;
   created_at: string;
   transaction_date: string | null;
+  receipt_image_url: string | null;
+}
+
+async function uploadReceipt(file: File, walletId: string): Promise<string | null> {
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = `${walletId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from("cibus_receipts").upload(path, file, {
+    contentType: file.type || "image/jpeg",
+    upsert: false,
+  });
+  if (error) {
+    toast.error("שגיאה בהעלאת קבלה");
+    return null;
+  }
+  const { data } = supabase.storage.from("cibus_receipts").getPublicUrl(path);
+  return data.publicUrl;
 }
 
 const todayLocal = () => {
