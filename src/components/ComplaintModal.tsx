@@ -72,10 +72,10 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
 
         {done ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-olive/40 bg-olive/10 p-5 text-right">
+            <div className="rounded-lg border border-success/40 bg-success/10 p-5 text-right">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="h-5 w-5 text-olive" />
-                <span className="font-bold text-olive">קרא ללקוח את ההודעה הבאה:</span>
+                <CheckCircle2 className="h-5 w-5 text-success" />
+                <span className="font-bold text-success">קרא ללקוח את ההודעה הבאה:</span>
               </div>
               <p className="text-foreground text-base leading-relaxed font-medium">
                 "{SUCCESS_SCRIPT}"
@@ -130,7 +130,7 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
               <Button
                 onClick={submit}
                 disabled={!canSubmit}
-                className="flex-1 h-11 bg-tomato text-tomato-foreground hover:opacity-90 font-bold"
+                className="flex-1 h-11 bg-destructive text-destructive-foreground hover:opacity-90 font-bold"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "שלח פנייה"}
               </Button>
