@@ -1096,6 +1096,17 @@ function TasksPage() {
                                     )}
                                   </div>
 
+                                  {log?.admin_verification_status === "rejected" && log.rejection_note && (
+                                    <div className="mt-3 rounded-lg border-2 border-rose-500/60 bg-rose-500/10 p-3 flex items-start gap-2">
+                                      <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                                      <div className="text-right flex-1">
+                                        <div className="text-[11px] font-bold text-rose-300 mb-1">⚠️ הערת מנהל — המשימה נפסלה</div>
+                                        <div className="text-sm text-rose-100 leading-snug whitespace-pre-wrap">{log.rejection_note}</div>
+                                      </div>
+                                    </div>
+                                  )}
+
+
                                   {t.requires_photo && !t.id.startsWith("__virtual_") && branchId && (
                                     <div className="mt-3 rounded-lg border border-pink-500/30 bg-pink-500/5 p-3">
                                       <div className="text-[11px] text-pink-200/90 font-bold mb-2 text-right">
