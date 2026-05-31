@@ -21,7 +21,12 @@ import {
   Package,
   UserCircle,
   Wrench,
+  MessageSquareWarning,
+  ShieldAlert,
+  Wallet,
 } from "lucide-react";
+import { ComplaintModal } from "@/components/ComplaintModal";
+import { useNewComplaintCount } from "@/lib/complaints-store";
 
 
 import {
@@ -110,6 +115,8 @@ export function CategoryDrawer() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [complaintOpen, setComplaintOpen] = useState(false);
+  const newComplaintCount = useNewComplaintCount();
   const { canInstall, promptInstall } = useInstallPrompt();
 
   // Dynamically filter sidebar categories to only those with ≥1 active item
@@ -172,6 +179,7 @@ export function CategoryDrawer() {
   const close = () => setDrawerOpen(false);
 
   return (
+    <>
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
       <SheetTrigger asChild>
         <button
@@ -226,6 +234,26 @@ export function CategoryDrawer() {
                 <span className={iconWrap}><Wrench className="h-5 w-5" /></span>
               </Link>
             </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setComplaintOpen(true);
+                  close();
+                }}
+                className={itemClass}
+              >
+                <span className="flex-1 text-right">📞 פתיחת תלונה ללקוח</span>
+                <span className={iconWrap}><MessageSquareWarning className="h-5 w-5" /></span>
+              </button>
+            </li>
+            <li>
+              <Link to="/cibus" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">💳 ניהול צבירות סיבוס</span>
+                <span className={iconWrap}><Wallet className="h-5 w-5" /></span>
+              </Link>
+            </li>
+
 
             <li>
               <button
@@ -383,6 +411,20 @@ export function CategoryDrawer() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/admin/complaints" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right flex items-center gap-2 justify-end">
+                      {newComplaintCount > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-tomato text-tomato-foreground text-[10px] font-black">
+                          {newComplaintCount}
+                        </span>
+                      )}
+                      <span>🚨 ניהול תלונות</span>
+                    </span>
+                    <span className={iconWrap}><ShieldAlert className="h-5 w-5" /></span>
+                  </Link>
+                </li>
+
+                <li>
                   <Link to="/admin" search={{ edit: undefined }} onClick={close} className={itemClass}>
                     <span className="flex-1 text-right">
                       ⚙️ הגדרות מערכת וצוות
@@ -532,5 +574,7 @@ export function CategoryDrawer() {
         </div>
       </SheetContent>
     </Sheet>
+    <ComplaintModal open={complaintOpen} onOpenChange={setComplaintOpen} />
+    </>
   );
 }
