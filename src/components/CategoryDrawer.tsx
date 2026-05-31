@@ -233,6 +233,26 @@ export function CategoryDrawer() {
                 <span className={iconWrap}><Wrench className="h-5 w-5" /></span>
               </Link>
             </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setComplaintOpen(true);
+                  close();
+                }}
+                className={itemClass}
+              >
+                <span className="flex-1 text-right">📞 פתיחת תלונה ללקוח</span>
+                <span className={iconWrap}><MessageSquareWarning className="h-5 w-5" /></span>
+              </button>
+            </li>
+            <li>
+              <Link to="/cibus" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">💳 ניהול צבירות סיבוס</span>
+                <span className={iconWrap}><Wallet className="h-5 w-5" /></span>
+              </Link>
+            </li>
+
 
             <li>
               <button
