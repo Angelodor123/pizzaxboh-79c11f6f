@@ -129,7 +129,10 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       return p.slice(0, rows.length);
     });
   }, [rows.length]);
-  const aiActive = parsed != null;
+  // Show V/X feedback whenever there is something to review (OCR result OR uploaded
+  // file OR rows the user can grade). This keeps the learning loop alive even when
+  // OCR didn't populate `parsed` (manual edits, retried scan, fallback parser, etc.).
+  const aiActive = parsed != null || !!file || !!previewUrl || rows.length > 0;
   const approvedCount = useMemo(() => {
     const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "approved").length;
     const it = itemVal.filter((s) => s === "approved").length;
