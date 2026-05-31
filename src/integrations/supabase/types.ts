@@ -412,6 +412,7 @@ export type Database = {
       }
       daily_task_logs: {
         Row: {
+          admin_verification_status: string
           branch_id: string
           comments: string | null
           completed: boolean
@@ -422,10 +423,14 @@ export type Database = {
           id: string
           log_date: string
           photo_url: string | null
+          rejection_note: string | null
           task_id: string
           updated_at: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          admin_verification_status?: string
           branch_id: string
           comments?: string | null
           completed?: boolean
@@ -436,10 +441,14 @@ export type Database = {
           id?: string
           log_date?: string
           photo_url?: string | null
+          rejection_note?: string | null
           task_id: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          admin_verification_status?: string
           branch_id?: string
           comments?: string | null
           completed?: boolean
@@ -450,8 +459,11 @@ export type Database = {
           id?: string
           log_date?: string
           photo_url?: string | null
+          rejection_note?: string | null
           task_id?: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
