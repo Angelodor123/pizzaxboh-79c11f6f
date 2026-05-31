@@ -258,6 +258,8 @@ function TasksPage() {
     | null
   >(null);
   const extractFn = useServerFn(extractIngredientFromTitle);
+  const [rejectingTask, setRejectingTask] = useState<{ id: string; name: string } | null>(null);
+  const [rejectNoteDraft, setRejectNoteDraft] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
