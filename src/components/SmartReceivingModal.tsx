@@ -88,7 +88,6 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [submitting, setSubmitting] = useState(false);
   const [categoryMemory, setCategoryMemory] = useState<Map<string, ExpenseCategory>>(new Map());
-  const [supXp, setSupXp] = useState<{ xp: number; invoices: number; streak: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   // ============================================================
