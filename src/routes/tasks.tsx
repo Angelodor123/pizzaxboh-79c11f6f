@@ -1033,9 +1033,11 @@ function TasksPage() {
                                 <SortableTaskItem key={t.id} id={t.id} showHandle={isSuperAdmin && !t.id.startsWith("__virtual_")}>
                                 <div
                                   className={`rounded-xl border p-4 transition-all duration-300 ${
-                                    done
-                                      ? "bg-card/40 border-border"
-                                      : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
+                                    log?.admin_verification_status === "verified"
+                                      ? "bg-card/40 border-emerald-500/40 shadow-[0_0_6px_rgba(16,185,129,0.25)]"
+                                      : done
+                                        ? "bg-card/40 border-border"
+                                        : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
                                   } ${isPulsing ? "neon-pulse-card" : ""}`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
