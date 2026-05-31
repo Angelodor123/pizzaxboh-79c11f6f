@@ -105,6 +105,8 @@ export function extractIngredientName(input: {
   return cleaned || input.name.trim();
 }
 
+export type AdminVerificationStatus = "none" | "verified" | "rejected";
+
 export interface DailyTaskLog {
   id: string;
   branch_id: string;
@@ -116,6 +118,10 @@ export interface DailyTaskLog {
   completed_by_user_id: string | null;
   comments: string;
   photo_url: string | null;
+  admin_verification_status: AdminVerificationStatus;
+  rejection_note: string | null;
+  verified_by: string | null;
+  verified_at: string | null;
 }
 
 export async function fetchTaskTree(branchId: string) {
@@ -138,7 +144,7 @@ export async function fetchTodayLogs(branchId: string): Promise<DailyTaskLog[]> 
     .select("*")
     .eq("branch_id", branchId)
     .eq("log_date", today as string);
-  return (data ?? []) as DailyTaskLog[];
+  return (data ?? []) as unknown as DailyTaskLog[];
 }
 
 export interface UpsertLogInput {
@@ -151,13 +157,17 @@ export interface UpsertLogInput {
   completed_by_user_id: string | null;
   comments: string;
   photo_url?: string | null;
+  admin_verification_status?: AdminVerificationStatus;
+  rejection_note?: string | null;
+  verified_by?: string | null;
+  verified_at?: string | null;
 }
 
 export async function upsertLogs(rows: UpsertLogInput[]) {
   if (rows.length === 0) return;
   const { error } = await supabase
     .from("daily_task_logs")
-    .upsert(rows, { onConflict: "task_id,log_date" });
+    .upsert(rows as never, { onConflict: "task_id,log_date" });
   if (error) throw error;
 }
 
