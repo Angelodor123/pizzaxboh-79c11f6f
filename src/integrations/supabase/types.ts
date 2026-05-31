@@ -334,6 +334,8 @@ export type Database = {
           description: string
           id: string
           manager_notes: string | null
+          order_date: string | null
+          order_number: string | null
           phone_number: string
           status: Database["public"]["Enums"]["complaint_status"]
           updated_at: string
@@ -347,6 +349,8 @@ export type Database = {
           description: string
           id?: string
           manager_notes?: string | null
+          order_date?: string | null
+          order_number?: string | null
           phone_number: string
           status?: Database["public"]["Enums"]["complaint_status"]
           updated_at?: string
@@ -360,6 +364,8 @@ export type Database = {
           description?: string
           id?: string
           manager_notes?: string | null
+          order_date?: string | null
+          order_number?: string | null
           phone_number?: string
           status?: Database["public"]["Enums"]["complaint_status"]
           updated_at?: string

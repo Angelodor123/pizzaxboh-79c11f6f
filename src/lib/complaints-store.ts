@@ -16,6 +16,8 @@ export interface Complaint {
   status: ComplaintStatus;
   manager_notes: string | null;
   compensation_notes: string | null;
+  order_date: string | null;
+  order_number: string | null;
 }
 
 export const STATUS_LABEL: Record<ComplaintStatus, string> = {
