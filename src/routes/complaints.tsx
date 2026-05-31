@@ -118,6 +118,20 @@ function ComplaintsAdminPage() {
                     >
                       <div className="font-bold text-foreground text-sm">{c.customer_name}</div>
                       <div className="text-xs text-muted-foreground mt-1" dir="ltr">{c.phone_number}</div>
+                      {(c.order_number || c.order_date) && (
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          {c.order_number && (
+                            <span className="text-[11px] font-bold text-amber-brand bg-amber-brand/10 border border-amber-brand/30 rounded px-1.5 py-0.5" dir="ltr">
+                              #{c.order_number}
+                            </span>
+                          )}
+                          {c.order_date && (
+                            <span className="text-[10px] text-zinc-400">
+                              {new Date(c.order_date).toLocaleDateString("he-IL")}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div className="text-xs text-zinc-400 mt-2 line-clamp-2 text-right">{c.description}</div>
                       <div className="text-[10px] text-zinc-600 mt-2">
                         {new Date(c.created_at).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
