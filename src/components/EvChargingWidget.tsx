@@ -65,9 +65,10 @@ export function EvChargingWidget() {
   const [issueDialogId, setIssueDialogId] = useState<string | null>(null);
   const [issueDraft, setIssueDraft] = useState("");
 
-  // Tick every second for countdowns
+  // Tick every 30 seconds (slow) — only to detect expiration for alarm/badge.
+  // The displayed time is a static target clock, not a live countdown.
   useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 1000);
+    const t = setInterval(() => setTick((x) => x + 1), 30_000);
     return () => clearInterval(t);
   }, []);
 
