@@ -1062,6 +1062,11 @@ function TasksPage() {
                                             {stamp}
                                           </div>
                                         )}
+                                        {log?.admin_verification_status === "verified" && (
+                                          <div className="text-[11px] text-emerald-400 font-bold mt-1 leading-snug">
+                                            ✅ אושר ע״י {log.verified_by_name ?? "הנהלה"}
+                                          </div>
+                                        )}
                                       </div>
                                     </label>
                                     {isSuperAdmin && done && !t.id.startsWith("__virtual_") && (
