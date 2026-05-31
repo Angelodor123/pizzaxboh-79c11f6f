@@ -1,0 +1,2 @@
+ALTER TABLE public.dough_updates_log DROP CONSTRAINT IF EXISTS dough_updates_log_location_check;
+ALTER TABLE public.dough_updates_log ADD CONSTRAINT dough_updates_log_location_check CHECK (location = ANY (ARRAY['shop'::text, 'warehouse'::text, 'southern_freezer'::text, 'southern_fridge'::text]));
