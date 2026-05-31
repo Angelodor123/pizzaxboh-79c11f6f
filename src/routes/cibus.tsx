@@ -1,12 +1,13 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Search, Plus, Minus, Loader2, Wallet, UserPlus, History } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, Search, Plus, Minus, Loader2, Wallet, UserPlus, History, Camera, Pencil, Trash2, Eye, X, Check, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/cibus")({
   beforeLoad: async () => {
