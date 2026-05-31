@@ -631,7 +631,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
-              <input ref={fileInput} type="file" accept="image/*" capture="environment" className="hidden"
+              <input ref={fileInput} type="file" accept="image/*,application/pdf" className="hidden"
                 onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
               {previewUrl ? (
                 <div className="relative">
