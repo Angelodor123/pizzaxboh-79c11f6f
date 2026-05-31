@@ -21,7 +21,12 @@ import {
   Package,
   UserCircle,
   Wrench,
+  MessageSquareWarning,
+  ShieldAlert,
+  Wallet,
 } from "lucide-react";
+import { ComplaintModal } from "@/components/ComplaintModal";
+import { useNewComplaintCount } from "@/lib/complaints-store";
 
 
 import {
