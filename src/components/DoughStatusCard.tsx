@@ -262,13 +262,21 @@ export function DoughStatusCard() {
         location: "shop",
       });
     }
-    await supabase.from("dough_updates_log").insert(rows);
+    const { data: inserted } = await supabase
+      .from("dough_updates_log")
+      .insert(rows)
+      .select("id,trays_count,updated_by_name,created_at,location");
 
     setSaving(false);
+    // Optimistic UI: reflect new numbers immediately without waiting for refetch.
     setShopCount(shopN);
     setWarehouseCount(whN);
-    void loadLatest(item.id, branchId);
+    const newest = (inserted as DoughLogRow[] | null)?.sort(
+      (a, b) => +new Date(b.created_at) - +new Date(a.created_at),
+    )[0];
+    if (newest) setLastUpdate(newest);
   };
+
 
   const handleReset = async () => {
     if (!item || !logDate || !branchId) return;
