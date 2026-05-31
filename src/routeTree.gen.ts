@@ -25,6 +25,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
+import { Route as AdminComplaintsRouteImport } from './routes/admin.complaints'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
 import { Route as ApiPublicHooksSportsSyncRouteImport } from './routes/api/public/hooks/sports-sync'
@@ -110,6 +111,11 @@ const AdminHistoryRoute = AdminHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminComplaintsRoute = AdminComplaintsRouteImport.update({
+  id: '/complaints',
+  path: '/complaints',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAlertsRoute = AdminAlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
+    | '/admin/complaints'
     | '/admin/history'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
+    | '/admin/complaints'
     | '/admin/history'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
+    | '/admin/complaints'
     | '/admin/history'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -403,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHistoryRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/complaints': {
+      id: '/admin/complaints'
+      path: '/complaints'
+      fullPath: '/admin/complaints'
+      preLoaderRoute: typeof AdminComplaintsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/alerts': {
       id: '/admin/alerts'
       path: '/alerts'
@@ -436,12 +455,14 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAlertsRoute: typeof AdminAlertsRoute
+  AdminComplaintsRoute: typeof AdminComplaintsRoute
   AdminHistoryRoute: typeof AdminHistoryRoute
   AdminSettingsEquipmentRoute: typeof AdminSettingsEquipmentRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAlertsRoute: AdminAlertsRoute,
+  AdminComplaintsRoute: AdminComplaintsRoute,
   AdminHistoryRoute: AdminHistoryRoute,
   AdminSettingsEquipmentRoute: AdminSettingsEquipmentRoute,
 }
@@ -470,3 +491,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
