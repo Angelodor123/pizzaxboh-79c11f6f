@@ -119,16 +119,12 @@ export function DoughStatusCard() {
       .eq("prep_item_id", (pi as PrepItem).id)
       .eq("log_date", date)
       .maybeSingle();
-    const fallbackTotal = Number(log?.current_stock ?? 0);
-    const { latestShop, latestWh } = await loadLatest(
-      (pi as PrepItem).id,
-      branchId,
-    );
-    // If we have no per-location history yet, seed shop with the existing total.
-    if (!latestShop && !latestWh && fallbackTotal > 0) {
-      setShopCount(fallbackTotal);
-    }
+    await loadLatest((pi as PrepItem).id, branchId);
+    // NOTE: We intentionally do NOT seed shopCount from prep_log.current_stock
+    // anymore — that total can include warehouse trays and caused a data swap
+    // (warehouse entries appearing under "בפיצה" after refresh).
   };
+
 
   useEffect(() => {
     void load();
