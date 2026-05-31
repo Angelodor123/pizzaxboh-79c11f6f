@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pizza, X, History, Store, Warehouse, RotateCcw } from "lucide-react";
+import { Pizza, X, History, Store, Snowflake, Refrigerator, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ interface PrepItem {
   unit: string;
 }
 
-type DoughLocation = "shop" | "warehouse";
+type DoughLocation = "shop" | "southern_freezer" | "southern_fridge" | "warehouse";
 
 interface DoughLogRow {
   id: string;
@@ -19,6 +19,13 @@ interface DoughLogRow {
   created_at: string;
   location: DoughLocation;
 }
+
+const LOCATION_LABEL: Record<DoughLocation, string> = {
+  shop: "בפיצה",
+  southern_freezer: "מקפיא מחסן דרומי",
+  southern_fridge: "מקרר מחסן דרומי",
+  warehouse: "במחסן",
+};
 
 function formatTime(iso: string) {
   try {
@@ -48,7 +55,8 @@ export function DoughStatusCard() {
   const branchId = useActiveBranch();
   const [item, setItem] = useState<PrepItem | null>(null);
   const [shopCount, setShopCount] = useState<number>(0);
-  const [warehouseCount, setWarehouseCount] = useState<number>(0);
+  const [southernFreezerCount, setSouthernFreezerCount] = useState<number>(0);
+  const [southernFridgeCount, setSouthernFridgeCount] = useState<number>(0);
   const [logDate, setLogDate] = useState<string>("");
   const [lastUpdate, setLastUpdate] = useState<DoughLogRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -56,14 +64,13 @@ export function DoughStatusCard() {
   const [history, setHistory] = useState<DoughLogRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [shopDraft, setShopDraft] = useState<string>("");
-  const [warehouseDraft, setWarehouseDraft] = useState<string>("");
+  const [freezerDraft, setFreezerDraft] = useState<string>("");
+  const [fridgeDraft, setFridgeDraft] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
-  const total = shopCount + warehouseCount;
+  const total = shopCount + southernFreezerCount + southernFridgeCount;
 
   const loadLatest = async (itemId: string, branch: string) => {
-    // Reset display each operational day at 5am (Asia/Jerusalem).
-    // History is preserved — we only filter what's shown on the card.
     const { data: dayStart } = await supabase.rpc("operational_day_start");
     const cutoff = (dayStart as string) ?? new Date(0).toISOString();
     const { data } = await supabase
@@ -73,14 +80,15 @@ export function DoughStatusCard() {
       .eq("prep_item_id", itemId)
       .gte("created_at", cutoff)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(100);
     const rows = (data as DoughLogRow[]) ?? [];
     setLastUpdate(rows[0] ?? null);
     const latestShop = rows.find((r) => r.location === "shop");
-    const latestWh = rows.find((r) => r.location === "warehouse");
+    const latestFreezer = rows.find((r) => r.location === "southern_freezer");
+    const latestFridge = rows.find((r) => r.location === "southern_fridge");
     setShopCount(latestShop ? Number(latestShop.trays_count) : 0);
-    setWarehouseCount(latestWh ? Number(latestWh.trays_count) : 0);
-    return { latestShop, latestWh };
+    setSouthernFreezerCount(latestFreezer ? Number(latestFreezer.trays_count) : 0);
+    setSouthernFridgeCount(latestFridge ? Number(latestFridge.trays_count) : 0);
   };
 
   const load = async () => {
@@ -94,8 +102,6 @@ export function DoughStatusCard() {
       .limit(1)
       .maybeSingle();
     if (!pi) {
-      // Auto-seed a default "בצקים" prep item for this branch so the
-      // card is usable immediately on new branches.
       const { data: created } = await supabase
         .from("prep_items")
         .insert({
@@ -114,21 +120,14 @@ export function DoughStatusCard() {
     const date = today as string;
     setLogDate(date);
 
-
     await loadLatest((pi as PrepItem).id, branchId);
-    // NOTE: We intentionally do NOT seed shopCount from prep_log.current_stock
-    // anymore — that total can include warehouse trays and caused a data swap
-    // (warehouse entries appearing under "בפיצה" after refresh).
   };
-
 
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
 
-  // Auto-reset the displayed counts when the operational day rolls over
-  // at 5am Asia/Jerusalem, or when the user returns to the tab afterwards.
   useEffect(() => {
     if (!branchId) return;
     const check = async () => {
@@ -181,18 +180,22 @@ export function DoughStatusCard() {
   const submit = async () => {
     if (!item || !logDate || !branchId) return;
     const shopN = valueOrZero(shopDraft);
-    const whN = valueOrZero(warehouseDraft);
-    if (!Number.isFinite(shopN) || !Number.isFinite(whN)) {
-      toast.error("יש להזין מספרים תקינים");
-      return;
-    }
-    const totalN = shopN + whN;
-    await persistCounts(shopN, whN, totalN);
+    const freezerN = valueOrZero(freezerDraft);
+    const fridgeN = valueOrZero(fridgeDraft);
+    const totalN = shopN + freezerN + fridgeN;
+    await persistCounts(shopN, freezerN, fridgeN, totalN);
     setOpen(false);
-    toast.success(`עודכן: ${totalN} מגשים (פיצה ${shopN} · מחסן ${whN})`);
+    toast.success(
+      `עודכן: ${totalN} מגשים (פיצה ${shopN} · מקפיא ${freezerN} · מקרר ${fridgeN})`,
+    );
   };
 
-  const persistCounts = async (shopN: number, whN: number, totalN: number) => {
+  const persistCounts = async (
+    shopN: number,
+    freezerN: number,
+    fridgeN: number,
+    totalN: number,
+  ) => {
     if (!item || !logDate || !branchId) return;
     setSaving(true);
     const { error } = await supabase.from("prep_log").upsert(
@@ -223,44 +226,21 @@ export function DoughStatusCard() {
         (prof?.full_name as string | undefined) ?? (user.email ?? null);
     }
 
-    const rows: Array<{
-      branch_id: string;
-      prep_item_id: string;
-      trays_count: number;
-      updated_by: string | null;
-      updated_by_name: string | null;
-      location: DoughLocation;
-    }> = [];
-    if (shopN !== shopCount) {
-      rows.push({
-        branch_id: branchId,
-        prep_item_id: item.id,
-        trays_count: shopN,
-        updated_by: user?.id ?? null,
-        updated_by_name: userName,
-        location: "shop",
-      });
-    }
-    if (whN !== warehouseCount) {
-      rows.push({
-        branch_id: branchId,
-        prep_item_id: item.id,
-        trays_count: whN,
-        updated_by: user?.id ?? null,
-        updated_by_name: userName,
-        location: "warehouse",
-      });
-    }
+    const baseRow = {
+      branch_id: branchId,
+      prep_item_id: item.id,
+      updated_by: user?.id ?? null,
+      updated_by_name: userName,
+    };
+
+    const rows: Array<typeof baseRow & { trays_count: number; location: DoughLocation }> = [];
+    if (shopN !== shopCount) rows.push({ ...baseRow, trays_count: shopN, location: "shop" });
+    if (freezerN !== southernFreezerCount)
+      rows.push({ ...baseRow, trays_count: freezerN, location: "southern_freezer" });
+    if (fridgeN !== southernFridgeCount)
+      rows.push({ ...baseRow, trays_count: fridgeN, location: "southern_fridge" });
     if (rows.length === 0) {
-      // Always log at least one snapshot so updated_at is fresh
-      rows.push({
-        branch_id: branchId,
-        prep_item_id: item.id,
-        trays_count: shopN,
-        updated_by: user?.id ?? null,
-        updated_by_name: userName,
-        location: "shop",
-      });
+      rows.push({ ...baseRow, trays_count: shopN, location: "shop" });
     }
     const { data: inserted } = await supabase
       .from("dough_updates_log")
@@ -268,28 +248,32 @@ export function DoughStatusCard() {
       .select("id,trays_count,updated_by_name,created_at,location");
 
     setSaving(false);
-    // Optimistic UI: reflect new numbers immediately without waiting for refetch.
+    // Optimistic UI
     setShopCount(shopN);
-    setWarehouseCount(whN);
+    setSouthernFreezerCount(freezerN);
+    setSouthernFridgeCount(fridgeN);
     const newest = (inserted as DoughLogRow[] | null)?.sort(
       (a, b) => +new Date(b.created_at) - +new Date(a.created_at),
     )[0];
     if (newest) setLastUpdate(newest);
   };
 
-
   const handleReset = async () => {
     if (!item || !logDate || !branchId) return;
     if (!confirm("לאפס את כמות הבצקים ל-0?")) return;
-    await persistCounts(0, 0, 0);
+    await persistCounts(0, 0, 0, 0);
     toast.success("הסטטוס אופס ל-0");
   };
 
   const openModal = () => {
     setShopDraft(String(shopCount));
-    setWarehouseDraft(String(warehouseCount));
+    setFreezerDraft(String(southernFreezerCount));
+    setFridgeDraft(String(southernFridgeCount));
     setOpen(true);
   };
+
+  const draftTotal =
+    valueOrZero(shopDraft) + valueOrZero(freezerDraft) + valueOrZero(fridgeDraft);
 
   return (
     <>
@@ -332,14 +316,18 @@ export function DoughStatusCard() {
           <div className="font-display text-3xl font-black text-amber-300 tabular-nums leading-tight">
             {total}
           </div>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-semibold tabular-nums">
               <Store className="h-3 w-3" />
               בפיצה: {shopCount}
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-[11px] text-sky-200 font-semibold tabular-nums">
-              <Warehouse className="h-3 w-3" />
-              במחסן: {warehouseCount}
+              <Snowflake className="h-3 w-3" />
+              מקפיא מחסן דרומי: {southernFreezerCount}
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200 font-semibold tabular-nums">
+              <Refrigerator className="h-3 w-3" />
+              מקרר מחסן דרומי: {southernFridgeCount}
             </span>
           </div>
           {lastUpdate && (
@@ -377,58 +365,77 @@ export function DoughStatusCard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1.5">
-                <span className="flex items-center gap-1 text-xs font-semibold text-amber-200">
-                  <Store className="h-3.5 w-3.5" /> בפיצה
-                </span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={999}
-                  placeholder="0"
-                  value={shopDraft === "0" ? "" : shopDraft}
-                  onFocus={(e) => {
-                    if (shopDraft === "0") setShopDraft("");
-                    e.currentTarget.select();
-                  }}
-                  onChange={(e) => setShopDraft(e.target.value)}
-                  onBlur={() => {
-                    if (shopDraft.trim() === "") setShopDraft("0");
-                  }}
-                  autoFocus
-                  className="w-full h-11 bg-background border-2 border-border focus:border-amber-400 focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="flex items-center gap-1 text-xs font-semibold text-sky-200">
-                  <Warehouse className="h-3.5 w-3.5" /> במחסן
-                </span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={999}
-                  placeholder="0"
-                  value={warehouseDraft === "0" ? "" : warehouseDraft}
-                  onFocus={(e) => {
-                    if (warehouseDraft === "0") setWarehouseDraft("");
-                    e.currentTarget.select();
-                  }}
-                  onChange={(e) => setWarehouseDraft(e.target.value)}
-                  onBlur={() => {
-                    if (warehouseDraft.trim() === "") setWarehouseDraft("0");
-                  }}
-                  className="w-full h-11 bg-background border-2 border-border focus:border-sky-400 focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums"
-                />
-              </label>
+            <div className="grid grid-cols-1 gap-3">
+              {([
+                {
+                  draft: shopDraft,
+                  setDraft: setShopDraft,
+                  label: "בפיצה",
+                  Icon: Store,
+                  color: "amber",
+                  autoFocus: true,
+                },
+                {
+                  draft: freezerDraft,
+                  setDraft: setFreezerDraft,
+                  label: "מקפיא מחסן דרומי",
+                  Icon: Snowflake,
+                  color: "sky",
+                  autoFocus: false,
+                },
+                {
+                  draft: fridgeDraft,
+                  setDraft: setFridgeDraft,
+                  label: "מקרר מחסן דרומי",
+                  Icon: Refrigerator,
+                  color: "emerald",
+                  autoFocus: false,
+                },
+              ] as const).map((f) => (
+                <label key={f.label} className="flex items-center gap-3 w-full">
+                  <span
+                    className={`flex items-center gap-1.5 text-xs font-semibold flex-1 ${
+                      f.color === "amber"
+                        ? "text-amber-200"
+                        : f.color === "sky"
+                          ? "text-sky-200"
+                          : "text-emerald-200"
+                    }`}
+                  >
+                    <f.Icon className="h-3.5 w-3.5" /> {f.label}
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={999}
+                    placeholder="0"
+                    value={f.draft === "0" ? "" : f.draft}
+                    onFocus={(e) => {
+                      if (f.draft === "0") f.setDraft("");
+                      e.currentTarget.select();
+                    }}
+                    onChange={(e) => f.setDraft(e.target.value)}
+                    onBlur={() => {
+                      if (f.draft.trim() === "") f.setDraft("0");
+                    }}
+                    autoFocus={f.autoFocus}
+                    className={`w-24 h-11 bg-background border-2 border-border focus:outline-none rounded-lg px-3 text-center font-display text-2xl font-black tabular-nums ${
+                      f.color === "amber"
+                        ? "focus:border-amber-400"
+                        : f.color === "sky"
+                          ? "focus:border-sky-400"
+                          : "focus:border-emerald-400"
+                    }`}
+                  />
+                </label>
+              ))}
             </div>
 
             <div className="text-center text-sm text-muted-foreground">
               סה״כ:{" "}
               <span className="font-bold text-amber-300 tabular-nums">
-                {valueOrZero(shopDraft) + valueOrZero(warehouseDraft)}
+                {draftTotal}
               </span>{" "}
               מגשים
             </div>
@@ -481,35 +488,29 @@ export function DoughStatusCard() {
                 </div>
               ) : (
                 history.map((row) => {
-                  const isShop = row.location === "shop";
+                  const label = LOCATION_LABEL[row.location] ?? row.location;
+                  const tone =
+                    row.location === "shop"
+                      ? "text-amber-300"
+                      : row.location === "southern_freezer"
+                        ? "text-sky-300"
+                        : row.location === "southern_fridge"
+                          ? "text-emerald-300"
+                          : "text-zinc-300";
                   return (
                     <div
                       key={row.id}
-                      className="flex flex-col gap-1 p-3 border-b border-zinc-800/50 last:border-0"
+                      className="flex items-center justify-between gap-2 py-2 border-b border-zinc-800 last:border-0"
                     >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                            isShop
-                              ? "bg-amber-500/15 text-amber-200 border border-amber-500/30"
-                              : "bg-sky-500/15 text-sky-200 border border-sky-500/30"
-                          }`}
-                        >
-                          {isShop ? (
-                            <Store className="h-3 w-3" />
-                          ) : (
-                            <Warehouse className="h-3 w-3" />
-                          )}
-                          {isShop ? "בפיצה" : "במחסן"}
-                        </span>
-                        <span className="text-base font-bold text-amber-300 tabular-nums">
-                          {row.trays_count} מגשים
-                        </span>
+                      <div className="text-right">
+                        <div className={`text-sm font-semibold ${tone}`}>
+                          {label}: {row.trays_count} מגשים
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          {row.updated_by_name ?? "—"}
+                        </div>
                       </div>
-                      <div className="text-sm text-zinc-300">
-                        {row.updated_by_name ?? "משתמש לא ידוע"}
-                      </div>
-                      <div className="text-xs text-zinc-500">
+                      <div className="text-xs text-zinc-500 tabular-nums">
                         {formatDateTime(row.created_at)}
                       </div>
                     </div>
