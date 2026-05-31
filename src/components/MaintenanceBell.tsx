@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, Wrench, AlertTriangle, Inbox } from "lucide-react";
+import { Bell, Wrench, MessageSquareWarning, Inbox } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useUnreadTicketCount } from "@/lib/maintenance-store";
 
 type NotificationItem = {
   id: string;
-  kind: "ticket" | "shortage";
+  kind: "ticket" | "complaint";
   title: string;
   subtitle?: string;
   href: string;
@@ -32,33 +31,78 @@ function formatRelative(iso: string) {
 }
 
 export function MaintenanceBell() {
-  const { role } = useAuth();
-  const isManager = role === "admin";
-  const ticketBadge = useUnreadTicketCount(isManager);
+  const { isSuperAdmin, assignedBranchId } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [badge, setBadge] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  // Load badge count (independent of popover open)
   useEffect(() => {
-    if (!isManager || !open) return;
+    if (!isSuperAdmin || !assignedBranchId) {
+      setBadge(0);
+      return;
+    }
+    let cancelled = false;
+    const refresh = async () => {
+      const [{ count: tCount }, { count: cCount }] = await Promise.all([
+        supabase
+          .from("maintenance_tickets")
+          .select("id", { count: "exact", head: true })
+          .neq("status", "resolved")
+          .eq("is_read_by_admin", false)
+          .eq("branch_id", assignedBranchId),
+        supabase
+          .from("customer_complaints")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "new")
+          .eq("branch_id", assignedBranchId),
+      ]);
+      if (cancelled) return;
+      setBadge((tCount ?? 0) + (cCount ?? 0));
+    };
+    void refresh();
+
+    const channel = supabase
+      .channel("notif-bell-" + assignedBranchId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "maintenance_tickets", filter: `branch_id=eq.${assignedBranchId}` },
+        () => void refresh(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customer_complaints", filter: `branch_id=eq.${assignedBranchId}` },
+        () => void refresh(),
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [isSuperAdmin, assignedBranchId]);
+
+  useEffect(() => {
+    if (!isSuperAdmin || !assignedBranchId || !open) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: tickets }, { data: shortages }] = await Promise.all([
+      const [{ data: tickets }, { data: complaints }] = await Promise.all([
         supabase
           .from("maintenance_tickets")
           .select("id, description, urgency, created_at, status")
           .neq("status", "resolved")
           .eq("is_read_by_admin", false)
+          .eq("branch_id", assignedBranchId)
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
-          .from("notebook_items")
-          .select("id, text, created_at, is_urgent")
-          .eq("list_key", "shortages")
-          .eq("done", false)
-          .is("archived_at", null)
+          .from("customer_complaints")
+          .select("id, customer_name, description, created_at, status")
+          .eq("status", "new")
+          .eq("branch_id", assignedBranchId)
           .order("created_at", { ascending: false })
           .limit(20),
       ]);
@@ -68,22 +112,22 @@ export function MaintenanceBell() {
           (t) => ({
             id: `t-${t.id}`,
             kind: "ticket" as const,
-            title: t.description || "קריאת שירות חדשה",
-            subtitle: t.urgency,
+            title: `🛠️ קריאת שירות חדשה`,
+            subtitle: t.description || t.urgency,
             href: "/service-calls",
             createdAt: t.created_at,
             urgent: typeof t.urgency === "string" && t.urgency.startsWith("קריטי"),
           }),
         ),
-        ...((shortages ?? []) as Array<{ id: string; text: string; created_at: string; is_urgent: boolean }>).map(
-          (s) => ({
-            id: `s-${s.id}`,
-            kind: "shortage" as const,
-            title: s.text,
-            subtitle: "חוסר במלאי",
-            href: "/notebook",
-            createdAt: s.created_at,
-            urgent: !!s.is_urgent,
+        ...((complaints ?? []) as Array<{ id: string; customer_name: string; description: string; created_at: string }>).map(
+          (c) => ({
+            id: `c-${c.id}`,
+            kind: "complaint" as const,
+            title: `🔴 תלונה חדשה מלקוח`,
+            subtitle: `${c.customer_name} — ${c.description}`.slice(0, 80),
+            href: "/complaints",
+            createdAt: c.created_at,
+            urgent: true,
           }),
         ),
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -93,11 +137,9 @@ export function MaintenanceBell() {
     return () => {
       cancelled = true;
     };
-  }, [isManager, open]);
+  }, [isSuperAdmin, assignedBranchId, open]);
 
-  if (!isManager) return null;
-
-  const badge = ticketBadge + items.filter((i) => i.kind === "shortage").length;
+  if (!isSuperAdmin) return null;
 
   const go = (href: string) => {
     setOpen(false);
@@ -114,7 +156,7 @@ export function MaintenanceBell() {
           title="התראות"
         >
           <Bell className="h-4 w-4" />
-          {(ticketBadge > 0 || badge > 0) && (
+          {badge > 0 && (
             <span
               className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
               style={{
@@ -122,7 +164,7 @@ export function MaintenanceBell() {
                 boxShadow: "0 0 8px rgba(255,20,147,0.9), 0 0 16px rgba(255,20,147,0.6)",
               }}
             >
-              {(ticketBadge || badge) > 99 ? "99+" : ticketBadge || badge}
+              {badge > 99 ? "99+" : badge}
             </span>
           )}
         </button>
@@ -153,7 +195,7 @@ export function MaintenanceBell() {
           {!loading && items.length > 0 && (
             <ul className="divide-y divide-border">
               {items.map((n) => {
-                const Icon = n.kind === "ticket" ? Wrench : AlertTriangle;
+                const Icon = n.kind === "ticket" ? Wrench : MessageSquareWarning;
                 return (
                   <li key={n.id}>
                     <button
@@ -194,17 +236,17 @@ export function MaintenanceBell() {
         <div className="border-t border-border px-3 py-2 flex items-center justify-between">
           <button
             type="button"
+            onClick={() => go("/complaints")}
+            className="text-[11px] font-bold text-neon hover:underline"
+          >
+            כל התלונות
+          </button>
+          <button
+            type="button"
             onClick={() => go("/service-calls")}
             className="text-[11px] font-bold text-neon hover:underline"
           >
             כל קריאות השירות
-          </button>
-          <button
-            type="button"
-            onClick={() => go("/notebook")}
-            className="text-[11px] font-bold text-neon hover:underline"
-          >
-            פנקס וחוסרים
           </button>
         </div>
       </PopoverContent>

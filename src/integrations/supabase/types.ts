@@ -327,6 +327,7 @@ export type Database = {
       customer_complaints: {
         Row: {
           address: string | null
+          branch_id: string | null
           compensation_notes: string | null
           created_at: string
           created_by: string | null
@@ -342,6 +343,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          branch_id?: string | null
           compensation_notes?: string | null
           created_at?: string
           created_by?: string | null
@@ -357,6 +359,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          branch_id?: string | null
           compensation_notes?: string | null
           created_at?: string
           created_by?: string | null
@@ -370,7 +373,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["complaint_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_complaints_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_operational_history: {
         Row: {

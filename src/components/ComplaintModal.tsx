@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { getCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
 
 const SUCCESS_SCRIPT =
@@ -56,8 +57,10 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       return;
     }
     setSubmitting(true);
+    const branchId = await getCurrentBranchId();
     const { error } = await supabase.from("customer_complaints").insert({
       created_by: uid,
+      branch_id: branchId,
       customer_name: name.trim(),
       phone_number: phone.trim(),
       address: address.trim() || null,
