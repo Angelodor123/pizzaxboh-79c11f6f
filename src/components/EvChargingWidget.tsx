@@ -37,16 +37,17 @@ function statusClasses(s: EvStatus) {
   return "bg-foreground/5 text-foreground/70 border-border";
 }
 
-function fmtCountdown(targetIso: string | null): { text: string; expired: boolean } {
+function fmtTargetClock(targetIso: string | null): { text: string; expired: boolean } {
   if (!targetIso) return { text: "—", expired: false };
-  const ms = new Date(targetIso).getTime() - Date.now();
+  const target = new Date(targetIso);
+  const ms = target.getTime() - Date.now();
   if (ms <= 0) return { text: "עכשיו!", expired: true };
-  const total = Math.floor(ms / 1000);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return { text: `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`, expired: false };
-  return { text: `${m}:${String(s).padStart(2, "0")}`, expired: false };
+  const text = target.toLocaleTimeString("he-IL", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return { text, expired: false };
 }
 
 export function EvChargingWidget() {
