@@ -79,6 +79,12 @@
   --info-foreground: oklch(0.98 0 0);
   --success: oklch(0.72 0.17 155); /* emerald */
   --success-foreground: oklch(0.15 0.04 155);
+  --tomato: oklch(0.62 0.22 28); /* tomato red — complaint status */
+  --tomato-foreground: oklch(0.98 0 0);
+  --olive: oklch(0.62 0.14 125); /* olive green — resolved/positive */
+  --olive-foreground: oklch(0.15 0.04 125);
+  --brand-gold: oklch(0.78 0.15 85); /* warm gold — in-progress */
+  --brand-gold-foreground: oklch(0.2 0.05 85);
 }
 
 
