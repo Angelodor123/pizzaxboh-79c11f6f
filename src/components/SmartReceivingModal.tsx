@@ -16,6 +16,29 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
+// === XP / Level (mirrors AiTrainingSandbox) ===
+const LEVEL_NAMES = ["מתחיל", "חניך", "מומחה", "וירטואוז", "מאסטר"];
+const LEVEL_COLORS = [
+  "from-zinc-500 to-zinc-700",
+  "from-sky-500 to-cyan-600",
+  "from-violet-500 to-fuchsia-600",
+  "from-amber-500 to-orange-600",
+  "from-pink-500 to-rose-600",
+];
+const XP_PER_LEVEL = 50;
+function levelFromXp(xp: number) {
+  const idx = Math.min(LEVEL_NAMES.length - 1, Math.floor(xp / XP_PER_LEVEL));
+  const inLevel = xp - idx * XP_PER_LEVEL;
+  const pct = idx === LEVEL_NAMES.length - 1 ? 100 : Math.round((inLevel / XP_PER_LEVEL) * 100);
+  return { level: idx + 1, name: LEVEL_NAMES[idx], color: LEVEL_COLORS[idx], pct };
+}
+function xpFromDiff(diff: string | null | undefined): number {
+  if (diff === "perfect") return 8;
+  const m = /^edits:(\d+)/.exec(diff || "");
+  if (m) return Math.max(1, 8 - (Number(m[1]) || 0));
+  return 2;
+}
+
 
 interface SupplierOpt { id: string; name: string }
 interface Props {
