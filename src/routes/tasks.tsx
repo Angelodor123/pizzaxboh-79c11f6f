@@ -69,6 +69,8 @@ type LogState = {
   photo_url: string | null;
   admin_verification_status: "none" | "verified" | "rejected";
   rejection_note: string | null;
+  verified_by_name: string | null;
+  verified_at: string | null;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
