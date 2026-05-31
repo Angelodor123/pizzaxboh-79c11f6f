@@ -354,6 +354,78 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           .eq("id", chosenMatch.order_id);
       }
 
+      // === CATALOG SYNC: auto-create / update supplier_products + detect price changes ===
+      // Tracks "digital inventory" by ensuring every received item exists in the supplier catalog,
+      // remembering its last seen price, and surfacing significant price deltas to the manager.
+      const priceAlerts: Array<{ name: string; oldPrice: number; newPrice: number; pct: number }> = [];
+      const catalogIdByName = new Map<string, string>();
+
+      if (supplierId) {
+        for (const r of cleanItems) {
+          if (!r.name.trim() || r.unitPrice <= 0) continue;
+          const cleanName = r.name.trim().slice(0, 200);
+          let productId: string | null = null;
+          let previousPrice: number | null = null;
+
+          // 1) fuzzy match against existing catalog (exact > alias > trigram)
+          const { data: matches } = await supabase.rpc("find_catalog_match", {
+            _branch_id: branchId,
+            _supplier_id: supplierId,
+            _query: cleanName,
+          });
+          const best = (matches ?? [])[0] as
+            | { product_id: string; product_name: string; similarity: number; match_type: string }
+            | undefined;
+
+          if (best && best.similarity >= 0.6) {
+            productId = best.product_id;
+            const { data: existing } = await supabase
+              .from("supplier_products")
+              .select("price, expected_price")
+              .eq("id", productId)
+              .maybeSingle();
+            previousPrice = Number(existing?.expected_price ?? existing?.price ?? 0) || null;
+
+            // refresh last-seen price; lock in expected_price the first time
+            await supabase
+              .from("supplier_products")
+              .update({
+                price: r.unitPrice,
+                expected_price: existing?.expected_price ?? r.unitPrice,
+              })
+              .eq("id", productId);
+          } else {
+            // 2) no match → create catalog entry so future receipts can match it
+            const { data: created } = await supabase
+              .from("supplier_products")
+              .insert({
+                supplier_id: supplierId,
+                branch_id: branchId,
+                name: cleanName,
+                unit: "",
+                default_qty: r.invoiceQty || 1,
+                price: r.unitPrice,
+                expected_price: r.unitPrice,
+                category: r.category || null,
+                active: true,
+              })
+              .select("id")
+              .maybeSingle();
+            productId = created?.id ?? null;
+          }
+
+          if (productId) catalogIdByName.set(cleanName, productId);
+
+          // 3) flag significant price change (>=10% delta vs expected baseline)
+          if (previousPrice && previousPrice > 0) {
+            const pct = ((r.unitPrice - previousPrice) / previousPrice) * 100;
+            if (Math.abs(pct) >= 10) {
+              priceAlerts.push({ name: cleanName, oldPrice: previousPrice, newPrice: r.unitPrice, pct });
+            }
+          }
+        }
+      }
+
       // Inventory: upsert items + insert movements per received row
       for (const r of cleanItems) {
         if (r.invoiceQty <= 0) continue;
@@ -390,6 +462,16 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             note: chosenMatch ? `התקבל מהזמנה #${chosenMatch.order_id.slice(0, 8)}` : "קליטה ידנית",
           });
         }
+      }
+
+      // Surface price-change alerts so the manager sees them right after save
+      if (priceAlerts.length) {
+        const top = priceAlerts.slice(0, 3).map((a) => {
+          const arrow = a.pct > 0 ? "📈" : "📉";
+          return `${arrow} ${a.name}: ₪${a.oldPrice.toFixed(2)} → ₪${a.newPrice.toFixed(2)} (${a.pct > 0 ? "+" : ""}${a.pct.toFixed(0)}%)`;
+        }).join("\n");
+        const more = priceAlerts.length > 3 ? `\n+${priceAlerts.length - 3} פריטים נוספים` : "";
+        toast.warning(`⚠️ זוהו שינויי מחיר משמעותיים:\n${top}${more}`, { duration: 10000 });
       }
 
       if (isPerfect) {
