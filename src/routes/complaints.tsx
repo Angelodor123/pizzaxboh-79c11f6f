@@ -239,6 +239,25 @@ function ComplaintDetailDialog({
               </div>
             )}
 
+            {(complaint.order_number || complaint.order_date) && (
+              <div className="grid grid-cols-2 gap-2">
+                {complaint.order_number && (
+                  <div className="p-3 rounded-lg bg-amber-brand/10 border border-amber-brand/40">
+                    <div className="text-xs text-amber-brand mb-1 font-bold">מספר הזמנה</div>
+                    <div className="text-foreground text-base font-bold" dir="ltr">#{complaint.order_number}</div>
+                  </div>
+                )}
+                {complaint.order_date && (
+                  <div className="p-3 rounded-lg bg-amber-brand/10 border border-amber-brand/40">
+                    <div className="text-xs text-amber-brand mb-1 font-bold">תאריך הזמנה</div>
+                    <div className="text-foreground text-base font-bold">
+                      {new Date(complaint.order_date).toLocaleDateString("he-IL")}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
               <div className="text-xs text-muted-foreground mb-1">תיאור התלונה</div>
               <p className="text-foreground text-sm whitespace-pre-wrap leading-relaxed">{complaint.description}</p>
