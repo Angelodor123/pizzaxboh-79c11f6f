@@ -89,6 +89,63 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [categoryMemory, setCategoryMemory] = useState<Map<string, ExpenseCategory>>(new Map());
   const fileInput = useRef<HTMLInputElement>(null);
 
+  // ============================================================
+  // Gamified per-field feedback (V / X) — same model as AI Training Sandbox.
+  // Only meaningful when OCR ran (parsed != null). When user keeps the AI's
+  // value and clicks ✓, it's "approved" (XP boost). Clicking ✗ or editing the
+  // field flips it to "corrected" (the model learns from the diff).
+  // ============================================================
+  type ValState = "pending" | "approved" | "corrected";
+  type HeaderKey = "invoice_number" | "document_date" | "total_amount";
+  const [headerVal, setHeaderVal] = useState<Record<HeaderKey, ValState>>({
+    invoice_number: "pending",
+    document_date: "pending",
+    total_amount: "pending",
+  });
+  const [itemVal, setItemVal] = useState<ValState[]>([]);
+  const setHV = (k: HeaderKey, v: ValState) => setHeaderVal((p) => ({ ...p, [k]: v }));
+  const setIV = (i: number, v: ValState) =>
+    setItemVal((p) => {
+      const next = p.length > i ? [...p] : [...p, ...Array.from({ length: i + 1 - p.length }, () => "pending" as ValState)];
+      next[i] = v;
+      return next;
+    });
+  const markHeaderEdited = (k: HeaderKey) => {
+    setHeaderVal((p) => (p[k] === "pending" ? { ...p, [k]: "corrected" } : p));
+  };
+  const markItemEdited = (i: number) => {
+    setItemVal((p) => p.map((s, idx) => (idx === i && s === "pending" ? "corrected" : s)));
+  };
+  const resetValidation = (rowCount: number) => {
+    setHeaderVal({ invoice_number: "pending", document_date: "pending", total_amount: "pending" });
+    setItemVal(Array.from({ length: Math.max(0, rowCount) }, () => "pending" as ValState));
+  };
+  // Keep itemVal length in sync when rows are added/removed.
+  useEffect(() => {
+    setItemVal((p) => {
+      if (p.length === rows.length) return p;
+      if (p.length < rows.length) return [...p, ...Array.from({ length: rows.length - p.length }, () => "pending" as ValState)];
+      return p.slice(0, rows.length);
+    });
+  }, [rows.length]);
+  const aiActive = parsed != null;
+  const approvedCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "approved").length;
+    const it = itemVal.filter((s) => s === "approved").length;
+    return h + it;
+  }, [headerVal, itemVal]);
+  const correctedCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "corrected").length;
+    const it = itemVal.filter((s) => s === "corrected").length;
+    return h + it;
+  }, [headerVal, itemVal]);
+  const pendingCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "pending").length;
+    const it = itemVal.filter((s) => s === "pending").length;
+    return h + it;
+  }, [headerVal, itemVal]);
+
+
   // Load category dictionary (item name → category) for the current branch
   useEffect(() => {
     let cancelled = false;
