@@ -208,7 +208,7 @@ export function EvChargingWidget() {
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {vehicles.map((v) => {
-            const cd = fmtCountdown(v.swap_at);
+            const cd = fmtTargetClock(v.swap_at);
             const isExpired = cd.expired && v.status === "בטעינה";
             const isCharging = v.status === "בטעינה" && !isExpired;
             const hasIssue = !!v.issue_note;
