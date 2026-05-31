@@ -1042,6 +1042,36 @@ function TasksPage() {
                                         )}
                                       </div>
                                     </label>
+                                    {isSuperAdmin && done && !t.id.startsWith("__virtual_") && (
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => setVerification(t.id, "verified", null)}
+                                          className={`p-1.5 rounded-md transition border ${
+                                            log?.admin_verification_status === "verified"
+                                              ? "bg-emerald-500/20 border-emerald-500/60 text-emerald-300"
+                                              : "border-transparent text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10"
+                                          }`}
+                                          aria-label="אשר ביצוע"
+                                          title="אישור מנהל"
+                                        >
+                                          <span className="text-base leading-none">✓</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { setRejectingTask({ id: t.id, name: t.name }); setRejectNoteDraft(log?.rejection_note ?? ""); }}
+                                          className={`p-1.5 rounded-md transition border ${
+                                            log?.admin_verification_status === "rejected"
+                                              ? "bg-rose-500/20 border-rose-500/60 text-rose-300"
+                                              : "border-transparent text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                                          }`}
+                                          aria-label="פסול ביצוע"
+                                          title="פסילת מנהל"
+                                        >
+                                          <span className="text-base leading-none">✗</span>
+                                        </button>
+                                      </div>
+                                    )}
                                     {recipe && (
                                       <button
                                         type="button"
