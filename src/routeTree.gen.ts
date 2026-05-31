@@ -21,6 +21,7 @@ import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as CibusRouteImport } from './routes/cibus'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -91,6 +92,11 @@ const GuideRoute = GuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CibusRoute = CibusRouteImport.update({
+  id: '/cibus',
+  path: '/cibus',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
+  '/cibus': typeof CibusRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
+  '/cibus': typeof CibusRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/calendar': typeof CalendarRoute
+  '/cibus': typeof CibusRoute
   '/guide': typeof GuideRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/calendar'
+    | '/cibus'
     | '/guide'
     | '/invoices'
     | '/maintenance'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/calendar'
+    | '/cibus'
     | '/guide'
     | '/invoices'
     | '/maintenance'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/calendar'
+    | '/cibus'
     | '/guide'
     | '/invoices'
     | '/maintenance'
@@ -285,6 +297,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CalendarRoute: typeof CalendarRoute
+  CibusRoute: typeof CibusRoute
   GuideRoute: typeof GuideRoute
   InvoicesRoute: typeof InvoicesRoute
   MaintenanceRoute: typeof MaintenanceRoute
@@ -387,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cibus': {
+      id: '/cibus'
+      path: '/cibus'
+      fullPath: '/cibus'
+      preLoaderRoute: typeof CibusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
@@ -473,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CalendarRoute: CalendarRoute,
+  CibusRoute: CibusRoute,
   GuideRoute: GuideRoute,
   InvoicesRoute: InvoicesRoute,
   MaintenanceRoute: MaintenanceRoute,
