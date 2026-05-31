@@ -374,23 +374,39 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       }
 
       // === GAMIFICATION: OCR feedback row for XP/streak tracking ===
-      // Diff counts: compare each editable field to its OCR-parsed value
-      let edits = 0;
+      // Source-of-truth = explicit user feedback (V ✓ / X ✗) collected per field.
+      // Falls back to diff against parsed OCR for any field the user didn't tag.
       const numEq = (a: number | null | undefined, b: number | null | undefined) =>
         Math.abs((Number(a) || 0) - (Number(b) || 0)) < 0.01;
+      let approved = 0;
+      let edits = 0;
       if (parsed) {
-        if ((parsed.invoice_number ?? "").trim() !== invoiceNumber.trim()) edits++;
-        if (!numEq(parsed.total_amount, totalNum)) edits++;
-        if ((parsed.document_date ?? "") !== docDate) edits++;
+        // Header — explicit state wins; pending => fallback to diff.
+        const headerFallback: Record<HeaderKey, boolean> = {
+          invoice_number: (parsed.invoice_number ?? "").trim() === invoiceNumber.trim(),
+          total_amount: numEq(parsed.total_amount, totalNum),
+          document_date: (parsed.document_date ?? "") === docDate,
+        };
+        (Object.keys(headerVal) as HeaderKey[]).forEach((k) => {
+          const s = headerVal[k];
+          if (s === "approved") approved++;
+          else if (s === "corrected") edits++;
+          else if (headerFallback[k]) approved++;
+          else edits++;
+        });
+        // Items — explicit state wins; pending => fallback to OCR diff.
         const ocrItems = parsed.items ?? [];
-        for (const r of cleanItems) {
+        cleanItems.forEach((r, idx) => {
+          const s = itemVal[idx] ?? "pending";
+          if (s === "approved") { approved++; return; }
+          if (s === "corrected") { edits++; return; }
           const match = ocrItems.find((it) => looseEq(it.name, r.name));
-          if (!match) { edits++; continue; }
-          if (!numEq(match.quantity, r.invoiceQty)) edits++;
-          if (!numEq(match.unit_price, r.unitPrice)) edits++;
-        }
+          if (!match) { edits++; return; }
+          if (!numEq(match.quantity, r.invoiceQty) || !numEq(match.unit_price, r.unitPrice)) edits++;
+          else approved++;
+        });
       }
-      const isPerfect = parsed != null && edits === 0;
+      const isPerfect = parsed != null && edits === 0 && approved > 0;
       await supabase.from("invoice_ocr_feedback").insert({
         branch_id: branchId,
         supplier_id: supplierId,
@@ -400,10 +416,16 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           invoice_number: invoiceNumber.trim(),
           total_amount: totalNum,
           document_date: docDate,
-          items: cleanItems.map((r) => ({ name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category })),
+          items: cleanItems.map((r, idx) => ({
+            name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
+            _val: itemVal[idx] ?? "pending",
+          })),
+          _validation: { header: headerVal, approved, corrected: edits },
         },
         diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
       });
+
+
 
 
       // Mark order received + update inventory
