@@ -512,6 +512,8 @@ function TasksPage() {
           photo_url: state.photo_url,
           admin_verification_status: state.admin_verification_status,
           rejection_note: state.rejection_note,
+          verified_by: state.admin_verification_status === "verified" ? userId : null,
+          verified_at: state.verified_at,
         },
       ]);
     } catch (e) {
