@@ -32,18 +32,13 @@
   --color-jungle: var(--jungle);
   --color-jungle-foreground: var(--jungle-foreground);
   --color-amber-brand: var(--amber-brand);
+  --color-amber-brand-foreground: var(--amber-brand-foreground);
   --color-neon: var(--neon);
   --color-neon-soft: var(--neon-soft);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-tomato: var(--tomato);
-  --color-tomato-foreground: var(--tomato-foreground);
-  --color-olive: var(--olive);
-  --color-olive-foreground: var(--olive-foreground);
-  --color-brand-gold: var(--brand-gold);
-  --color-brand-gold-foreground: var(--brand-gold-foreground);
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Heebo", system-ui, sans-serif;
 }
