@@ -69,6 +69,8 @@ type LogState = {
   photo_url: string | null;
   admin_verification_status: "none" | "verified" | "rejected";
   rejection_note: string | null;
+  verified_by_name: string | null;
+  verified_at: string | null;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
@@ -342,6 +344,8 @@ function TasksPage() {
         photo_url: l.photo_url ?? null,
         admin_verification_status: l.admin_verification_status ?? "none",
         rejection_note: l.rejection_note ?? null,
+        verified_by_name: null,
+        verified_at: l.verified_at ?? null,
       });
     });
     setLogs(map);
@@ -508,6 +512,8 @@ function TasksPage() {
           photo_url: state.photo_url,
           admin_verification_status: state.admin_verification_status,
           rejection_note: state.rejection_note,
+          verified_by: state.admin_verification_status === "verified" ? userId : null,
+          verified_at: state.verified_at,
         },
       ]);
     } catch (e) {
@@ -534,6 +540,8 @@ function TasksPage() {
       // Re-completing after rejection clears the verification cycle
       admin_verification_status: completed && prev?.admin_verification_status === "rejected" ? "none" : prev?.admin_verification_status ?? "none",
       rejection_note: completed && prev?.admin_verification_status === "rejected" ? null : prev?.rejection_note ?? null,
+      verified_by_name: completed && prev?.admin_verification_status === "rejected" ? null : prev?.verified_by_name ?? null,
+      verified_at: completed && prev?.admin_verification_status === "rejected" ? null : prev?.verified_at ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -552,10 +560,10 @@ function TasksPage() {
     }
   };
 
-  // Super admin: verify or reject a completed task.
+  // Super admin: verify / un-verify / reject a completed task.
   const setVerification = async (
     taskId: string,
-    status: "verified" | "rejected",
+    status: "none" | "verified" | "rejected",
     note: string | null,
   ) => {
     const prev = logs.get(taskId);
@@ -563,10 +571,12 @@ function TasksPage() {
     const nextState: LogState = {
       ...prev,
       // Rejection un-completes the task so the employee must redo it.
-      completed: status === "verified" ? prev.completed : false,
-      completed_at: status === "verified" ? prev.completed_at : null,
+      completed: status === "rejected" ? false : prev.completed,
+      completed_at: status === "rejected" ? null : prev.completed_at,
       admin_verification_status: status,
       rejection_note: status === "rejected" ? note : null,
+      verified_by_name: status === "verified" ? fullName : null,
+      verified_at: status === "verified" ? new Date().toISOString() : null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -575,7 +585,13 @@ function TasksPage() {
     });
     await persistTask(taskId, nextState);
     triggerHaptic("light");
-    toast.success(status === "verified" ? "המשימה אומתה" : "המשימה נפסלה והעובד יקבל הערה");
+    toast.success(
+      status === "verified"
+        ? "המשימה אומתה"
+        : status === "rejected"
+          ? "המשימה נפסלה והעובד יקבל הערה"
+          : "האישור בוטל",
+    );
   };
 
   const handlePhotoUploaded = (taskId: string, path: string) => {
@@ -589,6 +605,8 @@ function TasksPage() {
       photo_url: path,
       admin_verification_status: prev?.admin_verification_status ?? "none",
       rejection_note: prev?.rejection_note ?? null,
+      verified_by_name: prev?.verified_by_name ?? null,
+      verified_at: prev?.verified_at ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -657,6 +675,8 @@ function TasksPage() {
         photo_url: prev?.photo_url ?? null,
         admin_verification_status: prev?.admin_verification_status ?? "none",
         rejection_note: prev?.rejection_note ?? null,
+        verified_by_name: prev?.verified_by_name ?? null,
+        verified_at: prev?.verified_at ?? null,
       });
       return next;
     });
@@ -1013,9 +1033,11 @@ function TasksPage() {
                                 <SortableTaskItem key={t.id} id={t.id} showHandle={isSuperAdmin && !t.id.startsWith("__virtual_")}>
                                 <div
                                   className={`rounded-xl border p-4 transition-all duration-300 ${
-                                    done
-                                      ? "bg-card/40 border-border"
-                                      : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
+                                    log?.admin_verification_status === "verified"
+                                      ? "bg-card/40 border-emerald-500/40 shadow-[0_0_6px_rgba(16,185,129,0.25)]"
+                                      : done
+                                        ? "bg-card/40 border-border"
+                                        : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
                                   } ${isPulsing ? "neon-pulse-card" : ""}`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
@@ -1040,13 +1062,18 @@ function TasksPage() {
                                             {stamp}
                                           </div>
                                         )}
+                                        {log?.admin_verification_status === "verified" && (
+                                          <div className="text-[11px] text-emerald-400 font-bold mt-1 leading-snug">
+                                            ✅ אושר ע״י {log.verified_by_name ?? "הנהלה"}
+                                          </div>
+                                        )}
                                       </div>
                                     </label>
                                     {isSuperAdmin && done && !t.id.startsWith("__virtual_") && (
                                       <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
-                                          onClick={() => setVerification(t.id, "verified", null)}
+                                          onClick={() => setVerification(t.id, log?.admin_verification_status === "verified" ? "none" : "verified", null)}
                                           className={`p-1.5 rounded-md transition border ${
                                             log?.admin_verification_status === "verified"
                                               ? "bg-emerald-500/20 border-emerald-500/60 text-emerald-300"
