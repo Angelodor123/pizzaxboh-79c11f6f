@@ -870,12 +870,46 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
               </div>
 
 
+              {aiActive && (
+                <div className="space-y-2">
+                  <div className={`text-[11px] text-center font-bold tabular-nums px-3 py-2 rounded-md border ${
+                    pendingCount === 0
+                      ? (correctedCount === 0
+                          ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+                          : "border-amber-brand/50 bg-amber-brand/10 text-amber-brand")
+                      : "border-border bg-background/40 text-muted-foreground"
+                  }`}>
+                    {pendingCount === 0
+                      ? (correctedCount === 0
+                          ? `🎯 מושלם! ${approvedCount} שדות אושרו — XP מקסימלי`
+                          : `${approvedCount} ✓ · ${correctedCount} ✗ — ה-AI ילמד מהתיקונים`)
+                      : `סמן ✓ אם ה-AI צדק או ✗ אם תיקנת — נותרו ${pendingCount} שדות (אופציונלי)`}
+                  </div>
+                  {pendingCount > 0 && (
+                    <button type="button"
+                      onClick={() => {
+                        setHeaderVal((p) => {
+                          const next = { ...p };
+                          (Object.keys(next) as HeaderKey[]).forEach((k) => { if (next[k] === "pending") next[k] = "approved"; });
+                          return next;
+                        });
+                        setItemVal((p) => p.map((s) => (s === "pending" ? "approved" : s)));
+                      }}
+                      className="w-full h-9 inline-flex items-center justify-center gap-2 rounded-md font-semibold text-xs border border-emerald-500/40 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15 transition"
+                    >
+                      ✓ אשר את כל מה שנשאר ({pendingCount})
+                    </button>
+                  )}
+                </div>
+              )}
+
               <button type="button" onClick={submit} disabled={!canSubmit}
                 className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white transition disabled:opacity-40"
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 {chosenMatch ? "אשר קליטה וסמן כהתקבל" : "אשר קליטה"}
               </button>
+
             </>
           )}
         </div>
