@@ -255,6 +255,7 @@ export type Database = {
           created_by: string | null
           id: string
           note: string | null
+          transaction_date: string
           type: string
           wallet_id: string
         }
@@ -265,6 +266,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           note?: string | null
+          transaction_date?: string
           type: string
           wallet_id: string
         }
@@ -275,6 +277,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           note?: string | null
+          transaction_date?: string
           type?: string
           wallet_id?: string
         }

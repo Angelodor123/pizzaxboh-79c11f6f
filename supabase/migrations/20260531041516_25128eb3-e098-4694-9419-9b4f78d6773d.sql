@@ -1,0 +1,1 @@
+ALTER TABLE public.cibus_transactions_log ADD COLUMN IF NOT EXISTS transaction_date date NOT NULL DEFAULT CURRENT_DATE;
