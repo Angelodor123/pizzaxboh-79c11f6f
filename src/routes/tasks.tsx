@@ -560,10 +560,10 @@ function TasksPage() {
     }
   };
 
-  // Super admin: verify or reject a completed task.
+  // Super admin: verify / un-verify / reject a completed task.
   const setVerification = async (
     taskId: string,
-    status: "verified" | "rejected",
+    status: "none" | "verified" | "rejected",
     note: string | null,
   ) => {
     const prev = logs.get(taskId);
@@ -571,10 +571,12 @@ function TasksPage() {
     const nextState: LogState = {
       ...prev,
       // Rejection un-completes the task so the employee must redo it.
-      completed: status === "verified" ? prev.completed : false,
-      completed_at: status === "verified" ? prev.completed_at : null,
+      completed: status === "rejected" ? false : prev.completed,
+      completed_at: status === "rejected" ? null : prev.completed_at,
       admin_verification_status: status,
       rejection_note: status === "rejected" ? note : null,
+      verified_by_name: status === "verified" ? fullName : null,
+      verified_at: status === "verified" ? new Date().toISOString() : null,
     };
     setLogs((m) => {
       const next = new Map(m);
@@ -583,7 +585,14 @@ function TasksPage() {
     });
     await persistTask(taskId, nextState);
     triggerHaptic("light");
-    toast.success(status === "verified" ? "המשימה אומתה" : "המשימה נפסלה והעובד יקבל הערה");
+    toast.success(
+      status === "verified"
+        ? "המשימה אומתה"
+        : status === "rejected"
+          ? "המשימה נפסלה והעובד יקבל הערה"
+          : "האישור בוטל",
+    );
+  };
   };
 
   const handlePhotoUploaded = (taskId: string, path: string) => {
