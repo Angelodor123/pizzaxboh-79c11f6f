@@ -800,11 +800,18 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                           {rows.map((r, i) => {
                             const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
                             const isExtra = chosenMatch && r.orderedQty == null;
+                            const rowState: ValState = itemVal[i] ?? "pending";
+                            const rowRing = aiActive
+                              ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
+                              : "";
                             return (
-                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md ${isExtra ? "bg-amber-brand/5" : ""}`}>
+                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
                                 <div>
-                                  <input value={r.name} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
-                                    className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none" />
+                                  <div className="flex items-center gap-1.5">
+                                    <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
+                                      className={`flex-1 min-w-0 h-10 rounded bg-background border px-2 text-xs leading-none ${aiActive ? valBorder(rowState) : "border-border"}`} />
+                                    {aiActive && <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />}
+                                  </div>
                                   <select
                                     value={r.category}
                                     onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, category: e.target.value as ExpenseCategory | "" } : x))}
@@ -821,10 +828,10 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                   <div className="text-center text-xs tabular-nums text-muted-foreground">{r.orderedQty ?? "—"}</div>
                                 )}
                                 <input type="number" step="0.01" value={r.invoiceQty}
-                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x))}
+                                  onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
                                   className={`w-full h-10 rounded bg-background border px-2 text-xs leading-none text-center tabular-nums ${mismatch ? "border-red-500 text-red-500 font-bold" : "border-border"}`} />
                                 <input type="number" step="0.01" value={r.unitPrice}
-                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x))}
+                                  onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
                                   className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
                                 <input type="number" step="0.01" value={r.totalPrice}
                                   onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
@@ -832,6 +839,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               </div>
                             );
                           })}
+
                         </div>
                       </>
                     );
