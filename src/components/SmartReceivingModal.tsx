@@ -578,7 +578,34 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     [suppliers, supplierId],
   );
 
+  // Per-field V / X buttons (shows only when OCR was used).
+  const ValBtns = ({ state, onApprove, onReject }: { state: ValState; onApprove: () => void; onReject: () => void }) => (
+    <div className="inline-flex items-center gap-1 shrink-0">
+      <button type="button" onClick={onApprove} aria-label="ה-AI צדק" title="ה-AI צדק"
+        className={`h-9 w-9 grid place-content-center rounded-md border transition ${
+          state === "approved"
+            ? "bg-emerald-500 border-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+            : "border-border text-muted-foreground hover:border-emerald-400 hover:text-emerald-400"
+        }`}>
+        <Check className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" onClick={onReject} aria-label="טעות — תקן ידנית" title="טעות — תקן ידנית"
+        className={`h-9 w-9 grid place-content-center rounded-md border transition ${
+          state === "corrected"
+            ? "bg-rose-500 border-rose-400 text-white shadow-[0_0_10px_rgba(244,63,94,0.5)]"
+            : "border-border text-muted-foreground hover:border-rose-400 hover:text-rose-400"
+        }`}>
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+  const valBorder = (s: ValState) =>
+    s === "approved" ? "border-emerald-500/60"
+      : s === "corrected" ? "border-rose-500/70 ring-1 ring-rose-500/30"
+      : "border-border";
+
   return (
+
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-3xl bg-card border border-border rounded-2xl overflow-hidden max-h-[94vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-border">
