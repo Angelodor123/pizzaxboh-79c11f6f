@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { getCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
 
 const SUCCESS_SCRIPT =
