@@ -740,21 +740,31 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
-                      <label className="block text-xs font-bold text-muted-foreground">מס׳ חשבונית</label>
-                      <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)}
-                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none" />
+                      <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                        <span>מס׳ חשבונית</span>
+                        {aiActive && <ValBtns state={headerVal.invoice_number} onApprove={() => setHV("invoice_number", "approved")} onReject={() => setHV("invoice_number", "corrected")} />}
+                      </label>
+                      <input value={invoiceNumber} onChange={(e) => { setInvoiceNumber(e.target.value); if (aiActive) markHeaderEdited("invoice_number"); }}
+                        className={`w-full h-11 rounded-md bg-background border px-3 text-sm leading-none focus:border-neon outline-none ${aiActive ? valBorder(headerVal.invoice_number) : "border-border"}`} />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="block text-xs font-bold text-muted-foreground">תאריך *</label>
-                      <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)}
-                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none [&::-webkit-datetime-edit]:py-0 [&::-webkit-datetime-edit]:leading-none [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
+                      <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                        <span>תאריך *</span>
+                        {aiActive && <ValBtns state={headerVal.document_date} onApprove={() => setHV("document_date", "approved")} onReject={() => setHV("document_date", "corrected")} />}
+                      </label>
+                      <input type="date" value={docDate} onChange={(e) => { setDocDate(e.target.value); if (aiActive) markHeaderEdited("document_date"); }}
+                        className={`w-full h-11 rounded-md bg-background border px-3 text-sm leading-none focus:border-neon outline-none [&::-webkit-datetime-edit]:py-0 [&::-webkit-datetime-edit]:leading-none [&::-webkit-calendar-picker-indicator]:cursor-pointer ${aiActive ? valBorder(headerVal.document_date) : "border-border"}`} />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="block text-xs font-bold text-muted-foreground">סכום כולל ₪ *</label>
-                    <input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
-                      className="w-full h-11 rounded-md bg-background border-2 border-border px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums" />
+                    <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                      <span>סכום כולל ₪ *</span>
+                      {aiActive && <ValBtns state={headerVal.total_amount} onApprove={() => setHV("total_amount", "approved")} onReject={() => setHV("total_amount", "corrected")} />}
+                    </label>
+                    <input type="number" step="0.01" value={totalAmount} onChange={(e) => { setTotalAmount(e.target.value); if (aiActive) markHeaderEdited("total_amount"); }}
+                      className={`w-full h-11 rounded-md bg-background border-2 px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums ${aiActive ? valBorder(headerVal.total_amount) : "border-border"}`} />
                   </div>
+
                   {chosenMatch && (
                     <div className="text-[11px] text-neon">✓ משויך להזמנה {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")} · {supplierName}</div>
                   )}
