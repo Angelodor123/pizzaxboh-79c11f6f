@@ -67,6 +67,8 @@ type LogState = {
   completed_by_user_id: string | null;
   comments: string;
   photo_url: string | null;
+  admin_verification_status: "none" | "verified" | "rejected";
+  rejection_note: string | null;
 };
 
 const VIRTUAL_WINTER_SHIFT_ID = "__virtual_winter__";
