@@ -878,7 +878,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   }`}>
                     {pendingCount === 0
                       ? (correctedCount === 0
-                          ? `🎯 מושלם! ${approvedCount} שדות אושרו — XP מקסימלי`
+                          ? `✓ ${approvedCount} שדות אושרו`
                           : `${approvedCount} ✓ · ${correctedCount} ✗ — ה-AI ילמד מהתיקונים`)
                       : `סמן ✓ אם ה-AI צדק או ✗ אם תיקנת — נותרו ${pendingCount} שדות (אופציונלי)`}
                   </div>
