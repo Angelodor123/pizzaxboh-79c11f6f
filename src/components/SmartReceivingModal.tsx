@@ -558,12 +558,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         toast.warning(`⚠️ זוהו שינויי מחיר משמעותיים:\n${top}${more}`, { duration: 10000 });
       }
 
-      if (isPerfect) {
-        celebrate();
-        toast.success("🎉 קליטה מושלמת! ה-AI קיבל XP נוסף.");
-      } else {
-        toast.success("החשבונית נקלטה והמלאי עודכן");
-      }
+      toast.success("החשבונית נקלטה והמלאי עודכן");
       onSaved();
       onClose();
 
