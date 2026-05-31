@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { ocrInvoice } from "@/lib/receiving.functions";
-import { celebrate } from "@/lib/celebrate";
+
 
 export const EXPENSE_CATEGORIES = [
   "חומרי גלם",
@@ -16,28 +16,6 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
-// === XP / Level (mirrors AiTrainingSandbox) ===
-const LEVEL_NAMES = ["מתחיל", "חניך", "מומחה", "וירטואוז", "מאסטר"];
-const LEVEL_COLORS = [
-  "from-zinc-500 to-zinc-700",
-  "from-sky-500 to-cyan-600",
-  "from-violet-500 to-fuchsia-600",
-  "from-amber-500 to-orange-600",
-  "from-pink-500 to-rose-600",
-];
-const XP_PER_LEVEL = 50;
-function levelFromXp(xp: number) {
-  const idx = Math.min(LEVEL_NAMES.length - 1, Math.floor(xp / XP_PER_LEVEL));
-  const inLevel = xp - idx * XP_PER_LEVEL;
-  const pct = idx === LEVEL_NAMES.length - 1 ? 100 : Math.round((inLevel / XP_PER_LEVEL) * 100);
-  return { level: idx + 1, name: LEVEL_NAMES[idx], color: LEVEL_COLORS[idx], pct };
-}
-function xpFromDiff(diff: string | null | undefined): number {
-  if (diff === "perfect") return 8;
-  const m = /^edits:(\d+)/.exec(diff || "");
-  if (m) return Math.max(1, 8 - (Number(m[1]) || 0));
-  return 2;
-}
 
 
 interface SupplierOpt { id: string; name: string }
@@ -110,7 +88,6 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [submitting, setSubmitting] = useState(false);
   const [categoryMemory, setCategoryMemory] = useState<Map<string, ExpenseCategory>>(new Map());
-  const [supXp, setSupXp] = useState<{ xp: number; invoices: number; streak: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   // ============================================================
@@ -194,29 +171,6 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     return () => { cancelled = true; };
   }, []);
 
-  // Load supplier XP/streak when supplier is selected
-  useEffect(() => {
-    if (!supplierId) { setSupXp(null); return; }
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("invoice_ocr_feedback")
-        .select("diff_summary,created_at")
-        .eq("supplier_id", supplierId)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (cancelled) return;
-      const rows = data ?? [];
-      const xp = rows.reduce((a, r: any) => a + xpFromDiff(r.diff_summary), 0);
-      let streak = 0;
-      for (const r of rows as any[]) {
-        if (r.diff_summary === "perfect") streak++;
-        else break;
-      }
-      setSupXp({ xp, invoices: rows.length, streak });
-    })();
-    return () => { cancelled = true; };
-  }, [supplierId]);
 
   const lookupCategory = (name: string): ExpenseCategory | "" => {
     const k = norm(name);
@@ -604,12 +558,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         toast.warning(`⚠️ זוהו שינויי מחיר משמעותיים:\n${top}${more}`, { duration: 10000 });
       }
 
-      if (isPerfect) {
-        celebrate();
-        toast.success("🎉 קליטה מושלמת! ה-AI קיבל XP נוסף.");
-      } else {
-        toast.success("החשבונית נקלטה והמלאי עודכן");
-      }
+      toast.success("החשבונית נקלטה והמלאי עודכן");
       onSaved();
       onClose();
 
@@ -786,20 +735,6 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </div>
-                  {supplierId && supXp && (() => {
-                    const L = levelFromXp(supXp.xp);
-                    return (
-                      <div className={`rounded-xl p-3 bg-gradient-to-r ${L.color} text-white shadow-md`}>
-                        <div className="flex items-center justify-between text-xs font-bold">
-                          <span>LV{L.level} · {L.name}</span>
-                          <span className="opacity-90">XP {supXp.xp} · {supXp.invoices} קליטות{supXp.streak > 0 ? ` · 🔥${supXp.streak}` : ""}</span>
-                        </div>
-                        <div className="mt-1.5 h-1.5 rounded-full bg-white/25 overflow-hidden">
-                          <div className="h-full bg-white" style={{ width: `${L.pct}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })()}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
@@ -943,7 +878,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   }`}>
                     {pendingCount === 0
                       ? (correctedCount === 0
-                          ? `🎯 מושלם! ${approvedCount} שדות אושרו — XP מקסימלי`
+                          ? `✓ ${approvedCount} שדות אושרו`
                           : `${approvedCount} ✓ · ${correctedCount} ✗ — ה-AI ילמד מהתיקונים`)
                       : `סמן ✓ אם ה-AI צדק או ✗ אם תיקנת — נותרו ${pendingCount} שדות (אופציונלי)`}
                   </div>
