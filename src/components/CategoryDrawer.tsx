@@ -410,6 +410,20 @@ export function CategoryDrawer() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/admin/complaints" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right flex items-center gap-2 justify-end">
+                      {newComplaintCount > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-tomato text-tomato-foreground text-[10px] font-black">
+                          {newComplaintCount}
+                        </span>
+                      )}
+                      <span>🚨 ניהול תלונות</span>
+                    </span>
+                    <span className={iconWrap}><ShieldAlert className="h-5 w-5" /></span>
+                  </Link>
+                </li>
+
+                <li>
                   <Link to="/admin" search={{ edit: undefined }} onClick={close} className={itemClass}>
                     <span className="flex-1 text-right">
                       ⚙️ הגדרות מערכת וצוות
