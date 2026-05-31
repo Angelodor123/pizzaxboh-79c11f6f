@@ -113,12 +113,8 @@ export function DoughStatusCard() {
     const { data: today } = await supabase.rpc("operational_today");
     const date = today as string;
     setLogDate(date);
-    const { data: log } = await supabase
-      .from("prep_log")
-      .select("current_stock")
-      .eq("prep_item_id", (pi as PrepItem).id)
-      .eq("log_date", date)
-      .maybeSingle();
+
+
     await loadLatest((pi as PrepItem).id, branchId);
     // NOTE: We intentionally do NOT seed shopCount from prep_log.current_stock
     // anymore — that total can include warehouse trays and caused a data swap
