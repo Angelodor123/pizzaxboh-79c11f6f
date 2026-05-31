@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Upload, Loader2, CheckCircle2, AlertTriangle, ScanSearch, Link2 } from "lucide-react";
+import { X, Upload, Loader2, CheckCircle2, AlertTriangle, ScanSearch, Link2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,6 +88,63 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [submitting, setSubmitting] = useState(false);
   const [categoryMemory, setCategoryMemory] = useState<Map<string, ExpenseCategory>>(new Map());
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // ============================================================
+  // Gamified per-field feedback (V / X) — same model as AI Training Sandbox.
+  // Only meaningful when OCR ran (parsed != null). When user keeps the AI's
+  // value and clicks ✓, it's "approved" (XP boost). Clicking ✗ or editing the
+  // field flips it to "corrected" (the model learns from the diff).
+  // ============================================================
+  type ValState = "pending" | "approved" | "corrected";
+  type HeaderKey = "invoice_number" | "document_date" | "total_amount";
+  const [headerVal, setHeaderVal] = useState<Record<HeaderKey, ValState>>({
+    invoice_number: "pending",
+    document_date: "pending",
+    total_amount: "pending",
+  });
+  const [itemVal, setItemVal] = useState<ValState[]>([]);
+  const setHV = (k: HeaderKey, v: ValState) => setHeaderVal((p) => ({ ...p, [k]: v }));
+  const setIV = (i: number, v: ValState) =>
+    setItemVal((p) => {
+      const next = p.length > i ? [...p] : [...p, ...Array.from({ length: i + 1 - p.length }, () => "pending" as ValState)];
+      next[i] = v;
+      return next;
+    });
+  const markHeaderEdited = (k: HeaderKey) => {
+    setHeaderVal((p) => (p[k] === "pending" ? { ...p, [k]: "corrected" } : p));
+  };
+  const markItemEdited = (i: number) => {
+    setItemVal((p) => p.map((s, idx) => (idx === i && s === "pending" ? "corrected" : s)));
+  };
+  const resetValidation = (rowCount: number) => {
+    setHeaderVal({ invoice_number: "pending", document_date: "pending", total_amount: "pending" });
+    setItemVal(Array.from({ length: Math.max(0, rowCount) }, () => "pending" as ValState));
+  };
+  // Keep itemVal length in sync when rows are added/removed.
+  useEffect(() => {
+    setItemVal((p) => {
+      if (p.length === rows.length) return p;
+      if (p.length < rows.length) return [...p, ...Array.from({ length: rows.length - p.length }, () => "pending" as ValState)];
+      return p.slice(0, rows.length);
+    });
+  }, [rows.length]);
+  const aiActive = parsed != null;
+  const approvedCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "approved").length;
+    const it = itemVal.filter((s) => s === "approved").length;
+    return h + it;
+  }, [headerVal, itemVal]);
+  const correctedCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "corrected").length;
+    const it = itemVal.filter((s) => s === "corrected").length;
+    return h + it;
+  }, [headerVal, itemVal]);
+  const pendingCount = useMemo(() => {
+    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "pending").length;
+    const it = itemVal.filter((s) => s === "pending").length;
+    return h + it;
+  }, [headerVal, itemVal]);
+
 
   // Load category dictionary (item name → category) for the current branch
   useEffect(() => {
@@ -231,22 +288,25 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
 
     });
     setRows(pairs);
+    resetValidation(pairs.length);
     setStage("verify");
   };
 
   const skipMatch = () => {
     // populate rows from OCR only
     const ocrItems = parsed?.items ?? [];
-    setRows(ocrItems.map((it) => ({
+    const newRows = ocrItems.map((it) => ({
       name: it.name, orderedQty: null,
       invoiceQty: Number(it.quantity) || 0,
       unitPrice: Number(it.unit_price) || 0,
       totalPrice: Number(it.total_price) || 0,
-      category: lookupCategory(it.name),
-    })));
-
+      category: lookupCategory(it.name) as ExpenseCategory | "",
+    }));
+    setRows(newRows);
+    resetValidation(newRows.length);
     setStage("manual");
   };
+
 
   const totalNum = Number(totalAmount);
   const canSubmit = supplierId && !Number.isNaN(totalNum) && totalNum > 0 && docDate && !submitting;
@@ -314,23 +374,39 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       }
 
       // === GAMIFICATION: OCR feedback row for XP/streak tracking ===
-      // Diff counts: compare each editable field to its OCR-parsed value
-      let edits = 0;
+      // Source-of-truth = explicit user feedback (V ✓ / X ✗) collected per field.
+      // Falls back to diff against parsed OCR for any field the user didn't tag.
       const numEq = (a: number | null | undefined, b: number | null | undefined) =>
         Math.abs((Number(a) || 0) - (Number(b) || 0)) < 0.01;
+      let approved = 0;
+      let edits = 0;
       if (parsed) {
-        if ((parsed.invoice_number ?? "").trim() !== invoiceNumber.trim()) edits++;
-        if (!numEq(parsed.total_amount, totalNum)) edits++;
-        if ((parsed.document_date ?? "") !== docDate) edits++;
+        // Header — explicit state wins; pending => fallback to diff.
+        const headerFallback: Record<HeaderKey, boolean> = {
+          invoice_number: (parsed.invoice_number ?? "").trim() === invoiceNumber.trim(),
+          total_amount: numEq(parsed.total_amount, totalNum),
+          document_date: (parsed.document_date ?? "") === docDate,
+        };
+        (Object.keys(headerVal) as HeaderKey[]).forEach((k) => {
+          const s = headerVal[k];
+          if (s === "approved") approved++;
+          else if (s === "corrected") edits++;
+          else if (headerFallback[k]) approved++;
+          else edits++;
+        });
+        // Items — explicit state wins; pending => fallback to OCR diff.
         const ocrItems = parsed.items ?? [];
-        for (const r of cleanItems) {
+        cleanItems.forEach((r, idx) => {
+          const s = itemVal[idx] ?? "pending";
+          if (s === "approved") { approved++; return; }
+          if (s === "corrected") { edits++; return; }
           const match = ocrItems.find((it) => looseEq(it.name, r.name));
-          if (!match) { edits++; continue; }
-          if (!numEq(match.quantity, r.invoiceQty)) edits++;
-          if (!numEq(match.unit_price, r.unitPrice)) edits++;
-        }
+          if (!match) { edits++; return; }
+          if (!numEq(match.quantity, r.invoiceQty) || !numEq(match.unit_price, r.unitPrice)) edits++;
+          else approved++;
+        });
       }
-      const isPerfect = parsed != null && edits === 0;
+      const isPerfect = parsed != null && edits === 0 && approved > 0;
       await supabase.from("invoice_ocr_feedback").insert({
         branch_id: branchId,
         supplier_id: supplierId,
@@ -340,10 +416,16 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           invoice_number: invoiceNumber.trim(),
           total_amount: totalNum,
           document_date: docDate,
-          items: cleanItems.map((r) => ({ name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category })),
+          items: cleanItems.map((r, idx) => ({
+            name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
+            _val: itemVal[idx] ?? "pending",
+          })),
+          _validation: { header: headerVal, approved, corrected: edits },
         },
         diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
       });
+
+
 
 
       // Mark order received + update inventory
@@ -496,7 +578,34 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     [suppliers, supplierId],
   );
 
+  // Per-field V / X buttons (shows only when OCR was used).
+  const ValBtns = ({ state, onApprove, onReject }: { state: ValState; onApprove: () => void; onReject: () => void }) => (
+    <div className="inline-flex items-center gap-1 shrink-0">
+      <button type="button" onClick={onApprove} aria-label="ה-AI צדק" title="ה-AI צדק"
+        className={`h-9 w-9 grid place-content-center rounded-md border transition ${
+          state === "approved"
+            ? "bg-emerald-500 border-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+            : "border-border text-muted-foreground hover:border-emerald-400 hover:text-emerald-400"
+        }`}>
+        <Check className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" onClick={onReject} aria-label="טעות — תקן ידנית" title="טעות — תקן ידנית"
+        className={`h-9 w-9 grid place-content-center rounded-md border transition ${
+          state === "corrected"
+            ? "bg-rose-500 border-rose-400 text-white shadow-[0_0_10px_rgba(244,63,94,0.5)]"
+            : "border-border text-muted-foreground hover:border-rose-400 hover:text-rose-400"
+        }`}>
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+  const valBorder = (s: ValState) =>
+    s === "approved" ? "border-emerald-500/60"
+      : s === "corrected" ? "border-rose-500/70 ring-1 ring-rose-500/30"
+      : "border-border";
+
   return (
+
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm grid place-items-center p-3" onClick={onClose} dir="rtl">
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-3xl bg-card border border-border rounded-2xl overflow-hidden max-h-[94vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -631,21 +740,31 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
-                      <label className="block text-xs font-bold text-muted-foreground">מס׳ חשבונית</label>
-                      <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)}
-                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none" />
+                      <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                        <span>מס׳ חשבונית</span>
+                        {aiActive && <ValBtns state={headerVal.invoice_number} onApprove={() => setHV("invoice_number", "approved")} onReject={() => setHV("invoice_number", "corrected")} />}
+                      </label>
+                      <input value={invoiceNumber} onChange={(e) => { setInvoiceNumber(e.target.value); if (aiActive) markHeaderEdited("invoice_number"); }}
+                        className={`w-full h-11 rounded-md bg-background border px-3 text-sm leading-none focus:border-neon outline-none ${aiActive ? valBorder(headerVal.invoice_number) : "border-border"}`} />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="block text-xs font-bold text-muted-foreground">תאריך *</label>
-                      <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)}
-                        className="w-full h-11 rounded-md bg-background border border-border px-3 text-sm leading-none focus:border-neon outline-none [&::-webkit-datetime-edit]:py-0 [&::-webkit-datetime-edit]:leading-none [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
+                      <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                        <span>תאריך *</span>
+                        {aiActive && <ValBtns state={headerVal.document_date} onApprove={() => setHV("document_date", "approved")} onReject={() => setHV("document_date", "corrected")} />}
+                      </label>
+                      <input type="date" value={docDate} onChange={(e) => { setDocDate(e.target.value); if (aiActive) markHeaderEdited("document_date"); }}
+                        className={`w-full h-11 rounded-md bg-background border px-3 text-sm leading-none focus:border-neon outline-none [&::-webkit-datetime-edit]:py-0 [&::-webkit-datetime-edit]:leading-none [&::-webkit-calendar-picker-indicator]:cursor-pointer ${aiActive ? valBorder(headerVal.document_date) : "border-border"}`} />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="block text-xs font-bold text-muted-foreground">סכום כולל ₪ *</label>
-                    <input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
-                      className="w-full h-11 rounded-md bg-background border-2 border-border px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums" />
+                    <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                      <span>סכום כולל ₪ *</span>
+                      {aiActive && <ValBtns state={headerVal.total_amount} onApprove={() => setHV("total_amount", "approved")} onReject={() => setHV("total_amount", "corrected")} />}
+                    </label>
+                    <input type="number" step="0.01" value={totalAmount} onChange={(e) => { setTotalAmount(e.target.value); if (aiActive) markHeaderEdited("total_amount"); }}
+                      className={`w-full h-11 rounded-md bg-background border-2 px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums ${aiActive ? valBorder(headerVal.total_amount) : "border-border"}`} />
                   </div>
+
                   {chosenMatch && (
                     <div className="text-[11px] text-neon">✓ משויך להזמנה {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")} · {supplierName}</div>
                   )}
@@ -681,11 +800,18 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                           {rows.map((r, i) => {
                             const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
                             const isExtra = chosenMatch && r.orderedQty == null;
+                            const rowState: ValState = itemVal[i] ?? "pending";
+                            const rowRing = aiActive
+                              ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
+                              : "";
                             return (
-                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md ${isExtra ? "bg-amber-brand/5" : ""}`}>
+                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
                                 <div>
-                                  <input value={r.name} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
-                                    className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none" />
+                                  <div className="flex items-center gap-1.5">
+                                    <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
+                                      className={`flex-1 min-w-0 h-10 rounded bg-background border px-2 text-xs leading-none ${aiActive ? valBorder(rowState) : "border-border"}`} />
+                                    {aiActive && <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />}
+                                  </div>
                                   <select
                                     value={r.category}
                                     onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, category: e.target.value as ExpenseCategory | "" } : x))}
@@ -702,10 +828,10 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                   <div className="text-center text-xs tabular-nums text-muted-foreground">{r.orderedQty ?? "—"}</div>
                                 )}
                                 <input type="number" step="0.01" value={r.invoiceQty}
-                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x))}
+                                  onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
                                   className={`w-full h-10 rounded bg-background border px-2 text-xs leading-none text-center tabular-nums ${mismatch ? "border-red-500 text-red-500 font-bold" : "border-border"}`} />
                                 <input type="number" step="0.01" value={r.unitPrice}
-                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x))}
+                                  onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
                                   className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
                                 <input type="number" step="0.01" value={r.totalPrice}
                                   onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
@@ -713,6 +839,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               </div>
                             );
                           })}
+
                         </div>
                       </>
                     );
@@ -743,12 +870,46 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
               </div>
 
 
+              {aiActive && (
+                <div className="space-y-2">
+                  <div className={`text-[11px] text-center font-bold tabular-nums px-3 py-2 rounded-md border ${
+                    pendingCount === 0
+                      ? (correctedCount === 0
+                          ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+                          : "border-amber-brand/50 bg-amber-brand/10 text-amber-brand")
+                      : "border-border bg-background/40 text-muted-foreground"
+                  }`}>
+                    {pendingCount === 0
+                      ? (correctedCount === 0
+                          ? `🎯 מושלם! ${approvedCount} שדות אושרו — XP מקסימלי`
+                          : `${approvedCount} ✓ · ${correctedCount} ✗ — ה-AI ילמד מהתיקונים`)
+                      : `סמן ✓ אם ה-AI צדק או ✗ אם תיקנת — נותרו ${pendingCount} שדות (אופציונלי)`}
+                  </div>
+                  {pendingCount > 0 && (
+                    <button type="button"
+                      onClick={() => {
+                        setHeaderVal((p) => {
+                          const next = { ...p };
+                          (Object.keys(next) as HeaderKey[]).forEach((k) => { if (next[k] === "pending") next[k] = "approved"; });
+                          return next;
+                        });
+                        setItemVal((p) => p.map((s) => (s === "pending" ? "approved" : s)));
+                      }}
+                      className="w-full h-9 inline-flex items-center justify-center gap-2 rounded-md font-semibold text-xs border border-emerald-500/40 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15 transition"
+                    >
+                      ✓ אשר את כל מה שנשאר ({pendingCount})
+                    </button>
+                  )}
+                </div>
+              )}
+
               <button type="button" onClick={submit} disabled={!canSubmit}
                 className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white transition disabled:opacity-40"
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 20px rgba(255,45,180,0.45)" }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 {chosenMatch ? "אשר קליטה וסמן כהתקבל" : "אשר קליטה"}
               </button>
+
             </>
           )}
         </div>
