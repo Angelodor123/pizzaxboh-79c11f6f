@@ -538,6 +538,8 @@ function TasksPage() {
       // Re-completing after rejection clears the verification cycle
       admin_verification_status: completed && prev?.admin_verification_status === "rejected" ? "none" : prev?.admin_verification_status ?? "none",
       rejection_note: completed && prev?.admin_verification_status === "rejected" ? null : prev?.rejection_note ?? null,
+      verified_by_name: completed && prev?.admin_verification_status === "rejected" ? null : prev?.verified_by_name ?? null,
+      verified_at: completed && prev?.admin_verification_status === "rejected" ? null : prev?.verified_at ?? null,
     };
     setLogs((m) => {
       const next = new Map(m);
