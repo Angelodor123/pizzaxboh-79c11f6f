@@ -172,29 +172,6 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     return () => { cancelled = true; };
   }, []);
 
-  // Load supplier XP/streak when supplier is selected
-  useEffect(() => {
-    if (!supplierId) { setSupXp(null); return; }
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("invoice_ocr_feedback")
-        .select("diff_summary,created_at")
-        .eq("supplier_id", supplierId)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (cancelled) return;
-      const rows = data ?? [];
-      const xp = rows.reduce((a, r: any) => a + xpFromDiff(r.diff_summary), 0);
-      let streak = 0;
-      for (const r of rows as any[]) {
-        if (r.diff_summary === "perfect") streak++;
-        else break;
-      }
-      setSupXp({ xp, invoices: rows.length, streak });
-    })();
-    return () => { cancelled = true; };
-  }, [supplierId]);
 
   const lookupCategory = (name: string): ExpenseCategory | "" => {
     const k = norm(name);
