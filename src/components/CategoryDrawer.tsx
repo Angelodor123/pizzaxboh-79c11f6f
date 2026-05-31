@@ -179,6 +179,7 @@ export function CategoryDrawer() {
   const close = () => setDrawerOpen(false);
 
   return (
+    <>
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
       <SheetTrigger asChild>
         <button
