@@ -786,6 +786,20 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </div>
+                  {supplierId && supXp && (() => {
+                    const L = levelFromXp(supXp.xp);
+                    return (
+                      <div className={`rounded-xl p-3 bg-gradient-to-r ${L.color} text-white shadow-md`}>
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span>LV{L.level} · {L.name}</span>
+                          <span className="opacity-90">XP {supXp.xp} · {supXp.invoices} קליטות{supXp.streak > 0 ? ` · 🔥${supXp.streak}` : ""}</span>
+                        </div>
+                        <div className="mt-1.5 h-1.5 rounded-full bg-white/25 overflow-hidden">
+                          <div className="h-full bg-white" style={{ width: `${L.pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center justify-between text-xs font-bold text-muted-foreground">
