@@ -94,6 +94,14 @@ function CibusPage() {
           <Wallet className="h-5 w-5 text-amber-brand" />
           <h1 className="text-lg font-bold text-foreground">ארנק סיבוס</h1>
         </div>
+        <Button
+          onClick={() => setShowCreate(true)}
+          size="sm"
+          className="h-9 bg-amber-brand text-amber-brand-foreground hover:opacity-90 font-bold"
+        >
+          <UserPlus className="h-4 w-4 ml-1.5" />
+          חדש
+        </Button>
       </header>
 
       <div className="p-4 space-y-4">
