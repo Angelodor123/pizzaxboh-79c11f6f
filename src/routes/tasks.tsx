@@ -1283,6 +1283,60 @@ function TasksPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Super-admin rejection-note prompt */}
+      <Dialog
+        open={!!rejectingTask}
+        onOpenChange={(o) => { if (!o) { setRejectingTask(null); setRejectNoteDraft(""); } }}
+      >
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">פסילת ביצוע משימה</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-right">
+            <div className="text-sm text-muted-foreground">
+              {rejectingTask?.name}
+            </div>
+            <label className="block text-xs font-bold text-foreground">סיבת פסילה (תוצג לעובד)</label>
+            <textarea
+              value={rejectNoteDraft}
+              onChange={(e) => setRejectNoteDraft(e.target.value.slice(0, 500))}
+              rows={4}
+              autoFocus
+              placeholder="לדוגמה: התמונה לא ברורה, יש לחזור ולנקות את האזור…"
+              className="w-full bg-background border border-border focus:border-rose-500/60 focus:outline-none rounded-md px-3 py-2 text-sm resize-y"
+            />
+            <div className="text-[10px] text-muted-foreground tabular-nums text-end" dir="ltr">
+              {rejectNoteDraft.length}/500
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => { setRejectingTask(null); setRejectNoteDraft(""); }}
+              className="px-3 py-1.5 rounded-md text-xs font-bold border border-border hover:bg-accent"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              disabled={!rejectNoteDraft.trim()}
+              onClick={async () => {
+                if (!rejectingTask || !rejectNoteDraft.trim()) return;
+                const id = rejectingTask.id;
+                const note = rejectNoteDraft.trim();
+                setRejectingTask(null);
+                setRejectNoteDraft("");
+                await setVerification(id, "rejected", note);
+              }}
+              className="px-3 py-1.5 rounded-md text-xs font-bold bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              פסול ושלח הערה
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Draggable shortcut to the notepad */}
       <DraggableNotepadFab />
 
