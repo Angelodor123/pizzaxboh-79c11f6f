@@ -115,6 +115,8 @@ export function CategoryDrawer() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [complaintOpen, setComplaintOpen] = useState(false);
+  const newComplaintCount = useNewComplaintCount();
   const { canInstall, promptInstall } = useInstallPrompt();
 
   // Dynamically filter sidebar categories to only those with ≥1 active item
