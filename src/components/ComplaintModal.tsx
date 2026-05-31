@@ -16,12 +16,20 @@ interface Props {
   onOpenChange: (o: boolean) => void;
 }
 
+const todayLocal = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+};
+
 export function ComplaintModal({ open, onOpenChange }: Props) {
   const { session } = useAuth();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [desc, setDesc] = useState("");
+  const [orderDate, setOrderDate] = useState(todayLocal());
+  const [orderNumber, setOrderNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -31,6 +39,8 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       setPhone("");
       setAddress("");
       setDesc("");
+      setOrderDate(todayLocal());
+      setOrderNumber("");
       setSubmitting(false);
       setDone(false);
     }
@@ -52,6 +62,8 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       phone_number: phone.trim(),
       address: address.trim() || null,
       description: desc.trim(),
+      order_date: orderDate || null,
+      order_number: orderNumber.trim() || null,
     });
     setSubmitting(false);
     if (error) {
