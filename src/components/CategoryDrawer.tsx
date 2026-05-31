@@ -573,5 +573,7 @@ export function CategoryDrawer() {
         </div>
       </SheetContent>
     </Sheet>
+    <ComplaintModal open={complaintOpen} onOpenChange={setComplaintOpen} />
+    </>
   );
 }
