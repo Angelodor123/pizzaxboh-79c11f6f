@@ -16,7 +16,22 @@ export type SupplierProduct = {
   active: boolean;
   sku: string | null;
   unit_size: string | null;
+  expected_price: number | null;
+  min_stock_alert: number | null;
 };
+
+export const CATALOG_UNITS = ["ק״ג", "גרם", "ליטר", "מ״ל", "יח׳", "ארגז"] as const;
+
+export const CATALOG_CATEGORIES = [
+  "ירקות ופירות",
+  "בשרים",
+  "מוצרי חלב",
+  "יבשים",
+  "משקאות",
+  "אריזה וחד״פ",
+  "ניקיון",
+  "אחר",
+] as const;
 
 export async function loadSupplierProducts(supplierId: string): Promise<SupplierProduct[]> {
   const { data, error } = await supabase

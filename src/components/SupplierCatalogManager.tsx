@@ -4,7 +4,19 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { loadSupplierProducts, type SupplierProduct } from "@/lib/supplier-products";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  loadSupplierProducts,
+  type SupplierProduct,
+  CATALOG_UNITS,
+  CATALOG_CATEGORIES,
+} from "@/lib/supplier-products";
 
 interface Props {
   supplierId: string;
@@ -21,11 +33,28 @@ type Draft = {
   unit: string;
   default_qty: string;
   price: string;
+  expected_price: string;
   category: string;
+  min_stock_alert: string;
   image_url: string | null;
 };
 
-const EMPTY_DRAFT: Draft = { name: "", sku: "", unit_size: "", unit: "", default_qty: "1", price: "", category: "", image_url: null };
+const EMPTY_DRAFT: Draft = {
+  name: "",
+  sku: "",
+  unit_size: "",
+  unit: "",
+  default_qty: "1",
+  price: "",
+  expected_price: "",
+  category: "",
+  min_stock_alert: "",
+  image_url: null,
+};
+
+const fieldClass =
+  "w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none";
+const labelClass = "text-[11px] font-bold text-muted-foreground mb-1 block text-right";
 
 export function SupplierCatalogManager({ supplierId, supplierName, open, onClose }: Props) {
   const [items, setItems] = useState<SupplierProduct[]>([]);
@@ -83,7 +112,9 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       unit: p.unit ?? "",
       default_qty: String(p.default_qty ?? 1),
       price: p.price != null ? String(p.price) : "",
+      expected_price: p.expected_price != null ? String(p.expected_price) : "",
       category: p.category ?? "",
+      min_stock_alert: p.min_stock_alert != null ? String(p.min_stock_alert) : "",
       image_url: p.image_url,
     });
   };
@@ -110,7 +141,9 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         unit: draft.unit.trim(),
         default_qty: Number(draft.default_qty) || 1,
         price: draft.price.trim() ? Number(draft.price) : null,
+        expected_price: draft.expected_price.trim() ? Number(draft.expected_price) : null,
         category: draft.category.trim() || null,
+        min_stock_alert: draft.min_stock_alert.trim() ? Number(draft.min_stock_alert) : null,
         image_url: draft.image_url,
       };
       if (editingId) {
@@ -155,65 +188,123 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
           </DialogTitle>
         </DialogHeader>
 
-        {/* Add / Edit form */}
-        <div className="border border-border rounded-xl p-4 space-y-2.5 bg-background/40">
-          <div className="text-xs font-bold text-neon">{editingId ? "עריכת מוצר" : "מוצר חדש"}</div>
+        {/* Add / Edit form — compact 2-col grid */}
+        <div className="border border-border rounded-xl p-4 space-y-3 bg-background/40">
+          <div className="text-xs font-bold text-neon">{editingId ? "עריכת מוצר" : "פריט חדש לקטלוג"}</div>
 
-          <input
-            autoFocus
-            value={draft.name}
-            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            placeholder="שם המוצר"
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            maxLength={120}
-          />
-          <input
-            value={draft.sku}
-            onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
-            placeholder='מק״ט / SKU'
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            maxLength={64}
-          />
-          <input
-            value={draft.unit_size}
-            onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
-            placeholder='גודל אריזה (כגון: ארגז - 1 יח׳ × 2 ק״ג)'
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            maxLength={80}
-          />
-          <input
-            value={draft.category}
-            onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-            placeholder="קטגוריה (אופציונלי)"
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            maxLength={60}
-          />
-          <input
-            value={draft.unit}
-            onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
-            placeholder='יחידה (ק״ג / יח׳ / ארגז)'
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-            maxLength={20}
-          />
-          <input
-            value={draft.default_qty}
-            onChange={(e) => setDraft({ ...draft, default_qty: e.target.value })}
-            placeholder="כמות ברירת מחדל"
-            type="number"
-            min={0}
-            step="any"
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-          />
-          <input
-            value={draft.price}
-            onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-            placeholder="מחיר (אופציונלי)"
-            type="number"
-            min={0}
-            step="any"
-            className="w-full h-10 rounded-md bg-background border border-border px-2.5 text-sm focus:border-neon outline-none"
-          />
+          {/* Name (full width) */}
+          <div>
+            <label className={labelClass}>שם המוצר *</label>
+            <input
+              autoFocus
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              placeholder="לדוגמה: עגבניות שרי"
+              className={fieldClass}
+              maxLength={120}
+            />
+          </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>מק״ט / SKU</label>
+              <input
+                value={draft.sku}
+                onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+                placeholder="SKU-123"
+                className={fieldClass}
+                maxLength={64}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>קטגוריה</label>
+              <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v })}>
+                <SelectTrigger className="h-10 text-right">
+                  <SelectValue placeholder="בחר קטגוריה" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATALOG_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className={labelClass}>יחידת מידה</label>
+              <Select value={draft.unit} onValueChange={(v) => setDraft({ ...draft, unit: v })}>
+                <SelectTrigger className="h-10 text-right">
+                  <SelectValue placeholder="בחר יחידה" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATALOG_UNITS.map((u) => (
+                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className={labelClass}>גודל אריזה</label>
+              <input
+                value={draft.unit_size}
+                onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
+                placeholder="לדוגמה: ארגז × 5 ק״ג"
+                className={fieldClass}
+                maxLength={80}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>כמות ברירת מחדל</label>
+              <input
+                value={draft.default_qty}
+                onChange={(e) => setDraft({ ...draft, default_qty: e.target.value })}
+                type="number"
+                min={0}
+                step="any"
+                className={fieldClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>התראת מלאי נמוך</label>
+              <input
+                value={draft.min_stock_alert}
+                onChange={(e) => setDraft({ ...draft, min_stock_alert: e.target.value })}
+                placeholder="כמות מינ׳ במלאי"
+                type="number"
+                min={0}
+                step="any"
+                className={fieldClass}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>מחיר נוכחי (₪)</label>
+              <input
+                value={draft.price}
+                onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+                placeholder="0.00"
+                type="number"
+                min={0}
+                step="any"
+                className={fieldClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>מחיר צפוי (₪)</label>
+              <input
+                value={draft.expected_price}
+                onChange={(e) => setDraft({ ...draft, expected_price: e.target.value })}
+                placeholder="לבדיקת אנומליות"
+                type="number"
+                min={0}
+                step="any"
+                className={fieldClass}
+              />
+            </div>
+          </div>
+
+          {/* Image upload (full width) */}
           <input
             ref={fileRef}
             type="file"
@@ -225,20 +316,20 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               if (fileRef.current) fileRef.current.value = "";
             }}
           />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-sm disabled:opacity-50"
-          >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {draft.image_url ? "החלף תמונה" : "העלאת תמונה"}
-          </button>
-          {draft.image_url && (
-            <div className="flex justify-center">
-              <img src={draft.image_url} alt="" className="h-16 w-16 rounded object-cover border border-border" />
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-sm disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {draft.image_url ? "החלף תמונה" : "העלאת תמונה"}
+            </button>
+            {draft.image_url && (
+              <img src={draft.image_url} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+            )}
+          </div>
 
           <div className="flex gap-2 pt-1">
             {editingId && (
@@ -281,8 +372,10 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                     <div className="text-sm font-bold leading-tight">{p.name}</div>
                     {p.sku && <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku}</div>}
                     <div className="text-[11px] text-muted-foreground">
+                      {p.category && <span className="text-amber-brand">{p.category} · </span>}
                       {p.unit_size || p.unit}
                       {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                      {p.min_stock_alert != null && <> · מלאי מינ׳: {p.min_stock_alert}</>}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -302,7 +395,6 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                 </div>
               ))}
             </div>
-
           )}
         </div>
       </DialogContent>

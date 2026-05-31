@@ -1,13 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Search, Plus, Minus, Loader2, Wallet, UserPlus } from "lucide-react";
+import { ArrowRight, Search, Plus, Minus, Loader2, Wallet, UserPlus, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 export const Route = createFileRoute("/cibus")({
+  beforeLoad: async () => {
+    // Feature-flag: this module is currently active only for the Modiin branch.
+    const id = getActiveBranchIdSync();
+    if (!id) return;
+    const { data } = await supabase.from("branches").select("name").eq("id", id).maybeSingle();
+    if (data?.name && data.name !== "מודיעין") {
+      throw redirect({ to: "/" });
+    }
+  },
   component: CibusPage,
 });
 
@@ -17,6 +27,16 @@ interface Wallet {
   phone_number: string;
   balance: number;
   last_updated: string;
+}
+
+interface Transaction {
+  id: string;
+  wallet_id: string;
+  amount: number;
+  type: "add" | "deduct" | "initial";
+  balance_after: number;
+  note: string | null;
+  created_at: string;
 }
 
 function CibusPage() {
@@ -46,6 +66,13 @@ function CibusPage() {
       supabase.removeChannel(ch);
     };
   }, []);
+
+  // Keep the selected wallet in sync with realtime balance changes
+  useEffect(() => {
+    if (!selected) return;
+    const fresh = wallets.find((w) => w.id === selected.id);
+    if (fresh && fresh.balance !== selected.balance) setSelected(fresh);
+  }, [wallets, selected]);
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -124,7 +151,11 @@ function CibusPage() {
         )}
       </div>
 
-      <WalletDetail wallet={selected} onClose={() => setSelected(null)} />
+      <WalletDetail
+        wallet={selected}
+        onClose={() => setSelected(null)}
+        userId={session?.user?.id ?? null}
+      />
       <CreateWalletDialog
         open={showCreate}
         onOpenChange={setShowCreate}
@@ -135,12 +166,58 @@ function CibusPage() {
   );
 }
 
-function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () => void }) {
+function WalletDetail({
+  wallet,
+  onClose,
+  userId,
+}: {
+  wallet: Wallet | null;
+  onClose: () => void;
+  userId: string | null;
+}) {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [history, setHistory] = useState<Transaction[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
-    if (!wallet) setAmount("");
+    if (!wallet) {
+      setAmount("");
+      setHistory([]);
+      return;
+    }
+    let alive = true;
+    setHistoryLoading(true);
+    supabase
+      .from("cibus_transactions_log")
+      .select("*")
+      .eq("wallet_id", wallet.id)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => {
+        if (!alive) return;
+        setHistory((data ?? []) as Transaction[]);
+        setHistoryLoading(false);
+      });
+
+    const ch = supabase
+      .channel(`cibus-tx-${wallet.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "cibus_transactions_log",
+          filter: `wallet_id=eq.${wallet.id}`,
+        },
+        (payload) => setHistory((prev) => [payload.new as Transaction, ...prev]),
+      )
+      .subscribe();
+
+    return () => {
+      alive = false;
+      supabase.removeChannel(ch);
+    };
   }, [wallet]);
 
   if (!wallet) return null;
@@ -157,14 +234,24 @@ function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () 
       .from("cibus_wallets")
       .update({ balance: newBalance, last_updated: new Date().toISOString() })
       .eq("id", wallet.id);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       toast.error("שגיאה בעדכון");
       return;
     }
+
+    // Audit log — best-effort; UI continues even if logging fails
+    await supabase.from("cibus_transactions_log").insert({
+      wallet_id: wallet.id,
+      amount: num,
+      type: sign === 1 ? "add" : "deduct",
+      balance_after: newBalance,
+      created_by: userId,
+    });
+
+    setBusy(false);
     toast.success(sign === 1 ? `נוספו ₪${num.toFixed(2)}` : `נוצלו ₪${num.toFixed(2)}`);
     setAmount("");
-    onClose();
   };
 
   return (
@@ -172,7 +259,7 @@ function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () 
       <div
         dir="rtl"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-card border border-zinc-800 rounded-t-2xl sm:rounded-2xl p-5 space-y-4"
+        className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-card border border-zinc-800 rounded-t-2xl sm:rounded-2xl p-5 space-y-4"
       >
         <div>
           <div className="text-xs text-muted-foreground">לקוח</div>
@@ -219,6 +306,61 @@ function WalletDetail({ wallet, onClose }: { wallet: Wallet | null; onClose: () 
             <Plus className="h-5 w-5 ml-2" />
             הוסף צבירה
           </Button>
+        </div>
+
+        {/* Transaction history timeline */}
+        <div className="pt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <History className="h-4 w-4 text-amber-brand" />
+            <h3 className="text-sm font-bold text-foreground">היסטוריית עסקאות</h3>
+          </div>
+          {historyLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-xs text-muted-foreground text-center py-4 border border-dashed border-zinc-800 rounded-lg">
+              אין עסקאות עדיין
+            </div>
+          ) : (
+            <ul className="space-y-1.5 max-h-60 overflow-y-auto">
+              {history.map((tx) => {
+                const isAdd = tx.type === "add" || tx.type === "initial";
+                return (
+                  <li
+                    key={tx.id}
+                    className="flex items-center gap-2 p-2 rounded-md bg-zinc-900/40 border border-zinc-800/60 text-xs"
+                  >
+                    <span
+                      className={`shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-full ${
+                        isAdd ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                      }`}
+                    >
+                      {isAdd ? <Plus className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-bold tabular-nums ${isAdd ? "text-success" : "text-destructive"}`}>
+                        {isAdd ? "+" : "-"}₪{Number(tx.amount).toFixed(2)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {tx.type === "initial" ? "יתרת פתיחה" : isAdd ? "הוספה" : "מימוש"} ·{" "}
+                        {new Date(tx.created_at).toLocaleString("he-IL", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                      → ₪{Number(tx.balance_after).toFixed(2)}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
         <Button variant="outline" onClick={onClose} className="w-full h-11 border-zinc-700">
@@ -268,17 +410,36 @@ function CreateWalletDialog({
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("cibus_wallets").insert({
-      customer_name: name.trim(),
-      phone_number: phone.trim(),
-      balance: parseFloat(initial) || 0,
-      created_by: userId,
-    });
-    setBusy(false);
+    const initialBalance = parseFloat(initial) || 0;
+    const { data: newWallet, error } = await supabase
+      .from("cibus_wallets")
+      .insert({
+        customer_name: name.trim(),
+        phone_number: phone.trim(),
+        balance: initialBalance,
+        created_by: userId,
+      })
+      .select("id")
+      .maybeSingle();
     if (error) {
+      setBusy(false);
       toast.error(error.message.includes("unique") ? "כבר קיים ארנק עם טלפון זה" : "שגיאה ביצירה");
       return;
     }
+
+    // Log the initial balance if non-zero
+    if (newWallet?.id && initialBalance !== 0) {
+      await supabase.from("cibus_transactions_log").insert({
+        wallet_id: newWallet.id,
+        amount: Math.abs(initialBalance),
+        type: "initial",
+        balance_after: initialBalance,
+        note: "יתרת פתיחה",
+        created_by: userId,
+      });
+    }
+
+    setBusy(false);
     toast.success("ארנק נוצר בהצלחה");
     onOpenChange(false);
   };

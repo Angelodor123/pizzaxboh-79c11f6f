@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
+import { useIsModiinBranch } from "@/lib/active-branch";
 
 
 import {
@@ -117,6 +118,7 @@ export function CategoryDrawer() {
   const [savingName, setSavingName] = useState(false);
   const [complaintOpen, setComplaintOpen] = useState(false);
   const newComplaintCount = useNewComplaintCount();
+  const isModiinBranch = useIsModiinBranch();
   const { canInstall, promptInstall } = useInstallPrompt();
 
   // Dynamically filter sidebar categories to only those with ≥1 active item
@@ -191,6 +193,7 @@ export function CategoryDrawer() {
       </SheetTrigger>
       <SheetContent
         side="right"
+        dir="rtl"
         className="bg-[#18181b] border-l border-zinc-800/60 w-[88%] sm:w-80 p-0 flex flex-col"
         style={{
           paddingTop: "env(safe-area-inset-top, 0px)",
@@ -247,12 +250,16 @@ export function CategoryDrawer() {
                 <span className={iconWrap}><MessageSquareWarning className="h-5 w-5" /></span>
               </button>
             </li>
-            <li>
-              <Link to="/cibus" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">💳 ניהול צבירות סיבוס</span>
-                <span className={iconWrap}><Wallet className="h-5 w-5" /></span>
-              </Link>
-            </li>
+            {isModiinBranch && (
+              <li>
+                <Link to="/cibus" onClick={close} className={itemClass}>
+                  <span className="flex-1 text-right">💳 ניהול צבירות סיבוס</span>
+                  <span className={iconWrap}><Wallet className="h-5 w-5" /></span>
+                </Link>
+              </li>
+            )}
+
+
 
 
             <li>

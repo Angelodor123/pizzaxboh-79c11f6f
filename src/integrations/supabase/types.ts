@@ -247,6 +247,47 @@ export type Database = {
           },
         ]
       }
+      cibus_transactions_log: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          type: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          type: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          type?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cibus_transactions_log_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "cibus_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cibus_wallets: {
         Row: {
           balance: number
