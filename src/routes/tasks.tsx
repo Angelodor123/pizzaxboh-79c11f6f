@@ -550,6 +550,32 @@ function TasksPage() {
     }
   };
 
+  // Super admin: verify or reject a completed task.
+  const setVerification = async (
+    taskId: string,
+    status: "verified" | "rejected",
+    note: string | null,
+  ) => {
+    const prev = logs.get(taskId);
+    if (!prev) return;
+    const nextState: LogState = {
+      ...prev,
+      // Rejection un-completes the task so the employee must redo it.
+      completed: status === "verified" ? prev.completed : false,
+      completed_at: status === "verified" ? prev.completed_at : null,
+      admin_verification_status: status,
+      rejection_note: status === "rejected" ? note : null,
+    };
+    setLogs((m) => {
+      const next = new Map(m);
+      next.set(taskId, nextState);
+      return next;
+    });
+    await persistTask(taskId, nextState);
+    triggerHaptic("light");
+    toast.success(status === "verified" ? "המשימה אומתה" : "המשימה נפסלה והעובד יקבל הערה");
+  };
+
   const handlePhotoUploaded = (taskId: string, path: string) => {
     const prev = logs.get(taskId);
     const nextState: LogState = {
