@@ -305,18 +305,24 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           הרשימה ריקה. הוסף פריט ראשון למעלה.
         </p>
       ) : (
-        <ul className="space-y-1.5">
-          {items.map((it) => (
+        <SortableList
+          items={items}
+          getId={(it) => it.id}
+          onReorder={(reordered) => reorderList(cfg.key, reordered)}
+          disabled={bulk.selectionMode}
+          className="space-y-1.5"
+        >
+          {(it, handle) => (
             <NotebookRow
-              key={it.id}
               item={it}
               listKey={cfg.key}
               selectionMode={bulk.selectionMode}
               selected={bulk.isSelected(it.id)}
               onSelectToggle={() => bulk.toggle(it.id)}
+              dragHandle={handle}
             />
-          ))}
-        </ul>
+          )}
+        </SortableList>
       )}
 
       <BulkActionBar
