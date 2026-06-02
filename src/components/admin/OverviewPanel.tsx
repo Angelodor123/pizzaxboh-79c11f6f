@@ -233,9 +233,23 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     };
     void run();
     const t = setInterval(run, 30000);
+
+    // Realtime: refresh shortage KPI the moment notebook_items changes.
+    // Guarantees the "חוסרים פעילים" card always mirrors the DB, never a stale
+    // 30-second snapshot.
+    const channel = supabase
+      .channel("overview-shortages")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notebook_items" },
+        () => { void run(); },
+      )
+      .subscribe();
+
     return () => {
       alive = false;
       clearInterval(t);
+      void supabase.removeChannel(channel);
     };
   }, []);
 
