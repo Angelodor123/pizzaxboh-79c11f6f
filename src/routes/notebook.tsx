@@ -407,12 +407,14 @@ function NotebookRow({
   selectionMode = false,
   selected = false,
   onSelectToggle,
+  dragHandle,
 }: {
   item: NotebookItem;
   listKey: NotebookListKey;
   selectionMode?: boolean;
   selected?: boolean;
   onSelectToggle?: () => void;
+  dragHandle?: ReactNode;
 }) {
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
@@ -436,7 +438,7 @@ function NotebookRow({
   };
 
   return (
-    <li
+    <div
       onClickCapture={(e) => {
         if (selectionMode && onSelectToggle) {
           e.preventDefault();
@@ -452,6 +454,13 @@ function NotebookRow({
           : "bg-background/40 border-border/60"
       }`}
     >
+      {!selectionMode && (
+        dragHandle ?? (
+          <span className="shrink-0 inline-flex items-center justify-center h-9 w-6 text-muted-foreground/50" aria-hidden>
+            <GripVertical className="h-4 w-4" />
+          </span>
+        )
+      )}
       {selectionMode && (
         <span
           className={`shrink-0 grid place-content-center h-5 w-5 rounded-full border-2 ${
