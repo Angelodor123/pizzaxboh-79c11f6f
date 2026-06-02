@@ -123,6 +123,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const removeItem = useNotebookStore((s) => s.removeItem);
   const clearDone = useNotebookStore((s) => s.clearDone);
   const refresh = useNotebookStore((s) => s.refresh);
+  const reorderList = useNotebookStore((s) => s.reorderList);
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
   const bulk = useBulkSelection();
