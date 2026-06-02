@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw, GripVertical } from "lucide-react";
+import { ReactNode } from "react";
+import { SortableList } from "@/components/SortableList";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
 import { supabase } from "@/integrations/supabase/client";
