@@ -558,7 +558,7 @@ function NotebookRow({
           </button>
         </>
       )}
-    </li>
+    </div>
   );
 }
 
