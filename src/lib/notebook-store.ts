@@ -193,6 +193,18 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       .delete()
       .in("id", toDelete.map((it) => it.id));
   },
+
+  reorderList: async (list, reordered) => {
+    // Reassign sort_order based on visible order; persisted items only.
+    const withOrder = reordered.map((it, idx) => ({ ...it, sortOrder: idx }));
+    set((s) => ({ lists: { ...s.lists, [list]: withOrder } }));
+    const updates = withOrder.filter((it) => !it.id.startsWith("tmp-"));
+    await Promise.all(
+      updates.map((it) =>
+        supabase.from("notebook_items").update({ sort_order: it.sortOrder }).eq("id", it.id),
+      ),
+    );
+  },
 }));
 
 /**
