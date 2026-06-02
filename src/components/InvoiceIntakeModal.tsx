@@ -777,7 +777,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 type="file"
                 accept="image/*,application/pdf"
                 className="hidden"
-                onChange={(e) => onFileSelected(e.target.files?.[0] ?? null)}
+                onChange={(e) => { const f = e.target.files?.[0] ?? null; e.target.value = ""; void onFileSelected(f); }}
               />
               <button
                 type="button"
