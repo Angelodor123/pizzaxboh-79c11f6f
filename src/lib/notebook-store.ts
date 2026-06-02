@@ -14,6 +14,7 @@ export interface NotebookItem {
   done: boolean;
   priority: NotebookPriority;
   createdAt: string;
+  sortOrder: number;
   catalogProductId?: string | null;
   currentStock?: number | null;
   unit?: string | null;
@@ -26,6 +27,7 @@ interface DbRow {
   done: boolean;
   priority: NotebookPriority | null;
   created_at: string;
+  sort_order: number | null;
   catalog_product_id: string | null;
   current_stock: number | null;
   unit: string | null;
@@ -48,6 +50,7 @@ interface NotebookState {
   editItem: (list: NotebookListKey, id: string, text: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
   clearDone: (list: NotebookListKey) => Promise<void>;
+  reorderList: (list: NotebookListKey, reordered: NotebookItem[]) => Promise<void>;
 }
 
 const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
@@ -76,6 +79,7 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
       done: r.done,
       priority: (r.priority as NotebookPriority) ?? "normal",
       createdAt: r.created_at,
+      sortOrder: r.sort_order ?? 0,
       catalogProductId: r.catalog_product_id,
       currentStock: r.current_stock,
       unit: r.unit,
@@ -83,8 +87,9 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
   }
   for (const k of Object.keys(out) as NotebookListKey[]) {
     out[k].sort((a, b) => {
-      // urgent first, then alphabetical (Hebrew A-Z)
+      // urgent first, then by sort_order, then alphabetical (Hebrew)
       if (a.priority !== b.priority) return a.priority === "urgent" ? -1 : 1;
+      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
       return a.text.localeCompare(b.text, "he");
     });
   }
@@ -100,8 +105,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const branchId = getActiveBranchIdSync();
     let q = supabase
       .from("notebook_items")
-      .select("id,list_key,text,done,priority,created_at,catalog_product_id,current_stock,unit")
+      .select("id,list_key,text,done,priority,created_at,sort_order,catalog_product_id,current_stock,unit")
       .is("archived_at", null)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (branchId) q = q.eq("branch_id", branchId);
     const { data } = await q;
@@ -120,6 +126,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       done: false,
       priority,
       createdAt: new Date().toISOString(),
+      sortOrder: 0,
       catalogProductId,
       currentStock,
       unit,
@@ -185,6 +192,18 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       .from("notebook_items")
       .delete()
       .in("id", toDelete.map((it) => it.id));
+  },
+
+  reorderList: async (list, reordered) => {
+    // Reassign sort_order based on visible order; persisted items only.
+    const withOrder = reordered.map((it, idx) => ({ ...it, sortOrder: idx }));
+    set((s) => ({ lists: { ...s.lists, [list]: withOrder } }));
+    const updates = withOrder.filter((it) => !it.id.startsWith("tmp-"));
+    await Promise.all(
+      updates.map((it) =>
+        supabase.from("notebook_items").update({ sort_order: it.sortOrder }).eq("id", it.id),
+      ),
+    );
   },
 }));
 

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw, GripVertical } from "lucide-react";
+import { ReactNode } from "react";
+import { SortableList } from "@/components/SortableList";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,6 +123,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const removeItem = useNotebookStore((s) => s.removeItem);
   const clearDone = useNotebookStore((s) => s.clearDone);
   const refresh = useNotebookStore((s) => s.refresh);
+  const reorderList = useNotebookStore((s) => s.reorderList);
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
   const bulk = useBulkSelection();
@@ -302,18 +305,24 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
           הרשימה ריקה. הוסף פריט ראשון למעלה.
         </p>
       ) : (
-        <ul className="space-y-1.5">
-          {items.map((it) => (
+        <SortableList
+          items={items}
+          getId={(it) => it.id}
+          onReorder={(reordered) => reorderList(cfg.key, reordered)}
+          disabled={bulk.selectionMode}
+          className="space-y-1.5"
+        >
+          {(it, handle) => (
             <NotebookRow
-              key={it.id}
               item={it}
               listKey={cfg.key}
               selectionMode={bulk.selectionMode}
               selected={bulk.isSelected(it.id)}
               onSelectToggle={() => bulk.toggle(it.id)}
+              dragHandle={handle}
             />
-          ))}
-        </ul>
+          )}
+        </SortableList>
       )}
 
       <BulkActionBar
@@ -398,12 +407,14 @@ function NotebookRow({
   selectionMode = false,
   selected = false,
   onSelectToggle,
+  dragHandle,
 }: {
   item: NotebookItem;
   listKey: NotebookListKey;
   selectionMode?: boolean;
   selected?: boolean;
   onSelectToggle?: () => void;
+  dragHandle?: ReactNode;
 }) {
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
@@ -427,7 +438,7 @@ function NotebookRow({
   };
 
   return (
-    <li
+    <div
       onClickCapture={(e) => {
         if (selectionMode && onSelectToggle) {
           e.preventDefault();
@@ -443,6 +454,13 @@ function NotebookRow({
           : "bg-background/40 border-border/60"
       }`}
     >
+      {!selectionMode && (
+        dragHandle ?? (
+          <span className="shrink-0 inline-flex items-center justify-center h-9 w-6 text-muted-foreground/50" aria-hidden>
+            <GripVertical className="h-4 w-4" />
+          </span>
+        )
+      )}
       {selectionMode && (
         <span
           className={`shrink-0 grid place-content-center h-5 w-5 rounded-full border-2 ${
@@ -540,7 +558,7 @@ function NotebookRow({
           </button>
         </>
       )}
-    </li>
+    </div>
   );
 }
 
