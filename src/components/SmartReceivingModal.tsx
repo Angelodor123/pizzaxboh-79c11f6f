@@ -635,7 +635,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 </select>
               </div>
               <input ref={fileInput} type="file" accept="image/*,application/pdf" className="hidden"
-                onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
+                onChange={(e) => { const f = e.target.files?.[0] ?? null; e.target.value = ""; onFile(f); }} />
               {previewUrl ? (
                 <div className="relative">
                   <img src={previewUrl} alt="חשבונית" className="w-full max-h-80 object-contain rounded-xl bg-zinc-900/60 border border-border" />
