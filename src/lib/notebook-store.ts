@@ -105,8 +105,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const branchId = getActiveBranchIdSync();
     let q = supabase
       .from("notebook_items")
-      .select("id,list_key,text,done,priority,created_at,catalog_product_id,current_stock,unit")
+      .select("id,list_key,text,done,priority,created_at,sort_order,catalog_product_id,current_stock,unit")
       .is("archived_at", null)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (branchId) q = q.eq("branch_id", branchId);
     const { data } = await q;
