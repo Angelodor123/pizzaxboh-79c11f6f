@@ -126,6 +126,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       done: false,
       priority,
       createdAt: new Date().toISOString(),
+      sortOrder: 0,
       catalogProductId,
       currentStock,
       unit,
