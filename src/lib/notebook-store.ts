@@ -14,6 +14,7 @@ export interface NotebookItem {
   done: boolean;
   priority: NotebookPriority;
   createdAt: string;
+  sortOrder: number;
   catalogProductId?: string | null;
   currentStock?: number | null;
   unit?: string | null;
@@ -26,6 +27,7 @@ interface DbRow {
   done: boolean;
   priority: NotebookPriority | null;
   created_at: string;
+  sort_order: number | null;
   catalog_product_id: string | null;
   current_stock: number | null;
   unit: string | null;
