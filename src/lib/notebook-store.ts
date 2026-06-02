@@ -79,6 +79,7 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
       done: r.done,
       priority: (r.priority as NotebookPriority) ?? "normal",
       createdAt: r.created_at,
+      sortOrder: r.sort_order ?? 0,
       catalogProductId: r.catalog_product_id,
       currentStock: r.current_stock,
       unit: r.unit,
@@ -86,8 +87,9 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
   }
   for (const k of Object.keys(out) as NotebookListKey[]) {
     out[k].sort((a, b) => {
-      // urgent first, then alphabetical (Hebrew A-Z)
+      // urgent first, then by sort_order, then alphabetical (Hebrew)
       if (a.priority !== b.priority) return a.priority === "urgent" ? -1 : 1;
+      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
       return a.text.localeCompare(b.text, "he");
     });
   }
