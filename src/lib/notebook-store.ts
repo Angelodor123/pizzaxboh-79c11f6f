@@ -50,6 +50,7 @@ interface NotebookState {
   editItem: (list: NotebookListKey, id: string, text: string) => Promise<void>;
   removeItem: (list: NotebookListKey, id: string) => Promise<void>;
   clearDone: (list: NotebookListKey) => Promise<void>;
+  reorderList: (list: NotebookListKey, reordered: NotebookItem[]) => Promise<void>;
 }
 
 const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
