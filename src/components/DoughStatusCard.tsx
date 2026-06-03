@@ -159,7 +159,7 @@ export function DoughStatusCard() {
       .eq("branch_id", branchId)
       .eq("prep_item_id", item.id)
       .order("created_at", { ascending: false })
-      .limit(30);
+      .limit(300);
     setHistory((data as DoughLogRow[]) ?? []);
     setHistoryLoading(false);
   };
