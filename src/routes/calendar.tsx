@@ -630,6 +630,12 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
             רישום
           </span>
         )}
+        {ev._orderStatus === "ordered" && (
+          <span className="text-[9px] font-bold text-success border border-success/60 bg-success/10 rounded px-1 shrink-0 inline-flex items-center gap-0.5">
+            <Check className="h-2.5 w-2.5" />
+            הוזמן
+          </span>
+        )}
         {missing && (
           <span className="text-[9px] text-destructive border border-destructive/60 rounded px-1 shrink-0">⚠️ חסרה חשבונית</span>
         )}
