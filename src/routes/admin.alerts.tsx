@@ -112,7 +112,7 @@ function AdminAlertsPage() {
           סף התראת מלאי בצק
         </h2>
         <p className="text-xs text-muted-foreground">
-          התראה אוטומטית תישלח לכל המנהלים כשמספר מגשי הבצק יורד מתחת לערך זה.
+          התראה אוטומטית תישלח לכל המנהלים כשמספר מיכלי הבצק יורד מתחת לערך זה.
         </p>
         <div className="flex items-center gap-2">
           <input
