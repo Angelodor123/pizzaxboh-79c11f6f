@@ -55,6 +55,10 @@ export function RecipeCard({
   const [customScale, setCustomScale] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isEditingRecipe, setIsEditingRecipe] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(recipe.nameHebrew);
+  const [draftInstructions, setDraftInstructions] = useState(recipe.instructionsHebrew ?? "");
+  const [savingRecipe, setSavingRecipe] = useState(false);
 
   useEffect(() => {
     if (!forceOpen) return;
