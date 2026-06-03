@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/public/hooks/dough-alert")({
           const subs = await fetchSubscriptionsForUsers(userIds);
           const result = await sendPushToSubscriptions(subs, {
             title: "🚨 התראת מלאי בצק",
-            body: `נותרו רק ${data.trays_count} מגשי בצק (סף: ${data.threshold}). יש להכין מנה חדשה!`,
+            body: `נותרו רק ${data.trays_count} מיכלי בצק (סף: ${data.threshold}). יש להכין מנה חדשה!`,
             tag: "dough-alert",
             url: "/",
           });
