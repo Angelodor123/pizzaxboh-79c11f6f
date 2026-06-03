@@ -105,6 +105,49 @@ export function RecipeCard({
     toast.success("ההכנה הושלמה! שלבי ההכנה אופסו", { duration: 2500 });
   };
 
+  const startEditRecipe = () => {
+    setDraftTitle(recipe.nameHebrew);
+    setDraftInstructions(recipe.instructionsHebrew ?? "");
+    setIsEditingRecipe(true);
+    setExpanded(true);
+  };
+  const cancelEditRecipe = () => {
+    setDraftTitle(recipe.nameHebrew);
+    setDraftInstructions(recipe.instructionsHebrew ?? "");
+    setIsEditingRecipe(false);
+  };
+  const saveRecipe = async () => {
+    const title = draftTitle.trim();
+    if (!title) {
+      toast.error("כותרת לא יכולה להיות ריקה");
+      return;
+    }
+    setSavingRecipe(true);
+    const { data, error } = await supabase
+      .from("recipes")
+      .update({
+        name_hebrew: title,
+        instructions_hebrew: draftInstructions,
+      })
+      .eq("id", recipe.id)
+      .select()
+      .single();
+    setSavingRecipe(false);
+    if (error) {
+      toast.error("שמירה נכשלה: " + error.message);
+      return;
+    }
+    if (data) {
+      useCookbookStore.getState().upsertLocal({
+        ...recipe,
+        nameHebrew: title,
+        instructionsHebrew: draftInstructions,
+      });
+    }
+    setIsEditingRecipe(false);
+    toast.success("המתכון עודכן");
+  };
+
   // In service mode, scale typography up ~20% for at-a-glance reading.
   const titleClass = isServiceMode
     ? "font-display text-2xl sm:text-3xl font-bold mt-1 break-words"
