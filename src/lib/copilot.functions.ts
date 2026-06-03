@@ -227,13 +227,13 @@ function buildTools(supabase: any, branchId: string | undefined, userId: string)
 
     update_inventory_count: tool({
       description:
-        "מעדכן כמות מלאי. בחר אחד: (א) עדכון פריט מלאי כללי לפי inventory_item_id או name; (ב) רישום עדכון מגשי בצק (dough_trays) - מוסיף שורה חדשה ל-dough_updates_log.",
+        "מעדכן כמות מלאי. בחר אחד: (א) עדכון פריט מלאי כללי לפי inventory_item_id או name; (ב) רישום עדכון מיכלי בצק (dough_trays) - מוסיף שורה חדשה ל-dough_updates_log.",
       inputSchema: z.object({
         kind: z.enum(["inventory_item", "dough_trays"]),
         inventory_item_id: z.string().uuid().optional(),
         item_name: z.string().max(120).optional(),
         new_stock: z.number().optional().describe("ערך מלאי חדש (פריט מלאי כללי)"),
-        trays_count: z.number().int().min(0).max(10000).optional().describe("מספר מגשי בצק חדש"),
+        trays_count: z.number().int().min(0).max(10000).optional().describe("מספר מיכלי בצק חדש"),
         branch_id: z.string().uuid().optional(),
       }),
       execute: async ({ kind, inventory_item_id, item_name, new_stock, trays_count, branch_id }) => {
