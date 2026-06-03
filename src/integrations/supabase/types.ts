@@ -121,6 +121,7 @@ export type Database = {
           high_priority: boolean | null
           id: string
           notes: string | null
+          order_verification_status: string
           override_date: string
           start_time: string | null
           title: string | null
@@ -136,6 +137,7 @@ export type Database = {
           high_priority?: boolean | null
           id?: string
           notes?: string | null
+          order_verification_status?: string
           override_date: string
           start_time?: string | null
           title?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           high_priority?: boolean | null
           id?: string
           notes?: string | null
+          order_verification_status?: string
           override_date?: string
           start_time?: string | null
           title?: string | null
