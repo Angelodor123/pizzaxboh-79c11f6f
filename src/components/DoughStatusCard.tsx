@@ -107,7 +107,7 @@ export function DoughStatusCard() {
         .insert({
           branch_id: branchId,
           name: "בצקים",
-          unit: "מגשים",
+          unit: "מיכלים",
           active: true,
         })
         .select("id,name,unit")
@@ -186,7 +186,7 @@ export function DoughStatusCard() {
     await persistCounts(shopN, freezerN, fridgeN, totalN);
     setOpen(false);
     toast.success(
-      `עודכן: ${totalN} מגשים (פיצה ${shopN} · מקפיא ${freezerN} · מקרר ${fridgeN})`,
+      `עודכן: ${totalN} מיכלים (פיצה ${shopN} · מקפיא ${freezerN} · מקרר ${fridgeN})`,
     );
   };
 
@@ -336,7 +336,7 @@ export function DoughStatusCard() {
             </div>
           )}
           <div className="text-xs text-foreground/70">
-            סה״כ {total === 1 ? "מגש מוכן" : "מגשים מוכנים"} · לחיצה לעדכון
+            סה״כ {total === 1 ? "מיכל מוכן" : "מיכלים מוכנים"} · לחיצה לעדכון
           </div>
         </button>
       </div>
