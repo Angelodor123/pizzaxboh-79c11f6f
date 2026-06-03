@@ -66,12 +66,20 @@ interface EventOverride {
   notes: string | null;
   high_priority: boolean | null;
   expected_items?: ExpectedItem[] | null;
+  order_verification_status?: "pending" | "ordered" | "skipped" | null;
 }
 
 
 // Effective event = base event + per-instance override fields for that date.
 // Returns null if the instance is canceled.
-type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string; _missingInvoice?: boolean; _overrideItems?: ExpectedItem[] | null };
+type EffectiveEvent = CalendarEvent & {
+  _overrideId?: string;
+  _isOverride?: boolean;
+  _occurrenceDate?: string;
+  _missingInvoice?: boolean;
+  _overrideItems?: ExpectedItem[] | null;
+  _orderStatus?: "pending" | "ordered" | "skipped";
+};
 
 const WEEKDAYS_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const MONTHS_HE = [
@@ -172,10 +180,12 @@ function CalendarPage() {
     for (const e of matched) {
       const ov = overrides.find((o) => o.event_id === e.id && o.override_date === isoDate);
       if (!ov) {
-        out.push(annotateMissing({ ...e, _occurrenceDate: isoDate }));
+        out.push(annotateMissing({ ...e, _occurrenceDate: isoDate, _orderStatus: "pending" }));
         continue;
       }
       if (ov.deleted) continue;
+      // CRITICAL: skipped instances are filtered out of the visible grid
+      if (ov.order_verification_status === "skipped") continue;
       out.push(annotateMissing({
         ...e,
         title: ov.title ?? e.title,
@@ -187,6 +197,7 @@ function CalendarPage() {
         _overrideItems: ov.expected_items ?? null,
         _isOverride: true,
         _occurrenceDate: isoDate,
+        _orderStatus: (ov.order_verification_status ?? "pending") as "pending" | "ordered" | "skipped",
       }));
     }
     return out;
