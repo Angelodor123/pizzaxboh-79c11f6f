@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Pencil, Clock, CheckCircle2, Copy, MessageCircle } from "lucide-react";
+import { Pencil, Clock, CheckCircle2, Copy, MessageCircle, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   categoryLabels,
@@ -9,11 +8,13 @@ import {
   type Recipe,
 } from "@/lib/cookbook";
 import { formatRecipeText, buildWhatsAppShareUrl } from "@/lib/recipe-share";
+import { supabase } from "@/integrations/supabase/client";
 
 
 import { useAuth } from "@/lib/auth";
 import { useUIStore } from "@/lib/ui-store";
 import { useRecipeProgressStore } from "@/lib/notebook-store";
+import { useCookbookStore } from "@/lib/store";
 import { CountdownTimer } from "./CountdownTimer";
 
 // canEdit is derived from the authenticated user's role (admin) — see below.
