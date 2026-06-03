@@ -100,7 +100,7 @@ function NetworkKpiBanner() {
               Network KPI
             </div>
             <div className="font-display text-sm font-semibold text-muted-foreground mt-1">
-              סה״כ מגשי בצק ברשת
+              סה״כ מיכלי בצק ברשת
             </div>
           </div>
         </div>
