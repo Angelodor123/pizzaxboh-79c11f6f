@@ -462,11 +462,11 @@ export function DoughStatusCard() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4"
+            className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4"
           >
             <div className="flex items-center justify-between">
               <h3 className="font-display text-xl font-bold text-zinc-100">
-                היסטוריית עדכוני בצק
+                היסטוריית סטטוס מיכלי בצק
               </h3>
               <button
                 type="button"
@@ -477,7 +477,7 @@ export function DoughStatusCard() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="max-h-64 overflow-y-auto -mx-1 px-1">
+            <div className="max-h-[60vh] overflow-y-auto -mx-1 px-1 space-y-4">
               {historyLoading ? (
                 <div className="text-center text-sm text-zinc-500 py-6">
                   טוען…
@@ -487,35 +487,75 @@ export function DoughStatusCard() {
                   אין עדיין עדכונים
                 </div>
               ) : (
-                history.map((row) => {
-                  const label = LOCATION_LABEL[row.location] ?? row.location;
-                  const tone =
-                    row.location === "shop"
-                      ? "text-amber-300"
-                      : row.location === "southern_freezer"
-                        ? "text-sky-300"
-                        : row.location === "southern_fridge"
-                          ? "text-emerald-300"
-                          : "text-zinc-300";
-                  return (
-                    <div
-                      key={row.id}
-                      className="flex items-center justify-between gap-2 py-2 border-b border-zinc-800 last:border-0"
-                    >
-                      <div className="text-right">
-                        <div className={`text-sm font-semibold ${tone}`}>
-                          {label}: {row.trays_count} מגשים
+                (() => {
+                  // Group by local date (YYYY-MM-DD)
+                  const groups = new Map<string, DoughLogRow[]>();
+                  for (const r of history) {
+                    const d = new Date(r.created_at);
+                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key)!.push(r);
+                  }
+                  const days = Array.from(groups.entries());
+                  return days.map(([day, rows]) => {
+                    // Latest per location within the day = end-of-day snapshot
+                    const latest: Partial<Record<DoughLocation, DoughLogRow>> = {};
+                    for (const r of rows) {
+                      if (!latest[r.location]) latest[r.location] = r;
+                    }
+                    const dayTotal =
+                      (latest.shop?.trays_count ?? 0) +
+                      (latest.southern_freezer?.trays_count ?? 0) +
+                      (latest.southern_fridge?.trays_count ?? 0);
+                    const dayLabel = new Date(day).toLocaleDateString("he-IL", {
+                      weekday: "long",
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    });
+                    return (
+                      <div key={day} className="rounded-lg border border-zinc-800 bg-zinc-950/40">
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-zinc-800 bg-zinc-900/60 rounded-t-lg">
+                          <div className="text-sm font-bold text-zinc-100">{dayLabel}</div>
+                          <div className="text-xs text-amber-300 font-bold tabular-nums">
+                            סה״כ סוף יום: {dayTotal}
+                          </div>
                         </div>
-                        <div className="text-xs text-zinc-500">
-                          {row.updated_by_name ?? "—"}
+                        <div className="px-3 py-2 space-y-1">
+                          {rows.map((row) => {
+                            const label = LOCATION_LABEL[row.location] ?? row.location;
+                            const tone =
+                              row.location === "shop"
+                                ? "text-amber-300"
+                                : row.location === "southern_freezer"
+                                  ? "text-sky-300"
+                                  : row.location === "southern_fridge"
+                                    ? "text-emerald-300"
+                                    : "text-zinc-300";
+                            return (
+                              <div
+                                key={row.id}
+                                className="flex items-center justify-between gap-2 py-1.5 border-b border-zinc-800/60 last:border-0"
+                              >
+                                <div className="text-right">
+                                  <div className={`text-sm font-semibold ${tone}`}>
+                                    {label}: {row.trays_count} מגשים
+                                  </div>
+                                  <div className="text-xs text-zinc-500">
+                                    {row.updated_by_name ?? "—"}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-zinc-500 tabular-nums">
+                                  {formatTime(row.created_at)}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="text-xs text-zinc-500 tabular-nums">
-                        {formatDateTime(row.created_at)}
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  });
+                })()
               )}
             </div>
           </div>
