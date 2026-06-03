@@ -130,13 +130,13 @@ function GuidePage() {
           </div>
           <div>
             <div className="font-bold text-foreground mb-1">
-              מעקב בצקים — היסטוריה
+              מעקב מיכלי בצק — היסטוריה
             </div>
             <p className="text-muted-foreground">
               כעת לחיצה על אייקון השעון בכרטיס{" "}
-              <span className="text-amber-brand font-bold">סטטוס בצקים</span>{" "}
-              חושפת יומן מלא של מי עדכן את כמות המגשים ומתי בדיוק — שקיפות מלאה
-              ואחריותיות לכל צוות המשמרת.
+              <span className="text-amber-brand font-bold">סטטוס מיכלי בצק</span>{" "}
+              חושפת יומן מלא לפי ימים — מי עדכן את כמות המגשים, מתי בדיוק וסה״כ סוף יום
+              לכל יום ויום. שקיפות מלאה ואחריותיות לכל צוות המשמרת.
             </p>
           </div>
           <div>
