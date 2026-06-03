@@ -876,6 +876,33 @@ function DayDetails({
                     </div>
                   )}
                 </div>
+                {canEdit && ev.category === "delivery" && (
+                  <div className="mt-3 pt-3 border-t border-border/40">
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-bold">
+                      אימות הזמנה
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOrderStatus(ev, isoDate, "ordered")}
+                        className={`h-9 px-3 rounded-md border text-xs font-bold inline-flex items-center justify-center gap-1.5 transition ${
+                          ev._orderStatus === "ordered"
+                            ? "bg-success text-success-foreground border-success"
+                            : "border-success/60 text-success hover:bg-success/10"
+                        }`}
+                      >
+                        📦 הוזמן סחורה
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderStatus(ev, isoDate, "skipped")}
+                        className="h-9 px-3 rounded-md border border-destructive/60 text-destructive hover:bg-destructive/10 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
+                      >
+                        ❌ לא הוזמן השבוע
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             );
           })}
