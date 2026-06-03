@@ -286,7 +286,7 @@ export function DoughStatusCard() {
             type="button"
             onClick={handleReset}
             disabled={saving}
-            aria-label="איפוס סטטוס בצקים"
+            aria-label="איפוס סטטוס מיכלי בצק"
             title="איפוס לאפס"
             className="h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition disabled:opacity-40"
           >
@@ -295,7 +295,7 @@ export function DoughStatusCard() {
           <button
             type="button"
             onClick={openHistory}
-            aria-label="היסטוריית עדכוני בצק"
+            aria-label="היסטוריית עדכוני מיכלי בצק"
             className="h-7 w-7 grid place-content-center rounded-md text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition"
           >
             <History className="h-4 w-4" />
@@ -305,12 +305,12 @@ export function DoughStatusCard() {
           type="button"
           onClick={openModal}
           className="text-right flex flex-col gap-1 w-full"
-          aria-label="עדכון סטטוס בצקים"
+          aria-label="עדכון סטטוס מיכלי בצק"
         >
           <div className="flex items-center gap-2 text-amber-300">
             <Pizza className="h-4 w-4" />
             <span className="text-[10px] uppercase tracking-[0.2em] font-bold">
-              סטטוס בצקים
+              סטטוס מיכלי בצק
             </span>
           </div>
           <div className="font-display text-3xl font-black text-amber-300 tabular-nums leading-tight">
