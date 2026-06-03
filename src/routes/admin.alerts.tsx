@@ -70,7 +70,7 @@ function AdminAlertsPage() {
     if (error) {
       toast.error("שגיאה בשמירה", { description: error.message });
     } else {
-      toast.success("הסף עודכן", { description: `התראה תופעל כשמספר המגשים יורד מתחת ל-${threshold}` });
+      toast.success("הסף עודכן", { description: `התראה תופעל כשמספר המיכלים יורד מתחת ל-${threshold}` });
     }
   };
 
@@ -112,7 +112,7 @@ function AdminAlertsPage() {
           סף התראת מלאי בצק
         </h2>
         <p className="text-xs text-muted-foreground">
-          התראה אוטומטית תישלח לכל המנהלים כשמספר מגשי הבצק יורד מתחת לערך זה.
+          התראה אוטומטית תישלח לכל המנהלים כשמספר מיכלי הבצק יורד מתחת לערך זה.
         </p>
         <div className="flex items-center gap-2">
           <input
@@ -123,7 +123,7 @@ function AdminAlertsPage() {
             onChange={(e) => setThreshold(parseInt(e.target.value, 10) || 0)}
             className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-base font-bold text-center"
           />
-          <span className="text-sm text-muted-foreground">מגשים</span>
+          <span className="text-sm text-muted-foreground">מיכלים</span>
           <button
             onClick={saveThreshold}
             disabled={thresholdSaving}

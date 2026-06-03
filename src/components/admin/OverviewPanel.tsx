@@ -275,7 +275,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <KpiCard
           icon={<Pizza className="h-5 w-5" />}
-          label="מגשי בצק כעת"
+          label="מיכלי בצק כעת"
           value={loading ? "…" : doughTotal ?? "—"}
           sub={
             loading

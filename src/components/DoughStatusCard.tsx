@@ -107,7 +107,7 @@ export function DoughStatusCard() {
         .insert({
           branch_id: branchId,
           name: "בצקים",
-          unit: "מגשים",
+          unit: "מיכלים",
           active: true,
         })
         .select("id,name,unit")
@@ -186,7 +186,7 @@ export function DoughStatusCard() {
     await persistCounts(shopN, freezerN, fridgeN, totalN);
     setOpen(false);
     toast.success(
-      `עודכן: ${totalN} מגשים (פיצה ${shopN} · מקפיא ${freezerN} · מקרר ${fridgeN})`,
+      `עודכן: ${totalN} מיכלים (פיצה ${shopN} · מקפיא ${freezerN} · מקרר ${fridgeN})`,
     );
   };
 
@@ -336,7 +336,7 @@ export function DoughStatusCard() {
             </div>
           )}
           <div className="text-xs text-foreground/70">
-            סה״כ {total === 1 ? "מגש מוכן" : "מגשים מוכנים"} · לחיצה לעדכון
+            סה״כ {total === 1 ? "מיכל מוכן" : "מיכלים מוכנים"} · לחיצה לעדכון
           </div>
         </button>
       </div>
@@ -353,7 +353,7 @@ export function DoughStatusCard() {
           >
             <div className="flex items-center justify-between">
               <h3 className="font-display text-xl font-bold">
-                עדכן כמות מגשי בצק
+                עדכן כמות מיכלי בצק
               </h3>
               <button
                 type="button"
@@ -437,7 +437,7 @@ export function DoughStatusCard() {
               <span className="font-bold text-amber-300 tabular-nums">
                 {draftTotal}
               </span>{" "}
-              מגשים
+              מיכלים
             </div>
             <div className="text-xs text-muted-foreground text-center">
               ייסונכרן לפס ההכנות היומי ({item?.name ?? "בצקים"})
@@ -539,7 +539,7 @@ export function DoughStatusCard() {
                               >
                                 <div className="text-right">
                                   <div className={`text-sm font-semibold ${tone}`}>
-                                    {label}: {row.trays_count} מגשים
+                                    {label}: {row.trays_count} מיכלים
                                   </div>
                                   <div className="text-xs text-zinc-500">
                                     {row.updated_by_name ?? "—"}

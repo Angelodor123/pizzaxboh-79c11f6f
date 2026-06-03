@@ -100,7 +100,7 @@ function NetworkKpiBanner() {
               Network KPI
             </div>
             <div className="font-display text-sm font-semibold text-muted-foreground mt-1">
-              סה״כ מגשי בצק ברשת
+              סה״כ מיכלי בצק ברשת
             </div>
           </div>
         </div>
@@ -108,7 +108,7 @@ function NetworkKpiBanner() {
           <div className="font-display text-5xl font-black text-foreground tabular-nums leading-none">
             {total === null ? "—" : total}
           </div>
-          <div className="text-[11px] text-muted-foreground mt-1">מגשים פעילים</div>
+          <div className="text-[11px] text-muted-foreground mt-1">מיכלים פעילים</div>
         </div>
       </div>
       {perBranch.length > 0 && (

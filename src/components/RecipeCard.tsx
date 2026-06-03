@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Pencil, Clock, CheckCircle2, Copy, MessageCircle } from "lucide-react";
+import { Pencil, Clock, CheckCircle2, Copy, MessageCircle, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   categoryLabels,
@@ -9,11 +8,13 @@ import {
   type Recipe,
 } from "@/lib/cookbook";
 import { formatRecipeText, buildWhatsAppShareUrl } from "@/lib/recipe-share";
+import { supabase } from "@/integrations/supabase/client";
 
 
 import { useAuth } from "@/lib/auth";
 import { useUIStore } from "@/lib/ui-store";
 import { useRecipeProgressStore } from "@/lib/notebook-store";
+import { useCookbookStore } from "@/lib/store";
 import { CountdownTimer } from "./CountdownTimer";
 
 // canEdit is derived from the authenticated user's role (admin) — see below.
@@ -54,6 +55,10 @@ export function RecipeCard({
   const [customScale, setCustomScale] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isEditingRecipe, setIsEditingRecipe] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(recipe.nameHebrew);
+  const [draftInstructions, setDraftInstructions] = useState(recipe.instructionsHebrew ?? "");
+  const [savingRecipe, setSavingRecipe] = useState(false);
 
   useEffect(() => {
     if (!forceOpen) return;
@@ -100,6 +105,49 @@ export function RecipeCard({
     toast.success("ההכנה הושלמה! שלבי ההכנה אופסו", { duration: 2500 });
   };
 
+  const startEditRecipe = () => {
+    setDraftTitle(recipe.nameHebrew);
+    setDraftInstructions(recipe.instructionsHebrew ?? "");
+    setIsEditingRecipe(true);
+    setExpanded(true);
+  };
+  const cancelEditRecipe = () => {
+    setDraftTitle(recipe.nameHebrew);
+    setDraftInstructions(recipe.instructionsHebrew ?? "");
+    setIsEditingRecipe(false);
+  };
+  const saveRecipe = async () => {
+    const title = draftTitle.trim();
+    if (!title) {
+      toast.error("כותרת לא יכולה להיות ריקה");
+      return;
+    }
+    setSavingRecipe(true);
+    const { data, error } = await supabase
+      .from("recipes")
+      .update({
+        name_hebrew: title,
+        instructions_hebrew: draftInstructions,
+      })
+      .eq("id", recipe.id)
+      .select()
+      .single();
+    setSavingRecipe(false);
+    if (error) {
+      toast.error("שמירה נכשלה: " + error.message);
+      return;
+    }
+    if (data) {
+      useCookbookStore.getState().upsertLocal({
+        ...recipe,
+        nameHebrew: title,
+        instructionsHebrew: draftInstructions,
+      });
+    }
+    setIsEditingRecipe(false);
+    toast.success("המתכון עודכן");
+  };
+
   // In service mode, scale typography up ~20% for at-a-glance reading.
   const titleClass = isServiceMode
     ? "font-display text-2xl sm:text-3xl font-bold mt-1 break-words"
@@ -124,7 +172,17 @@ export function RecipeCard({
           <div className="text-[10px] uppercase tracking-[0.2em] text-amber-brand font-bold">
             {categoryLabels[recipe.category]}
           </div>
-          <h3 className={titleClass}>{recipe.nameHebrew}</h3>
+          {isEditingRecipe ? (
+            <input
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              className={`${titleClass} w-full bg-background border-2 border-neon/60 focus:border-neon outline-none rounded-md px-2 py-1`}
+              aria-label="כותרת המתכון"
+              dir="rtl"
+            />
+          ) : (
+            <h3 className={titleClass}>{recipe.nameHebrew}</h3>
+          )}
         </div>
         <span
           className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border whitespace-nowrap ${speed.className}`}
@@ -408,7 +466,40 @@ export function RecipeCard({
             <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               הוראות הכנה
             </h4>
-            <p className={instructionsClass}>{recipe.instructionsHebrew}</p>
+            {isEditingRecipe ? (
+              <textarea
+                value={draftInstructions}
+                onChange={(e) => setDraftInstructions(e.target.value)}
+                rows={Math.max(6, (draftInstructions.match(/\n/g)?.length ?? 0) + 2)}
+                className={`${instructionsClass} w-full bg-background border-2 border-neon/60 focus:border-neon outline-none rounded-md px-2 py-2`}
+                aria-label="הוראות הכנה"
+                dir="rtl"
+              />
+            ) : (
+              <p className={instructionsClass}>{recipe.instructionsHebrew}</p>
+            )}
+            {isEditingRecipe && canEdit && (
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={saveRecipe}
+                  disabled={savingRecipe}
+                  className="flex-1 inline-flex items-center justify-center gap-2 h-10 rounded-md bg-neon text-primary-foreground font-bold text-sm disabled:opacity-50"
+                >
+                  {savingRecipe ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  שמור
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditRecipe}
+                  disabled={savingRecipe}
+                  className="flex-1 inline-flex items-center justify-center gap-2 h-10 rounded-md border border-border font-bold text-sm hover:border-destructive hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                  ביטול
+                </button>
+              </div>
+            )}
             {recipe.techniqueNotesHebrew && !isServiceMode && (
               <p className="mt-2 text-xs text-amber-brand">
                 ⚠ {recipe.techniqueNotesHebrew}
@@ -458,16 +549,16 @@ export function RecipeCard({
         >
           {expanded ? "סגור" : "פתח מתכון"}
         </button>
-        {canEdit && (
-          <Link
-            to="/admin"
-            search={{ edit: recipe.id }}
+        {canEdit && !isEditingRecipe && (
+          <button
+            type="button"
+            onClick={startEditRecipe}
             aria-label="ערוך מתכון"
             title="ערוך מתכון"
             className="shrink-0 p-2 rounded-md border border-border text-muted-foreground hover:text-neon hover:border-neon transition"
           >
             <Pencil className="h-4 w-4" />
-          </Link>
+          </button>
         )}
       </footer>
     </article>

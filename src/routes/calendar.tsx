@@ -66,12 +66,20 @@ interface EventOverride {
   notes: string | null;
   high_priority: boolean | null;
   expected_items?: ExpectedItem[] | null;
+  order_verification_status?: "pending" | "ordered" | "skipped" | null;
 }
 
 
 // Effective event = base event + per-instance override fields for that date.
 // Returns null if the instance is canceled.
-type EffectiveEvent = CalendarEvent & { _overrideId?: string; _isOverride?: boolean; _occurrenceDate?: string; _missingInvoice?: boolean; _overrideItems?: ExpectedItem[] | null };
+type EffectiveEvent = CalendarEvent & {
+  _overrideId?: string;
+  _isOverride?: boolean;
+  _occurrenceDate?: string;
+  _missingInvoice?: boolean;
+  _overrideItems?: ExpectedItem[] | null;
+  _orderStatus?: "pending" | "ordered" | "skipped";
+};
 
 const WEEKDAYS_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const MONTHS_HE = [
@@ -172,10 +180,12 @@ function CalendarPage() {
     for (const e of matched) {
       const ov = overrides.find((o) => o.event_id === e.id && o.override_date === isoDate);
       if (!ov) {
-        out.push(annotateMissing({ ...e, _occurrenceDate: isoDate }));
+        out.push(annotateMissing({ ...e, _occurrenceDate: isoDate, _orderStatus: "pending" }));
         continue;
       }
       if (ov.deleted) continue;
+      // CRITICAL: skipped instances are filtered out of the visible grid
+      if (ov.order_verification_status === "skipped") continue;
       out.push(annotateMissing({
         ...e,
         title: ov.title ?? e.title,
@@ -187,6 +197,7 @@ function CalendarPage() {
         _overrideItems: ov.expected_items ?? null,
         _isOverride: true,
         _occurrenceDate: isoDate,
+        _orderStatus: (ov.order_verification_status ?? "pending") as "pending" | "ordered" | "skipped",
       }));
     }
     return out;
@@ -619,6 +630,12 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
             רישום
           </span>
         )}
+        {ev._orderStatus === "ordered" && (
+          <span className="text-[9px] font-bold text-success border border-success/60 bg-success/10 rounded px-1 shrink-0 inline-flex items-center gap-0.5">
+            <Check className="h-2.5 w-2.5" />
+            הוזמן
+          </span>
+        )}
         {missing && (
           <span className="text-[9px] text-destructive border border-destructive/60 rounded px-1 shrink-0">⚠️ חסרה חשבונית</span>
         )}
@@ -678,6 +695,28 @@ function DayDetails({
     if (error) toast.error("שגיאה בביטול המופע");
     else toast.success("המופע בוטל ליום זה בלבד");
   };
+
+  const setOrderStatus = async (
+    ev: EffectiveEvent,
+    date: string,
+    status: "ordered" | "skipped",
+  ) => {
+    const payload = {
+      event_id: ev.id,
+      override_date: date,
+      order_verification_status: status,
+      deleted: false,
+    };
+    const { error } = await supabase
+      .from("calendar_event_overrides")
+      .upsert(payload, { onConflict: "event_id,override_date" });
+    if (error) {
+      toast.error("שגיאה בעדכון הסטטוס");
+      return;
+    }
+    toast.success(status === "ordered" ? "סומן כהוזמן" : "סומן כלא הוזמן השבוע");
+  };
+
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-card/80 backdrop-blur p-4">
@@ -837,6 +876,33 @@ function DayDetails({
                     </div>
                   )}
                 </div>
+                {canEdit && ev.category === "delivery" && (
+                  <div className="mt-3 pt-3 border-t border-border/40">
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-bold">
+                      אימות הזמנה
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOrderStatus(ev, isoDate, "ordered")}
+                        className={`h-9 px-3 rounded-md border text-xs font-bold inline-flex items-center justify-center gap-1.5 transition ${
+                          ev._orderStatus === "ordered"
+                            ? "bg-success text-success-foreground border-success"
+                            : "border-success/60 text-success hover:bg-success/10"
+                        }`}
+                      >
+                        📦 הוזמן סחורה
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderStatus(ev, isoDate, "skipped")}
+                        className="h-9 px-3 rounded-md border border-destructive/60 text-destructive hover:bg-destructive/10 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
+                      >
+                        ❌ לא הוזמן השבוע
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             );
           })}

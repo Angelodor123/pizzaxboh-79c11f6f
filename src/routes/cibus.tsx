@@ -287,12 +287,21 @@ function WalletDetail({
       toast.error("הזן סכום חיובי");
       return;
     }
+    let effective = num;
+    if (sign === -1 && num > Number(wallet.balance)) {
+      effective = Math.max(0, Number(wallet.balance));
+      if (effective === 0) {
+        toast.warning("היתרה כבר 0 — לא ניתן לבצע מימוש");
+        return;
+      }
+      toast.warning(`הסכום הותאם ל-₪${effective.toFixed(2)} (יתרה זמינה)`);
+    }
     setBusy(true);
     let receiptUrl: string | null = null;
     if (receipt) {
       receiptUrl = await uploadReceipt(receipt, wallet.id);
     }
-    const newBalance = Number(wallet.balance) + sign * num;
+    const newBalance = Math.max(0, Number(wallet.balance) + sign * effective);
     const { error } = await supabase
       .from("cibus_wallets")
       .update({ balance: newBalance, last_updated: new Date().toISOString() })
@@ -305,7 +314,7 @@ function WalletDetail({
 
     await supabase.from("cibus_transactions_log").insert({
       wallet_id: wallet.id,
-      amount: num,
+      amount: effective,
       type: sign === 1 ? "add" : "deduct",
       balance_after: newBalance,
       created_by: userId,
@@ -314,7 +323,7 @@ function WalletDetail({
     });
 
     setBusy(false);
-    toast.success(sign === 1 ? `נוספו ₪${num.toFixed(2)}` : `נוצלו ₪${num.toFixed(2)}`);
+    toast.success(sign === 1 ? `נוספו ₪${effective.toFixed(2)}` : `נוצלו ₪${effective.toFixed(2)}`);
     setAmount("");
     setTxDate(todayLocal());
     setReceipt(null);
@@ -331,7 +340,7 @@ function WalletDetail({
     });
     if (!ok) return;
     const delta = -signedAmount(tx);
-    const newBalance = Number(wallet.balance) + delta;
+    const newBalance = Math.max(0, Number(wallet.balance) + delta);
     const { error: e1 } = await supabase
       .from("cibus_wallets")
       .update({ balance: newBalance, last_updated: new Date().toISOString() })
@@ -596,7 +605,7 @@ function EditTransactionModal({
     const oldSigned = sign * Number(tx.amount);
     const newSigned = sign * num;
     const delta = newSigned - oldSigned;
-    const newWalletBalance = walletBalance + delta;
+    const newWalletBalance = Math.max(0, walletBalance + delta);
 
     let receiptUrl = tx.receipt_image_url;
     if (receipt) {
