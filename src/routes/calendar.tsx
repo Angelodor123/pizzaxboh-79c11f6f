@@ -696,6 +696,28 @@ function DayDetails({
     else toast.success("המופע בוטל ליום זה בלבד");
   };
 
+  const setOrderStatus = async (
+    ev: EffectiveEvent,
+    date: string,
+    status: "ordered" | "skipped",
+  ) => {
+    const payload = {
+      event_id: ev.id,
+      override_date: date,
+      order_verification_status: status,
+      deleted: false,
+    };
+    const { error } = await supabase
+      .from("calendar_event_overrides")
+      .upsert(payload, { onConflict: "event_id,override_date" });
+    if (error) {
+      toast.error("שגיאה בעדכון הסטטוס");
+      return;
+    }
+    toast.success(status === "ordered" ? "סומן כהוזמן" : "סומן כלא הוזמן השבוע");
+  };
+
+
   return (
     <div className="mt-4 rounded-2xl border border-border bg-card/80 backdrop-blur p-4">
       <div className="flex items-center justify-between mb-3">
