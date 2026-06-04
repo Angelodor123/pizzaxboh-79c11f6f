@@ -374,13 +374,14 @@ function QuickAddCatalogDialog({
           category,
           sku: sku.trim() || null,
           expected_price: expectedNum,
+          cost_price: expectedNum,
           price: expectedNum,
           min_stock_alert: minStockNum,
           default_qty: 1,
           active: true,
           created_by: user?.id,
         } as any)
-        .select("id, name, unit, supplier_id, image_url")
+        .select("id, name, unit, supplier_id, image_url, cost_price")
         .single();
       if (error) throw error;
       const supplier = suppliers.find((s) => s.id === supplierId);
@@ -392,6 +393,7 @@ function QuickAddCatalogDialog({
         supplier_id: data.supplier_id,
         supplier_name: supplier?.name ?? "—",
         image_url: data.image_url,
+        cost_price: (data as any).cost_price ?? expectedNum,
       });
     } catch (e: any) {
       toast.error("שמירה נכשלה: " + (e?.message ?? ""));
