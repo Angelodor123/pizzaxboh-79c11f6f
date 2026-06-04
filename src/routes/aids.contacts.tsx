@@ -60,14 +60,18 @@ function AidsContactsPage() {
     load();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("למחוק איש קשר?")) return;
-    const { error } = await table().delete().eq("id", id);
+  const handleDelete = async (c: Contact) => {
+    const ok = await confirmDelete({
+      title: "מחיקת איש קשר",
+      itemName: c.name,
+    });
+    if (!ok) return;
+    const { error } = await table().delete().eq("id", c.id);
     if (error) {
       toast.error("מחיקה נכשלה");
     } else {
       toast.success("נמחק");
-      setItems((prev) => prev.filter((c) => c.id !== id));
+      setItems((prev) => prev.filter((x) => x.id !== c.id));
     }
   };
 

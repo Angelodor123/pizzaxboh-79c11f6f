@@ -16,6 +16,7 @@ import { Route as RestockRouteImport } from './routes/restock'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as PrepRouteImport } from './routes/prep'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
@@ -27,6 +28,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AidsRouteImport } from './routes/aids'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AidsIndexRouteImport } from './routes/aids.index'
 import { Route as AidsSuppliersRouteImport } from './routes/aids.suppliers'
 import { Route as AidsOperationsRouteImport } from './routes/aids.operations'
 import { Route as AidsContactsRouteImport } from './routes/aids.contacts'
@@ -70,6 +72,11 @@ const PrepRoute = PrepRouteImport.update({
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotebookRoute = NotebookRouteImport.update({
@@ -126,6 +133,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AidsIndexRoute = AidsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AidsRoute,
 } as any)
 const AidsSuppliersRoute = AidsSuppliersRouteImport.update({
   id: '/suppliers',
@@ -187,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
+  '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
@@ -200,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
+  '/aids/': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -207,7 +221,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/aids': typeof AidsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
@@ -216,6 +229,7 @@ export interface FileRoutesByTo {
   '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
+  '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
@@ -229,6 +243,7 @@ export interface FileRoutesByTo {
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
+  '/aids': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -246,6 +261,7 @@ export interface FileRoutesById {
   '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
+  '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
   '/prep': typeof PrepRoute
   '/recipes': typeof RecipesRoute
@@ -259,6 +275,7 @@ export interface FileRoutesById {
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
+  '/aids/': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -277,6 +294,7 @@ export interface FileRouteTypes {
     | '/maintenance'
     | '/my-profile'
     | '/notebook'
+    | '/notifications'
     | '/orders'
     | '/prep'
     | '/recipes'
@@ -290,6 +308,7 @@ export interface FileRouteTypes {
     | '/aids/contacts'
     | '/aids/operations'
     | '/aids/suppliers'
+    | '/aids/'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -297,7 +316,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
-    | '/aids'
     | '/calendar'
     | '/cibus'
     | '/complaints'
@@ -306,6 +324,7 @@ export interface FileRouteTypes {
     | '/maintenance'
     | '/my-profile'
     | '/notebook'
+    | '/notifications'
     | '/orders'
     | '/prep'
     | '/recipes'
@@ -319,6 +338,7 @@ export interface FileRouteTypes {
     | '/aids/contacts'
     | '/aids/operations'
     | '/aids/suppliers'
+    | '/aids'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -335,6 +355,7 @@ export interface FileRouteTypes {
     | '/maintenance'
     | '/my-profile'
     | '/notebook'
+    | '/notifications'
     | '/orders'
     | '/prep'
     | '/recipes'
@@ -348,6 +369,7 @@ export interface FileRouteTypes {
     | '/aids/contacts'
     | '/aids/operations'
     | '/aids/suppliers'
+    | '/aids/'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -365,6 +387,7 @@ export interface RootRouteChildren {
   MaintenanceRoute: typeof MaintenanceRoute
   MyProfileRoute: typeof MyProfileRoute
   NotebookRoute: typeof NotebookRoute
+  NotificationsRoute: typeof NotificationsRoute
   OrdersRoute: typeof OrdersRoute
   PrepRoute: typeof PrepRoute
   RecipesRoute: typeof RecipesRoute
@@ -425,6 +448,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/orders'
       preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notebook': {
@@ -503,6 +533,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/aids/': {
+      id: '/aids/'
+      path: '/'
+      fullPath: '/aids/'
+      preLoaderRoute: typeof AidsIndexRouteImport
+      parentRoute: typeof AidsRoute
     }
     '/aids/suppliers': {
       id: '/aids/suppliers'
@@ -589,6 +626,7 @@ interface AidsRouteChildren {
   AidsContactsRoute: typeof AidsContactsRoute
   AidsOperationsRoute: typeof AidsOperationsRoute
   AidsSuppliersRoute: typeof AidsSuppliersRoute
+  AidsIndexRoute: typeof AidsIndexRoute
 }
 
 const AidsRouteChildren: AidsRouteChildren = {
@@ -596,6 +634,7 @@ const AidsRouteChildren: AidsRouteChildren = {
   AidsContactsRoute: AidsContactsRoute,
   AidsOperationsRoute: AidsOperationsRoute,
   AidsSuppliersRoute: AidsSuppliersRoute,
+  AidsIndexRoute: AidsIndexRoute,
 }
 
 const AidsRouteWithChildren = AidsRoute._addFileChildren(AidsRouteChildren)
@@ -612,6 +651,7 @@ const rootRouteChildren: RootRouteChildren = {
   MaintenanceRoute: MaintenanceRoute,
   MyProfileRoute: MyProfileRoute,
   NotebookRoute: NotebookRoute,
+  NotificationsRoute: NotificationsRoute,
   OrdersRoute: OrdersRoute,
   PrepRoute: PrepRoute,
   RecipesRoute: RecipesRoute,
@@ -625,13 +665,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

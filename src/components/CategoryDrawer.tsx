@@ -210,7 +210,7 @@ export function CategoryDrawer() {
               </Link>
             </li>
             <li>
-              <Link to="/my-profile" onClick={close} className={itemClass}>
+              <Link to="/notifications" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">🔔 התראות</span>
                 <span className={iconWrap}><Bell className="h-5 w-5" /></span>
               </Link>
