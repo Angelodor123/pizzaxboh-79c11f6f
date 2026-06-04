@@ -865,6 +865,40 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       className={`w-full h-11 rounded-md bg-background border-2 px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums ${aiActive ? valBorder(headerVal.total_amount) : "border-border"}`} />
                   </div>
 
+                  {/* Estimated total from catalog cost_price × qty (with manual override) */}
+                  {(() => {
+                    const est = rows.reduce((sum, r) => {
+                      const unit = r.catalogCostPrice ?? r.unitPrice ?? 0;
+                      return sum + (Number(r.invoiceQty) || 0) * (Number(unit) || 0);
+                    }, 0);
+                    if (est <= 0) return null;
+                    return (
+                      <div className="rounded-md border border-amber-brand/40 bg-amber-brand/5 p-2 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-muted-foreground">סה״כ משוער (מחיר עלות × כמות)</span>
+                          <span className="font-bold text-amber-brand tabular-nums">₪{est.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number" step="0.01" inputMode="decimal"
+                            value={estimatedTotalOverride}
+                            onChange={(e) => setEstimatedTotalOverride(e.target.value)}
+                            placeholder="עקיפה ידנית (אופציונלי)"
+                            className="flex-1 h-8 rounded bg-background border border-border px-2 text-[11px] tabular-nums focus:border-amber-brand outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setTotalAmount(String((Number(estimatedTotalOverride) || est).toFixed(2))); markHeaderEdited("total_amount"); }}
+                            className="h-8 px-2 rounded border border-amber-brand/60 text-amber-brand text-[11px] font-bold hover:bg-amber-brand/10"
+                          >
+                            השתמש בסכום
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+
                   {chosenMatch && (
                     <div className="text-[11px] text-neon">✓ משויך להזמנה {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")} · {supplierName}</div>
                   )}
