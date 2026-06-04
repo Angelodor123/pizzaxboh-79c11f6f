@@ -750,6 +750,74 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         }
       }
 
+      // ============================================================
+      // Delivery exceptions: record discrepancies vs the order, and
+      // notify managers when items are missing/damaged so they can
+      // chase a credit note (זיכוי) from the supplier.
+      // ============================================================
+      try {
+        const exceptions: Array<{
+          branch_id: string;
+          order_id: string | null;
+          invoice_id: string | null;
+          supplier_id: string | null;
+          product_id: string | null;
+          product_name: string;
+          expected_qty: number | null;
+          actual_qty: number | null;
+          reason: "missing" | "damaged" | "unexpected_item" | "partial";
+        }> = [];
+        for (const r of cleanItems) {
+          const expected = r.orderedQty;
+          const actual = Number(r.invoiceQty) || 0;
+          let reason: "missing" | "damaged" | "unexpected_item" | "partial" | null = null;
+          if (r.damaged) reason = "damaged";
+          else if (chosenMatch && expected == null) reason = "unexpected_item";
+          else if (expected != null && actual < expected - 0.001) {
+            reason = actual <= 0 ? "missing" : "partial";
+          }
+          if (!reason) continue;
+          exceptions.push({
+            branch_id: branchId,
+            order_id: chosenMatch?.order_id ?? null,
+            invoice_id: invoiceRow!.id,
+            supplier_id: supplierId || chosenMatch?.supplier_id || null,
+            product_id: r.catalogProductId,
+            product_name: r.name.trim().slice(0, 200),
+            expected_qty: expected,
+            actual_qty: actual,
+            reason,
+          });
+        }
+        if (exceptions.length) {
+          await supabase.from("delivery_exceptions").insert(exceptions);
+
+          // Fan-out notification to super admins for missing/damaged items
+          // (those that require a credit note follow-up).
+          const followUps = exceptions.filter((e) => e.reason === "missing" || e.reason === "damaged" || e.reason === "partial");
+          if (followUps.length) {
+            const { data: adminIds } = await supabase.rpc("list_super_admin_user_ids");
+            const ids: string[] = Array.isArray(adminIds) ? adminIds : [];
+            if (ids.length) {
+              const summary = followUps.slice(0, 3).map((e) => `${e.product_name} (${e.reason === "damaged" ? "פגום" : `${e.actual_qty}/${e.expected_qty}`})`).join(", ");
+              const more = followUps.length > 3 ? ` +${followUps.length - 3}` : "";
+              await supabase.from("notifications").insert(ids.map((uid) => ({
+                user_id: uid,
+                type: "warning",
+                title: `פערים בקליטת סחורה${chosenMatch ? ` · ${chosenMatch.supplier_name}` : ""}`,
+                body: `${followUps.length} פריטים דורשים מעקב לזיכוי: ${summary}${more}`,
+                link: "/inventory-audit",
+                data: { invoice_id: invoiceRow!.id, order_id: chosenMatch?.order_id ?? null },
+              })));
+            }
+            toast.warning(`נרשמו ${followUps.length} פערים — נדרש מעקב לזיכוי מהספק`, { duration: 8000 });
+          }
+        }
+      } catch (exErr) {
+        console.error("Failed to record delivery exceptions", exErr);
+      }
+
+
       // Surface price-change alerts so the manager sees them right after save
       if (priceAlerts.length) {
         const top = priceAlerts.slice(0, 3).map((a) => {
