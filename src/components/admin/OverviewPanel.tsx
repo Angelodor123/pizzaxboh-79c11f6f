@@ -434,6 +434,9 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         </div>
       </div>
 
+      {/* Notification settings & testing */}
+      <NotificationTestCard />
+
       {/* Shortcut grid to operational pages */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <Link to="/tasks" className="rounded-lg border border-border p-3 text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center gap-2">
