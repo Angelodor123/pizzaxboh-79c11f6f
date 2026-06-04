@@ -1,6 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { useCookbookStore } from "@/lib/store";
-import { recipeToMenuCategory, isMenuItem } from "@/lib/menu-categories";
+import { useState, useEffect } from "react";
 import { Pencil, Check, X, Download } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,13 +8,10 @@ import {
   Menu,
   Settings,
   LogOut,
-  ChevronDown,
   NotebookPen,
   CalendarDays,
   Truck,
   Home,
-  ChefHat,
-  UtensilsCrossed,
   ListChecks,
   Package,
   UserCircle,
@@ -30,7 +25,6 @@ import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
 import { useIsModiinBranch } from "@/lib/active-branch";
 
-
 import {
   Sheet,
   SheetContent,
@@ -38,47 +32,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
-import {
-  BACK_OF_HOUSE_CATEGORIES,
-  menuCategoryEmoji,
-  menuCategoryLabels,
-  menuCategoryOrder,
-  type MenuCategory,
-} from "@/lib/menu-categories";
 import { useUIStore } from "@/lib/ui-store";
 import { useAuth } from "@/lib/auth";
 
-const RECIPE_EMOJI: Record<RecipeCategory, string> = {
-  dishes: "🍕",
-  sauces_bases: "🍅",
-  aiolis_sauces: "🍯",
-  jams_creams: "🥘",
-  starters: "🌽",
-  spices: "🧂",
-  croutons: "🥖",
-  desserts: "🍪",
-  pastas: "🍝",
-  authentic_pastas: "🇮🇹",
-  salads: "🥗",
-};
-
-// Static catalog of all known categories — actual sidebar list is filtered
-// dynamically below based on what's present in the live recipes table.
-const ALL_RECIPE_CATEGORIES = BACK_OF_HOUSE_CATEGORIES.map((key) => ({
-  key,
-  emoji: RECIPE_EMOJI[key],
-  label: categoryLabels[key],
-}));
-
-const ALL_MENU_CATEGORIES = menuCategoryOrder.map((key) => ({
-  key,
-  emoji: menuCategoryEmoji[key],
-  label: menuCategoryLabels[key],
-}));
-
 // Shared item classes for consistent padding + modern hover.
-// RTL: text anchors to the right (start), icon anchors to the far left (end).
 const itemClass =
   "flex w-full items-center justify-between gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
 
@@ -90,6 +47,7 @@ const groupLabelClass =
 function GroupDivider() {
   return <div className="border-t border-zinc-800/50 mx-2 my-2" />;
 }
+
 
 export function CategoryDrawer() {
   const { drawerOpen, setDrawerOpen } = useUIStore();
