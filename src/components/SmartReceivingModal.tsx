@@ -317,12 +317,13 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const skipMatch = () => {
     // populate rows from OCR only
     const ocrItems = parsed?.items ?? [];
-    const newRows = ocrItems.map((it) => ({
+    const newRows: RowPair[] = ocrItems.map((it) => ({
       name: it.name, orderedQty: null,
       invoiceQty: Number(it.quantity) || 0,
       unitPrice: Number(it.unit_price) || 0,
       totalPrice: Number(it.total_price) || 0,
       category: lookupCategory(it.name) as ExpenseCategory | "",
+      ...blankMatch(),
     }));
     setRows(newRows);
     resetValidation(newRows.length);
