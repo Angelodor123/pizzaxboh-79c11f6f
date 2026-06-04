@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/aids/contacts")({
   head: () => ({ meta: [{ title: "אנשי קשר — עזרים" }] }),
@@ -156,7 +157,7 @@ function AidsContactsPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(c.id)}
+                      onClick={() => handleDelete(c)}
                       className="p-2 rounded-md hover:bg-red-500/15 text-muted-foreground hover:text-red-400"
                       aria-label="מחק"
                     >
