@@ -1041,13 +1041,50 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
                             return (
-                              <div key={i} className={`rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                              <div key={i} className={`rounded-md p-1.5 border ${isExtra ? "bg-amber-brand/5 border-amber-brand/30" : "border-border/60"} ${rowRing} ${!r.received ? "bg-rose-500/5 border-rose-500/40" : ""}`}>
+                                {/* ZONE A — Physical delivery verification (independent of AI feedback) */}
+                                <div className="flex items-center flex-wrap gap-2 pb-1.5 mb-1.5 border-b border-border/40">
+                                  <label className="inline-flex items-center gap-1.5 text-[11px] font-bold cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={r.received}
+                                      onChange={(e) => {
+                                        const v = e.target.checked;
+                                        setRows((p) => p.map((x, idx) => idx === i ? { ...x, received: v, notReceivedReason: v ? null : (x.notReceivedReason ?? "missing") } : x));
+                                      }}
+                                      className="h-4 w-4 accent-emerald-500"
+                                    />
+                                    <span className={r.received ? "text-emerald-400" : "text-rose-400"}>
+                                      {r.received ? "✓ הגיע" : "✗ לא הגיע"}
+                                    </span>
+                                  </label>
+                                  {!r.received && (
+                                    <select
+                                      value={r.notReceivedReason ?? "missing"}
+                                      onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, notReceivedReason: e.target.value as NotReceivedReason } : x))}
+                                      className="h-7 rounded bg-background border border-rose-500/50 text-rose-300 px-2 text-[11px] focus:border-rose-400 outline-none"
+                                      aria-label="סיבה"
+                                    >
+                                      <option value="missing">חסר במשלוח</option>
+                                      <option value="damaged">פגום / לא תקין</option>
+                                    </select>
+                                  )}
+                                  {!r.received && (
+                                    <span className="text-[10px] text-rose-300/80">לא יתעדכן במלאי · ייפתח דוח חריגה</span>
+                                  )}
+                                </div>
+
                                 <div className={`grid ${cols} gap-2 items-center`}>
                                 <div>
                                   <div className="flex items-center gap-1.5">
                                     <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
                                       className={`flex-1 min-w-0 h-10 rounded bg-background border px-2 text-xs leading-none ${aiActive ? valBorder(rowState) : "border-border"}`} />
-                                    {aiActive && <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />}
+                                    {aiActive && (
+                                      <div className="inline-flex items-center gap-1 shrink-0" title="משוב לזיהוי AI בלבד — לא משנה סטטוס אספקה">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">AI</span>
+                                        <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />
+                                      </div>
+                                    )}
                                   </div>
                                   <select
                                     value={r.category}
