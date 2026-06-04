@@ -378,13 +378,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     return { blob: new Blob([bytes], { type: mime }), mime };
   };
 
+  const isImageFile = (candidate: File) => {
+    const imageExt = /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(candidate.name);
+    return candidate.type.startsWith("image/") || (!candidate.type && imageExt);
+  };
+
   const onFileSelected = async (f: File | null) => {
-    setFile(f);
     if (!f) {
+      setFile(null);
       setPreviewUrl(null);
       saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
       return;
     }
+    if (!isImageFile(f)) {
+      toast.error("אפשר להעלות תמונה בלבד");
+      return;
+    }
+
+    setFile(f);
 
     setUploading(true);
     setOcrLoading(true);
@@ -393,6 +404,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
       setPreviewUrl(dataUrl);
+      toast.success("התמונה נקלטה, מתחיל פענוח…");
       await saveDraftImage(DRAFT_KEY, dataUrl).catch(() => { /* ignore */ });
       persistDraft();
 
@@ -791,7 +803,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 id={fileInputId}
                 ref={fileInput}
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/*"
                 className="hidden"
                 onChange={handleFileInputChange}
               />
@@ -808,9 +820,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
               >
                 <input
                   type="file"
-                  accept="image/*,application/pdf"
+                  accept="image/*"
                   aria-label="העלה תמונה"
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                   onChange={handleFileInputChange}
                 />
                 <Upload className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -868,9 +880,9 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 >
                   <input
                     type="file"
-                    accept="image/*,application/pdf"
+                    accept="image/*"
                     aria-label="לחץ להעלאת תמונת חשבונית"
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                     onChange={handleFileInputChange}
                   />
                   <Upload className="h-7 w-7 md:h-8 md:w-8 mx-auto mb-2" />
