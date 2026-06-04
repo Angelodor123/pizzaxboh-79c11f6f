@@ -294,7 +294,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         up = Number(ocrItems[idx].unit_price) || 0;
         tp = Number(ocrItems[idx].total_price) || invQty * up;
       }
-      return { name: oi.name, orderedQty, invoiceQty: invQty, unitPrice: up, totalPrice: tp, category: lookupCategory(oi.name) };
+      return { name: oi.name, orderedQty, invoiceQty: invQty, unitPrice: up, totalPrice: tp, category: lookupCategory(oi.name), ...blankMatch() };
     });
     // Extra invoice items not on the order
     ocrItems.forEach((it, i) => {
