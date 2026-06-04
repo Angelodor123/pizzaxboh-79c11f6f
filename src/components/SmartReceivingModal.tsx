@@ -192,6 +192,68 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     return () => { cancelled = true; };
   }, []);
 
+  // === Load supplier catalog for matching dropdowns + cost-based estimates ===
+  useEffect(() => {
+    if (!supplierId) { setCatalog([]); return; }
+    let cancelled = false;
+    (async () => {
+      const branchId = await requireCurrentBranchId();
+      const { data } = await supabase
+        .from("supplier_products")
+        .select("id, name, cost_price, expected_price, price")
+        .eq("supplier_id", supplierId)
+        .eq("branch_id", branchId)
+        .eq("active", true)
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setCatalog(((data ?? []) as CatalogOpt[]));
+    })();
+    return () => { cancelled = true; };
+  }, [supplierId]);
+
+  /**
+   * Fuzzy-match each row against the supplier catalog. Returns a NEW rows
+   * array with matchStatus populated:
+   *   auto    — similarity >= 0.85 (high confidence)
+   *   review  — 0 < similarity < 0.85 (low confidence, needs human review)
+   *   none    — no candidate at all
+   */
+  const matchRowsAgainstCatalog = async (input: RowPair[]): Promise<RowPair[]> => {
+    if (!supplierId) return input;
+    const branchId = await requireCurrentBranchId();
+    const out = await Promise.all(input.map(async (r) => {
+      if (r.matchStatus === "manual" || r.matchStatus === "new") return r;
+      if (!r.name.trim()) return r;
+      try {
+        const { data } = await supabase.rpc("find_catalog_match", {
+          _branch_id: branchId,
+          _supplier_id: supplierId,
+          _query: r.name.trim(),
+        });
+        const best = (data ?? [])[0] as { product_id: string; product_name: string; similarity: number } | undefined;
+        if (!best || best.similarity <= 0) {
+          return { ...r, matchStatus: "none" as const, catalogProductId: null, matchSimilarity: 0, aiSuggestedProductId: null };
+        }
+        const catItem = catalog.find((c) => c.id === best.product_id);
+        const cost = catItem?.cost_price ?? catItem?.expected_price ?? catItem?.price ?? null;
+        const status = best.similarity >= 0.85 ? "auto" as const : "review" as const;
+        return {
+          ...r,
+          matchStatus: status,
+          catalogProductId: best.product_id,
+          catalogCostPrice: cost,
+          matchSimilarity: best.similarity,
+          aiSuggestedProductId: best.product_id,
+        };
+      } catch {
+        return r;
+      }
+    }));
+    return out;
+  };
+
+
+
 
   const lookupCategory = (name: string): ExpenseCategory | "" => {
     const k = norm(name);
