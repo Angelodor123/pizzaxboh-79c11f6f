@@ -96,17 +96,34 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
         if (r.diff_summary === "perfect") streak += 1;
         else break;
       }
+      // Aggregate dual metrics from final_data._validation and final_data._delivery.
+      let parsingApproved = 0, parsingTotal = 0, deliveryReceived = 0, deliveryTotal = 0;
+      for (const r of arr) {
+        const fd = (r.final_data ?? {}) as { _validation?: { approved?: number; corrected?: number }; _delivery?: { received?: number; total?: number } };
+        const v = fd._validation;
+        if (v && (Number(v.approved) || 0) + (Number(v.corrected) || 0) > 0) {
+          parsingApproved += Number(v.approved) || 0;
+          parsingTotal += (Number(v.approved) || 0) + (Number(v.corrected) || 0);
+        }
+        const d = fd._delivery;
+        if (d && Number(d.total) > 0) {
+          deliveryReceived += Number(d.received) || 0;
+          deliveryTotal += Number(d.total) || 0;
+        }
+      }
       result.push({
         supplier_id: sid,
         name: suppliers.find((s) => s.id === sid)?.name ?? "ספק לא ידוע",
         xp,
         invoices: arr.length,
         streak,
+        parsingApproved, parsingTotal,
+        deliveryReceived, deliveryTotal,
       });
     }
     for (const s of suppliers) {
       if (!bySup.has(s.id)) {
-        result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0 });
+        result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0, parsingApproved: 0, parsingTotal: 0, deliveryReceived: 0, deliveryTotal: 0 });
       }
     }
     result.sort((a, b) => b.xp - a.xp);
