@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Package, BookOpen, Sparkles, Wrench } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Package, BookOpen, Sparkles, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/aids")({
   head: () => ({
     meta: [
       { title: "עזרים — ספרייה דיגיטלית" },
-      { name: "description", content: "ספרייה דיגיטלית: ספקים, מתכונים, ניקיון ותפעול." },
+      { name: "description", content: "ספרייה דיגיטלית: ספקים, מתכונים, ניקיון ואנשי קשר." },
     ],
   }),
   component: AidsHubPage,
@@ -42,15 +42,16 @@ const FOLDERS: Folder[] = [
     accent: "from-sky-500/20 to-sky-500/5 border-sky-500/40 text-sky-300",
   },
   {
-    title: "תפעול ומכשור",
-    emoji: "🛠️",
-    Icon: Wrench,
-    to: "/aids/operations",
+    title: "אנשי קשר",
+    emoji: "📞",
+    Icon: Phone,
+    to: "/aids/contacts",
     accent: "from-violet-500/20 to-violet-500/5 border-violet-500/40 text-violet-300",
   },
 ];
 
 function AidsHubPage() {
+  const navigate = useNavigate();
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-6">
@@ -63,10 +64,11 @@ function AidsHubPage() {
 
         <div className="grid grid-cols-2 gap-4">
           {FOLDERS.map((f) => (
-            <Link
+            <button
               key={f.title}
-              to={f.to}
-              className={`group relative rounded-2xl border-2 bg-gradient-to-br ${f.accent} p-4 min-h-[140px] flex flex-col justify-between hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg`}
+              type="button"
+              onClick={() => navigate({ to: f.to })}
+              className={`group relative text-right rounded-2xl border-2 bg-gradient-to-br ${f.accent} p-4 min-h-[140px] flex flex-col justify-between hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg`}
             >
               <div className="flex items-start justify-between">
                 <span className="text-3xl leading-none">{f.emoji}</span>
@@ -80,7 +82,7 @@ function AidsHubPage() {
                   פתח <ArrowRight className="h-3 w-3 rotate-180" />
                 </div>
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       </div>
