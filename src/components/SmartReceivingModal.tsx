@@ -727,10 +727,22 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       }
 
 
-      // Inventory: upsert items + insert movements per received row
+      // Inventory: upsert items + insert movements per RECEIVED row.
+      // Rows marked "not received" are recorded as discrepancies (shortage_items)
+      // and never touch inventory or AI feedback.
+      const discrepancyRows: Array<{ name: string; reason: NotReceivedReason; quantity: number; catalogId: string | null }> = [];
       for (const r of cleanItems) {
-        if (r.invoiceQty <= 0) continue;
         const name = r.name.trim().slice(0, 200);
+        if (!r.received) {
+          discrepancyRows.push({
+            name,
+            reason: r.notReceivedReason ?? "missing",
+            quantity: r.orderedQty ?? r.invoiceQty ?? 0,
+            catalogId: catalogIdByName.get(name) ?? r.catalogProductId ?? null,
+          });
+          continue;
+        }
+        if (r.invoiceQty <= 0) continue;
         let invId: string | null = null;
         const { data: existing } = await supabase
           .from("inventory_items")
@@ -763,6 +775,21 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             note: chosenMatch ? `התקבל מהזמנה #${chosenMatch.order_id.slice(0, 8)}` : "קליטה ידנית",
           });
         }
+      }
+
+      // Discrepancy report — open shortage tickets for the missing/damaged items.
+      if (discrepancyRows.length) {
+        const reasonLabel: Record<NotReceivedReason, string> = { missing: "חסר במשלוח", damaged: "פגום / לא תקין" };
+        await supabase.from("shortage_items").insert(discrepancyRows.map((d) => ({
+          branch_id: branchId,
+          name: d.name,
+          quantity: d.quantity,
+          unit: "",
+          notes: `${reasonLabel[d.reason]} · חשבונית ${invoiceNumber.trim() || invoiceRow!.id.slice(0, 8)} · ${supplierName || "ספק"}`,
+          catalog_item_id: d.catalogId,
+          status: "open",
+        })));
+        toast.warning(`📋 נפתח דוח חריגות עבור ${discrepancyRows.length} פריט(ים) שלא הגיעו`, { duration: 7000 });
       }
 
       // Surface price-change alerts so the manager sees them right after save
