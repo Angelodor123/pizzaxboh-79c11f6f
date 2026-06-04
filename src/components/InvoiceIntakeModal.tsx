@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback, useId } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, useId, type ChangeEvent, type DragEvent } from "react";
 import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -476,14 +476,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.currentTarget.files?.[0] ?? null;
     e.currentTarget.value = "";
     if (!selected) return;
     void onFileSelected(selected);
   };
 
-  const handleDropFile = (e: React.DragEvent<HTMLElement>) => {
+  const handleDropFile = (e: DragEvent<HTMLElement>) => {
     e.preventDefault();
     const selected = e.dataTransfer.files?.[0] ?? null;
     if (!selected) return;
