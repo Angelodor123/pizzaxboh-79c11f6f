@@ -17,8 +17,8 @@ interface PersonalTask {
  * RLS scopes rows to `auth.uid() = user_id`.
  */
 export function PersonalTasksCard() {
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
   const [tasks, setTasks] = useState<PersonalTask[]>([]);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
