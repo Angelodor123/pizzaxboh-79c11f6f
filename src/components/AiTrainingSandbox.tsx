@@ -23,6 +23,13 @@ interface SupplierStat {
   xp: number;
   invoices: number;
   streak: number;
+  // === Dual metrics ===
+  // Parsing Accuracy: based on user 👍/👎 OCR feedback (approved / total graded).
+  parsingApproved: number;
+  parsingTotal: number;
+  // Delivery Accuracy: based on Received vs Not-Received checkboxes.
+  deliveryReceived: number;
+  deliveryTotal: number;
 }
 
 const LEVEL_NAMES = ["מתחיל", "חניך", "מומחה", "וירטואוז", "מאסטר"];
