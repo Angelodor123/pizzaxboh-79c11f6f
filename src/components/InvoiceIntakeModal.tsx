@@ -378,13 +378,24 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     return { blob: new Blob([bytes], { type: mime }), mime };
   };
 
+  const isImageFile = (candidate: File) => {
+    const imageExt = /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(candidate.name);
+    return candidate.type.startsWith("image/") || (!candidate.type && imageExt);
+  };
+
   const onFileSelected = async (f: File | null) => {
-    setFile(f);
     if (!f) {
+      setFile(null);
       setPreviewUrl(null);
       saveDraftImage(DRAFT_KEY, null).catch(() => { /* ignore */ });
       return;
     }
+    if (!isImageFile(f)) {
+      toast.error("אפשר להעלות תמונה בלבד");
+      return;
+    }
+
+    setFile(f);
 
     setUploading(true);
     setOcrLoading(true);
