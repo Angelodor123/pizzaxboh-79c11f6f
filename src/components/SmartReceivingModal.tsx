@@ -50,7 +50,15 @@ type RowPair = {
   unitPrice: number;
   totalPrice: number;
   category: ExpenseCategory | "";
+  // === Catalog matching (Receipt Intelligence) ===
+  catalogProductId: string | null;
+  catalogCostPrice: number | null;
+  matchSimilarity: number | null;
+  aiSuggestedProductId: string | null;
+  matchStatus: "auto" | "review" | "manual" | "new" | "none";
 };
+
+type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
 
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
 
@@ -65,6 +73,14 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   r.onerror = reject;
   r.readAsDataURL(file);
 });
+const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus"> => ({
+  catalogProductId: null,
+  catalogCostPrice: null,
+  matchSimilarity: null,
+  aiSuggestedProductId: null,
+  matchStatus: "none",
+});
+
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const looseEq = (a: string, b: string) => {
@@ -82,6 +98,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [parsed, setParsed] = useState<Parsed | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [chosenMatch, setChosenMatch] = useState<Match | null>(null);
+  const [catalog, setCatalog] = useState<CatalogOpt[]>([]);
+  const [estimatedTotalOverride, setEstimatedTotalOverride] = useState<string>("");
   const [rows, setRows] = useState<RowPair[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
@@ -173,6 +191,85 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // === Load supplier catalog for matching dropdowns + cost-based estimates ===
+  useEffect(() => {
+    if (!supplierId) { setCatalog([]); return; }
+    let cancelled = false;
+    (async () => {
+      const branchId = await requireCurrentBranchId();
+      const { data } = await supabase
+        .from("supplier_products")
+        .select("id, name, cost_price, expected_price, price")
+        .eq("supplier_id", supplierId)
+        .eq("branch_id", branchId)
+        .eq("active", true)
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setCatalog(((data ?? []) as CatalogOpt[]));
+    })();
+    return () => { cancelled = true; };
+  }, [supplierId]);
+
+  /**
+   * Fuzzy-match each row against the supplier catalog. Returns a NEW rows
+   * array with matchStatus populated:
+   *   auto    — similarity >= 0.85 (high confidence)
+   *   review  — 0 < similarity < 0.85 (low confidence, needs human review)
+   *   none    — no candidate at all
+   */
+  const matchRowsAgainstCatalog = async (input: RowPair[]): Promise<RowPair[]> => {
+    if (!supplierId) return input;
+    const branchId = await requireCurrentBranchId();
+    const out = await Promise.all(input.map(async (r) => {
+      if (r.matchStatus === "manual" || r.matchStatus === "new") return r;
+      if (!r.name.trim()) return r;
+      try {
+        const { data } = await supabase.rpc("find_catalog_match", {
+          _branch_id: branchId,
+          _supplier_id: supplierId,
+          _query: r.name.trim(),
+        });
+        const best = (data ?? [])[0] as { product_id: string; product_name: string; similarity: number } | undefined;
+        if (!best || best.similarity <= 0) {
+          return { ...r, matchStatus: "none" as const, catalogProductId: null, matchSimilarity: 0, aiSuggestedProductId: null };
+        }
+        const catItem = catalog.find((c) => c.id === best.product_id);
+        const cost = catItem?.cost_price ?? catItem?.expected_price ?? catItem?.price ?? null;
+        const status = best.similarity >= 0.85 ? "auto" as const : "review" as const;
+        return {
+          ...r,
+          matchStatus: status,
+          catalogProductId: best.product_id,
+          catalogCostPrice: cost,
+          matchSimilarity: best.similarity,
+          aiSuggestedProductId: best.product_id,
+        };
+      } catch {
+        return r;
+      }
+    }));
+    return out;
+  };
+
+  // Auto-run catalog matching once for any row that hasn't been classified yet.
+  // (Skips rows already manually chosen or marked as "new product").
+  useEffect(() => {
+    if (stage !== "verify" && stage !== "manual") return;
+    if (!supplierId) return;
+    const needs = rows.some((r) => r.matchSimilarity == null && r.matchStatus === "none" && r.name.trim());
+    if (!needs) return;
+    let cancelled = false;
+    (async () => {
+      const next = await matchRowsAgainstCatalog(rows);
+      if (!cancelled) setRows(next);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, supplierId, catalog.length, rows.length]);
+
+
+
 
 
   const lookupCategory = (name: string): ExpenseCategory | "" => {
@@ -278,7 +375,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         up = Number(ocrItems[idx].unit_price) || 0;
         tp = Number(ocrItems[idx].total_price) || invQty * up;
       }
-      return { name: oi.name, orderedQty, invoiceQty: invQty, unitPrice: up, totalPrice: tp, category: lookupCategory(oi.name) };
+      return { name: oi.name, orderedQty, invoiceQty: invQty, unitPrice: up, totalPrice: tp, category: lookupCategory(oi.name), ...blankMatch() };
     });
     // Extra invoice items not on the order
     ocrItems.forEach((it, i) => {
@@ -289,6 +386,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         unitPrice: Number(it.unit_price) || 0,
         totalPrice: Number(it.total_price) || 0,
         category: lookupCategory(it.name),
+        ...blankMatch(),
       });
 
     });
@@ -300,12 +398,13 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const skipMatch = () => {
     // populate rows from OCR only
     const ocrItems = parsed?.items ?? [];
-    const newRows = ocrItems.map((it) => ({
+    const newRows: RowPair[] = ocrItems.map((it) => ({
       name: it.name, orderedQty: null,
       invoiceQty: Number(it.quantity) || 0,
       unitPrice: Number(it.unit_price) || 0,
       totalPrice: Number(it.total_price) || 0,
       category: lookupCategory(it.name) as ExpenseCategory | "",
+      ...blankMatch(),
     }));
     setRows(newRows);
     resetValidation(newRows.length);
@@ -441,48 +540,47 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           .eq("id", chosenMatch.order_id);
       }
 
-      // === CATALOG SYNC: auto-create / update supplier_products + detect price changes ===
-      // Tracks "digital inventory" by ensuring every received item exists in the supplier catalog,
-      // remembering its last seen price, and surfacing significant price deltas to the manager.
+      // === CATALOG SYNC + MAPPING-CORRECTIONS LEARNING LOOP ===
+      // For each parsed row:
+      //   - if user picked a catalog product (matchStatus === "manual") use that id directly
+      //   - if user marked "new" we always create
+      //   - otherwise we keep the prior auto/fuzzy logic
+      //   - every time the final productId differs from the AI's initial suggestion
+      //     (or AI had none and user picked one) we store a mapping_correction row
+      //     so future matching can be biased by past human decisions.
       const priceAlerts: Array<{ name: string; oldPrice: number; newPrice: number; pct: number }> = [];
       const catalogIdByName = new Map<string, string>();
+      const mappingCorrections: Array<{
+        parsed_text: string; corrected_product_id: string | null;
+        ai_suggested_product_id: string | null; ai_similarity: number | null; match_action: string;
+      }> = [];
 
       if (supplierId) {
         for (const r of cleanItems) {
-          if (!r.name.trim() || r.unitPrice <= 0) continue;
+          if (!r.name.trim()) continue;
           const cleanName = r.name.trim().slice(0, 200);
           let productId: string | null = null;
           let previousPrice: number | null = null;
 
-          // 1) fuzzy match against existing catalog (exact > alias > trigram)
-          const { data: matches } = await supabase.rpc("find_catalog_match", {
-            _branch_id: branchId,
-            _supplier_id: supplierId,
-            _query: cleanName,
-          });
-          const best = (matches ?? [])[0] as
-            | { product_id: string; product_name: string; similarity: number; match_type: string }
-            | undefined;
-
-          if (best && best.similarity >= 0.6) {
-            productId = best.product_id;
+          if (r.matchStatus === "manual" && r.catalogProductId) {
+            productId = r.catalogProductId;
             const { data: existing } = await supabase
               .from("supplier_products")
-              .select("price, expected_price")
+              .select("price, expected_price, cost_price")
               .eq("id", productId)
               .maybeSingle();
-            previousPrice = Number(existing?.expected_price ?? existing?.price ?? 0) || null;
-
-            // refresh last-seen price; lock in expected_price the first time
-            await supabase
-              .from("supplier_products")
-              .update({
-                price: r.unitPrice,
-                expected_price: existing?.expected_price ?? r.unitPrice,
-              })
-              .eq("id", productId);
-          } else {
-            // 2) no match → create catalog entry so future receipts can match it
+            previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+            if (r.unitPrice > 0) {
+              await supabase
+                .from("supplier_products")
+                .update({
+                  price: r.unitPrice,
+                  expected_price: existing?.expected_price ?? r.unitPrice,
+                  cost_price: existing?.cost_price ?? r.unitPrice,
+                })
+                .eq("id", productId);
+            }
+          } else if (r.matchStatus === "new") {
             const { data: created } = await supabase
               .from("supplier_products")
               .insert({
@@ -491,27 +589,124 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 name: cleanName,
                 unit: "",
                 default_qty: r.invoiceQty || 1,
-                price: r.unitPrice,
-                expected_price: r.unitPrice,
+                price: r.unitPrice || null,
+                expected_price: r.unitPrice || null,
+                cost_price: r.unitPrice || null,
                 category: r.category || null,
                 active: true,
               })
               .select("id")
               .maybeSingle();
             productId = created?.id ?? null;
+          } else if (r.catalogProductId && (r.matchStatus === "auto" || r.matchStatus === "review")) {
+            productId = r.catalogProductId;
+            const { data: existing } = await supabase
+              .from("supplier_products")
+              .select("price, expected_price, cost_price")
+              .eq("id", productId)
+              .maybeSingle();
+            previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+            if (r.unitPrice > 0) {
+              await supabase
+                .from("supplier_products")
+                .update({
+                  price: r.unitPrice,
+                  expected_price: existing?.expected_price ?? r.unitPrice,
+                  cost_price: existing?.cost_price ?? r.unitPrice,
+                })
+                .eq("id", productId);
+            }
+          } else if (r.unitPrice > 0) {
+            // Last-resort fuzzy fallback (no client-side match attached)
+            const { data: matches } = await supabase.rpc("find_catalog_match", {
+              _branch_id: branchId, _supplier_id: supplierId, _query: cleanName,
+            });
+            const best = (matches ?? [])[0] as
+              | { product_id: string; product_name: string; similarity: number; match_type: string }
+              | undefined;
+            if (best && best.similarity >= 0.6) {
+              productId = best.product_id;
+              const { data: existing } = await supabase
+                .from("supplier_products")
+                .select("price, expected_price, cost_price")
+                .eq("id", productId)
+                .maybeSingle();
+              previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+              await supabase
+                .from("supplier_products")
+                .update({
+                  price: r.unitPrice,
+                  expected_price: existing?.expected_price ?? r.unitPrice,
+                  cost_price: existing?.cost_price ?? r.unitPrice,
+                })
+                .eq("id", productId);
+            } else {
+              const { data: created } = await supabase
+                .from("supplier_products")
+                .insert({
+                  supplier_id: supplierId,
+                  branch_id: branchId,
+                  name: cleanName,
+                  unit: "",
+                  default_qty: r.invoiceQty || 1,
+                  price: r.unitPrice,
+                  expected_price: r.unitPrice,
+                  cost_price: r.unitPrice,
+                  category: r.category || null,
+                  active: true,
+                })
+                .select("id")
+                .maybeSingle();
+              productId = created?.id ?? null;
+            }
           }
 
           if (productId) catalogIdByName.set(cleanName, productId);
 
-          // 3) flag significant price change (>=10% delta vs expected baseline)
-          if (previousPrice && previousPrice > 0) {
+          // === Mapping correction: only when human input diverged from AI ===
+          const aiSuggestion = r.aiSuggestedProductId ?? null;
+          if (r.matchStatus === "manual" && productId && productId !== aiSuggestion) {
+            mappingCorrections.push({
+              parsed_text: cleanName,
+              corrected_product_id: productId,
+              ai_suggested_product_id: aiSuggestion,
+              ai_similarity: r.matchSimilarity,
+              match_action: "remap",
+            });
+          } else if (r.matchStatus === "new" && productId) {
+            mappingCorrections.push({
+              parsed_text: cleanName,
+              corrected_product_id: productId,
+              ai_suggested_product_id: aiSuggestion,
+              ai_similarity: r.matchSimilarity,
+              match_action: "new_product",
+            });
+          }
+
+          // Flag significant price change (>=10% delta vs cost baseline)
+          if (previousPrice && previousPrice > 0 && r.unitPrice > 0) {
             const pct = ((r.unitPrice - previousPrice) / previousPrice) * 100;
             if (Math.abs(pct) >= 10) {
               priceAlerts.push({ name: cleanName, oldPrice: previousPrice, newPrice: r.unitPrice, pct });
             }
           }
         }
+
+        // Persist all corrections as training data for future matches.
+        if (mappingCorrections.length) {
+          await supabase.from("mapping_corrections").insert(mappingCorrections.map((m) => ({
+            branch_id: branchId,
+            supplier_id: supplierId,
+            invoice_id: invoiceRow!.id,
+            parsed_text: m.parsed_text,
+            corrected_product_id: m.corrected_product_id,
+            ai_suggested_product_id: m.ai_suggested_product_id,
+            ai_similarity: m.ai_similarity,
+            match_action: m.match_action,
+          })));
+        }
       }
+
 
       // Inventory: upsert items + insert movements per received row
       for (const r of cleanItems) {
@@ -667,9 +862,10 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       unitPrice: 0,
                       totalPrice: 0,
                       category: lookupCategory(oi.name),
+                      ...blankMatch(),
                     })));
                   } else {
-                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "" }]);
+                    setRows([{ name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "", ...blankMatch() }]);
 
                   }
                   setStage("manual");
@@ -765,6 +961,40 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       className={`w-full h-11 rounded-md bg-background border-2 px-3 text-base font-bold leading-none focus:border-neon outline-none tabular-nums ${aiActive ? valBorder(headerVal.total_amount) : "border-border"}`} />
                   </div>
 
+                  {/* Estimated total from catalog cost_price × qty (with manual override) */}
+                  {(() => {
+                    const est = rows.reduce((sum, r) => {
+                      const unit = r.catalogCostPrice ?? r.unitPrice ?? 0;
+                      return sum + (Number(r.invoiceQty) || 0) * (Number(unit) || 0);
+                    }, 0);
+                    if (est <= 0) return null;
+                    return (
+                      <div className="rounded-md border border-amber-brand/40 bg-amber-brand/5 p-2 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-muted-foreground">סה״כ משוער (מחיר עלות × כמות)</span>
+                          <span className="font-bold text-amber-brand tabular-nums">₪{est.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number" step="0.01" inputMode="decimal"
+                            value={estimatedTotalOverride}
+                            onChange={(e) => setEstimatedTotalOverride(e.target.value)}
+                            placeholder="עקיפה ידנית (אופציונלי)"
+                            className="flex-1 h-8 rounded bg-background border border-border px-2 text-[11px] tabular-nums focus:border-amber-brand outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setTotalAmount(String((Number(estimatedTotalOverride) || est).toFixed(2))); markHeaderEdited("total_amount"); }}
+                            className="h-8 px-2 rounded border border-amber-brand/60 text-amber-brand text-[11px] font-bold hover:bg-amber-brand/10"
+                          >
+                            השתמש בסכום
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+
                   {chosenMatch && (
                     <div className="text-[11px] text-neon">✓ משויך להזמנה {new Date(chosenMatch.sent_at).toLocaleDateString("he-IL")} · {supplierName}</div>
                   )}
@@ -805,7 +1035,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
                             return (
-                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                              <div key={i} className={`rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                                <div className={`grid ${cols} gap-2 items-center`}>
                                 <div>
                                   <div className="flex items-center gap-1.5">
                                     <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
@@ -836,6 +1067,17 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                 <input type="number" step="0.01" value={r.totalPrice}
                                   onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
                                   className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
+                                </div>
+                                <CatalogMatchRow
+                                  row={r}
+                                  catalog={catalog}
+                                  onPick={(productId) => {
+                                    const cat = catalog.find((c) => c.id === productId);
+                                    const cost = cat?.cost_price ?? cat?.expected_price ?? cat?.price ?? null;
+                                    setRows((p) => p.map((x, idx) => idx === i ? { ...x, catalogProductId: productId, catalogCostPrice: cost, matchStatus: "manual" } : x));
+                                  }}
+                                  onMarkNew={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, catalogProductId: null, matchStatus: "new" } : x))}
+                                />
                               </div>
                             );
                           })}
@@ -847,7 +1089,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 </div>
                 <button
                   type="button"
-                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "" }])}
+                  onClick={() => setRows((p) => [...p, { name: "", orderedQty: null, invoiceQty: 0, unitPrice: 0, totalPrice: 0, category: "", ...blankMatch() }])}
                   className="mt-3 w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-border hover:border-neon hover:text-neon text-xs font-bold"
                 >
                   + הוסף שורה
@@ -939,3 +1181,83 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     </div>
   );
 }
+
+// ============================================================
+// Per-row catalog matching strip.
+// - "auto"   → green badge with matched product name
+// - "manual" → blue badge with chosen product
+// - "new"    → amber badge "will be created on save"
+// - "review"/"none" → "needs review" + product dropdown + create-new button
+// ============================================================
+function CatalogMatchRow({
+  row,
+  catalog,
+  onPick,
+  onMarkNew,
+}: {
+  row: RowPair;
+  catalog: CatalogOpt[];
+  onPick: (productId: string) => void;
+  onMarkNew: () => void;
+}) {
+  if (!row.name.trim()) return null;
+  const matchedName = row.catalogProductId
+    ? catalog.find((c) => c.id === row.catalogProductId)?.name
+    : null;
+
+  if (row.matchStatus === "auto") {
+    return (
+      <div className="mt-1.5 flex items-center justify-between gap-2 text-[10.5px] px-1">
+        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
+          ✓ זוהה בקטלוג: {matchedName}{row.matchSimilarity != null && ` (${Math.round(row.matchSimilarity * 100)}%)`}
+        </span>
+        <button type="button" onClick={onMarkNew} className="text-[10.5px] text-muted-foreground hover:text-amber-brand underline">
+          לא נכון? צור מוצר חדש
+        </button>
+      </div>
+    );
+  }
+  if (row.matchStatus === "manual") {
+    return (
+      <div className="mt-1.5 text-[10.5px] px-1 flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-sky-500/15 text-sky-400 border border-sky-500/30 font-bold">
+          🔗 שויך ידנית: {matchedName}
+        </span>
+      </div>
+    );
+  }
+  if (row.matchStatus === "new") {
+    return (
+      <div className="mt-1.5 text-[10.5px] px-1 flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-amber-brand/15 text-amber-brand border border-amber-brand/30 font-bold">
+          ＋ ייווצר כמוצר חדש בקטלוג בעת השמירה
+        </span>
+      </div>
+    );
+  }
+  // review or none → needs review
+  return (
+    <div className="mt-1.5 px-1 flex flex-col sm:flex-row gap-1.5 sm:items-center">
+      <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold text-[10.5px] shrink-0">
+        ⚠ דורש התאמה
+      </span>
+      <select
+        value={row.catalogProductId ?? ""}
+        onChange={(e) => { if (e.target.value) onPick(e.target.value); }}
+        className="flex-1 min-w-0 h-8 rounded bg-background border border-border px-2 text-[11px] focus:border-neon outline-none"
+        aria-label="בחר מוצר מהקטלוג"
+      >
+        <option value="">בחר מקטלוג הספק…</option>
+        {catalog.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+      <button
+        type="button"
+        onClick={onMarkNew}
+        className="shrink-0 inline-flex items-center gap-1 h-8 px-2 rounded border border-amber-brand/50 text-amber-brand text-[10.5px] font-bold hover:bg-amber-brand/10"
+      >
+        ＋ צור חדש
+      </button>
+    </div>
+  );
+}
+

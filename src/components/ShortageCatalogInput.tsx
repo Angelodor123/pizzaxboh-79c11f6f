@@ -19,6 +19,7 @@ type CatalogMatch = {
   supplier_id: string;
   supplier_name: string;
   image_url: string | null;
+  cost_price: number | null;
 };
 
 type Supplier = { id: string; name: string };
@@ -75,7 +76,7 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
         const branchId = await requireCurrentBranchId();
         const { data, error } = await supabase
           .from("supplier_products")
-          .select("id, name, unit, supplier_id, image_url, suppliers!inner(name)")
+          .select("id, name, unit, supplier_id, image_url, cost_price, expected_price, price, suppliers!inner(name)")
           .eq("branch_id", branchId)
           .eq("active", true)
           .ilike("name", `%${q}%`)
@@ -89,6 +90,7 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
           supplier_id: r.supplier_id,
           supplier_name: r.suppliers?.name ?? "—",
           image_url: r.image_url,
+          cost_price: r.cost_price ?? r.expected_price ?? r.price ?? null,
         }));
         setResults(rows);
       } catch (e: any) {
@@ -268,22 +270,40 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
 
       {/* Urgent toggle row when item selected */}
       {selected && (
-        <div className="mt-2 flex items-center justify-between gap-2 px-1">
-          <button
-            type="button"
-            onClick={() => setUrgent((u) => !u)}
-            aria-pressed={urgent}
-            className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border transition ${
-              urgent
-                ? "bg-neon/15 border-neon text-neon"
-                : "border-border text-muted-foreground hover:border-neon/60"
-            }`}
-          >
-            🔥 {urgent ? "מסומן כדחוף" : "סמן כדחוף"}
-          </button>
-          <div className="text-[11px] text-muted-foreground">
-            ספק: <span className="text-foreground font-bold">{selected.supplier_name}</span>
+        <div className="mt-2 space-y-1.5">
+          <div className="flex items-center justify-between gap-2 px-1">
+            <button
+              type="button"
+              onClick={() => setUrgent((u) => !u)}
+              aria-pressed={urgent}
+              className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border transition ${
+                urgent
+                  ? "bg-neon/15 border-neon text-neon"
+                  : "border-border text-muted-foreground hover:border-neon/60"
+              }`}
+            >
+              🔥 {urgent ? "מסומן כדחוף" : "סמן כדחוף"}
+            </button>
+            <div className="text-[11px] text-muted-foreground">
+              ספק: <span className="text-foreground font-bold">{selected.supplier_name}</span>
+            </div>
           </div>
+          {selected.cost_price != null && selected.cost_price > 0 && (() => {
+            const qty = Number(stock) || 0;
+            const loss = qty * selected.cost_price;
+            return (
+              <div className="px-1 flex items-center justify-between text-[11px] rounded-md border border-amber-brand/40 bg-amber-brand/5 py-1.5 px-2">
+                <span className="text-muted-foreground">
+                  עלות יחידה: <span className="text-foreground font-bold tabular-nums">₪{selected.cost_price.toFixed(2)}</span>
+                </span>
+                {qty > 0 && (
+                  <span className="font-bold text-amber-brand tabular-nums">
+                    הפסד משוער: ₪{loss.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -372,13 +392,14 @@ function QuickAddCatalogDialog({
           category,
           sku: sku.trim() || null,
           expected_price: expectedNum,
+          cost_price: expectedNum,
           price: expectedNum,
           min_stock_alert: minStockNum,
           default_qty: 1,
           active: true,
           created_by: user?.id,
         } as any)
-        .select("id, name, unit, supplier_id, image_url")
+        .select("id, name, unit, supplier_id, image_url, cost_price")
         .single();
       if (error) throw error;
       const supplier = suppliers.find((s) => s.id === supplierId);
@@ -390,6 +411,7 @@ function QuickAddCatalogDialog({
         supplier_id: data.supplier_id,
         supplier_name: supplier?.name ?? "—",
         image_url: data.image_url,
+        cost_price: (data as any).cost_price ?? expectedNum,
       });
     } catch (e: any) {
       toast.error("שמירה נכשלה: " + (e?.message ?? ""));

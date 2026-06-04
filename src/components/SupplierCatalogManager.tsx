@@ -35,6 +35,7 @@ type Draft = {
   default_qty: string;
   price: string;
   expected_price: string;
+  cost_price: string;
   category: string;
   min_stock_alert: string;
   image_url: string | null;
@@ -48,6 +49,7 @@ const EMPTY_DRAFT: Draft = {
   default_qty: "1",
   price: "",
   expected_price: "",
+  cost_price: "",
   category: "",
   min_stock_alert: "",
   image_url: null,
@@ -114,6 +116,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       default_qty: String(p.default_qty ?? 1),
       price: p.price != null ? String(p.price) : "",
       expected_price: p.expected_price != null ? String(p.expected_price) : "",
+      cost_price: p.cost_price != null ? String(p.cost_price) : "",
       category: p.category ?? "",
       min_stock_alert: p.min_stock_alert != null ? String(p.min_stock_alert) : "",
       image_url: p.image_url,
@@ -150,6 +153,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         default_qty: Number(draft.default_qty) || 1,
         price: draft.price.trim() ? Number(draft.price) : null,
         expected_price: draft.expected_price.trim() ? Number(draft.expected_price) : null,
+        cost_price: draft.cost_price.trim() ? Number(draft.cost_price) : null,
         category: draft.category.trim() || null,
         min_stock_alert: draft.min_stock_alert.trim() ? Number(draft.min_stock_alert) : null,
         image_url: draft.image_url,
@@ -314,6 +318,18 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                 className={fieldClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>מחיר עלות (₪) · מנהל</label>
+              <input
+                value={draft.cost_price}
+                onChange={(e) => setDraft({ ...draft, cost_price: e.target.value })}
+                placeholder="לחישוב עלות הזמנות וחוסרים"
+                type="number"
+                min={0}
+                step="any"
+                className={`${fieldClass} border-amber-brand/40`}
+              />
+            </div>
           </div>
 
           {/* Image upload (full width) */}
@@ -387,6 +403,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                       {p.category && <span className="text-amber-brand">{p.category} · </span>}
                       {p.unit_size || p.unit}
                       {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                      {p.cost_price != null && <> · עלות <span className="text-amber-brand font-bold">₪{p.cost_price}</span></>}
                       {p.min_stock_alert != null && <> · מלאי מינ׳: {p.min_stock_alert}</>}
                     </div>
                   </div>
