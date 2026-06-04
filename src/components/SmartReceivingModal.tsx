@@ -50,7 +50,15 @@ type RowPair = {
   unitPrice: number;
   totalPrice: number;
   category: ExpenseCategory | "";
+  // === Catalog matching (Receipt Intelligence) ===
+  catalogProductId: string | null;
+  catalogCostPrice: number | null;
+  matchSimilarity: number | null;
+  aiSuggestedProductId: string | null;
+  matchStatus: "auto" | "review" | "manual" | "new" | "none";
 };
+
+type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
 
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
 
