@@ -270,22 +270,40 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
 
       {/* Urgent toggle row when item selected */}
       {selected && (
-        <div className="mt-2 flex items-center justify-between gap-2 px-1">
-          <button
-            type="button"
-            onClick={() => setUrgent((u) => !u)}
-            aria-pressed={urgent}
-            className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border transition ${
-              urgent
-                ? "bg-neon/15 border-neon text-neon"
-                : "border-border text-muted-foreground hover:border-neon/60"
-            }`}
-          >
-            🔥 {urgent ? "מסומן כדחוף" : "סמן כדחוף"}
-          </button>
-          <div className="text-[11px] text-muted-foreground">
-            ספק: <span className="text-foreground font-bold">{selected.supplier_name}</span>
+        <div className="mt-2 space-y-1.5">
+          <div className="flex items-center justify-between gap-2 px-1">
+            <button
+              type="button"
+              onClick={() => setUrgent((u) => !u)}
+              aria-pressed={urgent}
+              className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border transition ${
+                urgent
+                  ? "bg-neon/15 border-neon text-neon"
+                  : "border-border text-muted-foreground hover:border-neon/60"
+              }`}
+            >
+              🔥 {urgent ? "מסומן כדחוף" : "סמן כדחוף"}
+            </button>
+            <div className="text-[11px] text-muted-foreground">
+              ספק: <span className="text-foreground font-bold">{selected.supplier_name}</span>
+            </div>
           </div>
+          {selected.cost_price != null && selected.cost_price > 0 && (() => {
+            const qty = Number(stock) || 0;
+            const loss = qty * selected.cost_price;
+            return (
+              <div className="px-1 flex items-center justify-between text-[11px] rounded-md border border-amber-brand/40 bg-amber-brand/5 py-1.5 px-2">
+                <span className="text-muted-foreground">
+                  עלות יחידה: <span className="text-foreground font-bold tabular-nums">₪{selected.cost_price.toFixed(2)}</span>
+                </span>
+                {qty > 0 && (
+                  <span className="font-bold text-amber-brand tabular-nums">
+                    הפסד משוער: ₪{loss.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
