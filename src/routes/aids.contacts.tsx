@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/aids/contacts")({
   head: () => ({ meta: [{ title: "אנשי קשר — עזרים" }] }),
@@ -60,14 +61,18 @@ function AidsContactsPage() {
     load();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("למחוק איש קשר?")) return;
-    const { error } = await table().delete().eq("id", id);
+  const handleDelete = async (c: Contact) => {
+    const ok = await confirmDelete({
+      title: "מחיקת איש קשר",
+      itemName: c.name,
+    });
+    if (!ok) return;
+    const { error } = await table().delete().eq("id", c.id);
     if (error) {
       toast.error("מחיקה נכשלה");
     } else {
       toast.success("נמחק");
-      setItems((prev) => prev.filter((c) => c.id !== id));
+      setItems((prev) => prev.filter((x) => x.id !== c.id));
     }
   };
 
@@ -152,7 +157,7 @@ function AidsContactsPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(c.id)}
+                      onClick={() => handleDelete(c)}
                       className="p-2 rounded-md hover:bg-red-500/15 text-muted-foreground hover:text-red-400"
                       aria-label="מחק"
                     >

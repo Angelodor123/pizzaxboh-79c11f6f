@@ -8,6 +8,7 @@ import {
   type ComplaintStatus,
 } from "@/lib/complaints-store";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmDelete } from "@/lib/confirm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -197,7 +198,11 @@ function ComplaintDetailDialog({
 
   const del = async () => {
     if (!complaint) return;
-    if (!confirm("למחוק את הפנייה לצמיתות?")) return;
+    const ok = await confirmDelete({
+      title: "מחיקת פנייה",
+      description: "למחוק את הפנייה לצמיתות? פעולה זו אינה ניתנת לשחזור.",
+    });
+    if (!ok) return;
     setDeleting(true);
     const { error } = await supabase.from("customer_complaints").delete().eq("id", complaint.id);
     setDeleting(false);

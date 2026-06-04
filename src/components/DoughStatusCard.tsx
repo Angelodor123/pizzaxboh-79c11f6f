@@ -3,6 +3,7 @@ import { Pizza, X, History, Store, Snowflake, Refrigerator, RotateCcw } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 
 interface PrepItem {
   id: string;
@@ -260,7 +261,13 @@ export function DoughStatusCard() {
 
   const handleReset = async () => {
     if (!item || !logDate || !branchId) return;
-    if (!confirm("לאפס את כמות הבצקים ל-0?")) return;
+    const ok = await confirmDelete({
+      title: "איפוס סטטוס בצקים",
+      description: "לאפס את כמות הבצקים ל-0?",
+      confirmLabel: "אפס",
+      destructive: true,
+    });
+    if (!ok) return;
     await persistCounts(0, 0, 0, 0);
     toast.success("הסטטוס אופס ל-0");
   };

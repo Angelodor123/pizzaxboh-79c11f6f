@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Package, Trash2, Upload, Loader2, Image as ImageIcon, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmDelete } from "@/lib/confirm";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -117,7 +118,14 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       min_stock_alert: p.min_stock_alert != null ? String(p.min_stock_alert) : "",
       image_url: p.image_url,
     });
+    // Scroll dialog content to top so the populated form is visible.
+    requestAnimationFrame(() => {
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+      dialog?.scrollTo({ top: 0, behavior: "smooth" });
+      toast.success(`עורך: ${p.name}`);
+    });
   };
+
 
   const cancelEdit = () => {
     setDraft(EMPTY_DRAFT);
@@ -167,9 +175,13 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     }
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("למחוק את המוצר מהקטלוג?")) return;
-    const { error } = await supabase.from("supplier_products").delete().eq("id", id);
+  const remove = async (p: SupplierProduct) => {
+    const ok = await confirmDelete({
+      title: "מחיקת מוצר מקטלוג",
+      itemName: p.name,
+    });
+    if (!ok) return;
+    const { error } = await supabase.from("supplier_products").delete().eq("id", p.id);
     if (error) {
       toast.error("מחיקה נכשלה: " + error.message);
       return;
@@ -386,7 +398,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => remove(p.id)}
+                      onClick={() => remove(p)}
                       className="h-8 w-8 grid place-content-center rounded border border-border hover:text-destructive hover:border-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
