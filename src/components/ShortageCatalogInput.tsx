@@ -76,7 +76,7 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
         const branchId = await requireCurrentBranchId();
         const { data, error } = await supabase
           .from("supplier_products")
-          .select("id, name, unit, supplier_id, image_url, suppliers!inner(name)")
+          .select("id, name, unit, supplier_id, image_url, cost_price, expected_price, price, suppliers!inner(name)")
           .eq("branch_id", branchId)
           .eq("active", true)
           .ilike("name", `%${q}%`)
@@ -90,6 +90,7 @@ export function ShortageCatalogInput({ onSubmit, placeholder }: Props) {
           supplier_id: r.supplier_id,
           supplier_name: r.suppliers?.name ?? "—",
           image_url: r.image_url,
+          cost_price: r.cost_price ?? r.expected_price ?? r.price ?? null,
         }));
         setResults(rows);
       } catch (e: any) {
