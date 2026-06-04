@@ -24,6 +24,7 @@ import {
   MessageSquareWarning,
   ShieldAlert,
   Wallet,
+  Bell,
 } from "lucide-react";
 import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
