@@ -153,6 +153,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         default_qty: Number(draft.default_qty) || 1,
         price: draft.price.trim() ? Number(draft.price) : null,
         expected_price: draft.expected_price.trim() ? Number(draft.expected_price) : null,
+        cost_price: draft.cost_price.trim() ? Number(draft.cost_price) : null,
         category: draft.category.trim() || null,
         min_stock_alert: draft.min_stock_alert.trim() ? Number(draft.min_stock_alert) : null,
         image_url: draft.image_url,
