@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Pizza, Wrench, AlertTriangle, Send, UserPlus, ListChecks, ChefHat, PackageCheck, Trophy, CalendarDays, Projector } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationTestCard } from "@/components/admin/NotificationTestCard";
 
 interface Metrics {
   doughShop: number | null;
@@ -432,6 +433,9 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
           </button>
         </div>
       </div>
+
+      {/* Notification settings & testing */}
+      <NotificationTestCard />
 
       {/* Shortcut grid to operational pages */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
