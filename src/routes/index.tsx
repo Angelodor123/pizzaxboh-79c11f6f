@@ -82,13 +82,22 @@ function OperationalDashboard() {
     };
   }, []);
 
+  // Helpers: drop instances marked as skipped or deleted via overrides.
+  const isSkipped = (eventId: string, iso: string) => {
+    const ov = overrides.find((o) => o.event_id === eventId && o.override_date === iso);
+    if (!ov) return false;
+    return ov.deleted === true || ov.order_verification_status === "skipped";
+  };
+
   const todayEvents = useMemo(() => {
     const iso = todayIso();
     const wd = new Date(iso + "T00:00:00").getDay();
     return events.filter(
-      (e) => e.event_date === iso || e.recurring_weekday === wd,
+      (e) =>
+        (e.event_date === iso || e.recurring_weekday === wd) && !isSkipped(e.id, iso),
     );
-  }, [events]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, overrides]);
 
   const tomorrowDeliveries = useMemo(() => {
     const d = new Date();
@@ -98,9 +107,11 @@ function OperationalDashboard() {
     return events.filter(
       (e) =>
         e.category === "delivery" &&
-        (e.event_date === iso || e.recurring_weekday === wd),
+        (e.event_date === iso || e.recurring_weekday === wd) &&
+        !isSkipped(e.id, iso),
     );
-  }, [events]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, overrides]);
 
   const openTasks = lists.tasks.filter((t) => !t.done).length;
   const shoppingCount = lists.shopping.filter((t) => !t.done).length;
