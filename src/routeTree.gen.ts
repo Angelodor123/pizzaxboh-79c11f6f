@@ -21,6 +21,7 @@ import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as InvoicesRouteImport } from './routes/invoices'
+import { Route as InventoryAuditRouteImport } from './routes/inventory-audit'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as CibusRouteImport } from './routes/cibus'
@@ -97,6 +98,11 @@ const MaintenanceRoute = MaintenanceRouteImport.update({
 const InvoicesRoute = InvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryAuditRoute = InventoryAuditRouteImport.update({
+  id: '/inventory-audit',
+  path: '/inventory-audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuideRoute = GuideRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
   '/guide': typeof GuideRoute
+  '/inventory-audit': typeof InventoryAuditRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
   '/guide': typeof GuideRoute
+  '/inventory-audit': typeof InventoryAuditRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
   '/guide': typeof GuideRoute
+  '/inventory-audit': typeof InventoryAuditRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
   '/my-profile': typeof MyProfileRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
     | '/cibus'
     | '/complaints'
     | '/guide'
+    | '/inventory-audit'
     | '/invoices'
     | '/maintenance'
     | '/my-profile'
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/cibus'
     | '/complaints'
     | '/guide'
+    | '/inventory-audit'
     | '/invoices'
     | '/maintenance'
     | '/my-profile'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/cibus'
     | '/complaints'
     | '/guide'
+    | '/inventory-audit'
     | '/invoices'
     | '/maintenance'
     | '/my-profile'
@@ -383,6 +395,7 @@ export interface RootRouteChildren {
   CibusRoute: typeof CibusRoute
   ComplaintsRoute: typeof ComplaintsRoute
   GuideRoute: typeof GuideRoute
+  InventoryAuditRoute: typeof InventoryAuditRoute
   InvoicesRoute: typeof InvoicesRoute
   MaintenanceRoute: typeof MaintenanceRoute
   MyProfileRoute: typeof MyProfileRoute
@@ -483,6 +496,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof InvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory-audit': {
+      id: '/inventory-audit'
+      path: '/inventory-audit'
+      fullPath: '/inventory-audit'
+      preLoaderRoute: typeof InventoryAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guide': {
@@ -647,6 +667,7 @@ const rootRouteChildren: RootRouteChildren = {
   CibusRoute: CibusRoute,
   ComplaintsRoute: ComplaintsRoute,
   GuideRoute: GuideRoute,
+  InventoryAuditRoute: InventoryAuditRoute,
   InvoicesRoute: InvoicesRoute,
   MaintenanceRoute: MaintenanceRoute,
   MyProfileRoute: MyProfileRoute,
