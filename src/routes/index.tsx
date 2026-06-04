@@ -13,6 +13,9 @@ import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 import { useBranchFeature } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
 import { PersonalTasksCard } from "@/components/PersonalTasksCard";
+import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
+import { NotificationBell } from "@/components/NotificationBell";
+import { ShiftFeedCard } from "@/components/ShiftFeedCard";
 
 
 export const Route = createFileRoute("/")({
