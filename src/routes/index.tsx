@@ -211,6 +211,12 @@ function OperationalDashboard() {
         <PersonalTasksCard />
       </div>
 
+      {/* Shift Updates Feed — branch-scoped team chat */}
+      <div className="mb-6">
+        <ShiftFeedCard />
+      </div>
+
+
 
 
       {/* Quick Access Cards */}
