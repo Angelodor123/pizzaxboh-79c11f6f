@@ -505,11 +505,15 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           else edits++;
         });
         // Items — explicit state wins; pending => fallback to OCR diff.
+        // CRITICAL: rows the user marked as "not received" are PHYSICAL delivery
+        // issues, not OCR errors. Never let them implicitly count as a negative
+        // AI signal — skip them entirely from the parsing-accuracy fallback.
         const ocrItems = parsed.items ?? [];
         cleanItems.forEach((r, idx) => {
           const s = itemVal[idx] ?? "pending";
           if (s === "approved") { approved++; return; }
           if (s === "corrected") { edits++; return; }
+          if (!r.received) return; // discrepancy, not OCR feedback
           const match = ocrItems.find((it) => looseEq(it.name, r.name));
           if (!match) { edits++; return; }
           if (!numEq(match.quantity, r.invoiceQty) || !numEq(match.unit_price, r.unitPrice)) edits++;
@@ -517,6 +521,12 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         });
       }
       const isPerfect = parsed != null && edits === 0 && approved > 0;
+      // Delivery-accuracy metrics — independent of AI parsing accuracy.
+      const deliveryTotal = cleanItems.length;
+      const deliveryReceived = cleanItems.filter((r) => r.received).length;
+      const deliveryIssues = cleanItems
+        .filter((r) => !r.received)
+        .map((r) => ({ name: r.name, reason: r.notReceivedReason ?? "missing", quantity: r.invoiceQty }));
       await supabase.from("invoice_ocr_feedback").insert({
         branch_id: branchId,
         supplier_id: supplierId,
@@ -529,8 +539,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           items: cleanItems.map((r, idx) => ({
             name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
             _val: itemVal[idx] ?? "pending",
+            _received: r.received,
+            _not_received_reason: r.notReceivedReason,
           })),
           _validation: { header: headerVal, approved, corrected: edits },
+          _delivery: { total: deliveryTotal, received: deliveryReceived, issues: deliveryIssues },
         },
         diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
       });
