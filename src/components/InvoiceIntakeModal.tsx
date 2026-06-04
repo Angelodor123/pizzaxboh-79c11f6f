@@ -404,6 +404,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       // unlike URL.createObjectURL() which may be revoked by the browser.
       const dataUrl = await fileToDataUrl(f);
       setPreviewUrl(dataUrl);
+      toast.success("התמונה נקלטה, מתחיל פענוח…");
       await saveDraftImage(DRAFT_KEY, dataUrl).catch(() => { /* ignore */ });
       persistDraft();
 
