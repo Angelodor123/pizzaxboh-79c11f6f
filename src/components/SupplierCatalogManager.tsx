@@ -167,9 +167,13 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     }
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("למחוק את המוצר מהקטלוג?")) return;
-    const { error } = await supabase.from("supplier_products").delete().eq("id", id);
+  const remove = async (p: SupplierProduct) => {
+    const ok = await confirmDelete({
+      title: "מחיקת מוצר מקטלוג",
+      itemName: p.name,
+    });
+    if (!ok) return;
+    const { error } = await supabase.from("supplier_products").delete().eq("id", p.id);
     if (error) {
       toast.error("מחיקה נכשלה: " + error.message);
       return;

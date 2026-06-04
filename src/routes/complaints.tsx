@@ -197,7 +197,11 @@ function ComplaintDetailDialog({
 
   const del = async () => {
     if (!complaint) return;
-    if (!confirm("למחוק את הפנייה לצמיתות?")) return;
+    const ok = await confirmDelete({
+      title: "מחיקת פנייה",
+      description: "למחוק את הפנייה לצמיתות? פעולה זו אינה ניתנת לשחזור.",
+    });
+    if (!ok) return;
     setDeleting(true);
     const { error } = await supabase.from("customer_complaints").delete().eq("id", complaint.id);
     setDeleting(false);
