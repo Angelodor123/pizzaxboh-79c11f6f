@@ -43,6 +43,7 @@ type Parsed = {
   document_date: string | null;
   items: OcrItem[];
 };
+type NotReceivedReason = "missing" | "damaged";
 type RowPair = {
   name: string;
   orderedQty: number | null;
@@ -56,6 +57,9 @@ type RowPair = {
   matchSimilarity: number | null;
   aiSuggestedProductId: string | null;
   matchStatus: "auto" | "review" | "manual" | "new" | "none";
+  // === Physical delivery verification (independent of AI feedback) ===
+  received: boolean;
+  notReceivedReason: NotReceivedReason | null;
 };
 
 type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
@@ -73,12 +77,14 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   r.onerror = reject;
   r.readAsDataURL(file);
 });
-const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus"> => ({
+const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus" | "received" | "notReceivedReason"> => ({
   catalogProductId: null,
   catalogCostPrice: null,
   matchSimilarity: null,
   aiSuggestedProductId: null,
   matchStatus: "none",
+  received: true,
+  notReceivedReason: null,
 });
 
 
@@ -499,11 +505,15 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           else edits++;
         });
         // Items — explicit state wins; pending => fallback to OCR diff.
+        // CRITICAL: rows the user marked as "not received" are PHYSICAL delivery
+        // issues, not OCR errors. Never let them implicitly count as a negative
+        // AI signal — skip them entirely from the parsing-accuracy fallback.
         const ocrItems = parsed.items ?? [];
         cleanItems.forEach((r, idx) => {
           const s = itemVal[idx] ?? "pending";
           if (s === "approved") { approved++; return; }
           if (s === "corrected") { edits++; return; }
+          if (!r.received) return; // discrepancy, not OCR feedback
           const match = ocrItems.find((it) => looseEq(it.name, r.name));
           if (!match) { edits++; return; }
           if (!numEq(match.quantity, r.invoiceQty) || !numEq(match.unit_price, r.unitPrice)) edits++;
@@ -511,6 +521,12 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         });
       }
       const isPerfect = parsed != null && edits === 0 && approved > 0;
+      // Delivery-accuracy metrics — independent of AI parsing accuracy.
+      const deliveryTotal = cleanItems.length;
+      const deliveryReceived = cleanItems.filter((r) => r.received).length;
+      const deliveryIssues = cleanItems
+        .filter((r) => !r.received)
+        .map((r) => ({ name: r.name, reason: r.notReceivedReason ?? "missing", quantity: r.invoiceQty }));
       await supabase.from("invoice_ocr_feedback").insert({
         branch_id: branchId,
         supplier_id: supplierId,
@@ -523,8 +539,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           items: cleanItems.map((r, idx) => ({
             name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
             _val: itemVal[idx] ?? "pending",
+            _received: r.received,
+            _not_received_reason: r.notReceivedReason,
           })),
           _validation: { header: headerVal, approved, corrected: edits },
+          _delivery: { total: deliveryTotal, received: deliveryReceived, issues: deliveryIssues },
         },
         diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
       });
@@ -708,10 +727,22 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       }
 
 
-      // Inventory: upsert items + insert movements per received row
+      // Inventory: upsert items + insert movements per RECEIVED row.
+      // Rows marked "not received" are recorded as discrepancies (shortage_items)
+      // and never touch inventory or AI feedback.
+      const discrepancyRows: Array<{ name: string; reason: NotReceivedReason; quantity: number; catalogId: string | null }> = [];
       for (const r of cleanItems) {
-        if (r.invoiceQty <= 0) continue;
         const name = r.name.trim().slice(0, 200);
+        if (!r.received) {
+          discrepancyRows.push({
+            name,
+            reason: r.notReceivedReason ?? "missing",
+            quantity: r.orderedQty ?? r.invoiceQty ?? 0,
+            catalogId: catalogIdByName.get(name) ?? r.catalogProductId ?? null,
+          });
+          continue;
+        }
+        if (r.invoiceQty <= 0) continue;
         let invId: string | null = null;
         const { data: existing } = await supabase
           .from("inventory_items")
@@ -744,6 +775,21 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             note: chosenMatch ? `התקבל מהזמנה #${chosenMatch.order_id.slice(0, 8)}` : "קליטה ידנית",
           });
         }
+      }
+
+      // Discrepancy report — open shortage tickets for the missing/damaged items.
+      if (discrepancyRows.length) {
+        const reasonLabel: Record<NotReceivedReason, string> = { missing: "חסר במשלוח", damaged: "פגום / לא תקין" };
+        await supabase.from("shortage_items").insert(discrepancyRows.map((d) => ({
+          branch_id: branchId,
+          name: d.name,
+          quantity: d.quantity,
+          unit: "",
+          notes: `${reasonLabel[d.reason]} · חשבונית ${invoiceNumber.trim() || invoiceRow!.id.slice(0, 8)} · ${supplierName || "ספק"}`,
+          catalog_item_id: d.catalogId,
+          status: "open",
+        })));
+        toast.warning(`📋 נפתח דוח חריגות עבור ${discrepancyRows.length} פריט(ים) שלא הגיעו`, { duration: 7000 });
       }
 
       // Surface price-change alerts so the manager sees them right after save
@@ -1035,13 +1081,50 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
                             return (
-                              <div key={i} className={`rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                              <div key={i} className={`rounded-md p-1.5 border ${isExtra ? "bg-amber-brand/5 border-amber-brand/30" : "border-border/60"} ${rowRing} ${!r.received ? "bg-rose-500/5 border-rose-500/40" : ""}`}>
+                                {/* ZONE A — Physical delivery verification (independent of AI feedback) */}
+                                <div className="flex items-center flex-wrap gap-2 pb-1.5 mb-1.5 border-b border-border/40">
+                                  <label className="inline-flex items-center gap-1.5 text-[11px] font-bold cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={r.received}
+                                      onChange={(e) => {
+                                        const v = e.target.checked;
+                                        setRows((p) => p.map((x, idx) => idx === i ? { ...x, received: v, notReceivedReason: v ? null : (x.notReceivedReason ?? "missing") } : x));
+                                      }}
+                                      className="h-4 w-4 accent-emerald-500"
+                                    />
+                                    <span className={r.received ? "text-emerald-400" : "text-rose-400"}>
+                                      {r.received ? "✓ הגיע" : "✗ לא הגיע"}
+                                    </span>
+                                  </label>
+                                  {!r.received && (
+                                    <select
+                                      value={r.notReceivedReason ?? "missing"}
+                                      onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, notReceivedReason: e.target.value as NotReceivedReason } : x))}
+                                      className="h-7 rounded bg-background border border-rose-500/50 text-rose-300 px-2 text-[11px] focus:border-rose-400 outline-none"
+                                      aria-label="סיבה"
+                                    >
+                                      <option value="missing">חסר במשלוח</option>
+                                      <option value="damaged">פגום / לא תקין</option>
+                                    </select>
+                                  )}
+                                  {!r.received && (
+                                    <span className="text-[10px] text-rose-300/80">לא יתעדכן במלאי · ייפתח דוח חריגה</span>
+                                  )}
+                                </div>
+
                                 <div className={`grid ${cols} gap-2 items-center`}>
                                 <div>
                                   <div className="flex items-center gap-1.5">
                                     <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
                                       className={`flex-1 min-w-0 h-10 rounded bg-background border px-2 text-xs leading-none ${aiActive ? valBorder(rowState) : "border-border"}`} />
-                                    {aiActive && <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />}
+                                    {aiActive && (
+                                      <div className="inline-flex items-center gap-1 shrink-0" title="משוב לזיהוי AI בלבד — לא משנה סטטוס אספקה">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">AI</span>
+                                        <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />
+                                      </div>
+                                    )}
                                   </div>
                                   <select
                                     value={r.category}

@@ -23,6 +23,13 @@ interface SupplierStat {
   xp: number;
   invoices: number;
   streak: number;
+  // === Dual metrics ===
+  // Parsing Accuracy: based on user 👍/👎 OCR feedback (approved / total graded).
+  parsingApproved: number;
+  parsingTotal: number;
+  // Delivery Accuracy: based on Received vs Not-Received checkboxes.
+  deliveryReceived: number;
+  deliveryTotal: number;
 }
 
 const LEVEL_NAMES = ["מתחיל", "חניך", "מומחה", "וירטואוז", "מאסטר"];
@@ -89,17 +96,34 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
         if (r.diff_summary === "perfect") streak += 1;
         else break;
       }
+      // Aggregate dual metrics from final_data._validation and final_data._delivery.
+      let parsingApproved = 0, parsingTotal = 0, deliveryReceived = 0, deliveryTotal = 0;
+      for (const r of arr) {
+        const fd = (r.final_data ?? {}) as { _validation?: { approved?: number; corrected?: number }; _delivery?: { received?: number; total?: number } };
+        const v = fd._validation;
+        if (v && (Number(v.approved) || 0) + (Number(v.corrected) || 0) > 0) {
+          parsingApproved += Number(v.approved) || 0;
+          parsingTotal += (Number(v.approved) || 0) + (Number(v.corrected) || 0);
+        }
+        const d = fd._delivery;
+        if (d && Number(d.total) > 0) {
+          deliveryReceived += Number(d.received) || 0;
+          deliveryTotal += Number(d.total) || 0;
+        }
+      }
       result.push({
         supplier_id: sid,
         name: suppliers.find((s) => s.id === sid)?.name ?? "ספק לא ידוע",
         xp,
         invoices: arr.length,
         streak,
+        parsingApproved, parsingTotal,
+        deliveryReceived, deliveryTotal,
       });
     }
     for (const s of suppliers) {
       if (!bySup.has(s.id)) {
-        result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0 });
+        result.push({ supplier_id: s.id, name: s.name, xp: 0, invoices: 0, streak: 0, parsingApproved: 0, parsingTotal: 0, deliveryReceived: 0, deliveryTotal: 0 });
       }
     }
     result.sort((a, b) => b.xp - a.xp);
@@ -174,6 +198,34 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
                     {s.streak} ברצף מושלם
                   </div>
                 )}
+
+                {/* Dual metrics — parsing accuracy (AI 👍/👎) vs delivery accuracy (Received/Not). */}
+                <div className="grid grid-cols-2 gap-2">
+                  {(() => {
+                    const pPct = s.parsingTotal > 0 ? Math.round((s.parsingApproved / s.parsingTotal) * 100) : null;
+                    const dPct = s.deliveryTotal > 0 ? Math.round((s.deliveryReceived / s.deliveryTotal) * 100) : null;
+                    const tone = (pct: number | null) =>
+                      pct == null ? "border-border text-muted-foreground bg-background/40"
+                        : pct >= 90 ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/5"
+                        : pct >= 70 ? "border-amber-brand/40 text-amber-brand bg-amber-brand/5"
+                        : "border-rose-500/40 text-rose-400 bg-rose-500/5";
+                    return (
+                      <>
+                        <div className={`rounded-md border px-2 py-1.5 ${tone(pPct)}`}>
+                          <div className="text-[9px] uppercase tracking-wider font-bold opacity-80">דיוק קליטה (AI)</div>
+                          <div className="text-base font-bold tabular-nums">{pPct == null ? "—" : `${pPct}%`}</div>
+                          <div className="text-[9px] opacity-70 tabular-nums">{s.parsingApproved}/{s.parsingTotal} שדות</div>
+                        </div>
+                        <div className={`rounded-md border px-2 py-1.5 ${tone(dPct)}`}>
+                          <div className="text-[9px] uppercase tracking-wider font-bold opacity-80">דיוק אספקה</div>
+                          <div className="text-base font-bold tabular-nums">{dPct == null ? "—" : `${dPct}%`}</div>
+                          <div className="text-[9px] opacity-70 tabular-nums">{s.deliveryReceived}/{s.deliveryTotal} פריטים</div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
 
                 <div className="flex gap-2">
                   <button
