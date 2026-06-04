@@ -19,8 +19,7 @@ function relTime(iso: string): string {
 function NotificationsPage() {
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
-  const { items, unreadCount, markAllRead, markRead, loading } =
-    useNotifications(userId) as ReturnType<typeof useNotifications> & { loading?: boolean };
+  const { items, unreadCount, markAllRead, markRead, loading } = useNotifications(userId);
 
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
