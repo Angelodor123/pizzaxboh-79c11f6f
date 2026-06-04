@@ -20,7 +20,9 @@ import {
   ShieldAlert,
   Wallet,
   Bell,
+  ClipboardList,
 } from "lucide-react";
+
 import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
 import { useIsModiinBranch } from "@/lib/active-branch";
