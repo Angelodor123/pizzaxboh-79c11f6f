@@ -43,6 +43,7 @@ type Parsed = {
   document_date: string | null;
   items: OcrItem[];
 };
+type NotReceivedReason = "missing" | "damaged";
 type RowPair = {
   name: string;
   orderedQty: number | null;
@@ -56,6 +57,9 @@ type RowPair = {
   matchSimilarity: number | null;
   aiSuggestedProductId: string | null;
   matchStatus: "auto" | "review" | "manual" | "new" | "none";
+  // === Physical delivery verification (independent of AI feedback) ===
+  received: boolean;
+  notReceivedReason: NotReceivedReason | null;
 };
 
 type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
@@ -73,12 +77,14 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   r.onerror = reject;
   r.readAsDataURL(file);
 });
-const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus"> => ({
+const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus" | "received" | "notReceivedReason"> => ({
   catalogProductId: null,
   catalogCostPrice: null,
   matchSimilarity: null,
   aiSuggestedProductId: null,
   matchStatus: "none",
+  received: true,
+  notReceivedReason: null,
 });
 
 
