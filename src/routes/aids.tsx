@@ -1,176 +1,89 @@
-import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Search, Info, ChevronDown, Package } from "lucide-react";
-import { SUPPLIER_AIDS, type SupplierAid } from "@/lib/aids-suppliers";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, Package, BookOpen, Sparkles, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/aids")({
   head: () => ({
     meta: [
-      { title: "עזרים — תקני ספקים" },
-      { name: "description", content: "קטלוג ספקים ותקני הזמנה תפעוליים." },
+      { title: "עזרים — ספרייה דיגיטלית" },
+      { name: "description", content: "ספרייה דיגיטלית: ספקים, מתכונים, ניקיון ותפעול." },
     ],
   }),
-  component: AidsPage,
+  component: AidsHubPage,
 });
 
-function AidsPage() {
-  const [query, setQuery] = useState("");
-  const [openId, setOpenId] = useState<string | null>(SUPPLIER_AIDS[0]?.id ?? null);
+type Folder = {
+  title: string;
+  emoji: string;
+  Icon: typeof Package;
+  to: string;
+  accent: string;
+};
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return SUPPLIER_AIDS;
-    return SUPPLIER_AIDS.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q) ||
-        s.rows.some((r) => r.name.toLowerCase().includes(q)),
-    );
-  }, [query]);
+const FOLDERS: Folder[] = [
+  {
+    title: "ספקים ותקנים",
+    emoji: "📦",
+    Icon: Package,
+    to: "/aids/suppliers",
+    accent: "from-neon/20 to-neon/5 border-neon/40 text-neon",
+  },
+  {
+    title: "ספרי מתכונים",
+    emoji: "📖",
+    Icon: BookOpen,
+    to: "/recipes",
+    accent: "from-amber-500/20 to-amber-500/5 border-amber-500/40 text-amber-300",
+  },
+  {
+    title: "נהלי ניקיון",
+    emoji: "🧹",
+    Icon: Sparkles,
+    to: "/aids/cleaning",
+    accent: "from-sky-500/20 to-sky-500/5 border-sky-500/40 text-sky-300",
+  },
+  {
+    title: "תפעול ומכשור",
+    emoji: "🛠️",
+    Icon: Wrench,
+    to: "/aids/operations",
+    accent: "from-violet-500/20 to-violet-500/5 border-violet-500/40 text-violet-300",
+  },
+];
 
+function AidsHubPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mx-auto max-w-3xl px-4 py-6">
         <header className="mb-6">
-          <h1 className="text-2xl font-extrabold flex items-center gap-2">
-            <span className="p-2 rounded-md bg-neon/10 text-neon">
-              <Package className="h-6 w-6" />
-            </span>
-            עזרים — תקני ספקים
-          </h1>
+          <h1 className="text-2xl font-extrabold">📚 עזרים</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            קטלוג ספקים, מוצרים ותקני הזמנה. חיפוש לפי שם ספק, קטגוריה או מוצר.
+            ספרייה דיגיטלית — בחר קטגוריה כדי להיכנס לתוכן.
           </p>
         </header>
 
-        <div className="relative mb-5">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="חפש ספק / מוצר / קטגוריה..."
-            className="w-full pr-10 pl-3 py-2.5 rounded-xl bg-card/60 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-neon/40"
-          />
-        </div>
-
-        <div className="space-y-3">
-          {filtered.length === 0 && (
-            <div className="rounded-xl border border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-              לא נמצאו ספקים התואמים לחיפוש.
-            </div>
-          )}
-          {filtered.map((s) => (
-            <SupplierCard
-              key={s.id}
-              supplier={s}
-              open={openId === s.id}
-              onToggle={() => setOpenId((cur) => (cur === s.id ? null : s.id))}
-            />
+        <div className="grid grid-cols-2 gap-4">
+          {FOLDERS.map((f) => (
+            <Link
+              key={f.title}
+              to={f.to}
+              className={`group relative rounded-2xl border-2 bg-gradient-to-br ${f.accent} p-4 min-h-[140px] flex flex-col justify-between hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg`}
+            >
+              <div className="flex items-start justify-between">
+                <span className="text-3xl leading-none">{f.emoji}</span>
+                <f.Icon className="h-5 w-5 opacity-70" />
+              </div>
+              <div>
+                <div className="text-base font-extrabold text-foreground leading-tight">
+                  {f.title}
+                </div>
+                <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold opacity-80">
+                  פתח <ArrowRight className="h-3 w-3 rotate-180" />
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function SupplierCard({
-  supplier,
-  open,
-  onToggle,
-}: {
-  supplier: SupplierAid;
-  open: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card/60 overflow-hidden">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/40 transition"
-      >
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="font-bold text-foreground">{supplier.name}</div>
-            <div className="text-[11px] text-muted-foreground">
-              {supplier.category} · {supplier.rows.length} פריטים
-            </div>
-          </div>
-        </div>
-        <ChevronDown
-          className={`h-5 w-5 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 pt-1">
-          {supplier.callout && (
-            <div className="mb-3 flex gap-2 items-start rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
-              <Info className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{supplier.callout}</span>
-            </div>
-          )}
-          <SupplierTable supplier={supplier} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SupplierTable({ supplier }: { supplier: SupplierAid }) {
-  const cellBase = "px-3 py-2 text-sm border-b border-border/60";
-  const headBase =
-    "px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-zinc-900/40 text-right";
-
-  if (supplier.kind === "static") {
-    return (
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-right">
-          <thead>
-            <tr>
-              <th className={headBase}>שם מוצר</th>
-              <th className={`${headBase} w-32`}>תקן</th>
-            </tr>
-          </thead>
-          <tbody>
-            {supplier.rows.map((r, i) => (
-              <tr key={i} className="hover:bg-zinc-800/30">
-                <td className={`${cellBase} font-medium`}>{r.name}</td>
-                <td className={`${cellBase} text-muted-foreground`}>{r.standard}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full text-right">
-        <thead>
-          <tr>
-            <th className={headBase}>שם מוצר</th>
-            {supplier.days.map((d) => (
-              <th key={d} className={`${headBase} w-28`}>
-                {d}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {supplier.rows.map((r, i) => (
-            <tr key={i} className="hover:bg-zinc-800/30">
-              <td className={`${cellBase} font-medium`}>{r.name}</td>
-              {supplier.days.map((d) => (
-                <td key={d} className={`${cellBase} text-muted-foreground`}>
-                  {r.amounts[d] ?? "—"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

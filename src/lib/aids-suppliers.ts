@@ -1,158 +1,68 @@
 // Static catalog of supplier ordering standards (תקנים) for the "עזרים" view.
 // Two table shapes:
-//  - "static":  columns = שם מוצר, תקן
-//  - "split":   columns = שם מוצר + per-day amounts (e.g. ראשון / רביעי)
+//  - "static":     columns = שם מוצר, כמות יעד
+//  - "split_days": columns = שם מוצר + per-day amounts (e.g. ראשון / רביעי)
 
-export type StaticRow = { name: string; standard: string };
-export type SplitRow = { name: string; amounts: Record<string, string> };
+export type StaticItem = { item: string; amount: string | number };
+export type SplitDays = Record<string, StaticItem[]>;
 
 export type SupplierAid =
   | {
-      id: string;
-      name: string;
-      category: string;
-      kind: "static";
+      supplier: string;
+      category?: string;
+      type: "static";
       callout?: string;
-      rows: StaticRow[];
+      items: StaticItem[];
     }
   | {
-      id: string;
-      name: string;
-      category: string;
-      kind: "split";
-      days: string[]; // e.g. ["ראשון", "רביעי"]
+      supplier: string;
+      category?: string;
+      type: "split_days";
       callout?: string;
-      rows: SplitRow[];
+      days: SplitDays;
     };
 
 export const SUPPLIER_AIDS: SupplierAid[] = [
   {
-    id: "gaash",
-    name: "מחלבת געש",
+    supplier: "מחלבת געש",
     category: "מחלבה",
-    kind: "split",
-    days: ["ראשון", "רביעי"],
+    type: "split_days",
     callout:
       "עדכוני כמויות בהתאם לנפח עבודה מבצעים על הזמנת יום רביעי.",
-    rows: [
-      { name: "מוצרלה מגורדת", amounts: { "ראשון": "—", "רביעי": "—" } },
-      { name: "שמנת לבישול", amounts: { "ראשון": "—", "רביעי": "—" } },
-      { name: "מוצרלה פרסקה", amounts: { "ראשון": "—", "רביעי": "—" } },
-      { name: "בושה עיזים", amounts: { "ראשון": "—", "רביעי": "—" } },
-      { name: "גבינה בולגרית", amounts: { "ראשון": "—", "רביעי": "—" } },
-      { name: "מסקרפונה", amounts: { "ראשון": "—", "רביעי": "—" } },
-      { name: "מוצרלה נאפולי", amounts: { "ראשון": "—", "רביעי": "—" } },
-    ],
+    days: {
+      "ראשון": [
+        { item: "מוצרלה מגורדת", amount: 35 },
+        { item: "שמנת לבישול", amount: 3 },
+        { item: "מוצרלה פרסקה", amount: 2 },
+        { item: "בושה עיזים", amount: 2 },
+      ],
+      "רביעי": [
+        { item: "מוצרלה מגורדת", amount: 55 },
+        { item: "שמנת לבישול", amount: 8 },
+        { item: "מוצרלה פרסקה", amount: 5 },
+        { item: "מוצרלה נאפולי", amount: 5 },
+      ],
+    },
   },
   {
-    id: "benedict",
-    name: "מאפיית בנדיקט",
-    category: "מאפייה",
-    kind: "split",
-    days: ["ראשון", "רביעי"],
-    callout: "כמויות הבצק מתעדכנות לפי חיזוי הביקוש השבועי.",
-    rows: [{ name: "בצק 440 גרם", amounts: { "ראשון": "—", "רביעי": "—" } }],
-  },
-  {
-    id: "yshavi",
-    name: "י.שבי (יבשים)",
+    supplier: "י.שבי",
     category: "יבשים",
-    kind: "static",
-    rows: [
-      { name: "נוטלה", standard: "—" },
-      { name: "שוקולד לבן", standard: "—" },
-      { name: "קרם קינדר", standard: "—" },
-      { name: "קרם פיסטוק", standard: "—" },
-      { name: "קרם תות", standard: "—" },
-      { name: "קרם קרמל", standard: "—" },
-      { name: "סוכר", standard: "—" },
-      { name: "מלח", standard: "—" },
-      { name: "שום גבישי", standard: "—" },
-      { name: "אורגנו", standard: "—" },
-      { name: "צ׳ילי / שטה גרוס", standard: "—" },
-      { name: "דבש", standard: "—" },
-      { name: "פלפל גרוס", standard: "—" },
-      { name: "פפריקה מעושנת", standard: "—" },
-      { name: "שמן סויה", standard: "—" },
-      { name: "מיונז הלמנס", standard: "—" },
-      { name: "חרדל דיז׳ון", standard: "—" },
-      { name: "חרדל חלק", standard: "—" },
-      { name: "מיץ לימון", standard: "—" },
-      { name: "תירס", standard: "—" },
+    type: "static",
+    items: [
+      { item: "נוטלה", amount: "6 קרטונים" },
+      { item: "שוקולד לבן", amount: "3 יחידות" },
+      { item: "קרם פיסטוק", amount: "6 יחידות" },
+      { item: "סוכר", amount: "4 מארזים" },
     ],
   },
   {
-    id: "tzach",
-    name: "צח ייבוא ושיווק",
+    supplier: "צח סחר",
     category: "ייבוא",
-    kind: "static",
-    rows: [{ name: "אבקת מסקרפונה", standard: "—" }],
-  },
-  {
-    id: "israko",
-    name: "ישראקו",
-    category: "יבשים",
-    kind: "static",
-    rows: [
-      { name: "—", standard: "—" },
+    type: "static",
+    items: [
+      { item: "פח שמן זית", amount: 3 },
+      { item: "קמח פיצה", amount: 20 },
+      { item: "עגבניות פולפה", amount: 10 },
     ],
-  },
-  {
-    id: "anshey-hazait",
-    name: "אנשי הזית",
-    category: "שמן וזיתים",
-    kind: "static",
-    rows: [
-      { name: "עגבניות סן מרזנו", standard: "—" },
-      { name: "עגבניות שלמות מקולפות", standard: "—" },
-      { name: "שמן זית", standard: "—" },
-      { name: "מחית פטריות כמהין", standard: "—" },
-      { name: "מלח פלור דה סלור", standard: "—" },
-    ],
-  },
-  {
-    id: "radex",
-    name: "רדקס",
-    category: "משקאות",
-    kind: "static",
-    callout: "הזמנת חביות בתיאום מראש בלבד.",
-    rows: [
-      { name: "ארדינגר (חביות)", standard: "—" },
-      { name: "קסטיל רוז׳ (חביות)", standard: "—" },
-      { name: "באדווייזר (חביות)", standard: "—" },
-      { name: "בלון גז", standard: "—" },
-    ],
-  },
-  {
-    id: "merkazit",
-    name: "החברה המרכזית",
-    category: "משקאות",
-    kind: "static",
-    rows: [
-      { name: "זכוכית קולה", standard: "—" },
-      { name: "זכוכית זירו", standard: "—" },
-      { name: "זכוכית פאנטה", standard: "—" },
-    ],
-  },
-  {
-    id: "pastateria",
-    name: "פסטטריה",
-    category: "פסטה",
-    kind: "static",
-    rows: [{ name: "פפרדלה", standard: "—" }],
-  },
-  {
-    id: "fresh-pasta",
-    name: "פרש פסטה",
-    category: "פסטה",
-    kind: "static",
-    rows: [{ name: "ארנצ׳יני", standard: "—" }],
-  },
-  {
-    id: "sheleg",
-    name: "שלג",
-    category: "אריזה",
-    kind: "static",
-    rows: [{ name: "קרטונים", standard: "—" }],
   },
 ];

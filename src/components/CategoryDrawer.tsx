@@ -1,6 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { useCookbookStore } from "@/lib/store";
-import { recipeToMenuCategory, isMenuItem } from "@/lib/menu-categories";
+import { useState, useEffect } from "react";
 import { Pencil, Check, X, Download } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,13 +8,10 @@ import {
   Menu,
   Settings,
   LogOut,
-  ChevronDown,
   NotebookPen,
   CalendarDays,
   Truck,
   Home,
-  ChefHat,
-  UtensilsCrossed,
   ListChecks,
   Package,
   UserCircle,
@@ -24,11 +19,11 @@ import {
   MessageSquareWarning,
   ShieldAlert,
   Wallet,
+  Bell,
 } from "lucide-react";
 import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
 import { useIsModiinBranch } from "@/lib/active-branch";
-
 
 import {
   Sheet,
@@ -37,47 +32,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { categoryLabels, type RecipeCategory } from "@/lib/cookbook";
-import {
-  BACK_OF_HOUSE_CATEGORIES,
-  menuCategoryEmoji,
-  menuCategoryLabels,
-  menuCategoryOrder,
-  type MenuCategory,
-} from "@/lib/menu-categories";
 import { useUIStore } from "@/lib/ui-store";
 import { useAuth } from "@/lib/auth";
 
-const RECIPE_EMOJI: Record<RecipeCategory, string> = {
-  dishes: "🍕",
-  sauces_bases: "🍅",
-  aiolis_sauces: "🍯",
-  jams_creams: "🥘",
-  starters: "🌽",
-  spices: "🧂",
-  croutons: "🥖",
-  desserts: "🍪",
-  pastas: "🍝",
-  authentic_pastas: "🇮🇹",
-  salads: "🥗",
-};
-
-// Static catalog of all known categories — actual sidebar list is filtered
-// dynamically below based on what's present in the live recipes table.
-const ALL_RECIPE_CATEGORIES = BACK_OF_HOUSE_CATEGORIES.map((key) => ({
-  key,
-  emoji: RECIPE_EMOJI[key],
-  label: categoryLabels[key],
-}));
-
-const ALL_MENU_CATEGORIES = menuCategoryOrder.map((key) => ({
-  key,
-  emoji: menuCategoryEmoji[key],
-  label: menuCategoryLabels[key],
-}));
-
 // Shared item classes for consistent padding + modern hover.
-// RTL: text anchors to the right (start), icon anchors to the far left (end).
 const itemClass =
   "flex w-full items-center justify-between gap-3 px-4 py-2 mx-2 my-0.5 rounded-lg text-base font-bold text-foreground hover:bg-zinc-800/80 hover:text-neon transition-colors";
 
@@ -90,15 +48,9 @@ function GroupDivider() {
   return <div className="border-t border-zinc-800/50 mx-2 my-2" />;
 }
 
+
 export function CategoryDrawer() {
-  const {
-    category,
-    menuCategory,
-    drawerOpen,
-    setCategory,
-    openDishes,
-    setDrawerOpen,
-  } = useUIStore();
+  const { drawerOpen, setDrawerOpen } = useUIStore();
   const {
     session,
     email,
@@ -111,8 +63,6 @@ export function CategoryDrawer() {
     signOut,
     refreshRole,
   } = useAuth();
-  const [recipesOpen, setRecipesOpen] = useState(false);
-  const [dishesOpen, setDishesOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -120,27 +70,6 @@ export function CategoryDrawer() {
   const newComplaintCount = useNewComplaintCount();
   const isModiinBranch = useIsModiinBranch();
   const { canInstall, promptInstall } = useInstallPrompt();
-
-  // Dynamically filter sidebar categories to only those with ≥1 active item
-  // in the live recipes store. Empty categories are hidden entirely.
-  const recipes = useCookbookStore((s) => s.recipes);
-  const { RECIPE_CATEGORIES, MENU_CATEGORIES } = useMemo(() => {
-    const active = recipes.filter((r) => !r.deleted);
-    const recipeCounts = new Map<RecipeCategory, number>();
-    const menuCounts = new Map<MenuCategory, number>();
-    for (const r of active) {
-      if (isMenuItem(r)) {
-        const mc = recipeToMenuCategory(r);
-        menuCounts.set(mc, (menuCounts.get(mc) ?? 0) + 1);
-      } else {
-        recipeCounts.set(r.category, (recipeCounts.get(r.category) ?? 0) + 1);
-      }
-    }
-    return {
-      RECIPE_CATEGORIES: ALL_RECIPE_CATEGORIES.filter((c) => (recipeCounts.get(c.key) ?? 0) > 0),
-      MENU_CATEGORIES: ALL_MENU_CATEGORIES.filter((c) => (menuCounts.get(c.key) ?? 0) > 0),
-    };
-  }, [recipes]);
 
   useEffect(() => {
     if (!editingName) setNameDraft(fullName ?? "");
@@ -168,17 +97,12 @@ export function CategoryDrawer() {
     setEditingName(false);
   };
 
-  // Effective role mapping for menu visibility. Uses the *effective* values
-  // from useAuth() so "View As" simulation immediately rewires the menu.
-  // - admin role + super admin flag → super_admin (all groups)
-  // - admin role only               → manager     (groups A + B)
-  // - viewer / null                 → employee    (group A only)
+  // Admin group visible for both manager and super_admin (per spec).
   const isSuperAdmin = effIsSuperAdmin;
   const isManager = role === "admin" && !effIsSuperAdmin;
-  const canSeeLogistics = isSuperAdmin || isManager;
-  const canSeeManagement = isSuperAdmin;
-  const isDishesView = category === "dishes";
+  const canSeeManagement = isSuperAdmin || isManager;
   const close = () => setDrawerOpen(false);
+
 
   return (
     <>
@@ -200,25 +124,43 @@ export function CategoryDrawer() {
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
-        <SheetHeader className="px-6 py-5 pl-14 border-b border-zinc-800/60 flex flex-row items-center justify-between gap-4 text-right space-y-0">
-          <SheetTitle className="font-display text-xl text-foreground flex-1 text-right">
-            תפריט
+        <SheetHeader className="px-6 py-5 pl-14 border-b border-zinc-800/60 text-right space-y-1">
+          <SheetTitle className="font-display text-2xl text-neon flex-1 text-right tracking-tight">
+            🍕 Pizza X
           </SheetTitle>
+          <div className="text-xs text-muted-foreground">
+            שלום, <span className="text-foreground font-bold">{fullName?.trim() || email || "אורח"}</span>
+          </div>
         </SheetHeader>
 
         <nav className="flex-1 overflow-y-auto py-2">
-          {/* ───── Group A: מטבח ותפעול ───── */}
-          <div className={groupLabelClass}>מטבח ותפעול</div>
+          {/* ───── Group 1: עבודה שוטפת ───── */}
+          <div className={groupLabelClass}>עבודה שוטפת</div>
           <ul className="flex flex-col">
             <li>
               <Link to="/" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">🏠 דף הבית</span>
+                <span className="flex-1 text-right">🏠 פנקס יומי</span>
                 <span className={iconWrap}><Home className="h-5 w-5" /></span>
               </Link>
             </li>
-
-
-
+            <li>
+              <Link to="/aids" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📚 עזרים</span>
+                <span className={iconWrap}><Package className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/calendar" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📅 יומן הזמנות</span>
+                <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/orders" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📦 קבלת סחורה</span>
+                <span className={iconWrap}><Truck className="h-5 w-5" /></span>
+              </Link>
+            </li>
             <li>
               <Link to="/tasks" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">✅ משימות יומיות</span>
@@ -227,196 +169,66 @@ export function CategoryDrawer() {
             </li>
             <li>
               <Link to="/notebook" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">📋 פנקס עבודה יומי</span>
+                <span className="flex-1 text-right">📋 פנקס עבודה</span>
                 <span className={iconWrap}><NotebookPen className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
               <Link to="/maintenance" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">🛠️ פתיחת קריאת שירות</span>
+                <span className="flex-1 text-right">🛠️ קריאת שירות</span>
                 <span className={iconWrap}><Wrench className="h-5 w-5" /></span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/aids" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">📚 עזרים — תקני ספקים</span>
-                <span className={iconWrap}><Package className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
               <button
                 type="button"
-                onClick={() => {
-                  setComplaintOpen(true);
-                  close();
-                }}
+                onClick={() => { setComplaintOpen(true); close(); }}
                 className={itemClass}
               >
-                <span className="flex-1 text-right">📞 פתיחת תלונה ללקוח</span>
+                <span className="flex-1 text-right">📞 פתיחת תלונה</span>
                 <span className={iconWrap}><MessageSquareWarning className="h-5 w-5" /></span>
               </button>
             </li>
             {isModiinBranch && (
               <li>
                 <Link to="/cibus" onClick={close} className={itemClass}>
-                  <span className="flex-1 text-right">💳 ניהול צבירות סיבוס</span>
+                  <span className="flex-1 text-right">💳 צבירות סיבוס</span>
                   <span className={iconWrap}><Wallet className="h-5 w-5" /></span>
                 </Link>
               </li>
             )}
+          </ul>
 
-
-
-
+          {/* ───── Group 2: אזור אישי ───── */}
+          <GroupDivider />
+          <div className={groupLabelClass}>אזור אישי</div>
+          <ul className="flex flex-col">
             <li>
-              <button
-                type="button"
-                onClick={() => setDishesOpen((o) => !o)}
-                aria-expanded={dishesOpen}
-                className={`w-full ${itemClass} ${
-                  isDishesView ? "bg-neon/10 text-neon" : ""
-                }`}
-              >
-                <ChevronDown
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${
-                    dishesOpen ? "rotate-180" : ""
-                  }`}
-                />
-                <span className="flex-1 text-right">🍽️ תפריט המנות</span>
-                <span className={iconWrap}><UtensilsCrossed className="h-5 w-5" /></span>
-              </button>
-              {dishesOpen && (
-                <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
-                  <li>
-                    <Link
-                      to="/recipes"
-                      onClick={() => openDishes("all")}
-                      className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
-                        isDishesView && menuCategory === "all"
-                          ? "bg-neon/10 text-neon border-neon"
-                          : "text-foreground border-transparent hover:text-neon"
-                      }`}
-                    >
-                      <span className="flex-1 text-right">🍽️ כל המנות</span>
-                    </Link>
-                  </li>
-                  {MENU_CATEGORIES.map((it) => {
-                    const active = isDishesView && menuCategory === it.key;
-                    return (
-                      <li key={it.key}>
-                        <Link
-                          to="/recipes"
-                          onClick={() => openDishes(it.key)}
-                          className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
-                            active
-                              ? "bg-neon/10 text-neon border-neon"
-                              : "text-foreground border-transparent hover:text-neon"
-                          }`}
-                        >
-                          <span className="flex-1 text-right">
-                            {it.emoji} {it.label}
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              <Link to="/my-profile" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">👤 הפרופיל שלי</span>
+                <span className={iconWrap}><UserCircle className="h-5 w-5" /></span>
+              </Link>
             </li>
-
             <li>
-              <button
-                type="button"
-                onClick={() => setRecipesOpen((o) => !o)}
-                aria-expanded={recipesOpen}
-                className={`w-full ${itemClass}`}
-              >
-                <ChevronDown
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${
-                    recipesOpen ? "rotate-180" : ""
-                  }`}
-                />
-                <span className="flex-1 text-right">📖 ספר מתכונים</span>
-                <span className={iconWrap}><ChefHat className="h-5 w-5" /></span>
-              </button>
-              {recipesOpen && (
-                <ul className="bg-background/40 border-y border-zinc-800/50 my-1">
-                  <li>
-                    <Link
-                      to="/recipes"
-                      onClick={() => {
-                        setCategory("all");
-                        close();
-                      }}
-                      className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
-                        category === "all"
-                          ? "bg-neon/10 text-neon border-neon"
-                          : "text-foreground border-transparent hover:text-neon"
-                      }`}
-                    >
-                      <span className="flex-1 text-right">📋 הצג הכל</span>
-                    </Link>
-                  </li>
-                  {RECIPE_CATEGORIES.map((it) => {
-                    const active = category === it.key;
-                    return (
-                      <li key={it.key}>
-                        <Link
-                          to="/recipes"
-                          onClick={() => {
-                            setCategory(it.key);
-                            close();
-                          }}
-                          className={`flex items-center justify-end gap-3 px-8 py-3 text-sm font-bold border-r-4 transition ${
-                            active
-                              ? "bg-neon/10 text-neon border-neon"
-                              : "text-foreground border-transparent hover:text-neon"
-                          }`}
-                        >
-                          <span className="flex-1 text-right">
-                            {it.emoji} {it.label}
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              <Link to="/my-profile" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">🔔 התראות</span>
+                <span className={iconWrap}><Bell className="h-5 w-5" /></span>
+              </Link>
             </li>
           </ul>
 
-          {/* ───── Group B: לוגיסטיקה ───── */}
-          {canSeeLogistics && (
-            <>
-              <GroupDivider />
-              <div className={groupLabelClass}>לוגיסטיקה</div>
-              <ul className="flex flex-col">
-                <li>
-                  <Link to="/orders" onClick={close} className={itemClass}>
-                    <span className="flex-1 text-right">
-                      📦 הזמנות וקבלת סחורה
-                    </span>
-                    <span className={iconWrap}><Package className="h-5 w-5" /></span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/calendar" onClick={close} className={itemClass}>
-                    <span className="flex-1 text-right">
-                      📅 לוח אירועים וסחורות
-                    </span>
-                    <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
-                  </Link>
-                </li>
-              </ul>
-            </>
-          )}
-
-          {/* ───── Group C: הנהלה ───── */}
+          {/* ───── Group 3: ניהול (manager + super_admin only) ───── */}
           {canSeeManagement && (
             <>
               <GroupDivider />
-              <div className={groupLabelClass}>הנהלה</div>
+              <div className={groupLabelClass}>ניהול</div>
               <ul className="flex flex-col">
+                <li>
+                  <Link to="/admin" search={{ edit: undefined }} onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">🛠️ פאנל ניהול</span>
+                    <span className={iconWrap}><Settings className="h-5 w-5" /></span>
+                  </Link>
+                </li>
                 <li>
                   <Link to="/suppliers" onClick={close} className={itemClass}>
                     <span className="flex-1 text-right">🚚 ניהול ספקים</span>
@@ -432,15 +244,6 @@ export function CategoryDrawer() {
                     )}
                     <span className="flex-1 text-right">🚨 ניהול תלונות</span>
                     <span className={iconWrap}><ShieldAlert className="h-5 w-5" /></span>
-                  </Link>
-                </li>
-
-                <li>
-                  <Link to="/admin" search={{ edit: undefined }} onClick={close} className={itemClass}>
-                    <span className="flex-1 text-right">
-                      ⚙️ הגדרות מערכת וצוות
-                    </span>
-                    <span className={iconWrap}><Settings className="h-5 w-5" /></span>
                   </Link>
                 </li>
               </ul>
