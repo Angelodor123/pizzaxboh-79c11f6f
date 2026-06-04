@@ -1051,3 +1051,83 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     </div>
   );
 }
+
+// ============================================================
+// Per-row catalog matching strip.
+// - "auto"   → green badge with matched product name
+// - "manual" → blue badge with chosen product
+// - "new"    → amber badge "will be created on save"
+// - "review"/"none" → "needs review" + product dropdown + create-new button
+// ============================================================
+function CatalogMatchRow({
+  row,
+  catalog,
+  onPick,
+  onMarkNew,
+}: {
+  row: RowPair;
+  catalog: CatalogOpt[];
+  onPick: (productId: string) => void;
+  onMarkNew: () => void;
+}) {
+  if (!row.name.trim()) return null;
+  const matchedName = row.catalogProductId
+    ? catalog.find((c) => c.id === row.catalogProductId)?.name
+    : null;
+
+  if (row.matchStatus === "auto") {
+    return (
+      <div className="mt-1.5 flex items-center justify-between gap-2 text-[10.5px] px-1">
+        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
+          ✓ זוהה בקטלוג: {matchedName}{row.matchSimilarity != null && ` (${Math.round(row.matchSimilarity * 100)}%)`}
+        </span>
+        <button type="button" onClick={onMarkNew} className="text-[10.5px] text-muted-foreground hover:text-amber-brand underline">
+          לא נכון? צור מוצר חדש
+        </button>
+      </div>
+    );
+  }
+  if (row.matchStatus === "manual") {
+    return (
+      <div className="mt-1.5 text-[10.5px] px-1 flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-sky-500/15 text-sky-400 border border-sky-500/30 font-bold">
+          🔗 שויך ידנית: {matchedName}
+        </span>
+      </div>
+    );
+  }
+  if (row.matchStatus === "new") {
+    return (
+      <div className="mt-1.5 text-[10.5px] px-1 flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-amber-brand/15 text-amber-brand border border-amber-brand/30 font-bold">
+          ＋ ייווצר כמוצר חדש בקטלוג בעת השמירה
+        </span>
+      </div>
+    );
+  }
+  // review or none → needs review
+  return (
+    <div className="mt-1.5 px-1 flex flex-col sm:flex-row gap-1.5 sm:items-center">
+      <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold text-[10.5px] shrink-0">
+        ⚠ דורש התאמה
+      </span>
+      <select
+        value={row.catalogProductId ?? ""}
+        onChange={(e) => { if (e.target.value) onPick(e.target.value); }}
+        className="flex-1 min-w-0 h-8 rounded bg-background border border-border px-2 text-[11px] focus:border-neon outline-none"
+        aria-label="בחר מוצר מהקטלוג"
+      >
+        <option value="">בחר מקטלוג הספק…</option>
+        {catalog.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+      <button
+        type="button"
+        onClick={onMarkNew}
+        className="shrink-0 inline-flex items-center gap-1 h-8 px-2 rounded border border-amber-brand/50 text-amber-brand text-[10.5px] font-bold hover:bg-amber-brand/10"
+      >
+        ＋ צור חדש
+      </button>
+    </div>
+  );
+}
+
