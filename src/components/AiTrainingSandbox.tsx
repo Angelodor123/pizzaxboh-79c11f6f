@@ -199,6 +199,34 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
                   </div>
                 )}
 
+                {/* Dual metrics — parsing accuracy (AI 👍/👎) vs delivery accuracy (Received/Not). */}
+                <div className="grid grid-cols-2 gap-2">
+                  {(() => {
+                    const pPct = s.parsingTotal > 0 ? Math.round((s.parsingApproved / s.parsingTotal) * 100) : null;
+                    const dPct = s.deliveryTotal > 0 ? Math.round((s.deliveryReceived / s.deliveryTotal) * 100) : null;
+                    const tone = (pct: number | null) =>
+                      pct == null ? "border-border text-muted-foreground bg-background/40"
+                        : pct >= 90 ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/5"
+                        : pct >= 70 ? "border-amber-brand/40 text-amber-brand bg-amber-brand/5"
+                        : "border-rose-500/40 text-rose-400 bg-rose-500/5";
+                    return (
+                      <>
+                        <div className={`rounded-md border px-2 py-1.5 ${tone(pPct)}`}>
+                          <div className="text-[9px] uppercase tracking-wider font-bold opacity-80">דיוק קליטה (AI)</div>
+                          <div className="text-base font-bold tabular-nums">{pPct == null ? "—" : `${pPct}%`}</div>
+                          <div className="text-[9px] opacity-70 tabular-nums">{s.parsingApproved}/{s.parsingTotal} שדות</div>
+                        </div>
+                        <div className={`rounded-md border px-2 py-1.5 ${tone(dPct)}`}>
+                          <div className="text-[9px] uppercase tracking-wider font-bold opacity-80">דיוק אספקה</div>
+                          <div className="text-base font-bold tabular-nums">{dPct == null ? "—" : `${dPct}%`}</div>
+                          <div className="text-[9px] opacity-70 tabular-nums">{s.deliveryReceived}/{s.deliveryTotal} פריטים</div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+
                 <div className="flex gap-2">
                   <button
                     type="button"
