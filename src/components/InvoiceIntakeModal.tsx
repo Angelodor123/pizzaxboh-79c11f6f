@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, useId, type ChangeEvent, type DragEvent } from "react";
 import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -194,6 +194,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [inventory, setInventory] = useState<InventoryOpt[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const fileInputId = useId();
   const [rawOcr, setRawOcr] = useState<ParsedInvoice | null>(null);
   const [supplierCatalog, setSupplierCatalog] = useState<SupplierProduct[]>([]);
   const runOcr = useServerFn(parseInvoiceImage);
@@ -473,6 +474,20 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       setOcrLoading(false);
       setUploading(false);
     }
+  };
+
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selected = e.currentTarget.files?.[0] ?? null;
+    e.currentTarget.value = "";
+    if (!selected) return;
+    void onFileSelected(selected);
+  };
+
+  const handleDropFile = (e: DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    const selected = e.dataTransfer.files?.[0] ?? null;
+    if (!selected) return;
+    void onFileSelected(selected);
   };
 
 
@@ -773,20 +788,34 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
           <div className="bg-zinc-900/60 border-b md:border-b-0 md:border-l border-border flex flex-col sticky top-0 z-20 md:self-start md:h-full md:max-h-[94vh] max-h-[42vh] shadow-md md:shadow-none">
             <div className="p-2 md:p-3 flex items-center justify-between gap-2 border-b border-border/50 shrink-0">
               <input
+                id={fileInputId}
                 ref={fileInput}
                 type="file"
                 accept="image/*,application/pdf"
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0] ?? null; e.target.value = ""; void onFileSelected(f); }}
+                onChange={handleFileInputChange}
               />
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                className="inline-flex items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3 rounded-md border border-border hover:border-neon hover:text-neon text-xs md:text-sm font-bold"
+              <span
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    fileInput.current?.click();
+                  }
+                }}
+                className="relative inline-flex cursor-pointer items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3 rounded-md border border-border hover:border-neon hover:text-neon text-xs md:text-sm font-bold overflow-hidden"
               >
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  aria-label="העלה תמונה"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  onChange={handleFileInputChange}
+                />
                 <Upload className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                {file ? "החלף" : "העלה תמונה"}
-              </button>
+                {uploading || ocrLoading ? "מעלה…" : file || previewUrl ? "החלף" : "העלה תמונה"}
+              </span>
               {previewUrl && (
                 <div className="flex items-center gap-1">
                   <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} className="h-8 w-8 md:h-9 md:w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="הקטן">
@@ -824,14 +853,29 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
                 </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInput.current?.click()}
-                  className="text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-6 md:p-8 hover:border-neon hover:text-neon transition"
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInput.current?.click();
+                    }
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDropFile}
+                  className="relative block cursor-pointer text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-6 md:p-8 hover:border-neon hover:text-neon transition overflow-hidden"
                 >
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    aria-label="לחץ להעלאת תמונת חשבונית"
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    onChange={handleFileInputChange}
+                  />
                   <Upload className="h-7 w-7 md:h-8 md:w-8 mx-auto mb-2" />
                   לחץ להעלאת תמונת חשבונית
-                </button>
+                </div>
               )}
             </div>
             <style>{`
