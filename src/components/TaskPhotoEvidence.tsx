@@ -34,8 +34,15 @@ export function TaskPhotoButton({
       toast.error("התמונה גדולה מדי (מקסימום 12MB)");
       return;
     }
-    if (!file.type.startsWith("image/")) {
-      toast.error("יש לבחור קובץ תמונה");
+    // Be tolerant: files from Google Drive / cloud pickers often arrive
+    // with empty `file.type`. Fall back to extension sniffing.
+    const name = file.name || "";
+    const looksImage =
+      file.type.startsWith("image/") ||
+      /\.(png|jpe?g|webp|heic|heif|gif|bmp|tiff?)$/i.test(name);
+    const looksPdf = file.type === "application/pdf" || /\.pdf$/i.test(name);
+    if (!looksImage && !looksPdf) {
+      toast.error("יש לבחור קובץ תמונה או PDF");
       return;
     }
     setUploading(true);
@@ -44,6 +51,7 @@ export function TaskPhotoButton({
       onUploaded(path);
       toast.success("התמונה הועלתה בהצלחה");
     } catch (e) {
+      console.error("task photo upload failed", e);
       toast.error(e instanceof Error ? e.message : "העלאת התמונה נכשלה");
     } finally {
       setUploading(false);

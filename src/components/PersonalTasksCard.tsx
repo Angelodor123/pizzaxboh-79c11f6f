@@ -1,20 +1,32 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Loader2, ListTodo } from "lucide-react";
+import { Plus, Trash2, Loader2, ListTodo, Flame, Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { SortableList } from "@/components/SortableList";
 
 interface PersonalTask {
   id: string;
   user_id: string;
   title: string;
   is_completed: boolean;
+  is_urgent: boolean;
+  sort_order: number;
   created_at: string;
+}
+
+function sortTasks(list: PersonalTask[]): PersonalTask[] {
+  return [...list].sort((a, b) => {
+    if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+    if (a.is_urgent !== b.is_urgent) return a.is_urgent ? -1 : 1;
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+    return a.created_at < b.created_at ? 1 : -1;
+  });
 }
 
 /**
  * Personal tasks widget — each user's private ad-hoc todo list.
- * RLS scopes rows to `auth.uid() = user_id`.
+ * Supports urgency flag and drag-and-drop reordering via grab handle.
  */
 export function PersonalTasksCard() {
   const { session } = useAuth();
@@ -23,6 +35,8 @@ export function PersonalTasksCard() {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
 
   useEffect(() => {
     if (!userId) {
@@ -35,12 +49,10 @@ export function PersonalTasksCard() {
       const { data, error } = await supabase
         .from("personal_tasks")
         .select("*")
-        .eq("user_id", userId)
-        .order("is_completed", { ascending: true })
-        .order("created_at", { ascending: false });
+        .eq("user_id", userId);
       if (!active) return;
       if (error) toast.error("שגיאה בטעינת המשימות האישיות");
-      else setTasks((data ?? []) as PersonalTask[]);
+      else setTasks(sortTasks((data ?? []) as PersonalTask[]));
       setLoading(false);
     })();
 
@@ -54,10 +66,12 @@ export function PersonalTasksCard() {
             setTasks((prev) => {
               const row = payload.new as PersonalTask;
               if (prev.some((t) => t.id === row.id)) return prev;
-              return [row, ...prev];
+              return sortTasks([row, ...prev]);
             });
           } else if (payload.eventType === "UPDATE") {
-            setTasks((prev) => prev.map((t) => (t.id === (payload.new as PersonalTask).id ? (payload.new as PersonalTask) : t)));
+            setTasks((prev) =>
+              sortTasks(prev.map((t) => (t.id === (payload.new as PersonalTask).id ? (payload.new as PersonalTask) : t))),
+            );
           } else if (payload.eventType === "DELETE") {
             setTasks((prev) => prev.filter((t) => t.id !== (payload.old as PersonalTask).id));
           }
@@ -75,9 +89,10 @@ export function PersonalTasksCard() {
     const t = title.trim();
     if (!t || !userId || adding) return;
     setAdding(true);
+    const minOrder = tasks.reduce((m, x) => Math.min(m, x.sort_order ?? 0), 0);
     const { data, error } = await supabase
       .from("personal_tasks")
-      .insert({ user_id: userId, title: t })
+      .insert({ user_id: userId, title: t, sort_order: minOrder - 1 })
       .select()
       .single();
     setAdding(false);
@@ -88,13 +103,13 @@ export function PersonalTasksCard() {
     setTitle("");
     setTasks((prev) => {
       if (prev.some((p) => p.id === data.id)) return prev;
-      return [data as PersonalTask, ...prev];
+      return sortTasks([data as PersonalTask, ...prev]);
     });
   };
 
   const toggle = async (task: PersonalTask) => {
     const next = !task.is_completed;
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, is_completed: next } : t)));
+    setTasks((prev) => sortTasks(prev.map((t) => (t.id === task.id ? { ...t, is_completed: next } : t))));
     const { error } = await supabase
       .from("personal_tasks")
       .update({ is_completed: next })
@@ -102,6 +117,16 @@ export function PersonalTasksCard() {
     if (error) {
       toast.error("העדכון נכשל");
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, is_completed: task.is_completed } : t)));
+    }
+  };
+
+  const toggleUrgent = async (task: PersonalTask) => {
+    const next = !task.is_urgent;
+    setTasks((prev) => sortTasks(prev.map((t) => (t.id === task.id ? { ...t, is_urgent: next } : t))));
+    const { error } = await supabase.from("personal_tasks").update({ is_urgent: next }).eq("id", task.id);
+    if (error) {
+      toast.error("העדכון נכשל");
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, is_urgent: task.is_urgent } : t)));
     }
   };
 
@@ -113,6 +138,30 @@ export function PersonalTasksCard() {
       toast.error("המחיקה נכשלה");
       setTasks(prev);
     }
+  };
+
+  const startEdit = (task: PersonalTask) => {
+    setEditingId(task.id);
+    setDraft(task.title);
+  };
+
+  const saveEdit = async (task: PersonalTask) => {
+    const clean = draft.trim();
+    setEditingId(null);
+    if (!clean || clean === task.title) return;
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, title: clean } : t)));
+    const { error } = await supabase.from("personal_tasks").update({ title: clean }).eq("id", task.id);
+    if (error) toast.error("עדכון הכותרת נכשל");
+  };
+
+  const onReorder = async (reordered: PersonalTask[]) => {
+    const withOrder = reordered.map((t, idx) => ({ ...t, sort_order: idx }));
+    setTasks(withOrder);
+    await Promise.all(
+      withOrder.map((t) =>
+        supabase.from("personal_tasks").update({ sort_order: t.sort_order }).eq("id", t.id),
+      ),
+    );
   };
 
   if (!userId) return null;
@@ -162,46 +211,128 @@ export function PersonalTasksCard() {
           אין משימות אישיות כרגע. הוסף משימה ראשונה למעלה.
         </p>
       ) : (
-        <ul className="space-y-1.5">
-          {tasks.map((t) => (
-            <li
-              key={t.id}
-              className={`flex items-center gap-2 rounded-md border px-2.5 py-2 transition ${
-                t.is_completed
-                  ? "border-zinc-800 bg-zinc-900/30 opacity-60"
-                  : "border-border bg-background/40"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => void toggle(t)}
-                aria-label={t.is_completed ? "סמן כלא הושלם" : "סמן כהושלם"}
-                className={`h-5 w-5 shrink-0 rounded border-2 grid place-content-center transition ${
+        <SortableList
+          items={tasks}
+          getId={(t) => t.id}
+          onReorder={onReorder}
+          className="space-y-1.5"
+        >
+          {(t, handle) => {
+            const isEditing = editingId === t.id;
+            return (
+              <div
+                onClick={() => !isEditing && !t.is_completed && startEdit(t)}
+                className={`group flex items-center gap-1.5 rounded-md border px-2 py-2 transition cursor-pointer hover:bg-white/5 ${
                   t.is_completed
-                    ? "bg-neon border-neon text-background"
-                    : "border-border hover:border-neon"
+                    ? "border-zinc-800 bg-zinc-900/30 opacity-60"
+                    : t.is_urgent
+                      ? "border-orange-500/50 bg-orange-500/5"
+                      : "border-border bg-background/40"
                 }`}
               >
-                {t.is_completed && (
-                  <svg viewBox="0 0 20 20" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path d="M4 10l4 4 8-8" />
-                  </svg>
+                {handle}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void toggle(t);
+                  }}
+                  aria-label={t.is_completed ? "סמן כלא הושלם" : "סמן כהושלם"}
+                  className={`h-5 w-5 shrink-0 rounded border-2 grid place-content-center transition ${
+                    t.is_completed
+                      ? "bg-neon border-neon text-background"
+                      : "border-border hover:border-neon"
+                  }`}
+                >
+                  {t.is_completed && (
+                    <svg viewBox="0 0 20 20" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
+                      <path d="M4 10l4 4 8-8" />
+                    </svg>
+                  )}
+                </button>
+
+                {isEditing ? (
+                  <input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void saveEdit(t);
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                    onBlur={() => void saveEdit(t)}
+                    maxLength={200}
+                    className="flex-1 min-w-0 bg-input border border-neon/60 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-neon/60"
+                  />
+                ) : (
+                  <span
+                    className={`flex-1 min-w-0 break-words text-sm leading-snug ${
+                      t.is_completed ? "line-through text-muted-foreground" : "text-foreground"
+                    }`}
+                  >
+                    {t.title}
+                  </span>
                 )}
-              </button>
-              <span className={`flex-1 text-sm leading-snug ${t.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                {t.title}
-              </span>
-              <button
-                type="button"
-                onClick={() => void remove(t)}
-                aria-label="מחק משימה"
-                className="h-8 w-8 shrink-0 grid place-content-center rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
+
+                {isEditing ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void saveEdit(t);
+                    }}
+                    aria-label="שמור"
+                    className="shrink-0 h-8 w-8 grid place-content-center rounded text-neon hover:bg-neon/10"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void toggleUrgent(t);
+                      }}
+                      aria-label={t.is_urgent ? "בטל דחיפות" : "סמן כדחוף"}
+                      title={t.is_urgent ? "דחוף" : "סמן כדחוף"}
+                      className={`shrink-0 h-8 w-8 grid place-content-center rounded transition ${
+                        t.is_urgent
+                          ? "text-orange-400 bg-orange-500/15"
+                          : "text-muted-foreground hover:text-orange-400 hover:bg-orange-500/10"
+                      }`}
+                    >
+                      <Flame className={`h-4 w-4 ${t.is_urgent ? "fill-orange-400/30" : ""}`} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEdit(t);
+                      }}
+                      aria-label="ערוך"
+                      className="shrink-0 h-8 w-8 grid place-content-center rounded text-muted-foreground hover:text-neon hover:bg-accent/40"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void remove(t);
+                      }}
+                      aria-label="מחק משימה"
+                      className="shrink-0 h-8 w-8 grid place-content-center rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+          }}
+        </SortableList>
       )}
     </div>
   );
