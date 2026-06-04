@@ -98,6 +98,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
   const [parsed, setParsed] = useState<Parsed | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [chosenMatch, setChosenMatch] = useState<Match | null>(null);
+  const [catalog, setCatalog] = useState<CatalogOpt[]>([]);
+  const [estimatedTotalOverride, setEstimatedTotalOverride] = useState<string>("");
   const [rows, setRows] = useState<RowPair[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
