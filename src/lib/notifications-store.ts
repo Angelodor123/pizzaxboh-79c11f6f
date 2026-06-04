@@ -87,8 +87,8 @@ export function useNotifications(userId: string | null | undefined) {
     if (!userId) return;
     const now = new Date().toISOString();
     setItems((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? now })));
-    await supabase
-      .from("notifications" as never)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from("notifications" as never) as any)
       .update({ read_at: now })
       .eq("user_id", userId)
       .is("read_at", null);
@@ -99,8 +99,8 @@ export function useNotifications(userId: string | null | undefined) {
       if (!userId) return;
       const now = new Date().toISOString();
       setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: n.read_at ?? now } : n)));
-      await supabase
-        .from("notifications" as never)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("notifications" as never) as any)
         .update({ read_at: now })
         .eq("id", id);
     },
