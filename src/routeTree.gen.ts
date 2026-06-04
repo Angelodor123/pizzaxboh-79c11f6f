@@ -27,6 +27,8 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AidsRouteImport } from './routes/aids'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AidsSuppliersRouteImport } from './routes/aids.suppliers'
+import { Route as AidsCleaningRouteImport } from './routes/aids.cleaning'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
@@ -123,6 +125,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AidsSuppliersRoute = AidsSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AidsRoute,
+} as any)
+const AidsCleaningRoute = AidsCleaningRouteImport.update({
+  id: '/cleaning',
+  path: '/cleaning',
+  getParentRoute: () => AidsRoute,
+} as any)
 const AdminHistoryRoute = AdminHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -154,7 +166,7 @@ const ApiPublicHooksDoughAlertRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/aids': typeof AidsRoute
+  '/aids': typeof AidsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
@@ -172,6 +184,8 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
+  '/aids/cleaning': typeof AidsCleaningRoute
+  '/aids/suppliers': typeof AidsSuppliersRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -179,7 +193,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/aids': typeof AidsRoute
+  '/aids': typeof AidsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
@@ -197,6 +211,8 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
+  '/aids/cleaning': typeof AidsCleaningRoute
+  '/aids/suppliers': typeof AidsSuppliersRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -205,7 +221,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/aids': typeof AidsRoute
+  '/aids': typeof AidsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
@@ -223,6 +239,8 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
+  '/aids/cleaning': typeof AidsCleaningRoute
+  '/aids/suppliers': typeof AidsSuppliersRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
   '/api/public/hooks/sports-sync': typeof ApiPublicHooksSportsSyncRoute
@@ -250,6 +268,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
+    | '/aids/cleaning'
+    | '/aids/suppliers'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -275,6 +295,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
+    | '/aids/cleaning'
+    | '/aids/suppliers'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -300,6 +322,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
+    | '/aids/cleaning'
+    | '/aids/suppliers'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
     | '/api/public/hooks/sports-sync'
@@ -308,7 +332,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  AidsRoute: typeof AidsRoute
+  AidsRoute: typeof AidsRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   CibusRoute: typeof CibusRoute
   ComplaintsRoute: typeof ComplaintsRoute
@@ -456,6 +480,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aids/suppliers': {
+      id: '/aids/suppliers'
+      path: '/suppliers'
+      fullPath: '/aids/suppliers'
+      preLoaderRoute: typeof AidsSuppliersRouteImport
+      parentRoute: typeof AidsRoute
+    }
+    '/aids/cleaning': {
+      id: '/aids/cleaning'
+      path: '/cleaning'
+      fullPath: '/aids/cleaning'
+      preLoaderRoute: typeof AidsCleaningRouteImport
+      parentRoute: typeof AidsRoute
+    }
     '/admin/history': {
       id: '/admin/history'
       path: '/history'
@@ -508,10 +546,22 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AidsRouteChildren {
+  AidsCleaningRoute: typeof AidsCleaningRoute
+  AidsSuppliersRoute: typeof AidsSuppliersRoute
+}
+
+const AidsRouteChildren: AidsRouteChildren = {
+  AidsCleaningRoute: AidsCleaningRoute,
+  AidsSuppliersRoute: AidsSuppliersRoute,
+}
+
+const AidsRouteWithChildren = AidsRoute._addFileChildren(AidsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  AidsRoute: AidsRoute,
+  AidsRoute: AidsRouteWithChildren,
   CalendarRoute: CalendarRoute,
   CibusRoute: CibusRoute,
   ComplaintsRoute: ComplaintsRoute,
@@ -533,3 +583,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
