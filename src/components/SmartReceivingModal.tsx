@@ -252,6 +252,23 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     return out;
   };
 
+  // Auto-run catalog matching once for any row that hasn't been classified yet.
+  // (Skips rows already manually chosen or marked as "new product").
+  useEffect(() => {
+    if (stage !== "verify" && stage !== "manual") return;
+    if (!supplierId) return;
+    const needs = rows.some((r) => r.matchSimilarity == null && r.matchStatus === "none" && r.name.trim());
+    if (!needs) return;
+    let cancelled = false;
+    (async () => {
+      const next = await matchRowsAgainstCatalog(rows);
+      if (!cancelled) setRows(next);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, supplierId, catalog.length, rows.length]);
+
+
 
 
 
