@@ -92,14 +92,7 @@ function GroupDivider() {
 }
 
 export function CategoryDrawer() {
-  const {
-    category,
-    menuCategory,
-    drawerOpen,
-    setCategory,
-    openDishes,
-    setDrawerOpen,
-  } = useUIStore();
+  const { drawerOpen, setDrawerOpen } = useUIStore();
   const {
     session,
     email,
@@ -112,8 +105,6 @@ export function CategoryDrawer() {
     signOut,
     refreshRole,
   } = useAuth();
-  const [recipesOpen, setRecipesOpen] = useState(false);
-  const [dishesOpen, setDishesOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -121,27 +112,6 @@ export function CategoryDrawer() {
   const newComplaintCount = useNewComplaintCount();
   const isModiinBranch = useIsModiinBranch();
   const { canInstall, promptInstall } = useInstallPrompt();
-
-  // Dynamically filter sidebar categories to only those with ≥1 active item
-  // in the live recipes store. Empty categories are hidden entirely.
-  const recipes = useCookbookStore((s) => s.recipes);
-  const { RECIPE_CATEGORIES, MENU_CATEGORIES } = useMemo(() => {
-    const active = recipes.filter((r) => !r.deleted);
-    const recipeCounts = new Map<RecipeCategory, number>();
-    const menuCounts = new Map<MenuCategory, number>();
-    for (const r of active) {
-      if (isMenuItem(r)) {
-        const mc = recipeToMenuCategory(r);
-        menuCounts.set(mc, (menuCounts.get(mc) ?? 0) + 1);
-      } else {
-        recipeCounts.set(r.category, (recipeCounts.get(r.category) ?? 0) + 1);
-      }
-    }
-    return {
-      RECIPE_CATEGORIES: ALL_RECIPE_CATEGORIES.filter((c) => (recipeCounts.get(c.key) ?? 0) > 0),
-      MENU_CATEGORIES: ALL_MENU_CATEGORIES.filter((c) => (menuCounts.get(c.key) ?? 0) > 0),
-    };
-  }, [recipes]);
 
   useEffect(() => {
     if (!editingName) setNameDraft(fullName ?? "");
@@ -169,17 +139,12 @@ export function CategoryDrawer() {
     setEditingName(false);
   };
 
-  // Effective role mapping for menu visibility. Uses the *effective* values
-  // from useAuth() so "View As" simulation immediately rewires the menu.
-  // - admin role + super admin flag → super_admin (all groups)
-  // - admin role only               → manager     (groups A + B)
-  // - viewer / null                 → employee    (group A only)
+  // Admin group visible for both manager and super_admin (per spec).
   const isSuperAdmin = effIsSuperAdmin;
   const isManager = role === "admin" && !effIsSuperAdmin;
-  const canSeeLogistics = isSuperAdmin || isManager;
-  const canSeeManagement = isSuperAdmin;
-  const isDishesView = category === "dishes";
+  const canSeeManagement = isSuperAdmin || isManager;
   const close = () => setDrawerOpen(false);
+
 
   return (
     <>
