@@ -238,6 +238,12 @@ export function CategoryDrawer() {
               </Link>
             </li>
             <li>
+              <Link to="/aids" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📚 עזרים — תקני ספקים</span>
+                <span className={iconWrap}><Package className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
               <button
                 type="button"
                 onClick={() => {
