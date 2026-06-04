@@ -932,6 +932,77 @@ export type Database = {
           },
         ]
       }
+      mapping_corrections: {
+        Row: {
+          ai_similarity: number | null
+          ai_suggested_product_id: string | null
+          branch_id: string
+          corrected_product_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string | null
+          match_action: string
+          parsed_text: string
+          supplier_id: string | null
+        }
+        Insert: {
+          ai_similarity?: number | null
+          ai_suggested_product_id?: string | null
+          branch_id: string
+          corrected_product_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          match_action?: string
+          parsed_text: string
+          supplier_id?: string | null
+        }
+        Update: {
+          ai_similarity?: number | null
+          ai_suggested_product_id?: string | null
+          branch_id?: string
+          corrected_product_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          match_action?: string
+          parsed_text?: string
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mapping_corrections_ai_suggested_product_id_fkey"
+            columns: ["ai_suggested_product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapping_corrections_corrected_product_id_fkey"
+            columns: ["corrected_product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapping_corrections_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapping_corrections_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measurement_units: {
         Row: {
           created_at: string
@@ -1797,6 +1868,7 @@ export type Database = {
           barcode: string | null
           branch_id: string
           category: string | null
+          cost_price: number | null
           created_at: string
           created_by: string | null
           default_qty: number
@@ -1819,6 +1891,7 @@ export type Database = {
           barcode?: string | null
           branch_id: string
           category?: string | null
+          cost_price?: number | null
           created_at?: string
           created_by?: string | null
           default_qty?: number
@@ -1841,6 +1914,7 @@ export type Database = {
           barcode?: string | null
           branch_id?: string
           category?: string | null
+          cost_price?: number | null
           created_at?: string
           created_by?: string | null
           default_qty?: number
