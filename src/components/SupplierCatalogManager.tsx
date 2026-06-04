@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Package, Trash2, Upload, Loader2, Image as ImageIcon, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmDelete } from "@/lib/confirm";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -390,7 +391,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => remove(p.id)}
+                      onClick={() => remove(p)}
                       className="h-8 w-8 grid place-content-center rounded border border-border hover:text-destructive hover:border-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

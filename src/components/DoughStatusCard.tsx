@@ -3,6 +3,7 @@ import { Pizza, X, History, Store, Snowflake, Refrigerator, RotateCcw } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
+import { confirmDelete } from "@/lib/confirm";
 
 interface PrepItem {
   id: string;

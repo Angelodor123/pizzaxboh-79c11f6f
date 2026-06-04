@@ -8,6 +8,7 @@ import {
   type ComplaintStatus,
 } from "@/lib/complaints-store";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmDelete } from "@/lib/confirm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
