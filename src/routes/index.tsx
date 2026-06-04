@@ -197,6 +197,13 @@ function OperationalDashboard() {
         <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" tourId="stat-events-today" />
       </div>
 
+      {/* Personal tasks — private per-user todo list */}
+      <div className="mb-6">
+        <PersonalTasksCard />
+      </div>
+
+
+
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Today's Schedule */}
