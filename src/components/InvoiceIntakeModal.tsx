@@ -822,7 +822,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                   type="file"
                   accept="image/*"
                   aria-label="העלה תמונה"
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                   onChange={handleFileInputChange}
                 />
                 <Upload className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -882,7 +882,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                     type="file"
                     accept="image/*"
                     aria-label="לחץ להעלאת תמונת חשבונית"
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                     onChange={handleFileInputChange}
                   />
                   <Upload className="h-7 w-7 md:h-8 md:w-8 mx-auto mb-2" />
