@@ -501,45 +501,53 @@ function NotebookRow({
         <>
           <button
             type="button"
-            onClick={() => void toggleItem(listKey, item.id)}
-            className={`flex-1 min-w-0 flex items-center gap-3 text-right cursor-pointer ${
-              item.done ? "opacity-50" : ""
-            }`}
-            aria-pressed={item.done}
+            onClick={(e) => {
+              e.stopPropagation();
+              void toggleItem(listKey, item.id);
+            }}
             aria-label={item.done ? `החזר: ${item.text}` : `סמן כבוצע: ${item.text}`}
+            aria-pressed={item.done}
+            className={`shrink-0 grid place-content-center h-6 w-6 rounded border-2 transition cursor-pointer ${
+              item.done ? "bg-neon border-neon" : "border-neon/50 hover:border-neon"
+            }`}
           >
-            <span
-              className={`shrink-0 grid place-content-center h-5 w-5 rounded border-2 transition ${
-                item.done ? "bg-neon border-neon" : "border-neon/50 hover:border-neon"
-              }`}
-              aria-hidden
-            >
-              {item.done && (
-                <svg
-                  viewBox="0 0 16 16"
-                  className="h-3 w-3 text-primary-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <path d="M3 8l3.5 3.5L13 5" />
-                </svg>
-              )}
-            </span>
-            <span
-              className={`flex-1 min-w-0 break-words text-sm flex items-center gap-1.5 ${
-                item.done ? "line-through text-muted-foreground" : "text-foreground"
-              }`}
-            >
-              {item.priority === "urgent" && !item.done && (
-                <Flame className="h-3.5 w-3.5 text-neon shrink-0" aria-label="דחוף" />
-              )}
-              <span className="min-w-0 break-words">{item.text}</span>
-            </span>
+            {item.done && (
+              <svg
+                viewBox="0 0 16 16"
+                className="h-3 w-3 text-primary-foreground"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+              >
+                <path d="M3 8l3.5 3.5L13 5" />
+              </svg>
+            )}
           </button>
           <button
             type="button"
             onClick={startEdit}
+            aria-label={`ערוך: ${item.text}`}
+            className={`flex-1 min-w-0 text-right text-sm cursor-pointer hover:bg-white/5 rounded px-1.5 py-1 transition flex items-center gap-1.5 ${
+              item.done ? "opacity-50" : ""
+            }`}
+          >
+            {item.priority === "urgent" && !item.done && (
+              <Flame className="h-3.5 w-3.5 text-neon shrink-0" aria-label="דחוף" />
+            )}
+            <span
+              className={`min-w-0 break-words ${
+                item.done ? "line-through text-muted-foreground" : "text-foreground"
+              }`}
+            >
+              {item.text}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              startEdit();
+            }}
             aria-label={`ערוך: ${item.text}`}
             className="shrink-0 p-2 rounded text-muted-foreground hover:text-neon active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
           >
@@ -547,7 +555,8 @@ function NotebookRow({
           </button>
           <button
             type="button"
-            onClick={async () => {
+            onClick={async (e) => {
+              e.stopPropagation();
               const ok = await confirmDelete({ title: "מחיקת פריט", itemName: item.text });
               if (ok) void removeItem(listKey, item.id);
             }}
