@@ -540,48 +540,47 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
           .eq("id", chosenMatch.order_id);
       }
 
-      // === CATALOG SYNC: auto-create / update supplier_products + detect price changes ===
-      // Tracks "digital inventory" by ensuring every received item exists in the supplier catalog,
-      // remembering its last seen price, and surfacing significant price deltas to the manager.
+      // === CATALOG SYNC + MAPPING-CORRECTIONS LEARNING LOOP ===
+      // For each parsed row:
+      //   - if user picked a catalog product (matchStatus === "manual") use that id directly
+      //   - if user marked "new" we always create
+      //   - otherwise we keep the prior auto/fuzzy logic
+      //   - every time the final productId differs from the AI's initial suggestion
+      //     (or AI had none and user picked one) we store a mapping_correction row
+      //     so future matching can be biased by past human decisions.
       const priceAlerts: Array<{ name: string; oldPrice: number; newPrice: number; pct: number }> = [];
       const catalogIdByName = new Map<string, string>();
+      const mappingCorrections: Array<{
+        parsed_text: string; corrected_product_id: string | null;
+        ai_suggested_product_id: string | null; ai_similarity: number | null; match_action: string;
+      }> = [];
 
       if (supplierId) {
         for (const r of cleanItems) {
-          if (!r.name.trim() || r.unitPrice <= 0) continue;
+          if (!r.name.trim()) continue;
           const cleanName = r.name.trim().slice(0, 200);
           let productId: string | null = null;
           let previousPrice: number | null = null;
 
-          // 1) fuzzy match against existing catalog (exact > alias > trigram)
-          const { data: matches } = await supabase.rpc("find_catalog_match", {
-            _branch_id: branchId,
-            _supplier_id: supplierId,
-            _query: cleanName,
-          });
-          const best = (matches ?? [])[0] as
-            | { product_id: string; product_name: string; similarity: number; match_type: string }
-            | undefined;
-
-          if (best && best.similarity >= 0.6) {
-            productId = best.product_id;
+          if (r.matchStatus === "manual" && r.catalogProductId) {
+            productId = r.catalogProductId;
             const { data: existing } = await supabase
               .from("supplier_products")
-              .select("price, expected_price")
+              .select("price, expected_price, cost_price")
               .eq("id", productId)
               .maybeSingle();
-            previousPrice = Number(existing?.expected_price ?? existing?.price ?? 0) || null;
-
-            // refresh last-seen price; lock in expected_price the first time
-            await supabase
-              .from("supplier_products")
-              .update({
-                price: r.unitPrice,
-                expected_price: existing?.expected_price ?? r.unitPrice,
-              })
-              .eq("id", productId);
-          } else {
-            // 2) no match → create catalog entry so future receipts can match it
+            previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+            if (r.unitPrice > 0) {
+              await supabase
+                .from("supplier_products")
+                .update({
+                  price: r.unitPrice,
+                  expected_price: existing?.expected_price ?? r.unitPrice,
+                  cost_price: existing?.cost_price ?? r.unitPrice,
+                })
+                .eq("id", productId);
+            }
+          } else if (r.matchStatus === "new") {
             const { data: created } = await supabase
               .from("supplier_products")
               .insert({
@@ -590,27 +589,124 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                 name: cleanName,
                 unit: "",
                 default_qty: r.invoiceQty || 1,
-                price: r.unitPrice,
-                expected_price: r.unitPrice,
+                price: r.unitPrice || null,
+                expected_price: r.unitPrice || null,
+                cost_price: r.unitPrice || null,
                 category: r.category || null,
                 active: true,
               })
               .select("id")
               .maybeSingle();
             productId = created?.id ?? null;
+          } else if (r.catalogProductId && (r.matchStatus === "auto" || r.matchStatus === "review")) {
+            productId = r.catalogProductId;
+            const { data: existing } = await supabase
+              .from("supplier_products")
+              .select("price, expected_price, cost_price")
+              .eq("id", productId)
+              .maybeSingle();
+            previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+            if (r.unitPrice > 0) {
+              await supabase
+                .from("supplier_products")
+                .update({
+                  price: r.unitPrice,
+                  expected_price: existing?.expected_price ?? r.unitPrice,
+                  cost_price: existing?.cost_price ?? r.unitPrice,
+                })
+                .eq("id", productId);
+            }
+          } else if (r.unitPrice > 0) {
+            // Last-resort fuzzy fallback (no client-side match attached)
+            const { data: matches } = await supabase.rpc("find_catalog_match", {
+              _branch_id: branchId, _supplier_id: supplierId, _query: cleanName,
+            });
+            const best = (matches ?? [])[0] as
+              | { product_id: string; product_name: string; similarity: number; match_type: string }
+              | undefined;
+            if (best && best.similarity >= 0.6) {
+              productId = best.product_id;
+              const { data: existing } = await supabase
+                .from("supplier_products")
+                .select("price, expected_price, cost_price")
+                .eq("id", productId)
+                .maybeSingle();
+              previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+              await supabase
+                .from("supplier_products")
+                .update({
+                  price: r.unitPrice,
+                  expected_price: existing?.expected_price ?? r.unitPrice,
+                  cost_price: existing?.cost_price ?? r.unitPrice,
+                })
+                .eq("id", productId);
+            } else {
+              const { data: created } = await supabase
+                .from("supplier_products")
+                .insert({
+                  supplier_id: supplierId,
+                  branch_id: branchId,
+                  name: cleanName,
+                  unit: "",
+                  default_qty: r.invoiceQty || 1,
+                  price: r.unitPrice,
+                  expected_price: r.unitPrice,
+                  cost_price: r.unitPrice,
+                  category: r.category || null,
+                  active: true,
+                })
+                .select("id")
+                .maybeSingle();
+              productId = created?.id ?? null;
+            }
           }
 
           if (productId) catalogIdByName.set(cleanName, productId);
 
-          // 3) flag significant price change (>=10% delta vs expected baseline)
-          if (previousPrice && previousPrice > 0) {
+          // === Mapping correction: only when human input diverged from AI ===
+          const aiSuggestion = r.aiSuggestedProductId ?? null;
+          if (r.matchStatus === "manual" && productId && productId !== aiSuggestion) {
+            mappingCorrections.push({
+              parsed_text: cleanName,
+              corrected_product_id: productId,
+              ai_suggested_product_id: aiSuggestion,
+              ai_similarity: r.matchSimilarity,
+              match_action: "remap",
+            });
+          } else if (r.matchStatus === "new" && productId) {
+            mappingCorrections.push({
+              parsed_text: cleanName,
+              corrected_product_id: productId,
+              ai_suggested_product_id: aiSuggestion,
+              ai_similarity: r.matchSimilarity,
+              match_action: "new_product",
+            });
+          }
+
+          // Flag significant price change (>=10% delta vs cost baseline)
+          if (previousPrice && previousPrice > 0 && r.unitPrice > 0) {
             const pct = ((r.unitPrice - previousPrice) / previousPrice) * 100;
             if (Math.abs(pct) >= 10) {
               priceAlerts.push({ name: cleanName, oldPrice: previousPrice, newPrice: r.unitPrice, pct });
             }
           }
         }
+
+        // Persist all corrections as training data for future matches.
+        if (mappingCorrections.length) {
+          await supabase.from("mapping_corrections").insert(mappingCorrections.map((m) => ({
+            branch_id: branchId,
+            supplier_id: supplierId,
+            invoice_id: invoiceRow!.id,
+            parsed_text: m.parsed_text,
+            corrected_product_id: m.corrected_product_id,
+            ai_suggested_product_id: m.ai_suggested_product_id,
+            ai_similarity: m.ai_similarity,
+            match_action: m.match_action,
+          })));
+        }
       }
+
 
       // Inventory: upsert items + insert movements per received row
       for (const r of cleanItems) {
