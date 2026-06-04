@@ -28,6 +28,13 @@ interface CalEvent {
   supplier: string | null;
 }
 
+interface CalOverride {
+  event_id: string;
+  override_date: string;
+  deleted: boolean | null;
+  order_verification_status: "pending" | "ordered" | "skipped" | null;
+}
+
 const WEEKDAYS_HE = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
 
 function todayIso() {
@@ -41,20 +48,37 @@ function OperationalDashboard() {
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
+  const [overrides, setOverrides] = useState<CalOverride[]>([]);
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      const { data } = await withBranch(
+    const load = async () => {
+      const [ev, ov] = await Promise.all([
+        withBranch(
+          supabase
+            .from("calendar_events")
+            .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
+            .limit(200),
+        ),
         supabase
-          .from("calendar_events")
-          .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
-          .limit(200),
-      );
-      if (mounted && data) setEvents(data as CalEvent[]);
-    })();
+          .from("calendar_event_overrides")
+          .select("event_id,override_date,deleted,order_verification_status"),
+      ]);
+      if (!mounted) return;
+      if (ev.data) setEvents(ev.data as CalEvent[]);
+      if (ov.data) setOverrides(ov.data as CalOverride[]);
+    };
+    void load();
+
+    const channel = supabase
+      .channel("dashboard_calendar_rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "calendar_events" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "calendar_event_overrides" }, () => void load())
+      .subscribe();
+
     return () => {
       mounted = false;
+      void supabase.removeChannel(channel);
     };
   }, []);
 
