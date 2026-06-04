@@ -318,6 +318,18 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                 className={fieldClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>מחיר עלות (₪) · מנהל</label>
+              <input
+                value={draft.cost_price}
+                onChange={(e) => setDraft({ ...draft, cost_price: e.target.value })}
+                placeholder="לחישוב עלות הזמנות וחוסרים"
+                type="number"
+                min={0}
+                step="any"
+                className={`${fieldClass} border-amber-brand/40`}
+              />
+            </div>
           </div>
 
           {/* Image upload (full width) */}
