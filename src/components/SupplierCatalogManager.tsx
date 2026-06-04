@@ -403,6 +403,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                       {p.category && <span className="text-amber-brand">{p.category} · </span>}
                       {p.unit_size || p.unit}
                       {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                      {p.cost_price != null && <> · עלות <span className="text-amber-brand font-bold">₪{p.cost_price}</span></>}
                       {p.min_stock_alert != null && <> · מלאי מינ׳: {p.min_stock_alert}</>}
                     </div>
                   </div>
