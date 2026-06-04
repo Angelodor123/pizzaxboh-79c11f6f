@@ -1100,14 +1100,23 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                         )}
                         <div className="flex flex-col gap-2">
                           {rows.map((r, i) => {
+                            const missing = chosenMatch && r.orderedQty != null && r.invoiceQty < r.orderedQty - 0.001;
                             const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
                             const isExtra = chosenMatch && r.orderedQty == null;
                             const rowState: ValState = itemVal[i] ?? "pending";
                             const rowRing = aiActive
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
+                            const rowBg = r.damaged
+                              ? "bg-red-500/10 border border-red-500/50"
+                              : missing
+                                ? "bg-red-500/5 border border-red-500/40"
+                                : isExtra
+                                  ? "bg-amber-brand/10 border border-amber-brand/40"
+                                  : "border border-transparent";
                             return (
-                              <div key={i} className={`rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                              <div key={i} className={`rounded-md p-1.5 ${rowBg} ${rowRing}`}>
+
                                 <div className={`grid ${cols} gap-2 items-center`}>
                                 <div>
                                   <div className="flex items-center gap-1.5">
