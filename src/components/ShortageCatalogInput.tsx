@@ -19,6 +19,7 @@ type CatalogMatch = {
   supplier_id: string;
   supplier_name: string;
   image_url: string | null;
+  cost_price: number | null;
 };
 
 type Supplier = { id: string; name: string };
