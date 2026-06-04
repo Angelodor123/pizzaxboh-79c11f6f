@@ -118,7 +118,14 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       min_stock_alert: p.min_stock_alert != null ? String(p.min_stock_alert) : "",
       image_url: p.image_url,
     });
+    // Scroll dialog content to top so the populated form is visible.
+    requestAnimationFrame(() => {
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+      dialog?.scrollTo({ top: 0, behavior: "smooth" });
+      toast.success(`עורך: ${p.name}`);
+    });
   };
+
 
   const cancelEdit = () => {
     setDraft(EMPTY_DRAFT);
