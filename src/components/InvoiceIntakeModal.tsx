@@ -802,7 +802,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 id={fileInputId}
                 ref={fileInput}
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/*"
                 className="hidden"
                 onChange={handleFileInputChange}
               />
@@ -819,7 +819,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
               >
                 <input
                   type="file"
-                  accept="image/*,application/pdf"
+                  accept="image/*"
                   aria-label="העלה תמונה"
                   className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   onChange={handleFileInputChange}
@@ -879,7 +879,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 >
                   <input
                     type="file"
-                    accept="image/*,application/pdf"
+                    accept="image/*"
                     aria-label="לחץ להעלאת תמונת חשבונית"
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     onChange={handleFileInputChange}
