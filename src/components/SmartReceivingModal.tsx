@@ -56,6 +56,8 @@ type RowPair = {
   matchSimilarity: number | null;
   aiSuggestedProductId: string | null;
   matchStatus: "auto" | "review" | "manual" | "new" | "none";
+  // === Delivery exceptions ===
+  damaged: boolean;
 };
 
 type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
@@ -73,13 +75,15 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   r.onerror = reject;
   r.readAsDataURL(file);
 });
-const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus"> => ({
+const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus" | "damaged"> => ({
   catalogProductId: null,
   catalogCostPrice: null,
   matchSimilarity: null,
   aiSuggestedProductId: null,
   matchStatus: "none",
+  damaged: false,
 });
+
 
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
