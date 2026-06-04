@@ -12,6 +12,7 @@ import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard"
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 import { useBranchFeature } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
+import { PersonalTasksCard } from "@/components/PersonalTasksCard";
 
 
 export const Route = createFileRoute("/")({
