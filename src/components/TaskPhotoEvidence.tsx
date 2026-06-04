@@ -68,8 +68,7 @@ export function TaskPhotoButton({
         <input
           id={inputId}
           type="file"
-          accept="image/*"
-          capture="environment"
+          accept="image/*,application/pdf"
           className="hidden"
           disabled={disabled || uploading}
           onChange={(e) => {

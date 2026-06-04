@@ -1094,6 +1094,33 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_tasks: {
+        Row: {
+          created_at: string
+          id: string
+          is_completed: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       prep_items: {
         Row: {
           active: boolean

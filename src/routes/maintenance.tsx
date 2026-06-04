@@ -178,8 +178,7 @@ function MaintenancePage() {
             </span>
             <input
               type="file"
-              accept="image/*"
-              capture="environment"
+              accept="image/*,application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="hidden"
             />
