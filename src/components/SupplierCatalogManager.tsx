@@ -116,6 +116,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       default_qty: String(p.default_qty ?? 1),
       price: p.price != null ? String(p.price) : "",
       expected_price: p.expected_price != null ? String(p.expected_price) : "",
+      cost_price: p.cost_price != null ? String(p.cost_price) : "",
       category: p.category ?? "",
       min_stock_alert: p.min_stock_alert != null ? String(p.min_stock_alert) : "",
       image_url: p.image_url,
