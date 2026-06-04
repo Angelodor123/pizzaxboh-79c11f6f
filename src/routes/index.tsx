@@ -148,21 +148,27 @@ function OperationalDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6" data-tour="home-header">
-        <h1 className="font-display text-2xl sm:text-4xl font-bold leading-tight tracking-tight text-foreground">
-          {titleParts.length > 1 ? (
-            <>
-              {titleParts[0]}
-              <span className="text-neon font-bold text-glow-neon">Pizza X</span>
-              {titleParts.slice(1).join("Pizza X")}
-            </>
-          ) : (
-            homeTitle
-          )}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="font-display text-2xl sm:text-4xl font-bold leading-tight tracking-tight text-foreground">
+            {titleParts.length > 1 ? (
+              <>
+                {titleParts[0]}
+                <span className="text-neon font-bold text-glow-neon">Pizza X</span>
+                {titleParts.slice(1).join("Pizza X")}
+              </>
+            ) : (
+              homeTitle
+            )}
+          </h1>
+          <NotificationBell />
+        </div>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
           {homeSubtitle} <span className="text-muted-foreground/80">• {dateLabel}</span>
         </p>
       </div>
+
+      <NotificationPermissionBanner />
+
 
       {/* Weather + EV grouped (related ambient widgets) */}
       <div className="mb-4">
