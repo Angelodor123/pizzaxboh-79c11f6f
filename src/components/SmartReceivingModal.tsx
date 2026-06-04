@@ -905,7 +905,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
                             return (
-                              <div key={i} className={`grid ${cols} gap-2 items-center rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                              <div key={i} className={`rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                                <div className={`grid ${cols} gap-2 items-center`}>
                                 <div>
                                   <div className="flex items-center gap-1.5">
                                     <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
@@ -936,6 +937,17 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                 <input type="number" step="0.01" value={r.totalPrice}
                                   onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
                                   className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
+                                </div>
+                                <CatalogMatchRow
+                                  row={r}
+                                  catalog={catalog}
+                                  onPick={(productId) => {
+                                    const cat = catalog.find((c) => c.id === productId);
+                                    const cost = cat?.cost_price ?? cat?.expected_price ?? cat?.price ?? null;
+                                    setRows((p) => p.map((x, idx) => idx === i ? { ...x, catalogProductId: productId, catalogCostPrice: cost, matchStatus: "manual" } : x));
+                                  }}
+                                  onMarkNew={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, catalogProductId: null, matchStatus: "new" } : x))}
+                                />
                               </div>
                             );
                           })}
