@@ -20,7 +20,9 @@ import {
   ShieldAlert,
   Wallet,
   Bell,
+  ClipboardList,
 } from "lucide-react";
+
 import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
 import { useIsModiinBranch } from "@/lib/active-branch";
@@ -235,6 +237,13 @@ export function CategoryDrawer() {
                     <span className={iconWrap}><Truck className="h-5 w-5" /></span>
                   </Link>
                 </li>
+                <li>
+                  <Link to="/inventory-audit" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">📋 דו״ח פערי קליטה</span>
+                    <span className={iconWrap}><ClipboardList className="h-5 w-5" /></span>
+                  </Link>
+                </li>
+
                 <li>
                   <Link to="/complaints" onClick={close} className={itemClass}>
                     {newComplaintCount > 0 && (

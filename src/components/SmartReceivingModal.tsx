@@ -56,6 +56,8 @@ type RowPair = {
   matchSimilarity: number | null;
   aiSuggestedProductId: string | null;
   matchStatus: "auto" | "review" | "manual" | "new" | "none";
+  // === Delivery exceptions ===
+  damaged: boolean;
 };
 
 type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
@@ -73,13 +75,15 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   r.onerror = reject;
   r.readAsDataURL(file);
 });
-const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus"> => ({
+const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus" | "damaged"> => ({
   catalogProductId: null,
   catalogCostPrice: null,
   matchSimilarity: null,
   aiSuggestedProductId: null,
   matchStatus: "none",
+  damaged: false,
 });
+
 
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
@@ -746,6 +750,74 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         }
       }
 
+      // ============================================================
+      // Delivery exceptions: record discrepancies vs the order, and
+      // notify managers when items are missing/damaged so they can
+      // chase a credit note (זיכוי) from the supplier.
+      // ============================================================
+      try {
+        const exceptions: Array<{
+          branch_id: string;
+          order_id: string | null;
+          invoice_id: string | null;
+          supplier_id: string | null;
+          product_id: string | null;
+          product_name: string;
+          expected_qty: number | null;
+          actual_qty: number | null;
+          reason: "missing" | "damaged" | "unexpected_item" | "partial";
+        }> = [];
+        for (const r of cleanItems) {
+          const expected = r.orderedQty;
+          const actual = Number(r.invoiceQty) || 0;
+          let reason: "missing" | "damaged" | "unexpected_item" | "partial" | null = null;
+          if (r.damaged) reason = "damaged";
+          else if (chosenMatch && expected == null) reason = "unexpected_item";
+          else if (expected != null && actual < expected - 0.001) {
+            reason = actual <= 0 ? "missing" : "partial";
+          }
+          if (!reason) continue;
+          exceptions.push({
+            branch_id: branchId,
+            order_id: chosenMatch?.order_id ?? null,
+            invoice_id: invoiceRow!.id,
+            supplier_id: supplierId || chosenMatch?.supplier_id || null,
+            product_id: r.catalogProductId,
+            product_name: r.name.trim().slice(0, 200),
+            expected_qty: expected,
+            actual_qty: actual,
+            reason,
+          });
+        }
+        if (exceptions.length) {
+          await supabase.from("delivery_exceptions").insert(exceptions);
+
+          // Fan-out notification to super admins for missing/damaged items
+          // (those that require a credit note follow-up).
+          const followUps = exceptions.filter((e) => e.reason === "missing" || e.reason === "damaged" || e.reason === "partial");
+          if (followUps.length) {
+            const { data: adminIds } = await supabase.rpc("list_super_admin_user_ids");
+            const ids: string[] = Array.isArray(adminIds) ? adminIds : [];
+            if (ids.length) {
+              const summary = followUps.slice(0, 3).map((e) => `${e.product_name} (${e.reason === "damaged" ? "פגום" : `${e.actual_qty}/${e.expected_qty}`})`).join(", ");
+              const more = followUps.length > 3 ? ` +${followUps.length - 3}` : "";
+              await supabase.from("notifications").insert(ids.map((uid) => ({
+                user_id: uid,
+                type: "warning",
+                title: `פערים בקליטת סחורה${chosenMatch ? ` · ${chosenMatch.supplier_name}` : ""}`,
+                body: `${followUps.length} פריטים דורשים מעקב לזיכוי: ${summary}${more}`,
+                link: "/inventory-audit",
+                data: { invoice_id: invoiceRow!.id, order_id: chosenMatch?.order_id ?? null },
+              })));
+            }
+            toast.warning(`נרשמו ${followUps.length} פערים — נדרש מעקב לזיכוי מהספק`, { duration: 8000 });
+          }
+        }
+      } catch (exErr) {
+        console.error("Failed to record delivery exceptions", exErr);
+      }
+
+
       // Surface price-change alerts so the manager sees them right after save
       if (priceAlerts.length) {
         const top = priceAlerts.slice(0, 3).map((a) => {
@@ -1028,14 +1100,23 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                         )}
                         <div className="flex flex-col gap-2">
                           {rows.map((r, i) => {
+                            const missing = chosenMatch && r.orderedQty != null && r.invoiceQty < r.orderedQty - 0.001;
                             const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
                             const isExtra = chosenMatch && r.orderedQty == null;
                             const rowState: ValState = itemVal[i] ?? "pending";
                             const rowRing = aiActive
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
+                            const rowBg = r.damaged
+                              ? "bg-red-500/10 border border-red-500/50"
+                              : missing
+                                ? "bg-red-500/5 border border-red-500/40"
+                                : isExtra
+                                  ? "bg-amber-brand/10 border border-amber-brand/40"
+                                  : "border border-transparent";
                             return (
-                              <div key={i} className={`rounded-md p-1 ${isExtra ? "bg-amber-brand/5" : ""} ${rowRing}`}>
+                              <div key={i} className={`rounded-md p-1.5 ${rowBg} ${rowRing}`}>
+
                                 <div className={`grid ${cols} gap-2 items-center`}>
                                 <div>
                                   <div className="flex items-center gap-1.5">
@@ -1078,7 +1159,49 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                   }}
                                   onMarkNew={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, catalogProductId: null, matchStatus: "new" } : x))}
                                 />
+                                {/* Quick discrepancy actions per row */}
+                                <div className="mt-1.5 px-1 flex flex-wrap items-center gap-1.5 text-[10.5px]">
+                                  {chosenMatch && r.orderedQty != null && (
+                                    <button
+                                      type="button"
+                                      title="התקבל במלואו"
+                                      onClick={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: r.orderedQty as number, damaged: false } : x))}
+                                      className="inline-flex items-center gap-1 h-7 px-2 rounded border border-emerald-500/40 text-emerald-400 font-bold hover:bg-emerald-500/10"
+                                    >
+                                      ✅ במלואו
+                                    </button>
+                                  )}
+                                  {chosenMatch && r.orderedQty != null && (
+                                    <button
+                                      type="button"
+                                      title="חסר / כמות חלקית"
+                                      onClick={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: 0 } : x))}
+                                      className="inline-flex items-center gap-1 h-7 px-2 rounded border border-rose-500/40 text-rose-400 font-bold hover:bg-rose-500/10"
+                                    >
+                                      ➖ חסר / חלקי
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    title={r.damaged ? "ביטול סימון פגום" : "סימון פריט פגום"}
+                                    onClick={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, damaged: !x.damaged } : x))}
+                                    className={`inline-flex items-center gap-1 h-7 px-2 rounded font-bold border ${r.damaged ? "bg-red-500/15 border-red-500/50 text-red-400" : "border-border text-muted-foreground hover:border-red-500/40 hover:text-red-400"}`}
+                                  >
+                                    💥 פגום
+                                  </button>
+                                  {isExtra && (
+                                    <span className="inline-flex items-center gap-1 h-7 px-2 rounded bg-amber-brand/15 border border-amber-brand/40 text-amber-brand font-bold">
+                                      ➕ פריט לא מוזמן
+                                    </span>
+                                  )}
+                                  {missing && !r.damaged && (
+                                    <span className="inline-flex items-center gap-1 h-7 px-2 rounded bg-red-500/15 border border-red-500/40 text-red-400 font-bold">
+                                      ⚠ חסר {((r.orderedQty as number) - r.invoiceQty).toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+
                             );
                           })}
 
