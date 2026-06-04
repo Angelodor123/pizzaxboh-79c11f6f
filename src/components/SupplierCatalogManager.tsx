@@ -35,6 +35,7 @@ type Draft = {
   default_qty: string;
   price: string;
   expected_price: string;
+  cost_price: string;
   category: string;
   min_stock_alert: string;
   image_url: string | null;
@@ -48,6 +49,7 @@ const EMPTY_DRAFT: Draft = {
   default_qty: "1",
   price: "",
   expected_price: "",
+  cost_price: "",
   category: "",
   min_stock_alert: "",
   image_url: null,
