@@ -17,6 +17,7 @@ export type SupplierProduct = {
   sku: string | null;
   unit_size: string | null;
   expected_price: number | null;
+  cost_price: number | null;
   min_stock_alert: number | null;
 };
 
