@@ -73,6 +73,14 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reje
   r.onerror = reject;
   r.readAsDataURL(file);
 });
+const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus"> => ({
+  catalogProductId: null,
+  catalogCostPrice: null,
+  matchSimilarity: null,
+  aiSuggestedProductId: null,
+  matchStatus: "none",
+});
+
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const looseEq = (a: string, b: string) => {
