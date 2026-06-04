@@ -795,8 +795,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 className="hidden"
                 onChange={handleFileInputChange}
               />
-              <label
-                htmlFor={fileInputId}
+              <span
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -805,11 +804,18 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                     fileInput.current?.click();
                   }
                 }}
-                className="inline-flex cursor-pointer items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3 rounded-md border border-border hover:border-neon hover:text-neon text-xs md:text-sm font-bold"
+                className="relative inline-flex cursor-pointer items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3 rounded-md border border-border hover:border-neon hover:text-neon text-xs md:text-sm font-bold overflow-hidden"
               >
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  aria-label="העלה תמונה"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  onChange={handleFileInputChange}
+                />
                 <Upload className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {uploading || ocrLoading ? "מעלה…" : file || previewUrl ? "החלף" : "העלה תמונה"}
-              </label>
+              </span>
               {previewUrl && (
                 <div className="flex items-center gap-1">
                   <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} className="h-8 w-8 md:h-9 md:w-9 grid place-content-center rounded-md border border-border hover:text-neon" aria-label="הקטן">
@@ -847,15 +853,29 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
                 </>
               ) : (
-                <label
-                  htmlFor={fileInputId}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInput.current?.click();
+                    }
+                  }}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleDropFile}
-                  className="block cursor-pointer text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-6 md:p-8 hover:border-neon hover:text-neon transition"
+                  className="relative block cursor-pointer text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl p-6 md:p-8 hover:border-neon hover:text-neon transition overflow-hidden"
                 >
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    aria-label="לחץ להעלאת תמונת חשבונית"
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    onChange={handleFileInputChange}
+                  />
                   <Upload className="h-7 w-7 md:h-8 md:w-8 mx-auto mb-2" />
                   לחץ להעלאת תמונת חשבונית
-                </label>
+                </div>
               )}
             </div>
             <style>{`
