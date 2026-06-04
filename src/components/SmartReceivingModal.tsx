@@ -1159,7 +1159,49 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                   }}
                                   onMarkNew={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, catalogProductId: null, matchStatus: "new" } : x))}
                                 />
+                                {/* Quick discrepancy actions per row */}
+                                <div className="mt-1.5 px-1 flex flex-wrap items-center gap-1.5 text-[10.5px]">
+                                  {chosenMatch && r.orderedQty != null && (
+                                    <button
+                                      type="button"
+                                      title="התקבל במלואו"
+                                      onClick={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: r.orderedQty as number, damaged: false } : x))}
+                                      className="inline-flex items-center gap-1 h-7 px-2 rounded border border-emerald-500/40 text-emerald-400 font-bold hover:bg-emerald-500/10"
+                                    >
+                                      ✅ במלואו
+                                    </button>
+                                  )}
+                                  {chosenMatch && r.orderedQty != null && (
+                                    <button
+                                      type="button"
+                                      title="חסר / כמות חלקית"
+                                      onClick={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: 0 } : x))}
+                                      className="inline-flex items-center gap-1 h-7 px-2 rounded border border-rose-500/40 text-rose-400 font-bold hover:bg-rose-500/10"
+                                    >
+                                      ➖ חסר / חלקי
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    title={r.damaged ? "ביטול סימון פגום" : "סימון פריט פגום"}
+                                    onClick={() => setRows((p) => p.map((x, idx) => idx === i ? { ...x, damaged: !x.damaged } : x))}
+                                    className={`inline-flex items-center gap-1 h-7 px-2 rounded font-bold border ${r.damaged ? "bg-red-500/15 border-red-500/50 text-red-400" : "border-border text-muted-foreground hover:border-red-500/40 hover:text-red-400"}`}
+                                  >
+                                    💥 פגום
+                                  </button>
+                                  {isExtra && (
+                                    <span className="inline-flex items-center gap-1 h-7 px-2 rounded bg-amber-brand/15 border border-amber-brand/40 text-amber-brand font-bold">
+                                      ➕ פריט לא מוזמן
+                                    </span>
+                                  )}
+                                  {missing && !r.damaged && (
+                                    <span className="inline-flex items-center gap-1 h-7 px-2 rounded bg-red-500/15 border border-red-500/40 text-red-400 font-bold">
+                                      ⚠ חסר {((r.orderedQty as number) - r.invoiceQty).toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+
                             );
                           })}
 
