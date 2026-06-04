@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, useId } from "react";
 import { X, Upload, Plus, Trash2, Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -194,6 +194,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   const [inventory, setInventory] = useState<InventoryOpt[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const fileInputId = useId();
   const [rawOcr, setRawOcr] = useState<ParsedInvoice | null>(null);
   const [supplierCatalog, setSupplierCatalog] = useState<SupplierProduct[]>([]);
   const runOcr = useServerFn(parseInvoiceImage);
@@ -473,6 +474,20 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       setOcrLoading(false);
       setUploading(false);
     }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.currentTarget.files?.[0] ?? null;
+    e.currentTarget.value = "";
+    if (!selected) return;
+    void onFileSelected(selected);
+  };
+
+  const handleDropFile = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    const selected = e.dataTransfer.files?.[0] ?? null;
+    if (!selected) return;
+    void onFileSelected(selected);
   };
 
 
