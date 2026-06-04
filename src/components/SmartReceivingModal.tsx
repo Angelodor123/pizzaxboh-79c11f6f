@@ -305,6 +305,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         unitPrice: Number(it.unit_price) || 0,
         totalPrice: Number(it.total_price) || 0,
         category: lookupCategory(it.name),
+        ...blankMatch(),
       });
 
     });
