@@ -238,6 +238,13 @@ export function CategoryDrawer() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/inventory-audit" onClick={close} className={itemClass}>
+                    <span className="flex-1 text-right">📋 דו״ח פערי קליטה</span>
+                    <span className={iconWrap}><ClipboardList className="h-5 w-5" /></span>
+                  </Link>
+                </li>
+
+                <li>
                   <Link to="/complaints" onClick={close} className={itemClass}>
                     {newComplaintCount > 0 && (
                       <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-black shrink-0">
