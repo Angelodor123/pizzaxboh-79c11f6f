@@ -1,6 +1,6 @@
 // Internal team "Shift Updates" board, scoped to the active branch.
 // Realtime sync via Supabase channels; integrates @mentions which trigger
-// notifications (and push) for tagged users.
+// notifications (and push) for tagged users — including group tags.
 
 import { useEffect, useMemo, useState } from "react";
 import { Send, Trash2, MessageSquare } from "lucide-react";
@@ -13,6 +13,8 @@ import {
   extractMentionedUserIds,
   type MentionUser,
 } from "@/lib/notifications-store";
+import { fetchGroupUserIds, GROUP_TAGS } from "@/lib/employee-directory";
+import { FeedText } from "@/components/FeedText";
 import { useServerFn } from "@tanstack/react-start";
 import { sendPushToUsers } from "@/lib/push-send.functions";
 import { toast } from "sonner";
@@ -58,7 +60,6 @@ export function ShiftFeedCard() {
 
   useEffect(() => subscribeBranch((b) => setBranchId(b)), []);
 
-  // Load messages + author names.
   useEffect(() => {
     if (!branchId) return;
     let mounted = true;
@@ -95,7 +96,6 @@ export function ShiftFeedCard() {
     };
   }, [branchId]);
 
-  // Resolve author display names from mention directory.
   useEffect(() => {
     if (!mentionUsers.length) return;
     const map: Record<string, string> = {};
@@ -108,18 +108,28 @@ export function ShiftFeedCard() {
     if (!text || !uid || !branchId || sending) return;
     setSending(true);
     try {
-      const mentions = extractMentionedUserIds(text, mentionUsers);
+      // 1) Direct user mentions
+      const directIds = extractMentionedUserIds(text, mentionUsers);
+
+      // 2) Expand group tags (@כולם / @מטבח / @דלפק / @שליחים / @מנהלים)
+      const groupKeys = GROUP_TAGS.filter((g) =>
+        new RegExp(`@${g.tag}(?![\\u0590-\\u05FFa-zA-Z0-9])`).test(text),
+      ).map((g) => g.key);
+      const groupExpansions = await Promise.all(groupKeys.map((k) => fetchGroupUserIds(k)));
+      const allMentioned = new Set<string>([...directIds, ...groupExpansions.flat()]);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from("shift_feed" as never) as any).insert({
         user_id: uid,
         branch_id: branchId,
         message: text,
-        mentions,
+        mentions: Array.from(allMentioned),
       });
       if (error) throw error;
       setMessage("");
-      // Notify tagged users (excluding self).
-      const targets = mentions.filter((id) => id !== uid);
+
+      // Notify ALL tagged users — INCLUDING self (so self-mentions/tests work).
+      const targets = Array.from(allMentioned);
       if (targets.length) {
         const title = `${fullName ?? "מישהו"} תייג אותך בעדכוני משמרת`;
         await createNotifications(targets, {
@@ -127,12 +137,15 @@ export function ShiftFeedCard() {
           title,
           body: text.slice(0, 200),
           link: "/",
-          data: { source: "shift_feed" },
+          data: { source: "shift_feed", groups: groupKeys },
         });
-        try {
-          await pushFn({ data: { userIds: targets, title, body: text.slice(0, 200) } });
-        } catch (e) {
-          console.warn("[push] mention push failed", e);
+        const pushTargets = targets.filter((id) => id !== uid);
+        if (pushTargets.length) {
+          try {
+            await pushFn({ data: { userIds: pushTargets, title, body: text.slice(0, 200) } });
+          } catch (e) {
+            console.warn("[push] mention push failed", e);
+          }
         }
       }
     } catch (e) {
@@ -164,7 +177,7 @@ export function ShiftFeedCard() {
             value={message}
             onChange={setMessage}
             onMentionUsersChange={setMentionUsers}
-            placeholder="כתוב עדכון לצוות… השתמש ב-@ לתיוג"
+            placeholder="כתוב עדכון לצוות… השתמש ב-@ לתיוג (גם @כולם / @מטבח / @דלפק / @שליחים / @מנהלים)"
             multiline
             rows={2}
             disabled={!uid || !branchId}
@@ -204,8 +217,8 @@ export function ShiftFeedCard() {
                     </span>
                     <span className="text-[10px] text-muted-foreground shrink-0">{relTime(r.created_at)}</span>
                   </div>
-                  <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap break-words">
-                    {r.message}
+                  <p className="text-sm text-foreground/90 mt-1">
+                    <FeedText text={r.message} users={mentionUsers} />
                   </p>
                 </div>
                 {canDelete && (
