@@ -28,8 +28,8 @@ export function EditEmployeeDialog({ employee, onClose, onSaved }: Props) {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase
-      .from("profiles")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("profiles") as any)
       .update({
         department: department || null,
         seniority: seniority.trim() || null,
