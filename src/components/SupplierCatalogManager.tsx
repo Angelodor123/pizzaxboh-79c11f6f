@@ -196,7 +196,11 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto" dir="rtl">
+      <DialogContent
+        className="max-w-3xl max-h-[92vh] overflow-y-auto"
+        dir="rtl"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="font-display text-xl flex items-center gap-2">
             <Package className="h-5 w-5 text-neon" />
