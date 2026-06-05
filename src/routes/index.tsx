@@ -14,7 +14,7 @@ import { useBranchFeature } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
 import { PersonalTasksCard } from "@/components/PersonalTasksCard";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
-import { NotificationBell } from "@/components/NotificationBell";
+
 import { ShiftFeedCard } from "@/components/ShiftFeedCard";
 
 
@@ -160,7 +160,6 @@ function OperationalDashboard() {
               homeTitle
             )}
           </h1>
-          <NotificationBell />
         </div>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
           {homeSubtitle} <span className="text-muted-foreground/80">• {dateLabel}</span>

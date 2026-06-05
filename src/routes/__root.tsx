@@ -30,7 +30,7 @@ import { NdaGate } from "@/components/NdaGate";
 import { BranchGate, useActiveBranchData } from "@/components/BranchGate";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 
-import { MaintenanceBell } from "@/components/MaintenanceBell";
+import { UnifiedBell } from "@/components/UnifiedBell";
 import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -358,7 +358,7 @@ function AuthedShell() {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-visible sm:gap-3">
             <GlobalSearch />
             <div className="shrink-0">
-              <MaintenanceBell />
+              <UnifiedBell />
             </div>
             <div className="shrink-0">
               <BranchSwitcher />
