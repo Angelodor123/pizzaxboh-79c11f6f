@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 const OcrInput = z.object({
   imageBase64: z.string().min(100).max(15_000_000),
@@ -17,24 +19,82 @@ type ParsedReceipt = {
   items: OcrItem[];
 };
 
-const SYSTEM_PROMPT = `אתה עוזר OCR לחשבוניות ספקים בעברית. תקבל תמונה של חשבונית/קבלה ותחזיר אך ורק JSON תקין לפי הסכימה הזו:
-{
-  "supplier_name_hint": string|null,
-  "invoice_number": string|null,
-  "total_amount": number|null,
-  "document_date": string|null,   // YYYY-MM-DD
-  "items": [{ "name": string, "quantity": number, "unit_price": number|null, "total_price": number|null }]
-}
-חוקים: ללא הסברים, ללא markdown, רק JSON. אם משהו לא ידוע — null. נקה שמות מוצרים מקודים/ברקודים.`;
+// Reuse the rich parsing prompt + normalization from the training pipeline so
+// the real "Smart Receiving" modal benefits from the same logistical-item
+// filtering, date/number normalization, hidden-discount math, learned
+// supplier-specific instructions, and catalog RAG context.
+const BASE_SYSTEM = `אתה מערכת OCR לקבלות וחשבוניות בעברית, מבוססת Google Gemini Vision.
+- קרא את כל השורות, התעלם מלוגואים, כותרות עיצוביות, חתימות, חותמות וברקודים.
+- חלץ עבור כל שורת פריט: שם פריט נקי (בעברית אם קיים), כמות, מחיר נטו ליחידה, וסה"כ.
+- אם ערך לא ברור — החזר null (אל תנחש מספרים). שדה items חייב להיות מערך, גם אם ריק.
 
-function safeJson(text: string): ParsedReceipt | null {
-  try {
-    const m = text.match(/\{[\s\S]*\}/);
-    if (!m) return null;
-    return JSON.parse(m[0]) as ParsedReceipt;
-  } catch {
-    return null;
+🚫 סינון פריטים לוגיסטיים: התעלם מ"משטח", "פלטה", "ארגז ריק", "פיקדון", "Pallet", "Crate", "Deposit".
+
+📄 תעודות משלוח ללא מחירים: חלץ שמות וכמויות; השאר מחירים=null.
+
+🔢 נרמול מספרים: הסר ₪/$/€/ש״ח/שח/NIS/ILS ופסיקי אלפים. דוגמה: "₪569.86"→569.86. total_amount חייב להיות הסכום הסופי כולל מע״מ ("סה״כ לתשלום"/"Total").
+
+📅 נרמול תאריך: ISO YYYY-MM-DD בלבד. המר "27/05/26"→"2026-05-27" (יום/חודש/שנה ישראלי). תאריך לא קריא → null.
+
+🧮 הנחות מובלעות: אם quantity × unit_price המודפס גדול מ-total_price המודפס ביותר מ-1% — חשב את הנטו האמיתי: unit_price = total_price / quantity.`;
+
+const NumLike = z.preprocess((v) => {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") {
+    const cleaned = v
+      .replace(/[₪$€£]/g, "")
+      .replace(/ש["״']?\s*ח/g, "")
+      .replace(/NIS|ILS/gi, "")
+      .replace(/,/g, "")
+      .replace(/[^\d.\-]/g, "")
+      .trim();
+    if (!cleaned) return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
   }
+  return null;
+}, z.number().nullable());
+
+const DateLike = z.preprocess((v) => {
+  if (typeof v !== "string" || !v.trim()) return null;
+  const s = v.trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return s;
+  const dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (dmy) {
+    let y = parseInt(dmy[3], 10); if (y < 100) y += 2000;
+    const d = parseInt(dmy[1], 10);
+    const m = parseInt(dmy[2], 10);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  return null;
+}, z.string().nullable());
+
+const ParsedSchema = z.object({
+  supplier_guess: z.string().max(120).nullable().optional(),
+  invoice_number: z.string().max(60).nullable().optional(),
+  document_date: DateLike.optional(),
+  total_amount: NumLike.optional(),
+  items: z.array(z.object({
+    item_name: z.string().min(1).max(200),
+    quantity: NumLike.optional(),
+    unit_price: NumLike.optional(),
+    total_price: NumLike.optional(),
+  })).max(120),
+});
+
+function buildCatalogBlock(catalog: Array<{ name: string; unit?: string | null; price?: number | null }>, supplierName: string | null): string {
+  if (!catalog.length) return "";
+  const lines = catalog.slice(0, 200).map((c, i) => {
+    const parts: string[] = [`${i + 1}. ${c.name}`];
+    if (c.unit) parts.push(`יח׳:${c.unit}`);
+    if (c.price != null) parts.push(`מחיר צפוי:${c.price}`);
+    return parts.join(" | ");
+  });
+  const label = supplierName ? ` של הספק "${supplierName}"` : "";
+  return `\n\n📚 קטלוג ידוע${label} — מפה את שמות הפריטים לשמות הקנוניים מהרשימה:\n${lines.join("\n")}`;
 }
 
 export const ocrInvoice = createServerFn({ method: "POST" })
@@ -46,52 +106,76 @@ export const ocrInvoice = createServerFn({ method: "POST" })
       return { parsed: null as ParsedReceipt | null, matches: [], error: "LOVABLE_API_KEY missing" };
     }
 
+    const { supabase } = context;
+
+    // Load supplier-specific learned instructions + catalog for RAG
+    let supplierHint = "";
+    let supplierName: string | null = null;
+    let catalog: Array<{ name: string; unit: string | null; price: number | null }> = [];
+    if (data.supplierHintId) {
+      const { data: sup } = await supabase
+        .from("suppliers")
+        .select("name, parsing_instructions")
+        .eq("id", data.supplierHintId)
+        .maybeSingle();
+      if (sup?.name) supplierName = sup.name;
+      if (sup?.parsing_instructions) {
+        supplierHint = `\n\nהנחיות ספציפיות לספק "${sup.name}" (נלמדו אוטומטית):\n${sup.parsing_instructions}`;
+      }
+      const { data: products } = await supabase
+        .from("supplier_products")
+        .select("name, unit, expected_price, cost_price")
+        .eq("supplier_id", data.supplierHintId)
+        .eq("active", true)
+        .limit(200);
+      catalog = (products ?? []).map((p: { name: string; unit: string | null; expected_price: number | null; cost_price: number | null }) => ({
+        name: p.name, unit: p.unit, price: p.cost_price ?? p.expected_price,
+      }));
+    }
+
     const dataUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = gateway("google/gemini-2.5-flash");
 
     let parsed: ParsedReceipt | null = null;
     try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Lovable-API-Key": apiKey,
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: "נא לחלץ נתונים מהחשבונית הזו והחזר JSON בלבד." },
-                { type: "image_url", image_url: { url: dataUrl } },
-              ],
-            },
+      const { output } = await generateText({
+        model,
+        system: BASE_SYSTEM + supplierHint + buildCatalogBlock(catalog, supplierName),
+        output: Output.object({ schema: ParsedSchema }),
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: "פענח את החשבונית/קבלה הזו. החזר JSON תקין בלבד." },
+            { type: "image", image: dataUrl, mediaType: data.mimeType || "image/jpeg" },
           ],
-          temperature: 0,
-        }),
+        }],
       });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        return {
-          parsed: null,
-          matches: [],
-          error: res.status === 429 ? "מכסת AI התמלאה, נסה שוב מאוחר יותר" :
-                 res.status === 402 ? "נגמר הקרדיט ל-AI" :
-                 `OCR failed (${res.status}): ${errText.slice(0, 160)}`,
-        };
-      }
-      const json = await res.json();
-      const text: string = json.choices?.[0]?.message?.content ?? "";
-      parsed = safeJson(text);
+      parsed = {
+        supplier_name_hint: output.supplier_guess ?? null,
+        invoice_number: output.invoice_number ?? null,
+        total_amount: output.total_amount ?? null,
+        document_date: output.document_date ?? null,
+        items: (output.items ?? []).map((it) => ({
+          name: it.item_name,
+          quantity: Number(it.quantity ?? 0) || 0,
+          unit_price: it.unit_price ?? undefined,
+          total_price: it.total_price ?? undefined,
+        })),
+      };
     } catch (e) {
       console.error("OCR error", e);
-      return { parsed: null, matches: [], error: "OCR failed" };
+      const msg = (e as Error).message || "";
+      return {
+        parsed: null,
+        matches: [],
+        error: msg.includes("429") ? "מכסת AI התמלאה, נסה שוב מאוחר יותר" :
+               msg.includes("402") ? "נגמר הקרדיט ל-AI" :
+               "ניתוח החשבונית נכשל",
+      };
     }
 
     // Find recent sent orders within 48h for matching
-    const { supabase } = context;
     const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     let query = supabase
       .from("orders")
@@ -103,7 +187,6 @@ export const ocrInvoice = createServerFn({ method: "POST" })
     if (data.supplierHintId) query = query.eq("supplier_id", data.supplierHintId);
     const { data: orders } = await query;
 
-    // Attach supplier names
     const supplierIds = Array.from(new Set((orders ?? []).map((o) => o.supplier_id)));
     let supplierMap: Record<string, string> = {};
     if (supplierIds.length) {
@@ -114,7 +197,6 @@ export const ocrInvoice = createServerFn({ method: "POST" })
       supplierMap = Object.fromEntries((sups ?? []).map((s) => [s.id, s.name]));
     }
 
-    // Lightweight scoring: name-hint fuzzy + recency
     const hint = (parsed?.supplier_name_hint ?? "").toLowerCase().trim();
     const matches = (orders ?? []).map((o) => {
       const supName = supplierMap[o.supplier_id] ?? "";
