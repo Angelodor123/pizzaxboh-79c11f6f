@@ -34,7 +34,6 @@ import { Route as AidsSuppliersRouteImport } from './routes/aids.suppliers'
 import { Route as AidsStaffRouteImport } from './routes/aids.staff'
 import { Route as AidsOperationsRouteImport } from './routes/aids.operations'
 import { Route as AidsContactsRouteImport } from './routes/aids.contacts'
-import { Route as AidsCleaningRouteImport } from './routes/aids.cleaning'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
@@ -165,11 +164,6 @@ const AidsContactsRoute = AidsContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AidsRoute,
 } as any)
-const AidsCleaningRoute = AidsCleaningRouteImport.update({
-  id: '/cleaning',
-  path: '/cleaning',
-  getParentRoute: () => AidsRoute,
-} as any)
 const AdminHistoryRoute = AdminHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -215,7 +209,6 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
-  '/aids/cleaning': typeof AidsCleaningRoute
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/staff': typeof AidsStaffRoute
@@ -246,7 +239,6 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
-  '/aids/cleaning': typeof AidsCleaningRoute
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/staff': typeof AidsStaffRoute
@@ -279,7 +271,6 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
-  '/aids/cleaning': typeof AidsCleaningRoute
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/staff': typeof AidsStaffRoute
@@ -313,7 +304,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
-    | '/aids/cleaning'
     | '/aids/contacts'
     | '/aids/operations'
     | '/aids/staff'
@@ -344,7 +334,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
-    | '/aids/cleaning'
     | '/aids/contacts'
     | '/aids/operations'
     | '/aids/staff'
@@ -376,7 +365,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/alerts'
     | '/admin/history'
-    | '/aids/cleaning'
     | '/aids/contacts'
     | '/aids/operations'
     | '/aids/staff'
@@ -587,13 +575,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AidsContactsRouteImport
       parentRoute: typeof AidsRoute
     }
-    '/aids/cleaning': {
-      id: '/aids/cleaning'
-      path: '/cleaning'
-      fullPath: '/aids/cleaning'
-      preLoaderRoute: typeof AidsCleaningRouteImport
-      parentRoute: typeof AidsRoute
-    }
     '/admin/history': {
       id: '/admin/history'
       path: '/history'
@@ -640,7 +621,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AidsRouteChildren {
-  AidsCleaningRoute: typeof AidsCleaningRoute
   AidsContactsRoute: typeof AidsContactsRoute
   AidsOperationsRoute: typeof AidsOperationsRoute
   AidsStaffRoute: typeof AidsStaffRoute
@@ -649,7 +629,6 @@ interface AidsRouteChildren {
 }
 
 const AidsRouteChildren: AidsRouteChildren = {
-  AidsCleaningRoute: AidsCleaningRoute,
   AidsContactsRoute: AidsContactsRoute,
   AidsOperationsRoute: AidsOperationsRoute,
   AidsStaffRoute: AidsStaffRoute,
