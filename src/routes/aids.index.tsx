@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Package, BookOpen, Sparkles, Phone, Pizza, Contact } from "lucide-react";
+import { ArrowRight, Package, BookOpen, Phone, Pizza, Contact } from "lucide-react";
 import { useUIStore } from "@/lib/ui-store";
 
 export const Route = createFileRoute("/aids/")({
