@@ -246,7 +246,7 @@ function AdminPage() {
   };
 
   const { isSuperAdmin } = useAuth();
-  const [tab, setTab] = useState<"overview" | "recipes" | "users" | "branches" | "tasks" | "reminders" | "cms" | "units" | "prep" | "restock" | "onboarding">("overview");
+  const [tab, setTab] = useState<"overview" | "recipes" | "users" | "branches" | "tasks" | "reminders" | "units" | "prep" | "restock" | "onboarding">("overview");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">

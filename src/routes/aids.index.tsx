@@ -51,13 +51,6 @@ function AidsHubPage() {
       accent: "from-rose-500/20 to-rose-500/5 border-rose-500/40 text-rose-300",
     },
     {
-      title: "נהלי ניקיון",
-      emoji: "🧹",
-      Icon: Sparkles,
-      to: "/aids/cleaning",
-      accent: "from-sky-500/20 to-sky-500/5 border-sky-500/40 text-sky-300",
-    },
-    {
       title: "אנשי קשר חיצוניים",
       emoji: "📞",
       Icon: Phone,
