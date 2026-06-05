@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { motion, useMotionValue } from "framer-motion";
 import { Loader2, Minus, Send, ListChecks, Package, AlertTriangle, ArrowLeft } from "lucide-react";
 import { askCopilot, type CopilotAction } from "@/lib/copilot.functions";
+import { getDailyBriefing } from "@/lib/briefing.functions";
 import { useAuth } from "@/lib/auth";
 import { CopilotMascot } from "@/components/CopilotMascot";
 import { cn } from "@/lib/utils";
@@ -56,7 +57,9 @@ export function CopilotFab() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showDailyCta, setShowDailyCta] = useState(false);
+  const [briefingText, setBriefingText] = useState<string | null>(null);
   const ask = useServerFn(askCopilot);
+  const fetchBriefing = useServerFn(getDailyBriefing);
   const router = useRouter();
   const { role, isSuperAdmin } = useAuth();
   const listRef = useRef<HTMLDivElement>(null);
@@ -166,22 +169,24 @@ export function CopilotFab() {
         return;
       }
 
-      const hour = new Date().getHours();
-      const timeGreeting =
-        hour >= 5 && hour < 12
-          ? "בוקר טוב"
-          : hour >= 12 && hour < 18
-            ? "צהריים טובים"
-            : "ערב טוב";
-
+      // Show a quick loading placeholder, then fetch the contextual briefing
       setMessages([
-        {
-          role: "model",
-          content: `${timeGreeting}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬`,
-        },
+        { role: "model", content: "רגע, סוקר את המצב להיום... 🌿" },
       ]);
+      try {
+        const briefing = await fetchBriefing({ data: {} } as any);
+        setBriefingText(briefing.summaryText);
+        setMessages([{ role: "model", content: briefing.summaryText }]);
+      } catch (err) {
+        console.error("[copilot] briefing fetch failed", err);
+        const hour = new Date().getHours();
+        const tg = hour >= 5 && hour < 12 ? "בוקר טוב" : hour >= 12 && hour < 18 ? "צהריים טובים" : "ערב טוב";
+        setMessages([
+          { role: "model", content: `${tg}, ג'וני כאן. מוכן לעבודה. דברו אליי. 💬` },
+        ]);
+      }
     },
-    [],
+    [fetchBriefing],
   );
 
 
