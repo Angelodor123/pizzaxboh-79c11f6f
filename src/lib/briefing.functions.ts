@@ -45,17 +45,21 @@ export const getDailyBriefing = createServerFn({ method: "POST" })
     if (branchId) shortageQ = shortageQ.eq("branch_id", branchId);
     const { count: shortagesCount } = await shortageQ;
 
-    // deliveries today (invoices received today)
+    // deliveries today (invoices received today) — join supplier name
     let invoicesQ = supabase
       .from("invoices")
-      .select("supplier_name, scanned_at")
-      .gte("scanned_at", todayStart.toISOString())
-      .lte("scanned_at", todayEnd.toISOString())
+      .select("created_at, suppliers(name)")
+      .gte("created_at", todayStart.toISOString())
+      .lte("created_at", todayEnd.toISOString())
       .limit(20);
     if (branchId) invoicesQ = invoicesQ.eq("branch_id", branchId);
     const { data: invoices } = await invoicesQ;
     const deliveriesToday = Array.from(
-      new Set(((invoices ?? []) as any[]).map((i) => i.supplier_name).filter(Boolean)),
+      new Set(
+        ((invoices ?? []) as any[])
+          .map((i) => i.suppliers?.name as string | undefined)
+          .filter(Boolean) as string[],
+      ),
     );
 
     // calendar events today (one-off + recurring by weekday)
