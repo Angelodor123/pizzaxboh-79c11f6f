@@ -283,9 +283,6 @@ function AdminPage() {
         <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
           תזכורות ספקים
         </TabButton>
-        <TabButton active={tab === "cms"} onClick={() => setTab("cms")} icon={<FileText className="h-4 w-4" />}>
-          ניהול תוכן וטקסטים
-        </TabButton>
         <TabButton active={tab === "onboarding"} onClick={() => setTab("onboarding")} icon={<FileText className="h-4 w-4" />}>
           הסברי דפים
         </TabButton>
@@ -311,7 +308,7 @@ function AdminPage() {
       {tab === "branches" && isSuperAdmin && <BranchesPanel />}
       {tab === "tasks" && isSuperAdmin && <TasksPanel />}
       {tab === "reminders" && <SupplierRemindersPanel />}
-      {tab === "cms" && <ContentTextsPanel />}
+      
       {tab === "onboarding" && <OnboardingPanel />}
       {tab === "units" && <UnitsPanel />}
       {tab === "prep" && <PrepItemsPanel />}
