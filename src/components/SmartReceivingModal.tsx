@@ -1175,7 +1175,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                       : "grid-cols-[1fr_72px_72px_72px]";
                     return (
                       <>
-                        <div className={`grid ${cols} gap-2 px-1 pb-2 text-[11px] font-bold text-muted-foreground`}>
+                        <div className={`hidden sm:grid ${cols} gap-2 px-1 pb-2 text-[11px] font-bold text-muted-foreground`}>
                           <div className="text-right">פריט</div>
                           {chosenMatch && <div className="text-center">הוזמן</div>}
                           <div className="text-center">בחשבונית</div>
@@ -1185,7 +1185,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                         {rows.length === 0 && (
                           <div className="px-3 py-6 text-center text-xs text-muted-foreground">לא זוהו פריטים</div>
                         )}
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3" dir="rtl">
                           {rows.map((r, i) => {
                             const mismatch = chosenMatch && r.orderedQty != null && Math.abs(r.invoiceQty - r.orderedQty) > 0.001;
                             const isExtra = chosenMatch && r.orderedQty == null;
@@ -1194,10 +1194,24 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                               ? (rowState === "approved" ? "ring-1 ring-emerald-500/40" : rowState === "corrected" ? "ring-1 ring-rose-500/40" : "")
                               : "";
                             return (
-                              <div key={i} className={`rounded-md p-1.5 border ${isExtra ? "bg-amber-brand/5 border-amber-brand/30" : "border-border/60"} ${rowRing} ${!r.received ? "bg-rose-500/5 border-rose-500/40" : ""}`}>
-                                {/* ZONE A — Physical delivery verification (independent of AI feedback) */}
-                                <div className="flex items-center flex-wrap gap-2 pb-1.5 mb-1.5 border-b border-border/40">
-                                  <label className="inline-flex items-center gap-1.5 text-[11px] font-bold cursor-pointer select-none">
+                              <div key={i} className={`rounded-lg p-3 border shadow-sm space-y-3 ${isExtra ? "bg-amber-brand/5 border-amber-brand/30" : "bg-card/60 border-border/60"} ${rowRing} ${!r.received ? "bg-rose-500/5 border-rose-500/40" : ""}`}>
+                                {/* Row 1 — Item name + AI feedback */}
+                                <div className="flex items-center gap-2">
+                                  <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
+                                    placeholder="שם פריט"
+                                    className={`flex-1 min-w-0 h-10 rounded bg-background border px-2 text-sm font-bold leading-none ${aiActive ? valBorder(rowState) : "border-border"}`} />
+                                  {aiActive && (
+                                    <div className="inline-flex items-center gap-1 shrink-0" title="משוב לזיהוי AI בלבד — לא משנה סטטוס אספקה">
+                                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">AI</span>
+                                      <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />
+                                    </div>
+                                  )}
+                                </div>
+                                {isExtra && <div className="text-[10px] text-amber-brand">פריט לא בהזמנה</div>}
+
+                                {/* Row 2 — Received checkbox + quantity / prices */}
+                                <div className="flex flex-wrap items-end gap-3">
+                                  <label className="inline-flex items-center gap-2 text-xs font-bold cursor-pointer select-none order-1">
                                     <input
                                       type="checkbox"
                                       checked={r.received}
@@ -1205,65 +1219,71 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                                         const v = e.target.checked;
                                         setRows((p) => p.map((x, idx) => idx === i ? { ...x, received: v, notReceivedReason: v ? null : (x.notReceivedReason ?? "missing") } : x));
                                       }}
-                                      className="h-4 w-4 accent-emerald-500"
+                                      className="h-5 w-5 accent-emerald-500"
                                     />
                                     <span className={r.received ? "text-emerald-400" : "text-rose-400"}>
                                       {r.received ? "✓ הגיע" : "✗ לא הגיע"}
                                     </span>
                                   </label>
-                                  {!r.received && (
+
+                                  {chosenMatch && (
+                                    <div className="text-[11px] text-muted-foreground order-2">
+                                      <div className="mb-0.5">הוזמן</div>
+                                      <div className="h-10 w-16 grid place-items-center rounded bg-background/40 border border-border tabular-nums">{r.orderedQty ?? "—"}</div>
+                                    </div>
+                                  )}
+
+                                  <div className="order-3">
+                                    <div className="text-[11px] text-muted-foreground mb-0.5">כמות</div>
+                                    <input type="number" step="0.01" inputMode="decimal" value={r.invoiceQty}
+                                      onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
+                                      className={`w-20 h-10 rounded bg-background border px-2 text-sm leading-none text-center tabular-nums ${mismatch ? "border-red-500 text-red-500 font-bold" : "border-border"}`} />
+                                  </div>
+
+                                  <div className="order-4">
+                                    <div className="text-[11px] text-muted-foreground mb-0.5">יח׳ ₪</div>
+                                    <input type="number" step="0.01" inputMode="decimal" value={r.unitPrice}
+                                      onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
+                                      className="w-20 h-10 rounded bg-background border border-border px-2 text-sm leading-none text-center tabular-nums" />
+                                  </div>
+
+                                  <div className="order-5">
+                                    <div className="text-[11px] text-muted-foreground mb-0.5">סה״כ ₪</div>
+                                    <input type="number" step="0.01" inputMode="decimal" value={r.totalPrice}
+                                      onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
+                                      className="w-24 h-10 rounded bg-background border border-border px-2 text-sm leading-none text-center tabular-nums" />
+                                  </div>
+                                </div>
+
+                                {/* Row 3 — Accounting category */}
+                                <select
+                                  value={r.category}
+                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, category: e.target.value as ExpenseCategory | "" } : x))}
+                                  className={`w-full h-10 rounded bg-background border px-2 text-xs leading-none focus:border-neon outline-none ${r.category ? "border-neon/50 text-neon" : "border-border text-muted-foreground"}`}
+                                  aria-label="שיוך חשבונאי"
+                                >
+                                  <option value="">שיוך חשבונאי…</option>
+                                  {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                                </select>
+
+                                {/* Row 4 — Discrepancy reason (only when not received) */}
+                                {!r.received && (
+                                  <div className="flex flex-wrap items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/5 p-2">
+                                    <span className="text-[11px] font-bold text-rose-300">סיבת חריגה:</span>
                                     <select
                                       value={r.notReceivedReason ?? "missing"}
                                       onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, notReceivedReason: e.target.value as NotReceivedReason } : x))}
-                                      className="h-7 rounded bg-background border border-rose-500/50 text-rose-300 px-2 text-[11px] focus:border-rose-400 outline-none"
+                                      className="flex-1 min-w-[140px] h-9 rounded bg-background border border-rose-500/50 text-rose-300 px-2 text-xs focus:border-rose-400 outline-none"
                                       aria-label="סיבה"
                                     >
                                       <option value="missing">חסר במשלוח</option>
                                       <option value="damaged">פגום / לא תקין</option>
                                     </select>
-                                  )}
-                                  {!r.received && (
-                                    <span className="text-[10px] text-rose-300/80">לא יתעדכן במלאי · ייפתח דוח חריגה</span>
-                                  )}
-                                </div>
-
-                                <div className={`grid ${cols} gap-2 items-center`}>
-                                <div>
-                                  <div className="flex items-center gap-1.5">
-                                    <input value={r.name} onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x)); if (aiActive) markItemEdited(i); }}
-                                      className={`flex-1 min-w-0 h-10 rounded bg-background border px-2 text-xs leading-none ${aiActive ? valBorder(rowState) : "border-border"}`} />
-                                    {aiActive && (
-                                      <div className="inline-flex items-center gap-1 shrink-0" title="משוב לזיהוי AI בלבד — לא משנה סטטוס אספקה">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">AI</span>
-                                        <ValBtns state={rowState} onApprove={() => setIV(i, "approved")} onReject={() => setIV(i, "corrected")} />
-                                      </div>
-                                    )}
+                                    <span className="basis-full text-[10px] text-rose-300/80">לא יתעדכן במלאי · ייפתח דוח חריגה</span>
                                   </div>
-                                  <select
-                                    value={r.category}
-                                    onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, category: e.target.value as ExpenseCategory | "" } : x))}
-                                    className={`mt-1 w-full h-9 rounded bg-background border px-2 text-[11px] leading-none focus:border-neon outline-none ${r.category ? "border-neon/50 text-neon" : "border-border text-muted-foreground"}`}
-                                    aria-label="שיוך חשבונאי"
-                                  >
-                                    <option value="">שיוך חשבונאי…</option>
-                                    {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                                  </select>
-                                  {isExtra && <div className="text-[10px] text-amber-brand mt-0.5">פריט לא בהזמנה</div>}
-                                </div>
-
-                                {chosenMatch && (
-                                  <div className="text-center text-xs tabular-nums text-muted-foreground">{r.orderedQty ?? "—"}</div>
                                 )}
-                                <input type="number" step="0.01" value={r.invoiceQty}
-                                  onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, invoiceQty: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
-                                  className={`w-full h-10 rounded bg-background border px-2 text-xs leading-none text-center tabular-nums ${mismatch ? "border-red-500 text-red-500 font-bold" : "border-border"}`} />
-                                <input type="number" step="0.01" value={r.unitPrice}
-                                  onChange={(e) => { setRows((p) => p.map((x, idx) => idx === i ? { ...x, unitPrice: Number(e.target.value) } : x)); if (aiActive) markItemEdited(i); }}
-                                  className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
-                                <input type="number" step="0.01" value={r.totalPrice}
-                                  onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, totalPrice: Number(e.target.value) } : x))}
-                                  className="w-full h-10 rounded bg-background border border-border px-2 text-xs leading-none text-center tabular-nums" />
-                                </div>
+
+                                {/* Row 5 — Catalog match */}
                                 <CatalogMatchRow
                                   row={r}
                                   catalog={catalog}
@@ -1279,6 +1299,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                           })}
 
                         </div>
+
                       </>
                     );
                   })()}
