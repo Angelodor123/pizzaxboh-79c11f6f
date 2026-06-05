@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
-import { ocrInvoice } from "@/lib/receiving.functions";
+import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
 
 
 export const EXPENSE_CATEGORIES = [
@@ -62,7 +62,17 @@ type RowPair = {
   notReceivedReason: NotReceivedReason | null;
 };
 
-type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
+type CatalogOpt = {
+  id: string;
+  name: string;
+  cost_price: number | null;
+  expected_price: number | null;
+  price: number | null;
+  sku: string | null;
+  unit: string | null;
+  unit_size: string | null;
+  barcode: string | null;
+};
 
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
 
@@ -96,7 +106,7 @@ const looseEq = (a: string, b: string) => {
 };
 
 export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId = null }: Props) {
-  const ocr = useServerFn(ocrInvoice);
+  const ocr = useServerFn(parseInvoiceImage);
   const [stage, setStage] = useState<Stage>("pick");
   const [supplierId, setSupplierId] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -206,7 +216,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       const branchId = await requireCurrentBranchId();
       const { data } = await supabase
         .from("supplier_products")
-        .select("id, name, cost_price, expected_price, price")
+        .select("id, name, cost_price, expected_price, price, sku, unit, unit_size, barcode")
         .eq("supplier_id", supplierId)
         .eq("branch_id", branchId)
         .eq("active", true)
