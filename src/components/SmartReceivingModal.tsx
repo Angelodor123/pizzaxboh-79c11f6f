@@ -360,7 +360,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       else setStage("manual");
     } catch (e) {
       console.error(e);
-      toast.error("ניתוח החשבונית נכשל");
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("ניתוח החשבונית נכשל", { description: msg.slice(0, 240) });
       setStage("pick");
     }
   };
