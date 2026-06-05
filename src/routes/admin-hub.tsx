@@ -9,22 +9,40 @@ import {
   ShieldAlert,
   ArrowLeft,
   AlertTriangle,
+  ChefHat,
+  Building2,
+  Boxes,
+  ListChecks,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { PrepItemsPanel, RestockItemsPanel } from "@/components/admin/ParLevelPanels";
+import { BranchesPanel } from "@/components/admin/BranchesPanel";
+import { TasksPanel } from "@/components/admin/TasksPanel";
 
 export const Route = createFileRoute("/admin-hub")({
   component: AdminHubGate,
 });
 
-type TabKey = "users" | "catalog" | "deliveries" | "contacts" | "tasks";
+type TabKey =
+  | "users"
+  | "tasks"
+  | "recipes"
+  | "branches"
+  | "stock"
+  | "catalog"
+  | "deliveries"
+  | "contacts";
 
-const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+const TABS: { key: TabKey; label: string; icon: React.ReactNode; superAdminOnly?: boolean }[] = [
   { key: "users", label: "👥 משתמשים", icon: <Users className="h-4 w-4" /> },
-  { key: "catalog", label: "📦 קטלוג ועלויות", icon: <Package className="h-4 w-4" /> },
+  { key: "tasks", label: "📝 משימות קבועות", icon: <ListChecks className="h-4 w-4" />, superAdminOnly: true },
+  { key: "recipes", label: "👨‍🍳 מתכונים", icon: <ChefHat className="h-4 w-4" /> },
+  { key: "branches", label: "🏢 סניפים", icon: <Building2 className="h-4 w-4" />, superAdminOnly: true },
+  { key: "stock", label: "📦 מלאי יומי", icon: <Boxes className="h-4 w-4" /> },
+  { key: "catalog", label: "🧾 קטלוג ועלויות", icon: <Package className="h-4 w-4" /> },
   { key: "deliveries", label: "🚚 ביקורת משלוחים", icon: <Truck className="h-4 w-4" /> },
   { key: "contacts", label: "📞 אנשי קשר", icon: <Phone className="h-4 w-4" /> },
-  { key: "tasks", label: "📝 משימות", icon: <ClipboardList className="h-4 w-4" /> },
 ];
 
 function AdminHubGate() {
@@ -53,19 +71,22 @@ function AdminHubGate() {
 }
 
 function AdminHub() {
+  const { isSuperAdmin } = useAuth();
   const [tab, setTab] = useState<TabKey>("users");
+
+  const visibleTabs = TABS.filter((t) => !t.superAdminOnly || isSuperAdmin);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6" dir="rtl">
       <header className="mb-6">
         <h1 className="font-display text-3xl font-black text-neon">פאנל ניהול מרכזי</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          כל כלי הניהול במקום אחד — משתמשים, קטלוג, משלוחים, קשר ומשימות.
+          כל כלי הניהול במקום אחד.
         </p>
       </header>
 
       <div className="flex flex-wrap gap-2 mb-6 border-b border-border pb-3">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.key}
             type="button"
@@ -84,10 +105,13 @@ function AdminHub() {
 
       <div className="rounded-xl border-2 border-border bg-card p-5 min-h-[300px]">
         {tab === "users" && <UsersTab />}
+        {tab === "tasks" && isSuperAdmin && <TasksPanel />}
+        {tab === "recipes" && <RecipesTab />}
+        {tab === "branches" && isSuperAdmin && <BranchesPanel />}
+        {tab === "stock" && <StockTab />}
         {tab === "catalog" && <CatalogTab />}
         {tab === "deliveries" && <DeliveriesTab />}
         {tab === "contacts" && <ContactsTab />}
-        {tab === "tasks" && <TasksTab />}
       </div>
     </div>
   );
@@ -141,6 +165,77 @@ function UsersTab() {
   );
 }
 
+// ============= RECIPES =============
+function RecipesTab() {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    void (async () => {
+      const { count: c } = await supabase
+        .from("recipes")
+        .select("id", { count: "exact", head: true });
+      setCount(c ?? 0);
+    })();
+  }, []);
+  return (
+    <section className="space-y-4">
+      <h2 className="font-display text-xl font-bold">👨‍🍳 מתכונים</h2>
+      <p className="text-sm text-muted-foreground">
+        עריכת ספר המתכונים — מרכיבים, כמויות, שלבים והיסטוריית גרסאות.
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <Stat label="מתכונים פעילים" value={count ?? "…"} accent />
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <GoLink to="/admin" label="פתח עורך מתכונים" />
+        <GoLink to="/recipes" label="ספר המתכונים" />
+      </div>
+    </section>
+  );
+}
+
+// ============= STOCK (Prep + Restock unified) =============
+function StockTab() {
+  const [mode, setMode] = useState<"prep" | "restock">("prep");
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="font-display text-xl font-bold">📦 מלאי יומי</h2>
+          <p className="text-sm text-muted-foreground">
+            יעדי כמויות יומיים — הכנות מטבח (בצק, רטבים) והשלמות מהמחסן (אריזה, מתכלים).
+          </p>
+        </div>
+        <div className="inline-flex rounded-full border border-border bg-background/40 p-1">
+          <button
+            type="button"
+            onClick={() => setMode("prep")}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${
+              mode === "prep" ? "bg-neon text-primary-foreground" : "text-foreground/70 hover:text-foreground"
+            }`}
+          >
+            🧑‍🍳 הכנות
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("restock")}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${
+              mode === "restock" ? "bg-neon text-primary-foreground" : "text-foreground/70 hover:text-foreground"
+            }`}
+          >
+            📦 השלמות
+          </button>
+        </div>
+      </div>
+      <div className="rounded-lg border border-border bg-background/20 p-4">
+        {mode === "prep" ? <PrepItemsPanel /> : <RestockItemsPanel />}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        טיפ: שני הכלים זהים במבנה — הכנות מנוהלות על ידי המטבח, השלמות נספרות מול המחסן ויכולות לכלול ברקוד.
+      </p>
+    </section>
+  );
+}
+
 // ============= CATALOG =============
 function CatalogTab() {
   const [products, setProducts] = useState<number | null>(null);
@@ -157,7 +252,7 @@ function CatalogTab() {
   }, []);
   return (
     <section className="space-y-4">
-      <h2 className="font-display text-xl font-bold">📦 קטלוג ועלויות</h2>
+      <h2 className="font-display text-xl font-bold">🧾 קטלוג ועלויות</h2>
       <p className="text-sm text-muted-foreground">
         עריכת מוצרים, עדכון מחיר עלות (<code>cost_price</code>), וצפייה בתיקוני מיפוי שבוצעו על ידי הצוות.
         המחירים מתעדכנים אוטומטית בכל סריקת קבלה דרך מודול קליטת הסחורה.
@@ -264,35 +359,6 @@ function ContactsTab() {
         <GoLink to="/aids/contacts" label="פתח אנשי קשר חירום" />
         <GoLink to="/aids/staff" label="דף קשר צוות" />
       </div>
-    </section>
-  );
-}
-
-// ============= TASKS =============
-function TasksTab() {
-  const [tasks, setTasks] = useState<number | null>(null);
-  const [groups, setGroups] = useState<number | null>(null);
-  useEffect(() => {
-    void (async () => {
-      const [t, g] = await Promise.all([
-        supabase.from("tasks").select("id", { count: "exact", head: true }).eq("active", true),
-        supabase.from("task_groups").select("id", { count: "exact", head: true }).eq("active", true),
-      ]);
-      setTasks(t.count ?? 0);
-      setGroups(g.count ?? 0);
-    })();
-  }, []);
-  return (
-    <section className="space-y-4">
-      <h2 className="font-display text-xl font-bold">📝 משימות וקטגוריות</h2>
-      <p className="text-sm text-muted-foreground">
-        ניהול משימות חוזרות, קטגוריות וקבוצות משימה לכל משמרת.
-      </p>
-      <div className="grid grid-cols-2 gap-3">
-        <Stat label="משימות פעילות" value={tasks ?? "…"} accent />
-        <Stat label="קבוצות משימה" value={groups ?? "…"} />
-      </div>
-      <GoLink to="/admin" label="פתח ניהול משימות" />
     </section>
   );
 }
