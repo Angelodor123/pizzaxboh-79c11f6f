@@ -230,6 +230,7 @@ export function CopilotFab() {
             route: router.state.location.pathname,
             role: isSuperAdmin ? "super_admin" : role ?? "guest",
             branchId: branchId ?? undefined,
+            briefing: briefingText ?? undefined,
           },
         },
       });
