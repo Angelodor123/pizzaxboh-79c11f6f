@@ -2042,6 +2042,57 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_standards: {
+        Row: {
+          amount_text: string
+          branch_id: string
+          created_at: string
+          day_of_week: number | null
+          id: string
+          item_name: string
+          sort_order: number
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_text?: string
+          branch_id: string
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          item_name: string
+          sort_order?: number
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_text?: string
+          branch_id?: string
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          item_name?: string
+          sort_order?: number
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_standards_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_standards_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           active: boolean
@@ -2063,6 +2114,7 @@ export type Database = {
           order_cutoff_time: string | null
           order_days: number[]
           parsing_instructions: string | null
+          standards_callout: string | null
           updated_at: string
         }
         Insert: {
@@ -2085,6 +2137,7 @@ export type Database = {
           order_cutoff_time?: string | null
           order_days?: number[]
           parsing_instructions?: string | null
+          standards_callout?: string | null
           updated_at?: string
         }
         Update: {
@@ -2107,6 +2160,7 @@ export type Database = {
           order_cutoff_time?: string | null
           order_days?: number[]
           parsing_instructions?: string | null
+          standards_callout?: string | null
           updated_at?: string
         }
         Relationships: [
