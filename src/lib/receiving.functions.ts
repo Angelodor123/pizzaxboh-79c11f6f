@@ -101,8 +101,10 @@ const ParsedSchema = z.object({
   items: z.array(z.object({
     item_name: z.preprocess((v) => (v == null ? "" : String(v)), z.string().max(400)).optional(),
     quantity: NumLike.optional(),
+    base_unit_price: NumLike.optional(),
     unit_price: NumLike.optional(),
     total_price: NumLike.optional(),
+    discount: z.coerce.string().max(40).nullable().optional(),
   })).max(300).optional().default([]),
 });
 
