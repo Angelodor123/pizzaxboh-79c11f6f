@@ -326,24 +326,31 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     return () => { cancelled = true; };
   }, [linkedOrderId, suppliers]);
 
-  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => () => { if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const onFile = (f: File | null) => {
+  const onFile = async (f: File | null) => {
     setFile(f);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(f ? URL.createObjectURL(f) : null);
+    if (!f) {
+      setPreviewUrl(null);
+      return;
+    }
+    const dataUrl = await fileToDataUrl(f);
+    setPreviewUrl(dataUrl);
+    toast.success("התמונה נקלטה, מתחיל פענוח…");
+    await start(f, dataUrl);
   };
 
-  const start = async () => {
-    if (!file) return toast.error("יש להעלות תמונת חשבונית");
+  const start = async (selectedFile: File | null = file, dataUrlOverride?: string) => {
+    const targetFile = selectedFile ?? file;
+    if (!targetFile) return toast.error("יש להעלות תמונת חשבונית");
     setStage("processing");
     try {
-      const dataUrl = await fileToDataUrl(file);
+      const dataUrl = dataUrlOverride ?? await fileToDataUrl(targetFile);
       const catalogPayload = catalog.slice(0, 200).map((p) => ({
         name: p.name,
         sku: p.sku ?? null,
@@ -355,7 +362,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       const raw = await ocr({
         data: {
           imageDataUrl: dataUrl,
-          mimeType: file.type || "image/jpeg",
+          mimeType: targetFile.type || "image/jpeg",
           supplierId: supplierId || undefined,
           supplierCatalog: catalogPayload.length ? catalogPayload : undefined,
         },
