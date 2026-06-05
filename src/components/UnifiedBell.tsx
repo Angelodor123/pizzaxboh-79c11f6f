@@ -151,6 +151,7 @@ export function UnifiedBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-tour="header-bell"
           className="relative h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
           aria-label="התראות"
           title="התראות"
