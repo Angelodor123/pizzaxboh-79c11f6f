@@ -48,6 +48,8 @@ import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "
 import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
 import { OverviewPanel } from "@/components/admin/OverviewPanel";
+import { EditEmployeeDialog } from "@/components/EditEmployeeDialog";
+import type { EmployeeRow } from "@/lib/employee-directory";
 import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
