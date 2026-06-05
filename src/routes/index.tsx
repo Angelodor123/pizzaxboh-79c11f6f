@@ -211,7 +211,7 @@ function OperationalDashboard() {
       </div>
 
       {/* Shift Updates Feed — branch-scoped team chat */}
-      <div className="mb-6">
+      <div className="mb-6" data-tour="shift-feed">
         <ShiftFeedCard />
       </div>
 
@@ -325,6 +325,7 @@ function OperationalDashboard() {
               <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
               <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
               <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" />
+              <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
             </div>
 
             {canLogistics && (
