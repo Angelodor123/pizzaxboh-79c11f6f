@@ -910,6 +910,16 @@ function InvitationsPanel() {
                 className="flex items-center justify-between px-3 py-2 gap-2"
               >
                 <button
+                  onClick={() =>
+                    openEmployeeEditor(u.user_id, fullNames.get(u.user_id) ?? u.email)
+                  }
+                  className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-neon"
+                  aria-label="ערוך פרטי עובד"
+                  title="ערוך מחלקה / ותק / טלפון / כתובת"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => revokeUser(u.id, u.role, u.user_id)}
                   disabled={superAdminIds.has(u.user_id) || (u.role === "admin" && !isSuperAdmin)}
                   className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
