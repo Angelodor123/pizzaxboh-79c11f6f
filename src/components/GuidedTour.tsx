@@ -12,101 +12,43 @@ interface TourStep {
 }
 
 const COMMON_INTRO: TourStep = {
-  id: "step_intro_v1",
+  id: "step_intro_v3",
   selector: '[data-tour="home-header"]',
-  title: "ברוכים הבאים ל-Pizza X 🍕",
-  body: "זה מרכז השליטה התפעולי של המטבח. אקח אותך לסיור קצר כדי שתכיר את האזורים החשובים.",
+  title: "ברוכים הבאים לאפליקציית פיצה X! 🍕",
+  body: "בואו נעשה סיור קצר ונכיר את האזורים החשובים במערכת.",
 };
 
-const STAFF_STEPS: TourStep[] = [
+const NEW_HIRE_STEPS: TourStep[] = [
   COMMON_INTRO,
   {
-    id: "step_staff_events_v1",
-    selector: '[data-tour="stat-events-today"]',
-    title: "אירועים להיום",
-    body: "כאן רואים כמה אירועים מתוכננים להיום — אספקות, אירועים מיוחדים ומשימות עם עדיפות גבוהה.",
+    id: "step_header_bell_v3",
+    selector: '[data-tour="header-bell"]',
+    title: "🔔 מרכז ההתראות",
+    body: "כאן תקבלו עדכונים, תיוגים אישיים, משימות דחופות ופניות תחזוקה — כל ההתראות במקום אחד.",
   },
   {
-    id: "step_staff_notebook_v1",
-    selector: '[data-tour="card-notebook"]',
-    title: "פנקס עבודה יומי",
-    body: "ריכוז של כל המשימות, רשימת הקניות וההזמנות הפתוחות שלך — לחיצה כאן פותחת את הפנקס המלא.",
+    id: "step_shift_feed_v3",
+    selector: '[data-tour="shift-feed"]',
+    title: "💬 פיד המשמרת",
+    body: "פה מדברים. אפשר לתייג מחלקות שלמות כמו @מטבח, @דלפק, @שליחים או @כולם — וכל מי שמתויג יקבל התראה אישית.",
   },
   {
-    id: "step_staff_prep_v1",
-    selector: '[data-tour="tile-prep"]',
-    title: "הכנות יומיות",
-    body: "צ׳ק־ליסט של מה צריך להכין היום במטבח. החלקה ימינה על פריט מסמנת אותו כהושלם.",
+    id: "step_aids_hub_v3",
+    selector: '[data-tour="tile-aids"], [data-tour="tile-recipes"]',
+    title: "📚 ספריית עזרים",
+    body: "כל מה שצריך לדעת: מתכונים, נהלי ניקיון, איש קשר לשעת חירום ודף קשר של הצוות.",
   },
   {
-    id: "step_staff_restock_v1",
-    selector: '[data-tour="tile-restock"]',
-    title: "השלמות מהמחסן",
-    body: "מה צריך להביא מהמחסן היום. אפשר לסרוק ברקודים של פריטים ולסמן השלמה במחוות החלקה.",
-  },
-  {
-    id: "step_staff_recipes_v1",
-    selector: '[data-tour="tile-recipes"]',
-    title: "כל המתכונים",
-    body: "ספריית המתכונים והמנות, כולל מחשבון כמויות חי לכל מתכון.",
+    id: "step_tasks_shortages_v3",
+    selector: '[data-tour="tile-tasks"]',
+    title: "✅ עבודה שוטפת",
+    body: "כאן מדווחים על חוסרים, מסמנים משימות שהושלמו ועוקבים אחרי הצ'ק-ליסט של המשמרת. שיהיה סרוויס מוצלח! 🍕",
   },
 ];
 
-const ADMIN_STEPS: TourStep[] = [
-  COMMON_INTRO,
-  {
-    id: "step_admin_overview_v1",
-    selector: '[data-tour="stat-events-today"]',
-    title: "תמונת מצב יומית",
-    body: "כרטיסי הנתונים בראש הדף מציגים סטטוס מהיר — מתכונים פעילים, משימות פתוחות ואירועים להיום.",
-  },
-  {
-    id: "step_admin_notebook_v1",
-    selector: '[data-tour="card-notebook"]',
-    title: "פנקס העבודה",
-    body: "כאן הצוות מנהל משימות, קניות והזמנות יומיות. מצוין למעקב תפעולי שוטף.",
-  },
-  {
-    id: "step_admin_suppliers_v1",
-    selector: '[data-tour="tile-suppliers"]',
-    title: "ניהול ספקים",
-    body: "פרטי קשר, ימי אספקה והערות עבור כל הספקים — מרוכז במקום אחד.",
-  },
-  {
-    id: "step_admin_recipes_v1",
-    selector: '[data-tour="tile-recipes"]',
-    title: "מתכונים ותפריט",
-    body: "עריכת מתכונים, מנות, מרכיבים והעלויות. כל שינוי משתקף מיד אצל הצוות.",
-  },
-  {
-    id: "step_admin_panel_v1",
-    selector: '[data-tour="tile-admin"]',
-    title: "מערכת הניהול",
-    body: "מרכז הבקרה לאדמין: יחידות מידה, הכנות, השלמות, הסברי דפים, ניהול משתמשים ועוד.",
-  },
-];
-
-const GUEST_STEPS: TourStep[] = [
-  COMMON_INTRO,
-  {
-    id: "step_guest_overview_v1",
-    selector: '[data-tour="stat-events-today"]',
-    title: "סקירה מהירה",
-    body: "כרטיסי הסטטוס בראש הדף נותנים לך תמונת מצב מיידית של כל מה שקורה היום.",
-  },
-  {
-    id: "step_guest_notebook_v1",
-    selector: '[data-tour="card-notebook"]',
-    title: "פנקס עבודה",
-    body: "המשימות, הקניות וההזמנות של הצוות — מרוכזים במקום אחד.",
-  },
-  {
-    id: "step_guest_recipes_v1",
-    selector: '[data-tour="tile-recipes"]',
-    title: "ספריית המתכונים",
-    body: "כל המתכונים והמנות עם מחשבוני כמויות מתקדמים.",
-  },
-];
+const STAFF_STEPS = NEW_HIRE_STEPS;
+const ADMIN_STEPS = NEW_HIRE_STEPS;
+const GUEST_STEPS = NEW_HIRE_STEPS;
 
 // ============================================================
 // ACTIVE FEATURE-DISCOVERY STEPS
