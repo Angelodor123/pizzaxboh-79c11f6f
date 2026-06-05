@@ -344,6 +344,7 @@ function OperationalDashboard() {
               <>
                 <SectionHeader>הנהלה</SectionHeader>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <ShortcutTile to="/admin-hub" icon={<ShieldCheck className="h-5 w-5" />} label="פאנל ניהול מרכזי" />
                   <ShortcutTile to="/admin" icon={<ShieldCheck className="h-5 w-5" />} label="מערכת ניהול" tourId="tile-admin" />
                 </div>
               </>
