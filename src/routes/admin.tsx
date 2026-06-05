@@ -1010,6 +1010,13 @@ function InvitationsPanel() {
           </ul>
         </div>
       </div>
+      {editingEmployee && (
+        <EditEmployeeDialog
+          employee={editingEmployee}
+          onClose={() => setEditingEmployee(null)}
+          onSaved={() => setEditingEmployee(null)}
+        />
+      )}
     </section>
   );
 }
