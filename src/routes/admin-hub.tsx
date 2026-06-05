@@ -182,7 +182,7 @@ function DeliveriesTab() {
     void (async () => {
       const { data } = await supabase
         .from("delivery_exceptions")
-        .select("id, item_name, exception_type, quantity, supplier_name, created_at")
+        .select("id, product_name, reason, expected_qty, actual_qty, resolved, created_at")
         .order("created_at", { ascending: false })
         .limit(20);
       setExceptions((data ?? []) as any[]);
@@ -207,19 +207,29 @@ function DeliveriesTab() {
               className="rounded-md border border-border bg-background/40 p-3 flex items-center justify-between gap-2"
             >
               <div className="min-w-0">
-                <div className="text-sm font-bold truncate">{e.item_name || "פריט"}</div>
+                <div className="text-sm font-bold truncate">{e.product_name || "פריט"}</div>
                 <div className="text-xs text-muted-foreground truncate">
-                  {e.supplier_name || "—"} · {new Date(e.created_at).toLocaleDateString("he-IL")}
+                  {new Date(e.created_at).toLocaleDateString("he-IL")}
+                  {e.expected_qty != null && e.actual_qty != null
+                    ? ` · צפוי ${e.expected_qty} · התקבל ${e.actual_qty}`
+                    : ""}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="inline-flex items-center gap-1 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/40 px-2.5 py-1 text-[11px] font-bold">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                    e.resolved
+                      ? "bg-neon/10 text-neon border-neon/40"
+                      : "bg-pink-500/15 text-pink-300 border-pink-500/40"
+                  }`}
+                >
                   <AlertTriangle className="h-3 w-3" />
-                  {e.exception_type === "missing" ? "חסר" : e.exception_type === "damaged" ? "פגום" : e.exception_type}
+                  {e.reason === "missing"
+                    ? "חסר"
+                    : e.reason === "damaged"
+                      ? "פגום"
+                      : e.reason || "חריגה"}
                 </span>
-                {e.quantity != null && (
-                  <span className="text-xs text-muted-foreground tabular-nums">×{e.quantity}</span>
-                )}
               </div>
             </li>
           ))}
