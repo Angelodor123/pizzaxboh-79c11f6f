@@ -73,16 +73,16 @@ const DateLike = z.preprocess((v) => {
 }, z.string().nullable());
 
 const ParsedSchema = z.object({
-  supplier_guess: z.string().max(120).nullable().optional(),
-  invoice_number: z.string().max(60).nullable().optional(),
+  supplier_guess: z.preprocess((v) => (v == null ? null : String(v)), z.string().max(200).nullable()).optional(),
+  invoice_number: z.preprocess((v) => (v == null ? null : String(v)), z.string().max(120).nullable()).optional(),
   document_date: DateLike.optional(),
   total_amount: NumLike.optional(),
   items: z.array(z.object({
-    item_name: z.string().min(1).max(200),
+    item_name: z.preprocess((v) => (v == null ? "" : String(v)), z.string().max(400)).optional(),
     quantity: NumLike.optional(),
     unit_price: NumLike.optional(),
     total_price: NumLike.optional(),
-  })).max(120),
+  })).max(300).optional().default([]),
 });
 
 function buildCatalogBlock(catalog: Array<{ name: string; unit?: string | null; price?: number | null }>, supplierName: string | null): string {
