@@ -30,6 +30,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AidsIndexRouteImport } from './routes/aids.index'
 import { Route as AidsSuppliersRouteImport } from './routes/aids.suppliers'
+import { Route as AidsStaffRouteImport } from './routes/aids.staff'
 import { Route as AidsOperationsRouteImport } from './routes/aids.operations'
 import { Route as AidsContactsRouteImport } from './routes/aids.contacts'
 import { Route as AidsCleaningRouteImport } from './routes/aids.cleaning'
@@ -144,6 +145,11 @@ const AidsSuppliersRoute = AidsSuppliersRouteImport.update({
   path: '/suppliers',
   getParentRoute: () => AidsRoute,
 } as any)
+const AidsStaffRoute = AidsStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AidsRoute,
+} as any)
 const AidsOperationsRoute = AidsOperationsRouteImport.update({
   id: '/operations',
   path: '/operations',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/aids/cleaning': typeof AidsCleaningRoute
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
+  '/aids/staff': typeof AidsStaffRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
   '/aids/': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/aids/cleaning': typeof AidsCleaningRoute
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
+  '/aids/staff': typeof AidsStaffRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
   '/aids': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/aids/cleaning': typeof AidsCleaningRoute
   '/aids/contacts': typeof AidsContactsRoute
   '/aids/operations': typeof AidsOperationsRoute
+  '/aids/staff': typeof AidsStaffRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
   '/aids/': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/aids/cleaning'
     | '/aids/contacts'
     | '/aids/operations'
+    | '/aids/staff'
     | '/aids/suppliers'
     | '/aids/'
     | '/admin/settings/equipment'
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/aids/cleaning'
     | '/aids/contacts'
     | '/aids/operations'
+    | '/aids/staff'
     | '/aids/suppliers'
     | '/aids'
     | '/admin/settings/equipment'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/aids/cleaning'
     | '/aids/contacts'
     | '/aids/operations'
+    | '/aids/staff'
     | '/aids/suppliers'
     | '/aids/'
     | '/admin/settings/equipment'
@@ -548,6 +560,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AidsSuppliersRouteImport
       parentRoute: typeof AidsRoute
     }
+    '/aids/staff': {
+      id: '/aids/staff'
+      path: '/staff'
+      fullPath: '/aids/staff'
+      preLoaderRoute: typeof AidsStaffRouteImport
+      parentRoute: typeof AidsRoute
+    }
     '/aids/operations': {
       id: '/aids/operations'
       path: '/operations'
@@ -625,6 +644,7 @@ interface AidsRouteChildren {
   AidsCleaningRoute: typeof AidsCleaningRoute
   AidsContactsRoute: typeof AidsContactsRoute
   AidsOperationsRoute: typeof AidsOperationsRoute
+  AidsStaffRoute: typeof AidsStaffRoute
   AidsSuppliersRoute: typeof AidsSuppliersRoute
   AidsIndexRoute: typeof AidsIndexRoute
 }
@@ -633,6 +653,7 @@ const AidsRouteChildren: AidsRouteChildren = {
   AidsCleaningRoute: AidsCleaningRoute,
   AidsContactsRoute: AidsContactsRoute,
   AidsOperationsRoute: AidsOperationsRoute,
+  AidsStaffRoute: AidsStaffRoute,
   AidsSuppliersRoute: AidsSuppliersRoute,
   AidsIndexRoute: AidsIndexRoute,
 }
@@ -665,13 +686,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

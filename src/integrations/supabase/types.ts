@@ -1471,11 +1471,15 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           completed_tutorial_steps: string[]
           created_at: string
           date_of_birth: string | null
+          department: Database["public"]["Enums"]["staff_department"] | null
           full_name: string | null
           has_accepted_nda: boolean
+          phone: string | null
+          seniority: string | null
           start_date: string | null
           tutorial_cooldown_until: string | null
           tutorial_version: number
@@ -1483,11 +1487,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address?: string | null
           completed_tutorial_steps?: string[]
           created_at?: string
           date_of_birth?: string | null
+          department?: Database["public"]["Enums"]["staff_department"] | null
           full_name?: string | null
           has_accepted_nda?: boolean
+          phone?: string | null
+          seniority?: string | null
           start_date?: string | null
           tutorial_cooldown_until?: string | null
           tutorial_version?: number
@@ -1495,11 +1503,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address?: string | null
           completed_tutorial_steps?: string[]
           created_at?: string
           date_of_birth?: string | null
+          department?: Database["public"]["Enums"]["staff_department"] | null
           full_name?: string | null
           has_accepted_nda?: boolean
+          phone?: string | null
+          seniority?: string | null
           start_date?: string | null
           tutorial_cooldown_until?: string | null
           tutorial_version?: number
@@ -2309,6 +2321,19 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_employee_directory: {
+        Args: never
+        Returns: {
+          address: string
+          assigned_branch_id: string
+          department: Database["public"]["Enums"]["staff_department"]
+          full_name: string
+          phone: string
+          role: Database["public"]["Enums"]["app_role"]
+          seniority: string
+          user_id: string
+        }[]
+      }
       list_mentionable_users: {
         Args: never
         Returns: {
@@ -2336,6 +2361,12 @@ export type Database = {
         Args: never
         Returns: {
           full_name: string
+          user_id: string
+        }[]
+      }
+      list_users_in_group: {
+        Args: { _group: string }
+        Returns: {
           user_id: string
         }[]
       }
@@ -2369,6 +2400,7 @@ export type Database = {
       complaint_status: "new" | "in_progress" | "resolved"
       invoice_status: "pending_review" | "approved"
       order_status: "draft" | "sent" | "received" | "cancelled"
+      staff_department: "kitchen" | "counter" | "delivery" | "management"
       task_recurrence_type: "daily" | "weekly" | "monthly" | "as_needed"
     }
     CompositeTypes: {
@@ -2508,6 +2540,7 @@ export const Constants = {
       complaint_status: ["new", "in_progress", "resolved"],
       invoice_status: ["pending_review", "approved"],
       order_status: ["draft", "sent", "received", "cancelled"],
+      staff_department: ["kitchen", "counter", "delivery", "management"],
       task_recurrence_type: ["daily", "weekly", "monthly", "as_needed"],
     },
   },

@@ -48,6 +48,8 @@ import { UnitsPanel, PrepItemsPanel, RestockItemsPanel, OnboardingPanel } from "
 import { BranchesPanel } from "@/components/admin/BranchesPanel";
 import { TasksPanel } from "@/components/admin/TasksPanel";
 import { OverviewPanel } from "@/components/admin/OverviewPanel";
+import { EditEmployeeDialog } from "@/components/EditEmployeeDialog";
+import type { EmployeeRow } from "@/lib/employee-directory";
 import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
@@ -667,6 +669,29 @@ function InvitationsPanel() {
   const [inviteBranch, setInviteBranch] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<EmployeeRow | null>(null);
+
+  const openEmployeeEditor = async (userId: string, displayName: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from("profiles") as any)
+      .select("department, seniority, phone, address")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setEditingEmployee({
+      user_id: userId,
+      full_name: displayName,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      department: ((data as any)?.department ?? null) as EmployeeRow["department"],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      seniority: ((data as any)?.seniority ?? null) as string | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      phone: ((data as any)?.phone ?? null) as string | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      address: ((data as any)?.address ?? null) as string | null,
+      role: null,
+      assigned_branch_id: null,
+    });
+  };
 
   const load = async () => {
     const [{ data: i }, { data: r }, { data: s }, { data: b }, { data: p }] = await Promise.all([
@@ -885,6 +910,16 @@ function InvitationsPanel() {
                 className="flex items-center justify-between px-3 py-2 gap-2"
               >
                 <button
+                  onClick={() =>
+                    openEmployeeEditor(u.user_id, fullNames.get(u.user_id) ?? u.email)
+                  }
+                  className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-neon"
+                  aria-label="ערוך פרטי עובד"
+                  title="ערוך מחלקה / ותק / טלפון / כתובת"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => revokeUser(u.id, u.role, u.user_id)}
                   disabled={superAdminIds.has(u.user_id) || (u.role === "admin" && !isSuperAdmin)}
                   className="p-2 rounded-md hover:bg-background text-muted-foreground hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
@@ -975,6 +1010,13 @@ function InvitationsPanel() {
           </ul>
         </div>
       </div>
+      {editingEmployee && (
+        <EditEmployeeDialog
+          employee={editingEmployee}
+          onClose={() => setEditingEmployee(null)}
+          onSaved={() => setEditingEmployee(null)}
+        />
+      )}
     </section>
   );
 }

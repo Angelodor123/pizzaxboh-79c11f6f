@@ -1,9 +1,10 @@
 // Lightweight textarea/input with @ mention autocomplete.
-// Renders a dropdown over the input when the user types `@…`.
+// Suggests both user mentions and group tags (@כולם, @מטבח, @דלפק, @שליחים, @מנהלים).
 
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { MentionUser } from "@/lib/notifications-store";
+import { GROUP_TAGS } from "@/lib/employee-directory";
 
 interface Props {
   value: string;
@@ -16,6 +17,10 @@ interface Props {
   disabled?: boolean;
   onSubmit?: () => void;
 }
+
+type Suggestion =
+  | { kind: "user"; user_id: string; label: string }
+  | { kind: "group"; label: string; color: string };
 
 let cachedUsers: MentionUser[] | null = null;
 
@@ -51,11 +56,17 @@ export function MentionInput({
     });
   }, [onMentionUsersChange]);
 
-  const filtered = (() => {
+  const filtered: Suggestion[] = (() => {
     if (query === null) return [];
     const q = query.toLowerCase().trim();
-    const list = q ? users.filter((u) => u.full_name.toLowerCase().includes(q)) : users;
-    return list.slice(0, 6);
+    const groups: Suggestion[] = GROUP_TAGS.filter(
+      (g) => !q || g.tag.includes(q) || g.label.includes(q),
+    ).map((g) => ({ kind: "group" as const, label: g.tag, color: g.color }));
+    const userList: Suggestion[] = (q
+      ? users.filter((u) => u.full_name.toLowerCase().includes(q))
+      : users
+    ).map((u) => ({ kind: "user" as const, user_id: u.user_id, label: u.full_name }));
+    return [...groups, ...userList].slice(0, 8);
   })();
 
   const updateQuery = (text: string, caret: number) => {
@@ -75,13 +86,16 @@ export function MentionInput({
     updateQuery(text, e.target.selectionStart ?? text.length);
   };
 
-  const pickUser = (u: MentionUser) => {
+  const pick = (s: Suggestion) => {
     const el = ref.current;
     if (!el) return;
     const caret = el.selectionStart ?? value.length;
     const before = value.slice(0, caret);
     const after = value.slice(caret);
-    const replaced = before.replace(/@([\u0590-\u05FFa-zA-Z0-9 _-]{0,30})$/, `@${u.full_name} `);
+    const replaced = before.replace(
+      /@([\u0590-\u05FFa-zA-Z0-9 _-]{0,30})$/,
+      `@${s.label} `,
+    );
     const next = replaced + after;
     onChange(next);
     setQuery(null);
@@ -106,7 +120,7 @@ export function MentionInput({
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        pickUser(filtered[activeIdx]);
+        pick(filtered[activeIdx]);
         return;
       }
       if (e.key === "Escape") {
@@ -146,19 +160,26 @@ export function MentionInput({
         />
       )}
       {query !== null && filtered.length > 0 && (
-        <ul className="absolute z-50 bottom-full mb-1 w-full max-h-48 overflow-auto rounded-lg border border-border bg-card shadow-xl">
-          {filtered.map((u, i) => (
+        <ul className="absolute z-50 bottom-full mb-1 w-full max-h-56 overflow-auto rounded-lg border border-border bg-card shadow-xl">
+          {filtered.map((s, i) => (
             <li
-              key={u.user_id}
+              key={s.kind === "user" ? `u-${s.user_id}` : `g-${s.label}`}
               onMouseDown={(e) => {
                 e.preventDefault();
-                pickUser(u);
+                pick(s);
               }}
-              className={`px-3 py-2 text-sm cursor-pointer ${
+              className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between gap-2 ${
                 i === activeIdx ? "bg-neon/15 text-neon" : "hover:bg-muted/30"
               }`}
             >
-              @{u.full_name}
+              <span>@{s.label}</span>
+              {s.kind === "group" && (
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${s.color}`}
+                >
+                  קבוצה
+                </span>
+              )}
             </li>
           ))}
         </ul>

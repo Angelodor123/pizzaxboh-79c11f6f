@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Package, BookOpen, Sparkles, Phone, Pizza } from "lucide-react";
+import { ArrowRight, Package, BookOpen, Sparkles, Phone, Pizza, Contact } from "lucide-react";
 import { useUIStore } from "@/lib/ui-store";
 
 export const Route = createFileRoute("/aids/")({
@@ -58,11 +58,18 @@ function AidsHubPage() {
       accent: "from-sky-500/20 to-sky-500/5 border-sky-500/40 text-sky-300",
     },
     {
-      title: "אנשי קשר",
+      title: "אנשי קשר חיצוניים",
       emoji: "📞",
       Icon: Phone,
       to: "/aids/contacts",
       accent: "from-violet-500/20 to-violet-500/5 border-violet-500/40 text-violet-300",
+    },
+    {
+      title: "דף קשר — צוות הסניף",
+      emoji: "👥",
+      Icon: Contact,
+      to: "/aids/staff",
+      accent: "from-emerald-500/20 to-emerald-500/5 border-emerald-500/40 text-emerald-300",
     },
   ];
 
