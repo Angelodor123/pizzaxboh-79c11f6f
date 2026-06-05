@@ -366,12 +366,17 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         total_amount: raw.total_amount ?? null,
         document_date: raw.document_date ?? null,
         items: (raw.items ?? [])
-          .map((it) => ({
-            name: String(it.item_name ?? "").trim(),
-            quantity: Number(it.quantity ?? 0) || 0,
-            unit_price: it.unit_price ?? undefined,
-            total_price: it.total_price ?? undefined,
-          }))
+          .map((it) => {
+            const quantity = Number(it.quantity ?? 0) || 0;
+            const total = it.total_price ?? undefined;
+            const unit = it.unit_price ?? it.base_unit_price ?? (quantity > 0 && total != null ? total / quantity : undefined);
+            return {
+              name: String(it.item_name ?? "").trim(),
+              quantity,
+              unit_price: unit,
+              total_price: total,
+            };
+          })
           .filter((it) => it.name.length > 0),
       };
       setParsed(normalizedParsed);
@@ -425,11 +430,11 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       if (normalizedParsed.document_date) setDocDate(normalizedParsed.document_date);
       // If contextually linked to a specific order, auto-link and jump to verify
       if (linkedOrderId && chosenMatch) {
-        linkToMatch(chosenMatch);
+        linkToMatch(chosenMatch, normalizedParsed);
         return;
       }
       if (nextMatches.length > 0) setStage("suggest");
-      else setStage("manual");
+      else skipMatch(normalizedParsed);
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : String(e);
@@ -438,10 +443,10 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     }
   };
 
-  const linkToMatch = (m: Match) => {
+  const linkToMatch = (m: Match, sourceParsed: Parsed | null = parsed) => {
     setChosenMatch(m);
     setSupplierId(m.supplier_id);
-    const ocrItems = parsed?.items ?? [];
+    const ocrItems = sourceParsed?.items ?? [];
     const used = new Set<number>();
     const pairs: RowPair[] = m.items.map((oi) => {
       const orderedQty = Number(oi.qty.replace(/[^\d.]/g, "")) || null;
@@ -474,9 +479,9 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     setStage("verify");
   };
 
-  const skipMatch = () => {
+  const skipMatch = (sourceParsed: Parsed | null = parsed) => {
     // populate rows from OCR only
-    const ocrItems = parsed?.items ?? [];
+    const ocrItems = sourceParsed?.items ?? [];
     const newRows: RowPair[] = ocrItems.map((it) => ({
       name: it.name, orderedQty: null,
       invoiceQty: Number(it.quantity) || 0,
