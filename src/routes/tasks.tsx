@@ -1275,7 +1275,6 @@ function TasksPage() {
               ה-AI לא היה בטוח לחלוטין. ודא או ערוך את שם חומר הגלם לפני השמירה ברשימת החוסרים.
             </p>
             <input
-              autoFocus
               value={confirmShortage?.name ?? ""}
               onChange={(e) =>
                 setConfirmShortage((c) => (c ? { ...c, name: e.target.value } : c))
@@ -1328,7 +1327,6 @@ function TasksPage() {
               value={rejectNoteDraft}
               onChange={(e) => setRejectNoteDraft(e.target.value.slice(0, 500))}
               rows={4}
-              autoFocus
               placeholder="לדוגמה: התמונה לא ברורה, יש לחזור ולנקות את האזור…"
               className="w-full bg-background border border-border focus:border-rose-500/60 focus:outline-none rounded-md px-3 py-2 text-sm resize-y"
             />

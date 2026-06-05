@@ -78,7 +78,11 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="text-right max-w-md bg-card border-zinc-800">
+      <DialogContent
+        dir="rtl"
+        className="text-right max-w-md bg-card border-zinc-800"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-right text-lg font-bold">
             {done ? "✅ נרשם בהצלחה" : "פתיחת תלונה / פנייה"}

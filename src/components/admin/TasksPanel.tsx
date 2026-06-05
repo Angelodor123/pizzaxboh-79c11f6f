@@ -63,6 +63,7 @@ function PromptModal({
       <DialogContent
         dir="rtl"
         className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader className="text-right">
           <DialogTitle className="text-zinc-100 text-right">{state.title}</DialogTitle>
@@ -73,7 +74,6 @@ function PromptModal({
           )}
         </DialogHeader>
         <input
-          autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={state.placeholder}
@@ -121,6 +121,7 @@ function ConfirmModal({
       <DialogContent
         dir="rtl"
         className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader className="text-right">
           <DialogTitle className="text-zinc-100 text-right">{state.title}</DialogTitle>
@@ -188,7 +189,7 @@ function NewTaskModal({ state, onClose }: { state: NewTaskState; onClose: () => 
 
   return (
     <Dialog open={state.open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent dir="rtl" className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md">
+      <DialogContent dir="rtl" className="bg-zinc-900 border border-zinc-800/50 text-zinc-100 sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader className="text-right">
           <DialogTitle className="text-zinc-100 text-right">משימה חדשה</DialogTitle>
           <DialogDescription className="text-zinc-400 text-right">
@@ -199,7 +200,6 @@ function NewTaskModal({ state, onClose }: { state: NewTaskState; onClose: () => 
           <div>
             <label className="block text-xs text-zinc-400 mb-1 text-right">שם המשימה</label>
             <input
-              autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="שם המשימה"

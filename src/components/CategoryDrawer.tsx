@@ -139,7 +139,7 @@ export function CategoryDrawer() {
           <ul className="flex flex-col">
             <li>
               <Link to="/" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">🏠 פנקס יומי</span>
+                <span className="flex-1 text-right">🏠 דף הבית</span>
                 <span className={iconWrap}><Home className="h-5 w-5" /></span>
               </Link>
             </li>
@@ -304,7 +304,6 @@ export function CategoryDrawer() {
               {editingName ? (
                 <div className="flex items-center gap-1.5">
                   <input
-                    autoFocus
                     value={nameDraft}
                     onChange={(e) => setNameDraft(e.target.value)}
                     onKeyDown={(e) => {

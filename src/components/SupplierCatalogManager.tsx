@@ -212,7 +212,6 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
           <div>
             <label className={labelClass}>שם המוצר *</label>
             <input
-              autoFocus
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               placeholder="לדוגמה: עגבניות שרי"
