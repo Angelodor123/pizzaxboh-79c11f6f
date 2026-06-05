@@ -25,18 +25,39 @@ type ParsedReceipt = {
 // supplier-specific instructions, and catalog RAG context.
 const BASE_SYSTEM = `אתה מערכת OCR לקבלות וחשבוניות בעברית, מבוססת Google Gemini Vision.
 - קרא את כל השורות, התעלם מלוגואים, כותרות עיצוביות, חתימות, חותמות וברקודים.
-- חלץ עבור כל שורת פריט: שם פריט נקי (בעברית אם קיים), כמות, מחיר נטו ליחידה, וסה"כ.
+- חלץ עבור כל שורת פריט: שם פריט נקי (בעברית אם קיים), כמות, מחיר בסיס, הנחה, מחיר נטו ליחידה, וסה"כ.
 - אם ערך לא ברור — החזר null (אל תנחש מספרים). שדה items חייב להיות מערך, גם אם ריק.
 
-🚫 סינון פריטים לוגיסטיים: התעלם מ"משטח", "פלטה", "ארגז ריק", "פיקדון", "Pallet", "Crate", "Deposit".
+🚫 סינון פריטים לוגיסטיים (קריטי!):
+- התעלם וסנן החוצה: "משטח יורו פלסטיק", "משטח עץ", "משטח", "פלטה", "ארגז ריק", "מארז החזרה", "פיקדון", "בקבוקים ריקים", "Pallet", "Crate", "Deposit".
+- אל תכלול אותם בכלל בפלט.
 
-📄 תעודות משלוח ללא מחירים: חלץ שמות וכמויות; השאר מחירים=null.
+📄 טיפול בתעודות משלוח (ללא מחירים):
+- אם המסמך הוא תעודת משלוח / ת.מ. / Delivery Note ואין מחירים — חלץ שמות וכמויות, השאר מחירים=null. אל תמציא מחירים.
 
-🔢 נרמול מספרים: הסר ₪/$/€/ש״ח/שח/NIS/ILS ופסיקי אלפים. דוגמה: "₪569.86"→569.86. total_amount חייב להיות הסכום הסופי כולל מע״מ ("סה״כ לתשלום"/"Total").
+🔢 נרמול מספרים (חשוב מאוד!):
+- כל שדה מספרי חייב להיות float טהור או null.
+- הסר סימני מטבע (₪, $, €), המחרוזות "ש״ח"/"שח"/"NIS"/"ILS", פסיקי אלפים ורווחים.
+- דוגמאות: "₪569.86" → 569.86, "569,86 ש״ח" → 569.86, "1,234.50" → 1234.50.
+- total_amount הוא הסכום הסופי כולל מע״מ ("סה״כ לתשלום"/"סה"כ"/"לתשלום"/"Total").
 
-📅 נרמול תאריך: ISO YYYY-MM-DD בלבד. המר "27/05/26"→"2026-05-27" (יום/חודש/שנה ישראלי). תאריך לא קריא → null.
+📅 נרמול תאריך:
+- document_date חייב להיות ISO YYYY-MM-DD בלבד.
+- המר "27/05/26"→"2026-05-27" (פורמט ישראלי יום/חודש/שנה). שנה דו-ספרתית → הוסף 2000.
+- תאריך לא קריא → null. אל תמציא.
 
-🧮 הנחות מובלעות: אם quantity × unit_price המודפס גדול מ-total_price המודפס ביותר מ-1% — חשב את הנטו האמיתי: unit_price = total_price / quantity.`;
+🟠 הנחות — מחיר בסיס מול נטו:
+- base_unit_price = מחיר היחידה המקורי לפני ההנחה (ברוטו).
+- unit_price = מחיר היחידה הסופי לאחר ההנחה (נטו).
+- אם אין הנחה: discount=null, unit_price = base_unit_price.
+- total_price = quantity × unit_price (נטו).
+
+🧮 הנחות סמויות / מובלעות (חובה):
+- עבור כל שורה עם quantity, base_unit_price ו-total_price מודפסים — בצע בדיקה מתמטית:
+   Expected = quantity × base_unit_price.
+   אם total_price המודפס קטן מ-Expected ביותר מ-1% → יש הנחה מובלעת.
+- חשב pct = round((1 − printed_total / Expected) × 100, 2). discount="<pct>%".
+- עדכן unit_price = printed_total / quantity, total_price = printed_total.`;
 
 const NumLike = z.preprocess((v) => {
   if (v == null || v === "") return null;
@@ -80,8 +101,10 @@ const ParsedSchema = z.object({
   items: z.array(z.object({
     item_name: z.preprocess((v) => (v == null ? "" : String(v)), z.string().max(400)).optional(),
     quantity: NumLike.optional(),
+    base_unit_price: NumLike.optional(),
     unit_price: NumLike.optional(),
     total_price: NumLike.optional(),
+    discount: z.coerce.string().max(40).nullable().optional(),
   })).max(300).optional().default([]),
 });
 
