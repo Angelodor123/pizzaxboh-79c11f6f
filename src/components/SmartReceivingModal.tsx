@@ -575,6 +575,21 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         ai_suggested_product_id: string | null; ai_similarity: number | null; match_action: string;
       }> = [];
 
+      // Helper: build a short Hebrew price-change note and prepend to existing notes
+      const buildPriceNote = (oldP: number, newP: number): string => {
+        const today = new Date().toLocaleDateString("he-IL");
+        const dir = newP > oldP ? "↑ עלייה" : "↓ ירידה";
+        const pct = oldP > 0 ? Math.round(((newP - oldP) / oldP) * 100) : 0;
+        return `[${today}] ${dir} במחיר: ${oldP.toFixed(2)} → ${newP.toFixed(2)} ₪ (${pct > 0 ? "+" : ""}${pct}%)`;
+      };
+      const mergeNotes = (existing: string | null | undefined, line: string): string => {
+        const prev = (existing ?? "").trim();
+        // Keep only last ~5 price-change lines to avoid unbounded growth
+        const lines = prev ? prev.split("\n") : [];
+        lines.unshift(line);
+        return lines.slice(0, 8).join("\n");
+      };
+
       if (supplierId) {
         for (const r of cleanItems) {
           if (!r.name.trim()) continue;
@@ -586,17 +601,21 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             productId = r.catalogProductId;
             const { data: existing } = await supabase
               .from("supplier_products")
-              .select("price, expected_price, cost_price")
+              .select("price, expected_price, cost_price, notes")
               .eq("id", productId)
               .maybeSingle();
             previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
             if (r.unitPrice > 0) {
+              const priceChanged = previousPrice != null && Math.abs(previousPrice - r.unitPrice) > 0.001;
               await supabase
                 .from("supplier_products")
                 .update({
                   price: r.unitPrice,
                   expected_price: existing?.expected_price ?? r.unitPrice,
-                  cost_price: existing?.cost_price ?? r.unitPrice,
+                  cost_price: r.unitPrice,
+                  notes: priceChanged
+                    ? mergeNotes(existing?.notes, buildPriceNote(previousPrice!, r.unitPrice))
+                    : existing?.notes ?? null,
                 })
                 .eq("id", productId);
             }
@@ -622,17 +641,21 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             productId = r.catalogProductId;
             const { data: existing } = await supabase
               .from("supplier_products")
-              .select("price, expected_price, cost_price")
+              .select("price, expected_price, cost_price, notes")
               .eq("id", productId)
               .maybeSingle();
             previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
             if (r.unitPrice > 0) {
+              const priceChanged = previousPrice != null && Math.abs(previousPrice - r.unitPrice) > 0.001;
               await supabase
                 .from("supplier_products")
                 .update({
                   price: r.unitPrice,
                   expected_price: existing?.expected_price ?? r.unitPrice,
-                  cost_price: existing?.cost_price ?? r.unitPrice,
+                  cost_price: r.unitPrice,
+                  notes: priceChanged
+                    ? mergeNotes(existing?.notes, buildPriceNote(previousPrice!, r.unitPrice))
+                    : existing?.notes ?? null,
                 })
                 .eq("id", productId);
             }
@@ -648,16 +671,20 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
               productId = best.product_id;
               const { data: existing } = await supabase
                 .from("supplier_products")
-                .select("price, expected_price, cost_price")
+                .select("price, expected_price, cost_price, notes")
                 .eq("id", productId)
                 .maybeSingle();
               previousPrice = Number(existing?.cost_price ?? existing?.expected_price ?? existing?.price ?? 0) || null;
+              const priceChanged = previousPrice != null && Math.abs(previousPrice - r.unitPrice) > 0.001;
               await supabase
                 .from("supplier_products")
                 .update({
                   price: r.unitPrice,
                   expected_price: existing?.expected_price ?? r.unitPrice,
-                  cost_price: existing?.cost_price ?? r.unitPrice,
+                  cost_price: r.unitPrice,
+                  notes: priceChanged
+                    ? mergeNotes(existing?.notes, buildPriceNote(previousPrice!, r.unitPrice))
+                    : existing?.notes ?? null,
                 })
                 .eq("id", productId);
             } else {
@@ -703,7 +730,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             });
           }
 
-          // Flag significant price change (>=10% delta vs cost baseline)
+          // Flag significant price change (>=10% delta vs cost baseline) for toast alert
           if (previousPrice && previousPrice > 0 && r.unitPrice > 0) {
             const pct = ((r.unitPrice - previousPrice) / previousPrice) * 100;
             if (Math.abs(pct) >= 10) {
@@ -711,6 +738,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
             }
           }
         }
+
 
         // Persist all corrections as training data for future matches.
         if (mappingCorrections.length) {
