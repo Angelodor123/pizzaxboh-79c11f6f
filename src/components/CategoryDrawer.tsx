@@ -151,7 +151,7 @@ export function CategoryDrawer() {
             </li>
             <li>
               <Link to="/calendar" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">📅 יומן הזמנות</span>
+                <span className="flex-1 text-right">📅 יומן אירועים וסחורה</span>
                 <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
               </Link>
             </li>
