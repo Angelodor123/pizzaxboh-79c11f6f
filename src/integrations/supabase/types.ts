@@ -2352,6 +2352,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notifications_for_users: {
+        Args: {
+          _body: string
+          _data: Json
+          _link: string
+          _title: string
+          _type: string
+          _user_ids: string[]
+        }
+        Returns: undefined
+      }
       current_user_branch_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
