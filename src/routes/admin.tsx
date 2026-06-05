@@ -669,6 +669,29 @@ function InvitationsPanel() {
   const [inviteBranch, setInviteBranch] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<EmployeeRow | null>(null);
+
+  const openEmployeeEditor = async (userId: string, displayName: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("department, seniority, phone, address")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setEditingEmployee({
+      user_id: userId,
+      full_name: displayName,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      department: ((data as any)?.department ?? null) as EmployeeRow["department"],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      seniority: ((data as any)?.seniority ?? null) as string | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      phone: ((data as any)?.phone ?? null) as string | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      address: ((data as any)?.address ?? null) as string | null,
+      role: null,
+      assigned_branch_id: null,
+    });
+  };
 
   const load = async () => {
     const [{ data: i }, { data: r }, { data: s }, { data: b }, { data: p }] = await Promise.all([
