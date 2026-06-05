@@ -1050,7 +1050,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                     className="flex-1 h-11 rounded-md font-bold text-white bg-neon hover:opacity-90 inline-flex items-center justify-center gap-2">
                     <Link2 className="h-4 w-4" /> שייך את הקבלה להזמנה זו
                   </button>
-                  <button onClick={skipMatch}
+                  <button onClick={() => skipMatch()}
                     className="h-11 px-4 rounded-md border border-border hover:border-neon hover:text-neon font-bold text-sm">
                     זו הזמנה אחרת / בחר ידנית
                   </button>
