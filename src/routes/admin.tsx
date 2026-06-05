@@ -672,8 +672,8 @@ function InvitationsPanel() {
   const [editingEmployee, setEditingEmployee] = useState<EmployeeRow | null>(null);
 
   const openEmployeeEditor = async (userId: string, displayName: string) => {
-    const { data } = await supabase
-      .from("profiles")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from("profiles") as any)
       .select("department, seniority, phone, address")
       .eq("user_id", userId)
       .maybeSingle();
