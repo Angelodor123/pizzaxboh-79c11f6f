@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Sends a Web Push notification to a list of user_ids. Authenticated users only. */
+/** Sends a Web Push notification to a list of user_ids. Admin role required. */
 export const sendPushToUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -16,7 +16,16 @@ export const sendPushToUsers = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Role gate: only admin/shift_manager/super_admin can broadcast push to other users.
+    const { data: role, error: roleErr } = await context.supabase.rpc(
+      "current_user_role",
+    );
+    if (roleErr) throw new Error("Failed to verify role");
+    if (role !== "admin") {
+      throw new Error("Unauthorized: admin role required");
+    }
+
     const { fetchSubscriptionsForUsers, sendPushToSubscriptions } = await import(
       "@/lib/web-push.server"
     );
