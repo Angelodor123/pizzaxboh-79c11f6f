@@ -110,22 +110,26 @@ export function useNotifications(userId: string | null | undefined) {
   return { items, unreadCount, loading, markAllRead, markRead, refresh: load };
 }
 
-/** Inserts notification rows for the given user_ids. */
+/**
+ * Inserts notification rows for the given user_ids via a SECURITY DEFINER RPC.
+ * The RPC enforces: own-user inserts are allowed for everyone; cross-user
+ * inserts require admin / shift_manager / super_admin role.
+ */
 export async function createNotifications(
   userIds: string[],
   payload: { type?: string; title: string; body?: string; link?: string; data?: Record<string, unknown> },
 ): Promise<void> {
   const unique = Array.from(new Set(userIds.filter(Boolean)));
   if (!unique.length) return;
-  const rows = unique.map((uid) => ({
-    user_id: uid,
-    type: payload.type ?? "info",
-    title: payload.title,
-    body: payload.body ?? null,
-    link: payload.link ?? null,
-    data: payload.data ?? {},
-  }));
-  await supabase.from("notifications" as never).insert(rows as never);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).rpc("create_notifications_for_users", {
+    _user_ids: unique,
+    _type: payload.type ?? "info",
+    _title: payload.title,
+    _body: payload.body ?? null,
+    _link: payload.link ?? null,
+    _data: payload.data ?? {},
+  });
 }
 
 /** Parses @[name](user_id) tokens AND plain @name tokens given a name→id map. */
