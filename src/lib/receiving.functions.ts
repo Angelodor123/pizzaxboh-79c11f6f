@@ -156,12 +156,14 @@ export const ocrInvoice = createServerFn({ method: "POST" })
         invoice_number: output.invoice_number ?? null,
         total_amount: output.total_amount ?? null,
         document_date: output.document_date ?? null,
-        items: (output.items ?? []).map((it) => ({
-          name: it.item_name,
-          quantity: Number(it.quantity ?? 0) || 0,
-          unit_price: it.unit_price ?? undefined,
-          total_price: it.total_price ?? undefined,
-        })),
+        items: (output.items ?? [])
+          .map((it) => ({
+            name: String(it.item_name ?? "").trim(),
+            quantity: Number(it.quantity ?? 0) || 0,
+            unit_price: it.unit_price ?? undefined,
+            total_price: it.total_price ?? undefined,
+          }))
+          .filter((it) => it.name.length > 0),
       };
     } catch (e) {
       console.error("OCR error", e);
