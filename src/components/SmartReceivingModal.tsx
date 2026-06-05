@@ -77,13 +77,9 @@ type CatalogOpt = {
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
 
 
-const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, reject) => {
   const r = new FileReader();
-  r.onload = () => {
-    const s = String(r.result || "");
-    const idx = s.indexOf(",");
-    resolve(idx >= 0 ? s.slice(idx + 1) : s);
-  };
+  r.onload = () => resolve(String(r.result || ""));
   r.onerror = reject;
   r.readAsDataURL(file);
 });
@@ -347,26 +343,92 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     if (!file) return toast.error("יש להעלות תמונת חשבונית");
     setStage("processing");
     try {
-      const b64 = await fileToBase64(file);
-      const res = await ocr({
+      const dataUrl = await fileToDataUrl(file);
+      const catalogPayload = catalog.slice(0, 200).map((p) => ({
+        name: p.name,
+        sku: p.sku ?? null,
+        unit: p.unit ?? null,
+        unit_size: p.unit_size ?? null,
+        price: p.cost_price ?? p.expected_price ?? p.price ?? null,
+        barcode: p.barcode ?? null,
+      }));
+      const raw = await ocr({
         data: {
-          imageBase64: b64,
+          imageDataUrl: dataUrl,
           mimeType: file.type || "image/jpeg",
-          supplierHintId: supplierId || null,
+          supplierId: supplierId || undefined,
+          supplierCatalog: catalogPayload.length ? catalogPayload : undefined,
         },
       });
-      if (res.error) toast.warning(res.error);
-      setParsed(res.parsed ?? null);
-      setMatches(res.matches ?? []);
-      if (res.parsed?.invoice_number) setInvoiceNumber(res.parsed.invoice_number);
-      if (res.parsed?.total_amount != null) setTotalAmount(String(res.parsed.total_amount));
-      if (res.parsed?.document_date) setDocDate(res.parsed.document_date);
+      const normalizedParsed: Parsed = {
+        supplier_name_hint: raw.supplier_guess ?? null,
+        invoice_number: raw.invoice_number ?? null,
+        total_amount: raw.total_amount ?? null,
+        document_date: raw.document_date ?? null,
+        items: (raw.items ?? [])
+          .map((it) => ({
+            name: String(it.item_name ?? "").trim(),
+            quantity: Number(it.quantity ?? 0) || 0,
+            unit_price: it.unit_price ?? undefined,
+            total_price: it.total_price ?? undefined,
+          }))
+          .filter((it) => it.name.length > 0),
+      };
+      setParsed(normalizedParsed);
+
+      let effectiveSupplierId = supplierId;
+      if (!effectiveSupplierId && normalizedParsed.supplier_name_hint) {
+        const guess = normalizedParsed.supplier_name_hint.trim().toLowerCase();
+        const match = suppliers.find((s) => s.name.toLowerCase().includes(guess) || guess.includes(s.name.toLowerCase()));
+        if (match) {
+          effectiveSupplierId = match.id;
+          setSupplierId(match.id);
+        }
+      }
+
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      let query = supabase
+        .from("orders")
+        .select("id, supplier_id, sent_at, items, status")
+        .eq("status", "sent")
+        .gte("sent_at", cutoff)
+        .order("sent_at", { ascending: false })
+        .limit(15);
+      if (effectiveSupplierId) query = query.eq("supplier_id", effectiveSupplierId);
+      const { data: orders } = await query;
+      const supplierIds = Array.from(new Set((orders ?? []).map((o) => o.supplier_id).filter(Boolean)));
+      let supplierMap: Record<string, string> = {};
+      if (supplierIds.length) {
+        const { data: sups } = await supabase.from("suppliers").select("id, name").in("id", supplierIds);
+        supplierMap = Object.fromEntries((sups ?? []).map((s) => [s.id, s.name]));
+      }
+      const hint = (normalizedParsed.supplier_name_hint ?? "").toLowerCase().trim();
+      const nextMatches = (orders ?? []).map((o) => {
+        const supName = supplierMap[o.supplier_id] ?? "";
+        let score = 0;
+        if (effectiveSupplierId && o.supplier_id === effectiveSupplierId) score += 50;
+        if (hint && supName && (supName.toLowerCase().includes(hint) || hint.includes(supName.toLowerCase()))) score += 30;
+        const ageHrs = (Date.now() - new Date(o.sent_at).getTime()) / 3_600_000;
+        score += Math.max(0, 20 - ageHrs);
+        return {
+          order_id: o.id as string,
+          supplier_id: o.supplier_id as string,
+          supplier_name: supName,
+          sent_at: o.sent_at as string,
+          items: (o.items ?? []) as Array<{ name: string; qty: string }>,
+          score,
+        };
+      }).sort((a, b) => b.score - a.score);
+      setMatches(nextMatches);
+      if (normalizedParsed.invoice_number) setInvoiceNumber(normalizedParsed.invoice_number);
+      if (normalizedParsed.total_amount != null) setTotalAmount(String(normalizedParsed.total_amount));
+      if (normalizedParsed.document_date) setDocDate(normalizedParsed.document_date);
       // If contextually linked to a specific order, auto-link and jump to verify
       if (linkedOrderId && chosenMatch) {
         linkToMatch(chosenMatch);
         return;
       }
-      if ((res.matches?.length ?? 0) > 0) setStage("suggest");
+      if (nextMatches.length > 0) setStage("suggest");
       else setStage("manual");
     } catch (e) {
       console.error(e);
