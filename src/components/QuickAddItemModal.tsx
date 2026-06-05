@@ -112,7 +112,6 @@ export function QuickAddItemModal({ open, onClose, kind, branchId, onCreated }: 
           <label className="block">
             <span className="text-xs text-muted-foreground">שם הפריט</span>
             <input
-              autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-right text-sm"

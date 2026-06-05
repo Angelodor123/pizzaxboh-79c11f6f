@@ -365,7 +365,6 @@ export function RecipeCard({
                     return editingIdx === idx ? (
                       <div className="flex flex-col items-center justify-center shrink-0 w-[72px] px-1 rounded-md bg-neon/20 border border-neon">
                         <input
-                          autoFocus
                           type="number"
                           inputMode="decimal"
                           step="0.1"

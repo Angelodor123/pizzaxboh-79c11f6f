@@ -253,7 +253,6 @@ export function PersonalTasksCard() {
 
                 {isEditing ? (
                   <input
-                    autoFocus
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onClick={(e) => e.stopPropagation()}

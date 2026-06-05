@@ -73,7 +73,6 @@ function PromptModal({
           )}
         </DialogHeader>
         <input
-          autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={state.placeholder}
@@ -199,7 +198,6 @@ function NewTaskModal({ state, onClose }: { state: NewTaskState; onClose: () => 
           <div>
             <label className="block text-xs text-zinc-400 mb-1 text-right">שם המשימה</label>
             <input
-              autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="שם המשימה"

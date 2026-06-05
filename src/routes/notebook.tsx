@@ -475,7 +475,6 @@ function NotebookRow({
       {editing ? (
         <>
           <input
-            autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {

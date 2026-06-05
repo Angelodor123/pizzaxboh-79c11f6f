@@ -440,7 +440,6 @@ function QuickAddCatalogDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               dir="rtl"
-              autoFocus
               maxLength={120}
               className={inputCls}
             />

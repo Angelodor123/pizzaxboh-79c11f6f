@@ -126,7 +126,6 @@ function EquipmentSettingsPage() {
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   className="flex-1 h-9 rounded-md border border-border bg-background px-2"
-                  autoFocus
                 />
                 <button
                   onClick={() => handleSaveEdit(eq.id)}

@@ -163,7 +163,6 @@ export function BranchesPanel() {
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                     className="bg-input border border-border rounded px-2 py-1 text-right text-sm"
-                    autoFocus
                   />
                 </div>
               ) : (
