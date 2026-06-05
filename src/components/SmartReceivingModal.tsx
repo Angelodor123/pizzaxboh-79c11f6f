@@ -1004,7 +1004,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   לחץ לפתיחת מצלמה או גרירת קובץ
                 </button>
               )}
-              <button type="button" onClick={start} disabled={!file}
+              <button type="button" onClick={() => start()} disabled={!file}
                 className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white disabled:opacity-40"
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 22px rgba(255,45,180,0.45)" }}>
                 <ScanSearch className="h-4 w-4" /> נתח חשבונית
