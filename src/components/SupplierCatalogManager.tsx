@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { Package, Trash2, Upload, Loader2, Image as ImageIcon, Pencil, Check } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Package, Trash2, Upload, Loader2, Image as ImageIcon, Pencil, Check, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { confirmDelete } from "@/lib/confirm";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -66,6 +67,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -84,6 +87,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       load();
       setDraft(EMPTY_DRAFT);
       setEditingId(null);
+      setFormOpen(false);
+      setSearch("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, supplierId]);
@@ -105,6 +110,12 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     }
   };
 
+  const openCreate = () => {
+    setEditingId(null);
+    setDraft(EMPTY_DRAFT);
+    setFormOpen(true);
+  };
+
   const startEdit = (p: SupplierProduct) => {
     setEditingId(p.id);
     setDraft({
@@ -121,16 +132,11 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       min_stock_alert: p.min_stock_alert != null ? String(p.min_stock_alert) : "",
       image_url: p.image_url,
     });
-    // Scroll dialog content to top so the populated form is visible.
-    requestAnimationFrame(() => {
-      const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
-      dialog?.scrollTo({ top: 0, behavior: "smooth" });
-      toast.success(`עורך: ${p.name}`);
-    });
+    setFormOpen(true);
   };
 
-
-  const cancelEdit = () => {
+  const closeForm = () => {
+    setFormOpen(false);
     setDraft(EMPTY_DRAFT);
     setEditingId(null);
   };
@@ -162,16 +168,13 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
         const { error } = await supabase.from("supplier_products").update(payload).eq("id", editingId);
         if (error) throw error;
         toast.success("המוצר עודכן");
-        cancelEdit();
-        await load();
       } else {
         const { error } = await supabase.from("supplier_products").insert({ ...payload, sort_order: items.length });
         if (error) throw error;
         toast.success("המוצר נוסף לקטלוג");
-        cancelEdit();
-        await load();
-        onClose();
       }
+      closeForm();
+      await load();
     } catch (e: any) {
       toast.error("שמירה נכשלה: " + (e?.message ?? ""));
     } finally {
@@ -194,180 +197,311 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
     await load();
   };
 
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((p) =>
+      [p.name, p.sku, p.category, p.unit_size].filter(Boolean).some((v) => v!.toLowerCase().includes(q)),
+    );
+  }, [items, search]);
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, SupplierProduct[]>();
+    for (const p of filteredItems) {
+      const k = p.category || "ללא קטגוריה";
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(p);
+    }
+    return Array.from(map.entries());
+  }, [filteredItems]);
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent
-        className="max-w-3xl max-h-[92vh] overflow-y-auto"
-        dir="rtl"
-        onOpenAutoFocus={(event) => event.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle className="font-display text-xl flex items-center gap-2">
-            <Package className="h-5 w-5 text-neon" />
-            {supplierName} — הוספת מוצר לקטלוג
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+        <DialogContent
+          className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0"
+          dir="rtl"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+            <DialogTitle className="font-display text-xl flex items-center gap-2">
+              <Package className="h-5 w-5 text-neon" />
+              {supplierName} — קטלוג מוצרים
+            </DialogTitle>
+          </DialogHeader>
 
-        {/* Add / Edit form — compact 2-col grid */}
-        <div className="border border-border rounded-xl p-4 space-y-3 bg-background/40">
-          <div className="text-xs font-bold text-neon">{editingId ? "עריכת מוצר" : "פריט חדש לקטלוג"}</div>
-
-          {/* Name (full width) */}
-          <div>
-            <label className={labelClass}>שם המוצר *</label>
-            <input
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="לדוגמה: עגבניות שרי"
-              className={fieldClass}
-              maxLength={120}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>מק״ט / SKU</label>
+          {/* Sticky search + add */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur px-5 py-3 border-b border-border flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
-                value={draft.sku}
-                onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
-                placeholder="SKU-123"
-                className={fieldClass}
-                maxLength={64}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="חיפוש מוצר, מק״ט, קטגוריה…"
+                className={`${fieldClass} pr-8`}
               />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="נקה חיפוש"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            <div>
-              <label className={labelClass}>קטגוריה</label>
-              <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v })}>
-                <SelectTrigger className="h-10 text-right">
-                  <SelectValue placeholder="בחר קטגוריה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATALOG_CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className={labelClass}>יחידת מידה</label>
-              <Select value={draft.unit} onValueChange={(v) => setDraft({ ...draft, unit: v })}>
-                <SelectTrigger className="h-10 text-right">
-                  <SelectValue placeholder="בחר יחידה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATALOG_UNITS.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className={labelClass}>גודל אריזה</label>
-              <input
-                value={draft.unit_size}
-                onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
-                placeholder="לדוגמה: ארגז × 5 ק״ג"
-                className={fieldClass}
-                maxLength={80}
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>כמות ברירת מחדל</label>
-              <input
-                value={draft.default_qty}
-                onChange={(e) => setDraft({ ...draft, default_qty: e.target.value })}
-                type="number"
-                min={0}
-                step="any"
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>התראת מלאי נמוך</label>
-              <input
-                value={draft.min_stock_alert}
-                onChange={(e) => setDraft({ ...draft, min_stock_alert: e.target.value })}
-                placeholder="כמות מינ׳ במלאי"
-                type="number"
-                min={0}
-                step="any"
-                className={fieldClass}
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>מחיר נוכחי (₪)</label>
-              <input
-                value={draft.price}
-                onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-                placeholder="0.00"
-                type="number"
-                min={0}
-                step="any"
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>מחיר צפוי (₪)</label>
-              <input
-                value={draft.expected_price}
-                onChange={(e) => setDraft({ ...draft, expected_price: e.target.value })}
-                placeholder="לבדיקת אנומליות"
-                type="number"
-                min={0}
-                step="any"
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>מחיר עלות (₪) · מנהל</label>
-              <input
-                value={draft.cost_price}
-                onChange={(e) => setDraft({ ...draft, cost_price: e.target.value })}
-                placeholder="לחישוב עלות הזמנות וחוסרים"
-                type="number"
-                min={0}
-                step="any"
-                className={`${fieldClass} border-amber-brand/40`}
-              />
-            </div>
-          </div>
-
-          {/* Image upload (full width) */}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-              if (fileRef.current) fileRef.current.value = "";
-            }}
-          />
-          <div className="flex items-center gap-3">
             <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-sm disabled:opacity-50"
+              onClick={openCreate}
+              className="h-10 px-3 inline-flex items-center gap-1.5 rounded-md bg-neon text-black font-bold text-sm shrink-0"
             >
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {draft.image_url ? "החלף תמונה" : "העלאת תמונה"}
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">הוסף פריט</span>
             </button>
-            {draft.image_url && (
-              <img src={draft.image_url} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+          </div>
+
+          {/* Catalog list */}
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="text-xs font-bold text-muted-foreground mb-3">
+              מוצרים בקטלוג ({filteredItems.length}{search && ` מתוך ${items.length}`})
+            </div>
+            {loading ? (
+              <div className="text-sm text-muted-foreground py-8 text-center">טוען…</div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-sm text-muted-foreground py-12 text-center border border-dashed border-border rounded-xl">
+                {items.length === 0 ? "אין מוצרים בקטלוג. הוסף את הראשון בלחיצה על הכפתור." : "לא נמצאו תוצאות לחיפוש."}
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {grouped.map(([cat, list]) => (
+                  <div key={cat}>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-amber-brand mb-2 px-1">
+                      {cat} <span className="text-muted-foreground">({list.length})</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      {list.map((p) => (
+                        <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex items-center gap-3">
+                          <div className="h-14 w-14 shrink-0 rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
+                            {p.image_url ? (
+                              <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <ImageIcon className="h-6 w-6 text-zinc-700" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold leading-tight">{p.name}</div>
+                            {p.sku && <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku}</div>}
+                            <div className="text-[11px] text-muted-foreground">
+                              {p.unit_size || p.unit}
+                              {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
+                              {p.cost_price != null && <> · עלות <span className="text-amber-brand font-bold">₪{p.cost_price}</span></>}
+                              {p.min_stock_alert != null && <> · מלאי מינ׳: {p.min_stock_alert}</>}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => startEdit(p)}
+                              className="h-8 w-8 grid place-content-center rounded border border-border hover:text-neon hover:border-neon"
+                              aria-label="ערוך"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => remove(p)}
+                              className="h-8 w-8 grid place-content-center rounded border border-border hover:text-destructive hover:border-destructive"
+                              aria-label="מחק"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
-          <div className="flex gap-2 pt-1">
-            {editingId && (
-              <button onClick={cancelEdit} className="h-11 px-4 rounded-md border border-border text-sm hover:text-neon">
-                ביטול
+          {/* FAB */}
+          <button
+            onClick={openCreate}
+            aria-label="הוסף פריט לקטלוג"
+            className="absolute bottom-5 left-5 h-14 w-14 rounded-full bg-neon text-black shadow-lg grid place-content-center hover:scale-105 transition"
+          >
+            <Plus className="h-7 w-7" />
+          </button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add / Edit form Sheet */}
+      <Sheet open={formOpen} onOpenChange={(v) => { if (!v) closeForm(); }}>
+        <SheetContent
+          side="bottom"
+          dir="rtl"
+          className="h-[92vh] overflow-y-auto p-0 flex flex-col"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-border text-right">
+            <SheetTitle className="font-display text-lg flex items-center gap-2">
+              <Package className="h-5 w-5 text-neon" />
+              {editingId ? "עריכת מוצר" : "פריט חדש לקטלוג"}
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+            <div>
+              <label className={labelClass}>שם המוצר *</label>
+              <input
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                placeholder="לדוגמה: עגבניות שרי"
+                className={fieldClass}
+                maxLength={120}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>מק״ט / SKU</label>
+                <input
+                  value={draft.sku}
+                  onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+                  placeholder="SKU-123"
+                  className={fieldClass}
+                  maxLength={64}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>קטגוריה</label>
+                <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v })}>
+                  <SelectTrigger className="h-10 text-right">
+                    <SelectValue placeholder="בחר קטגוריה" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATALOG_CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className={labelClass}>יחידת מידה</label>
+                <Select value={draft.unit} onValueChange={(v) => setDraft({ ...draft, unit: v })}>
+                  <SelectTrigger className="h-10 text-right">
+                    <SelectValue placeholder="בחר יחידה" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATALOG_UNITS.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className={labelClass}>גודל אריזה</label>
+                <input
+                  value={draft.unit_size}
+                  onChange={(e) => setDraft({ ...draft, unit_size: e.target.value })}
+                  placeholder="לדוגמה: ארגז × 5 ק״ג"
+                  className={fieldClass}
+                  maxLength={80}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>כמות ברירת מחדל</label>
+                <input
+                  value={draft.default_qty}
+                  onChange={(e) => setDraft({ ...draft, default_qty: e.target.value })}
+                  type="number"
+                  min={0}
+                  step="any"
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>התראת מלאי נמוך</label>
+                <input
+                  value={draft.min_stock_alert}
+                  onChange={(e) => setDraft({ ...draft, min_stock_alert: e.target.value })}
+                  placeholder="כמות מינ׳ במלאי"
+                  type="number"
+                  min={0}
+                  step="any"
+                  className={fieldClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>מחיר נוכחי (₪)</label>
+                <input
+                  value={draft.price}
+                  onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+                  placeholder="0.00"
+                  type="number"
+                  min={0}
+                  step="any"
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>מחיר צפוי (₪)</label>
+                <input
+                  value={draft.expected_price}
+                  onChange={(e) => setDraft({ ...draft, expected_price: e.target.value })}
+                  placeholder="לבדיקת אנומליות"
+                  type="number"
+                  min={0}
+                  step="any"
+                  className={fieldClass}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className={labelClass}>מחיר עלות (₪) · מנהל</label>
+                <input
+                  value={draft.cost_price}
+                  onChange={(e) => setDraft({ ...draft, cost_price: e.target.value })}
+                  placeholder="לחישוב עלות הזמנות וחוסרים"
+                  type="number"
+                  min={0}
+                  step="any"
+                  className={`${fieldClass} border-amber-brand/40`}
+                />
+              </div>
+            </div>
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(f);
+                if (fileRef.current) fileRef.current.value = "";
+              }}
+            />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-md border border-border hover:border-neon hover:text-neon text-sm disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {draft.image_url ? "החלף תמונה" : "העלאת תמונה"}
               </button>
-            )}
+              {draft.image_url && (
+                <img src={draft.image_url} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-border px-5 py-3 flex gap-2 bg-background">
+            <button onClick={closeForm} className="h-11 px-4 rounded-md border border-border text-sm hover:text-neon">
+              ביטול
+            </button>
             <button
               onClick={save}
               disabled={saving || !draft.name.trim()}
@@ -377,59 +511,8 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               {editingId ? "שמור שינויים" : "הוסף לקטלוג"}
             </button>
           </div>
-        </div>
-
-        {/* Product grid */}
-        <div className="mt-4">
-          <div className="text-xs font-bold text-muted-foreground mb-2">מוצרים בקטלוג ({items.length})</div>
-          {loading ? (
-            <div className="text-sm text-muted-foreground py-8 text-center">טוען…</div>
-          ) : items.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-8 text-center border border-dashed border-border rounded-xl">
-              אין מוצרים בקטלוג. הוסף את הראשון מעל.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              {items.map((p) => (
-                <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex items-center gap-3">
-                  <div className="h-14 w-14 shrink-0 rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <ImageIcon className="h-6 w-6 text-zinc-700" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold leading-tight">{p.name}</div>
-                    {p.sku && <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku}</div>}
-                    <div className="text-[11px] text-muted-foreground">
-                      {p.category && <span className="text-amber-brand">{p.category} · </span>}
-                      {p.unit_size || p.unit}
-                      {p.price != null && <> · <span className="text-foreground/80">₪{p.price}</span></>}
-                      {p.cost_price != null && <> · עלות <span className="text-amber-brand font-bold">₪{p.cost_price}</span></>}
-                      {p.min_stock_alert != null && <> · מלאי מינ׳: {p.min_stock_alert}</>}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => startEdit(p)}
-                      className="h-8 w-8 grid place-content-center rounded border border-border hover:text-neon hover:border-neon"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => remove(p)}
-                      className="h-8 w-8 grid place-content-center rounded border border-border hover:text-destructive hover:border-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
