@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
-import { ocrInvoice } from "@/lib/receiving.functions";
+import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
 
 
 export const EXPENSE_CATEGORIES = [
@@ -62,18 +62,24 @@ type RowPair = {
   notReceivedReason: NotReceivedReason | null;
 };
 
-type CatalogOpt = { id: string; name: string; cost_price: number | null; expected_price: number | null; price: number | null };
+type CatalogOpt = {
+  id: string;
+  name: string;
+  cost_price: number | null;
+  expected_price: number | null;
+  price: number | null;
+  sku: string | null;
+  unit: string | null;
+  unit_size: string | null;
+  barcode: string | null;
+};
 
 type Stage = "pick" | "processing" | "suggest" | "verify" | "manual";
 
 
-const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, reject) => {
   const r = new FileReader();
-  r.onload = () => {
-    const s = String(r.result || "");
-    const idx = s.indexOf(",");
-    resolve(idx >= 0 ? s.slice(idx + 1) : s);
-  };
+  r.onload = () => resolve(String(r.result || ""));
   r.onerror = reject;
   r.readAsDataURL(file);
 });
@@ -96,7 +102,7 @@ const looseEq = (a: string, b: string) => {
 };
 
 export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId = null }: Props) {
-  const ocr = useServerFn(ocrInvoice);
+  const ocr = useServerFn(parseInvoiceImage);
   const [stage, setStage] = useState<Stage>("pick");
   const [supplierId, setSupplierId] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -206,7 +212,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       const branchId = await requireCurrentBranchId();
       const { data } = await supabase
         .from("supplier_products")
-        .select("id, name, cost_price, expected_price, price")
+        .select("id, name, cost_price, expected_price, price, sku, unit, unit_size, barcode")
         .eq("supplier_id", supplierId)
         .eq("branch_id", branchId)
         .eq("active", true)
@@ -320,44 +326,122 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     return () => { cancelled = true; };
   }, [linkedOrderId, suppliers]);
 
-  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => () => { if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const onFile = (f: File | null) => {
+  const onFile = async (f: File | null) => {
     setFile(f);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(f ? URL.createObjectURL(f) : null);
+    if (!f) {
+      setPreviewUrl(null);
+      return;
+    }
+    const dataUrl = await fileToDataUrl(f);
+    setPreviewUrl(dataUrl);
+    toast.success("התמונה נקלטה, מתחיל פענוח…");
+    await start(f, dataUrl);
   };
 
-  const start = async () => {
-    if (!file) return toast.error("יש להעלות תמונת חשבונית");
+  const start = async (selectedFile: File | null = file, dataUrlOverride?: string) => {
+    const targetFile = selectedFile ?? file;
+    if (!targetFile) return toast.error("יש להעלות תמונת חשבונית");
     setStage("processing");
     try {
-      const b64 = await fileToBase64(file);
-      const res = await ocr({
+      const dataUrl = dataUrlOverride ?? await fileToDataUrl(targetFile);
+      const catalogPayload = catalog.slice(0, 200).map((p) => ({
+        name: p.name,
+        sku: p.sku ?? null,
+        unit: p.unit ?? null,
+        unit_size: p.unit_size ?? null,
+        price: p.cost_price ?? p.expected_price ?? p.price ?? null,
+        barcode: p.barcode ?? null,
+      }));
+      const raw = await ocr({
         data: {
-          imageBase64: b64,
-          mimeType: file.type || "image/jpeg",
-          supplierHintId: supplierId || null,
+          imageDataUrl: dataUrl,
+          mimeType: targetFile.type || "image/jpeg",
+          supplierId: supplierId || undefined,
+          supplierCatalog: catalogPayload.length ? catalogPayload : undefined,
         },
       });
-      if (res.error) toast.warning(res.error);
-      setParsed(res.parsed ?? null);
-      setMatches(res.matches ?? []);
-      if (res.parsed?.invoice_number) setInvoiceNumber(res.parsed.invoice_number);
-      if (res.parsed?.total_amount != null) setTotalAmount(String(res.parsed.total_amount));
-      if (res.parsed?.document_date) setDocDate(res.parsed.document_date);
+      const normalizedParsed: Parsed = {
+        supplier_name_hint: raw.supplier_guess ?? null,
+        invoice_number: raw.invoice_number ?? null,
+        total_amount: raw.total_amount ?? null,
+        document_date: raw.document_date ?? null,
+        items: (raw.items ?? [])
+          .map((it) => {
+            const quantity = Number(it.quantity ?? 0) || 0;
+            const total = it.total_price ?? undefined;
+            const unit = it.unit_price ?? it.base_unit_price ?? (quantity > 0 && total != null ? total / quantity : undefined);
+            return {
+              name: String(it.item_name ?? "").trim(),
+              quantity,
+              unit_price: unit,
+              total_price: total,
+            };
+          })
+          .filter((it) => it.name.length > 0),
+      };
+      setParsed(normalizedParsed);
+
+      let effectiveSupplierId = supplierId;
+      if (!effectiveSupplierId && normalizedParsed.supplier_name_hint) {
+        const guess = normalizedParsed.supplier_name_hint.trim().toLowerCase();
+        const match = suppliers.find((s) => s.name.toLowerCase().includes(guess) || guess.includes(s.name.toLowerCase()));
+        if (match) {
+          effectiveSupplierId = match.id;
+          setSupplierId(match.id);
+        }
+      }
+
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      let query = supabase
+        .from("orders")
+        .select("id, supplier_id, sent_at, items, status")
+        .eq("status", "sent")
+        .gte("sent_at", cutoff)
+        .order("sent_at", { ascending: false })
+        .limit(15);
+      if (effectiveSupplierId) query = query.eq("supplier_id", effectiveSupplierId);
+      const { data: orders } = await query;
+      const supplierIds = Array.from(new Set((orders ?? []).map((o) => o.supplier_id).filter(Boolean)));
+      let supplierMap: Record<string, string> = {};
+      if (supplierIds.length) {
+        const { data: sups } = await supabase.from("suppliers").select("id, name").in("id", supplierIds);
+        supplierMap = Object.fromEntries((sups ?? []).map((s) => [s.id, s.name]));
+      }
+      const hint = (normalizedParsed.supplier_name_hint ?? "").toLowerCase().trim();
+      const nextMatches = (orders ?? []).map((o) => {
+        const supName = supplierMap[o.supplier_id] ?? "";
+        let score = 0;
+        if (effectiveSupplierId && o.supplier_id === effectiveSupplierId) score += 50;
+        if (hint && supName && (supName.toLowerCase().includes(hint) || hint.includes(supName.toLowerCase()))) score += 30;
+        const ageHrs = (Date.now() - new Date(o.sent_at).getTime()) / 3_600_000;
+        score += Math.max(0, 20 - ageHrs);
+        return {
+          order_id: o.id as string,
+          supplier_id: o.supplier_id as string,
+          supplier_name: supName,
+          sent_at: o.sent_at as string,
+          items: (o.items ?? []) as Array<{ name: string; qty: string }>,
+          score,
+        };
+      }).sort((a, b) => b.score - a.score);
+      setMatches(nextMatches);
+      if (normalizedParsed.invoice_number) setInvoiceNumber(normalizedParsed.invoice_number);
+      if (normalizedParsed.total_amount != null) setTotalAmount(String(normalizedParsed.total_amount));
+      if (normalizedParsed.document_date) setDocDate(normalizedParsed.document_date);
       // If contextually linked to a specific order, auto-link and jump to verify
       if (linkedOrderId && chosenMatch) {
-        linkToMatch(chosenMatch);
+        linkToMatch(chosenMatch, normalizedParsed);
         return;
       }
-      if ((res.matches?.length ?? 0) > 0) setStage("suggest");
-      else setStage("manual");
+      if (nextMatches.length > 0) setStage("suggest");
+      else skipMatch(normalizedParsed);
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : String(e);
@@ -366,10 +450,10 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     }
   };
 
-  const linkToMatch = (m: Match) => {
+  const linkToMatch = (m: Match, sourceParsed: Parsed | null = parsed) => {
     setChosenMatch(m);
     setSupplierId(m.supplier_id);
-    const ocrItems = parsed?.items ?? [];
+    const ocrItems = sourceParsed?.items ?? [];
     const used = new Set<number>();
     const pairs: RowPair[] = m.items.map((oi) => {
       const orderedQty = Number(oi.qty.replace(/[^\d.]/g, "")) || null;
@@ -402,9 +486,9 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     setStage("verify");
   };
 
-  const skipMatch = () => {
+  const skipMatch = (sourceParsed: Parsed | null = parsed) => {
     // populate rows from OCR only
-    const ocrItems = parsed?.items ?? [];
+    const ocrItems = sourceParsed?.items ?? [];
     const newRows: RowPair[] = ocrItems.map((it) => ({
       name: it.name, orderedQty: null,
       invoiceQty: Number(it.quantity) || 0,
@@ -920,7 +1004,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                   לחץ לפתיחת מצלמה או גרירת קובץ
                 </button>
               )}
-              <button type="button" onClick={start} disabled={!file}
+              <button type="button" onClick={() => start()} disabled={!file}
                 className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md font-bold text-white disabled:opacity-40"
                 style={{ background: "linear-gradient(135deg, #ff2db4, #ff5ec0)", boxShadow: "0 0 22px rgba(255,45,180,0.45)" }}>
                 <ScanSearch className="h-4 w-4" /> נתח חשבונית
@@ -973,7 +1057,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
                     className="flex-1 h-11 rounded-md font-bold text-white bg-neon hover:opacity-90 inline-flex items-center justify-center gap-2">
                     <Link2 className="h-4 w-4" /> שייך את הקבלה להזמנה זו
                   </button>
-                  <button onClick={skipMatch}
+                  <button onClick={() => skipMatch()}
                     className="h-11 px-4 rounded-md border border-border hover:border-neon hover:text-neon font-bold text-sm">
                     זו הזמנה אחרת / בחר ידנית
                   </button>
