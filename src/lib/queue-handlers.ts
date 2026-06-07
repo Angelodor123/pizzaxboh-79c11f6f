@@ -8,6 +8,9 @@ import { upsertLogs, type UpsertLogInput } from "./tasks";
 export const QK = {
   TaskLogUpsert: "task.log.upsert",
   DoughLogInsert: "dough.log.insert",
+  PrepLogUpsert: "prep.log.upsert",
+  RestockLogUpsert: "restock.log.upsert",
+  ComplaintInsert: "complaint.insert",
 } as const;
 
 export type DoughLogInsertPayload = {
@@ -19,6 +22,39 @@ export type DoughLogInsertPayload = {
     trays_count: number;
     location: "shop" | "southern_freezer" | "southern_fridge";
   }>;
+};
+
+export type PrepLogUpsertPayload = {
+  row: {
+    prep_item_id: string;
+    log_date: string;
+    current_stock: number;
+    completed: boolean;
+    updated_by: string | null;
+  };
+};
+
+export type RestockLogUpsertPayload = {
+  row: {
+    restock_item_id: string;
+    log_date: string;
+    current_stock: number;
+    completed: boolean;
+    updated_by: string | null;
+  };
+};
+
+export type ComplaintInsertPayload = {
+  row: {
+    created_by: string;
+    branch_id: string | null;
+    customer_name: string;
+    phone_number: string;
+    address: string | null;
+    description: string;
+    order_date: string | null;
+    order_number: string | null;
+  };
 };
 
 let registered = false;
@@ -36,6 +72,31 @@ export function registerOfflineHandlers() {
     const rows = (payload as DoughLogInsertPayload)?.rows ?? [];
     if (!rows.length) return;
     const { error } = await supabase.from("dough_updates_log").insert(rows);
+    if (error) throw error;
+  });
+
+  registerQueueHandler(QK.PrepLogUpsert, async (payload) => {
+    const row = (payload as PrepLogUpsertPayload)?.row;
+    if (!row) return;
+    const { error } = await supabase
+      .from("prep_log")
+      .upsert(row, { onConflict: "prep_item_id,log_date" });
+    if (error) throw error;
+  });
+
+  registerQueueHandler(QK.RestockLogUpsert, async (payload) => {
+    const row = (payload as RestockLogUpsertPayload)?.row;
+    if (!row) return;
+    const { error } = await supabase
+      .from("restock_log")
+      .upsert(row, { onConflict: "restock_item_id,log_date" });
+    if (error) throw error;
+  });
+
+  registerQueueHandler(QK.ComplaintInsert, async (payload) => {
+    const row = (payload as ComplaintInsertPayload)?.row;
+    if (!row) return;
+    const { error } = await supabase.from("customer_complaints").insert(row);
     if (error) throw error;
   });
 }
