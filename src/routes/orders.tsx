@@ -104,7 +104,7 @@ function OrdersPage() {
       </div>
 
       {loading ? (
-        <div className="text-center text-muted-foreground py-12">טוען…</div>
+        <GridSkeleton items={8} />
       ) : grid.length === 0 ? (
         <div className="text-center text-muted-foreground py-12 rounded-2xl border border-border bg-card/60">
           אין ספקים פעילים. הוסף ספקים במסך <Link to="/suppliers" className="text-neon font-bold">ניהול ספקים</Link>.
