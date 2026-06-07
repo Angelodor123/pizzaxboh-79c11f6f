@@ -84,8 +84,7 @@ function PrepPage() {
       updated_by: userId,
     };
     setLog((p) => ({ ...p, [id]: { prep_item_id: id, current_stock: stock, completed: row.completed } }));
-    const { error } = await supabase.from("prep_log").upsert(row, { onConflict: "prep_item_id,log_date" });
-    if (error) toast.error("שמירה נכשלה");
+    await runOrQueue(QK.PrepLogUpsert, { row }, "עדכון הכנה");
   };
 
   return (
