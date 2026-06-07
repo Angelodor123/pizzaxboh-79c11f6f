@@ -148,7 +148,7 @@ function SuppliersPage() {
       )}
 
       {loading ? (
-        <div className="text-center text-muted-foreground py-12">טוען…</div>
+        <GridSkeleton items={8} className="grid grid-cols-1 sm:grid-cols-2 gap-3" />
       ) : visible.length === 0 ? (
         <div className="text-center text-muted-foreground py-12 rounded-2xl border border-border bg-card/60">
           {showArchived ? "אין ספקים בארכיון" : "אין ספקים עדיין"}
