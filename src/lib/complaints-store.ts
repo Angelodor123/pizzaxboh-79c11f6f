@@ -86,7 +86,7 @@ export function useNewComplaintCount() {
     };
     load();
     const ch = supabase
-      .channel("complaints-count")
+      .channel(`complaints-count-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "customer_complaints" },
