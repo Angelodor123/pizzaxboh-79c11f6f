@@ -358,25 +358,34 @@ function TasksPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  const reloadAll = useCallback(async () => {
+    if (!branchId) return;
+    try {
+      const tree = await fetchTaskTree(branchId);
+      setShifts(tree.shifts);
+      setGroups(tree.groups);
+      setTasks(tree.tasks);
+      await reloadLogs(branchId);
+      setOpenShift((prev) => prev ?? tree.shifts[0]?.id ?? null);
+    } catch (err) {
+      toastError(err, "טעינת המשימות נכשלה.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId]);
+
   useEffect(() => {
     if (!branchId) return;
     let abort = false;
     (async () => {
       setLoading(true);
-      const tree = await fetchTaskTree(branchId);
+      await reloadAll();
       if (abort) return;
-      setShifts(tree.shifts);
-      setGroups(tree.groups);
-      setTasks(tree.tasks);
-      await reloadLogs(branchId);
-      setOpenShift(tree.shifts[0]?.id ?? null);
       setLoading(false);
     })();
     return () => {
       abort = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branchId]);
+  }, [branchId, reloadAll]);
 
   // Open Quick-Edit when arriving with ?edit=<taskId> (e.g. from GlobalSearch)
   useEffect(() => {
