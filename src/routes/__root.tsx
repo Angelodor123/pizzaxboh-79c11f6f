@@ -244,14 +244,16 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AccessGate>
-          <NdaGate>
-            <BranchGate>
-              <OfflineBanner />
-              <AuthedShell />
-            </BranchGate>
-          </NdaGate>
-        </AccessGate>
+        <ErrorBoundary>
+          <AccessGate>
+            <NdaGate>
+              <BranchGate>
+                <OfflineBanner />
+                <AuthedShell />
+              </BranchGate>
+            </NdaGate>
+          </AccessGate>
+        </ErrorBoundary>
       </AuthProvider>
       <Toaster position="top-center" richColors closeButton />
       <ConfirmHost />
