@@ -180,5 +180,6 @@ function OrdersPage() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
 }
