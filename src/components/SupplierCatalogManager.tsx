@@ -19,6 +19,7 @@ import {
   CATALOG_UNITS,
   CATALOG_CATEGORIES,
 } from "@/lib/supplier-products";
+import { CatalogRowsSkeleton } from "@/components/ui/skeletons";
 
 interface Props {
   supplierId: string;
