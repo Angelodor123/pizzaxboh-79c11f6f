@@ -14,6 +14,7 @@ import { SupplierCatalogManager } from "@/components/SupplierCatalogManager";
 import { Package } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
+import { supplierFormSchema, validateOrToast } from "@/lib/schemas";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
@@ -412,25 +413,24 @@ function SupplierForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error("חובה להזין שם ספק");
-      return;
-    }
-    setSaving(true);
-    const basePayload = {
-      name: name.trim().slice(0, 120),
-      category: category.trim().slice(0, 60) || "כללי",
+    const validated = validateOrToast(supplierFormSchema, {
+      name,
+      category,
+      contact,
+      notes,
       delivery_weekdays: weekdays,
+      order_days: orderDays,
+      delivery_days: deliveryDays,
       default_start_time: startTime || null,
       default_end_time: endTime || null,
-      contact: contact.trim().slice(0, 200) || null,
-      notes: notes.trim().slice(0, 2000) || null,
+      order_cutoff_time: orderCutoff || null,
       active,
       logo_url: logoUrl,
-      order_days: orderDays,
-      order_cutoff_time: orderCutoff || null,
-      delivery_days: deliveryDays,
-    };
+    });
+    if (!validated) return;
+
+    setSaving(true);
+    const basePayload = validated;
     let error;
     if (existing) {
       ({ error } = await supabase.from("suppliers").update(basePayload).eq("id", existing.id));
@@ -446,6 +446,7 @@ function SupplierForm({
     toast.success(existing ? "הספק עודכן והלוח סונכרן" : "הספק נוסף והלוח סונכרן");
     onClose();
   };
+
 
   return (
     <div
