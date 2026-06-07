@@ -91,6 +91,7 @@ function OrdersPage() {
   }
 
   return (
+    <PullToRefresh onRefresh={() => load()}>
     <div className="max-w-6xl mx-auto px-4 py-6" dir="rtl">
       <div className="mb-6 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Supplier Ordering</div>
