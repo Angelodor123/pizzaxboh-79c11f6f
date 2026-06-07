@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
 import { CheckCircle2, AlertTriangle, Search, Plus, Pencil } from "lucide-react";
-import { toast } from "sonner";
 import { QuickAddItemModal } from "@/components/QuickAddItemModal";
 import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEditStockItemDialog";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
