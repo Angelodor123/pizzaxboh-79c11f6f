@@ -508,6 +508,13 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
 
   const submit = async () => {
     if (!canSubmit) return;
+    const validatedHeader = validateOrToast(receivingHeaderSchema, {
+      supplier_id: supplierId,
+      invoice_number: invoiceNumber,
+      document_date: docDate,
+      total_amount: totalNum,
+    });
+    if (!validatedHeader) return;
     setSubmitting(true);
     try {
       const branchId = await requireCurrentBranchId();
