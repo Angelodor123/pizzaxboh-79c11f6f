@@ -11,12 +11,18 @@ import { ArrowRight, User } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { QuickBackBubble } from "@/components/QuickBackBubble";
 import { AccessGate } from "@/components/AccessGate";
 import { PageOnboarding, pageKeyFromPath } from "@/components/PageOnboarding";
 import { PageHeader } from "@/components/PageHeader";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { PageTransition } from "@/components/PageTransition";
+import {
+  DevicePreviewToggle,
+  devicePreviewWrapperClass,
+  useDevicePreview,
+} from "@/lib/device-preview";
 
 import { lazy, Suspense, useEffect } from "react";
 
