@@ -285,7 +285,8 @@ function AuthedShell() {
   const category = useUIStore((s) => s.category);
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const { role: effRole, isSuperAdmin: effSuper, loading: authLoading } = useAuth();
+  const { role: effRole, isSuperAdmin: effSuper, loading: authLoading, session } = useAuth();
+  useInactivityLogout(!!session);
 
   // Strict route guard — runs whenever pathname or effective role changes.
   // This is what makes "View As → Employee" immediately kick a super admin
