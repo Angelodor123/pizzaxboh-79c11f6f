@@ -34,6 +34,8 @@ import { UnifiedBell } from "@/components/UnifiedBell";
 import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useInactivityLogout } from "@/lib/use-inactivity-logout";
 import { ConfirmHost } from "@/lib/confirm";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
