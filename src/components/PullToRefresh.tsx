@@ -58,7 +58,7 @@ export function PullToRefresh({
       startY.current = null;
       if (distance >= threshold && !refreshing) {
         setRefreshing(true);
-        triggerHaptic("medium");
+        triggerHaptic("success");
         try {
           await onRefresh();
         } catch {
