@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { getCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
 import { runOrQueue } from "@/lib/offline-queue";
 import { QK } from "@/lib/queue-handlers";
+import { useAutosaveDraft } from "@/hooks/use-autosave-draft";
 
 const SUCCESS_SCRIPT =
   "חברים רשמתי את הפרטים שלכם, המנהל יצור איתכם קשר בהקדם האפשרי במהלך היום כדי לדבר איתכם ולפתור את הדברים על הצד הטוב ביותר.";
