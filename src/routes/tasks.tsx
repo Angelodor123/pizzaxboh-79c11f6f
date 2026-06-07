@@ -807,6 +807,7 @@ function TasksPage() {
   const openRecipe = recipeOpen ? recipes.find((r) => r.id === recipeOpen) : null;
 
   return (
+    <PullToRefresh onRefresh={reloadAll}>
     <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-10" dir="rtl">
       {/* Sticky progress */}
       <div className="sticky top-20 sm:top-24 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/95 backdrop-blur border-b border-border">
