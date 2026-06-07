@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { getCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
 
 const SUCCESS_SCRIPT =
   "חברים רשמתי את הפרטים שלכם, המנהל יצור איתכם קשר בהקדם האפשרי במהלך היום כדי לדבר איתכם ולפתור את הדברים על הצד הטוב ביותר.";
