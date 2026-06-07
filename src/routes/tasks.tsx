@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle, GripVertical, Flame, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ListSkeleton } from "@/components/ui/skeletons";
 import { extractIngredientFromTitle } from "@/lib/ingredient-extract.functions";
 import {
   DndContext,
@@ -786,8 +787,8 @@ function TasksPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin ml-2" /> טוען משימות…
+      <div className="max-w-4xl mx-auto px-3 sm:px-4" dir="rtl">
+        <ListSkeleton rows={6} />
       </div>
     );
   }

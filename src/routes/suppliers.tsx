@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare, Archive, ArchiveRestore, Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { GridSkeleton } from "@/components/ui/skeletons";
 import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -148,7 +149,7 @@ function SuppliersPage() {
       )}
 
       {loading ? (
-        <div className="text-center text-muted-foreground py-12">טוען…</div>
+        <GridSkeleton items={8} className="grid grid-cols-1 sm:grid-cols-2 gap-3" />
       ) : visible.length === 0 ? (
         <div className="text-center text-muted-foreground py-12 rounded-2xl border border-border bg-card/60">
           {showArchived ? "אין ספקים בארכיון" : "אין ספקים עדיין"}

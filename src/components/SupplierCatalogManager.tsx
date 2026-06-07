@@ -19,6 +19,7 @@ import {
   CATALOG_UNITS,
   CATALOG_CATEGORIES,
 } from "@/lib/supplier-products";
+import { CatalogRowsSkeleton } from "@/components/ui/skeletons";
 
 interface Props {
   supplierId: string;
@@ -265,7 +266,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
               מוצרים בקטלוג ({filteredItems.length}{search && ` מתוך ${items.length}`})
             </div>
             {loading ? (
-              <div className="text-sm text-muted-foreground py-8 text-center">טוען…</div>
+              <CatalogRowsSkeleton rows={5} />
             ) : filteredItems.length === 0 ? (
               <div className="text-sm text-muted-foreground py-12 text-center border border-dashed border-border rounded-xl">
                 {items.length === 0 ? "אין מוצרים בקטלוג. הוסף את הראשון בלחיצה על הכפתור." : "לא נמצאו תוצאות לחיפוש."}

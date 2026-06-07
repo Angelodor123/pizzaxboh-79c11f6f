@@ -34,6 +34,8 @@ import { UnifiedBell } from "@/components/UnifiedBell";
 import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useInactivityLogout } from "@/lib/use-inactivity-logout";
 import { ConfirmHost } from "@/lib/confirm";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { useRecipesSync } from "@/lib/store";
@@ -242,14 +244,16 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AccessGate>
-          <NdaGate>
-            <BranchGate>
-              <OfflineBanner />
-              <AuthedShell />
-            </BranchGate>
-          </NdaGate>
-        </AccessGate>
+        <ErrorBoundary>
+          <AccessGate>
+            <NdaGate>
+              <BranchGate>
+                <OfflineBanner />
+                <AuthedShell />
+              </BranchGate>
+            </NdaGate>
+          </AccessGate>
+        </ErrorBoundary>
       </AuthProvider>
       <Toaster position="top-center" richColors closeButton />
       <ConfirmHost />
@@ -281,7 +285,8 @@ function AuthedShell() {
   const category = useUIStore((s) => s.category);
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const { role: effRole, isSuperAdmin: effSuper, loading: authLoading } = useAuth();
+  const { role: effRole, isSuperAdmin: effSuper, loading: authLoading, session } = useAuth();
+  useInactivityLogout(!!session);
 
   // Strict route guard — runs whenever pathname or effective role changes.
   // This is what makes "View As → Employee" immediately kick a super admin
@@ -397,7 +402,9 @@ function AuthedShell() {
         <PageHeader isDishesView={isDishesView} />
         <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
         <PageTransition>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </PageTransition>
       </main>
 
