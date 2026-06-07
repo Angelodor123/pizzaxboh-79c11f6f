@@ -402,7 +402,9 @@ function AuthedShell() {
         <PageHeader isDishesView={isDishesView} />
         <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
         <PageTransition>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </PageTransition>
       </main>
 
