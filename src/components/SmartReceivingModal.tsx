@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
 import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
+import { receivingHeaderSchema, validateOrToast } from "@/lib/schemas";
 
 
 export const EXPENSE_CATEGORIES = [
@@ -508,6 +509,13 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
 
   const submit = async () => {
     if (!canSubmit) return;
+    const validatedHeader = validateOrToast(receivingHeaderSchema, {
+      supplier_id: supplierId,
+      invoice_number: invoiceNumber,
+      document_date: docDate,
+      total_amount: totalNum,
+    });
+    if (!validatedHeader) return;
     setSubmitting(true);
     try {
       const branchId = await requireCurrentBranchId();

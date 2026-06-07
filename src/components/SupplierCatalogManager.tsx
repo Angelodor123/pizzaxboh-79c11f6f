@@ -20,6 +20,7 @@ import {
   CATALOG_CATEGORIES,
 } from "@/lib/supplier-products";
 import { CatalogRowsSkeleton } from "@/components/ui/skeletons";
+import { supplierProductSchema, validateOrToast } from "@/lib/schemas";
 
 interface Props {
   supplierId: string;
@@ -143,27 +144,28 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
   };
 
   const save = async () => {
-    if (!draft.name.trim()) {
-      toast.error("שם המוצר חובה");
-      return;
-    }
+    const validated = validateOrToast(supplierProductSchema, {
+      name: draft.name,
+      sku: draft.sku || null,
+      unit_size: draft.unit_size || null,
+      unit: draft.unit,
+      default_qty: Number(draft.default_qty) || 1,
+      price: draft.price.trim() ? Number(draft.price) : null,
+      expected_price: draft.expected_price.trim() ? Number(draft.expected_price) : null,
+      cost_price: draft.cost_price.trim() ? Number(draft.cost_price) : null,
+      category: draft.category || null,
+      min_stock_alert: draft.min_stock_alert.trim() ? Number(draft.min_stock_alert) : null,
+      image_url: draft.image_url,
+    });
+    if (!validated) return;
+
     setSaving(true);
     try {
       const branchId = await requireCurrentBranchId();
       const payload = {
         supplier_id: supplierId,
         branch_id: branchId,
-        name: draft.name.trim(),
-        sku: draft.sku.trim() || null,
-        unit_size: draft.unit_size.trim() || null,
-        unit: draft.unit.trim(),
-        default_qty: Number(draft.default_qty) || 1,
-        price: draft.price.trim() ? Number(draft.price) : null,
-        expected_price: draft.expected_price.trim() ? Number(draft.expected_price) : null,
-        cost_price: draft.cost_price.trim() ? Number(draft.cost_price) : null,
-        category: draft.category.trim() || null,
-        min_stock_alert: draft.min_stock_alert.trim() ? Number(draft.min_stock_alert) : null,
-        image_url: draft.image_url,
+        ...validated,
       };
       if (editingId) {
         const { error } = await supabase.from("supplier_products").update(payload).eq("id", editingId);
@@ -182,6 +184,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       setSaving(false);
     }
   };
+
 
   const remove = async (p: SupplierProduct) => {
     const ok = await confirmDelete({
