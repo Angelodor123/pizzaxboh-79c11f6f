@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ListSkeleton } from "@/components/ui/skeletons";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { toastError } from "@/lib/error-messages";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
 import { extractIngredientFromTitle } from "@/lib/ingredient-extract.functions";
 import {
   DndContext,
@@ -36,7 +38,7 @@ import { useActiveBranch } from "@/components/BranchGate";
 import {
   fetchTaskTree,
   fetchTodayLogs,
-  upsertLogs,
+  
   extractIngredientName,
   isTaskActiveOn,
   compareTasks,
@@ -510,26 +512,25 @@ function TasksPage() {
   // Persist a single task's log row immediately.
   const persistTask = async (taskId: string, state: LogState) => {
     if (!branchId || taskId.startsWith("__virtual_")) return;
+    const row = {
+      branch_id: branchId,
+      task_id: taskId,
+      log_date: logDate,
+      completed: state.completed,
+      completed_at: state.completed_at,
+      completed_by: state.completed_by,
+      completed_by_user_id: state.completed_by_user_id,
+      comments: state.comments,
+      photo_url: state.photo_url,
+      admin_verification_status: state.admin_verification_status,
+      rejection_note: state.rejection_note,
+      verified_by: state.admin_verification_status === "verified" ? userId : null,
+      verified_at: state.verified_at,
+    };
     try {
-      await upsertLogs([
-        {
-          branch_id: branchId,
-          task_id: taskId,
-          log_date: logDate,
-          completed: state.completed,
-          completed_at: state.completed_at,
-          completed_by: state.completed_by,
-          completed_by_user_id: state.completed_by_user_id,
-          comments: state.comments,
-          photo_url: state.photo_url,
-          admin_verification_status: state.admin_verification_status,
-          rejection_note: state.rejection_note,
-          verified_by: state.admin_verification_status === "verified" ? userId : null,
-          verified_at: state.verified_at,
-        },
-      ]);
+      await runOrQueue(QK.TaskLogUpsert, { rows: [row] }, "שמירת משימה");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "שמירה נכשלה");
+      toastError(e, "שמירה נכשלה");
     }
   };
 

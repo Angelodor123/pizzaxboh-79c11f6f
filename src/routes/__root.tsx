@@ -316,9 +316,10 @@ function AuthedShell() {
       (category !== "all" && category !== "desserts" && MENU_ITEM_CATEGORIES.includes(category)));
   const showQuickBack = !isRecipesPage;
 
-  // Register service worker once
+  // Register service worker + offline-queue handlers once
   useEffect(() => {
     void ensureServiceWorker();
+    void import("@/lib/queue-handlers").then((m) => m.registerOfflineHandlers());
   }, []);
 
   // Gentle one-time prompt for notification permission
