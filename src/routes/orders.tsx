@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Truck, ChevronRight, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { GridSkeleton } from "@/components/ui/skeletons";
 import { useAuth } from "@/lib/auth";
 import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
