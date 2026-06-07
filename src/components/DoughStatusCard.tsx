@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
 
 interface PrepItem {
   id: string;
@@ -243,17 +245,33 @@ export function DoughStatusCard() {
     if (rows.length === 0) {
       rows.push({ ...baseRow, trays_count: shopN, location: "shop" });
     }
-    const { data: inserted } = await supabase
-      .from("dough_updates_log")
-      .insert(rows)
-      .select("id,trays_count,updated_by_name,created_at,location");
+    let inserted: DoughLogRow[] | null = null;
+    try {
+      const res = await runOrQueue(
+        QK.DoughLogInsert,
+        { rows },
+        "עדכון מלאי בצק",
+      );
+      if (!res.queued) {
+        const { data } = await supabase
+          .from("dough_updates_log")
+          .select("id,trays_count,updated_by_name,created_at,location")
+          .eq("branch_id", branchId)
+          .eq("prep_item_id", item.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        inserted = (data as DoughLogRow[] | null) ?? null;
+      }
+    } catch {
+      /* errors surface via toast inside runOrQueue */
+    }
 
     setSaving(false);
     // Optimistic UI
     setShopCount(shopN);
     setSouthernFreezerCount(freezerN);
     setSouthernFridgeCount(fridgeN);
-    const newest = (inserted as DoughLogRow[] | null)?.sort(
+    const newest = inserted?.sort(
       (a, b) => +new Date(b.created_at) - +new Date(a.created_at),
     )[0];
     if (newest) setLastUpdate(newest);
