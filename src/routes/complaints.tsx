@@ -9,6 +9,7 @@ import {
 } from "@/lib/complaints-store";
 import { supabase } from "@/integrations/supabase/client";
 import { confirmDelete } from "@/lib/confirm";
+import { deleteWithUndo } from "@/lib/delete-with-undo";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
