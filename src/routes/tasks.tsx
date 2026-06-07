@@ -786,8 +786,8 @@ function TasksPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin ml-2" /> טוען משימות…
+      <div className="max-w-4xl mx-auto px-3 sm:px-4" dir="rtl">
+        <ListSkeleton rows={6} />
       </div>
     );
   }
