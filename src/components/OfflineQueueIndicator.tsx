@@ -10,7 +10,10 @@ export function OfflineQueueIndicator() {
   const [busy, setBusy] = useState(false);
   const online = useOnlineStatus();
 
-  useEffect(() => subscribeQueueCount(setCount), []);
+  useEffect(() => {
+    const unsub = subscribeQueueCount(setCount);
+    return () => { unsub; };
+  }, []);
 
   if (count === 0 && online) return null;
 
