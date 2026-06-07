@@ -148,7 +148,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
       name: draft.name,
       sku: draft.sku || null,
       unit_size: draft.unit_size || null,
-      unit: draft.unit || null,
+      unit: draft.unit,
       default_qty: Number(draft.default_qty) || 1,
       price: draft.price.trim() ? Number(draft.price) : null,
       expected_price: draft.expected_price.trim() ? Number(draft.expected_price) : null,

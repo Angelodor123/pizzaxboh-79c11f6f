@@ -40,7 +40,7 @@ export const supplierProductSchema = z.object({
   name: trimmed(120, "שם המוצר").min(1, { message: "חובה להזין שם מוצר" }),
   sku: optionalString(64, "מק״ט"),
   unit_size: optionalString(50, "גודל יחידה"),
-  unit: optionalString(20, "יחידת מידה"),
+  unit: trimmed(20, "יחידת מידה").default(""),
   default_qty: z
     .number({ invalid_type_error: "כמות ברירת מחדל חייבת להיות מספר" })
     .min(0, { message: "כמות לא יכולה להיות שלילית" })
