@@ -40,6 +40,7 @@ import { UnifiedBell } from "@/components/UnifiedBell";
 import { CriticalMaintenanceInterceptor } from "@/components/CriticalMaintenanceInterceptor";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { OfflineQueueIndicator } from "@/components/OfflineQueueIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useInactivityLogout } from "@/lib/use-inactivity-logout";
 import { ConfirmHost } from "@/lib/confirm";
