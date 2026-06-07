@@ -36,6 +36,26 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
   const [orderNumber, setOrderNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  // Stable per-submission key for idempotency (resets after success/close).
+  const clientIdRef = useRef<string>(crypto.randomUUID());
+
+  // Auto-save draft so a closed/crashed page doesn't lose what was typed.
+  const draft = useAutosaveDraft(
+    "complaint-new",
+    { name, phone, address, desc, orderDate, orderNumber },
+    (v) => {
+      setName(v.name ?? "");
+      setPhone(v.phone ?? "");
+      setAddress(v.address ?? "");
+      setDesc(v.desc ?? "");
+      setOrderDate(v.orderDate ?? todayLocal());
+      setOrderNumber(v.orderNumber ?? "");
+      if ((v.name || v.desc || v.phone)?.trim()) {
+        toast.info("שוחזרה טיוטה קודמת");
+      }
+    },
+    open && !done,
+  );
 
   useEffect(() => {
     if (!open) {
@@ -47,6 +67,7 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       setOrderNumber("");
       setSubmitting(false);
       setDone(false);
+      clientIdRef.current = crypto.randomUUID();
     }
   }, [open]);
 
@@ -72,7 +93,10 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       order_number: orderNumber.trim() || null,
     };
     try {
-      await runOrQueue(QK.ComplaintInsert, { row }, "פתיחת תלונה");
+      await runOrQueue(QK.ComplaintInsert, { row }, "פתיחת תלונה", {
+        clientId: clientIdRef.current,
+      });
+      draft.reset();
       setDone(true);
     } catch {
       // toast handled inside runOrQueue
