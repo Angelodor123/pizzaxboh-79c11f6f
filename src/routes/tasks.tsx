@@ -38,7 +38,7 @@ import { useActiveBranch } from "@/components/BranchGate";
 import {
   fetchTaskTree,
   fetchTodayLogs,
-  upsertLogs,
+  
   extractIngredientName,
   isTaskActiveOn,
   compareTasks,
