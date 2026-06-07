@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronDown, ChevronUp, BookOpen, Loader2, CheckCircle2, CloudSnow, Pencil, Save, AlertTriangle, GripVertical, Flame, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ListSkeleton } from "@/components/ui/skeletons";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { toastError } from "@/lib/error-messages";
 import { extractIngredientFromTitle } from "@/lib/ingredient-extract.functions";
 import {
   DndContext,
@@ -356,25 +358,34 @@ function TasksPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  const reloadAll = useCallback(async () => {
+    if (!branchId) return;
+    try {
+      const tree = await fetchTaskTree(branchId);
+      setShifts(tree.shifts);
+      setGroups(tree.groups);
+      setTasks(tree.tasks);
+      await reloadLogs(branchId);
+      setOpenShift((prev) => prev ?? tree.shifts[0]?.id ?? null);
+    } catch (err) {
+      toastError(err, "טעינת המשימות נכשלה.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId]);
+
   useEffect(() => {
     if (!branchId) return;
     let abort = false;
     (async () => {
       setLoading(true);
-      const tree = await fetchTaskTree(branchId);
+      await reloadAll();
       if (abort) return;
-      setShifts(tree.shifts);
-      setGroups(tree.groups);
-      setTasks(tree.tasks);
-      await reloadLogs(branchId);
-      setOpenShift(tree.shifts[0]?.id ?? null);
       setLoading(false);
     })();
     return () => {
       abort = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branchId]);
+  }, [branchId, reloadAll]);
 
   // Open Quick-Edit when arriving with ?edit=<taskId> (e.g. from GlobalSearch)
   useEffect(() => {
@@ -796,6 +807,7 @@ function TasksPage() {
   const openRecipe = recipeOpen ? recipes.find((r) => r.id === recipeOpen) : null;
 
   return (
+    <PullToRefresh onRefresh={reloadAll}>
     <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-10" dir="rtl">
       {/* Sticky progress */}
       <div className="sticky top-20 sm:top-24 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/95 backdrop-blur border-b border-border">
@@ -1424,6 +1436,7 @@ function TasksPage() {
         </SheetContent>
       </Sheet>
     </div>
+    </PullToRefresh>
   );
 }
 

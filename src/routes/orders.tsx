@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Truck, ChevronRight, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GridSkeleton } from "@/components/ui/skeletons";
@@ -8,6 +8,8 @@ import { resolveSupplierLogo } from "@/lib/supplier-logos";
 import { OrderModal } from "@/components/OrderModal";
 import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { toastError } from "@/lib/error-messages";
 
 
 export const Route = createFileRoute("/orders")({
@@ -35,11 +37,9 @@ function OrdersPage() {
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
-  useEffect(() => {
-    if (role !== "admin") return;
-    let mounted = true;
-    const load = async () => {
-      setLoading(true);
+  const load = useCallback(async (signal?: { aborted: boolean }) => {
+    setLoading(true);
+    try {
       let supplierQuery = supabase
         .from("suppliers")
         .select("id,name,category,contact,logo_url,active,is_archived")
@@ -47,8 +47,10 @@ function OrdersPage() {
         .eq("active", true)
         .order("name");
       if (branchId) supplierQuery = supplierQuery.eq("branch_id", branchId);
-      const { data } = await supplierQuery;
-      if (mounted) setList((data as Supplier[]) ?? []);
+      const { data, error } = await supplierQuery;
+      if (error) throw error;
+      if (signal?.aborted) return;
+      setList((data as Supplier[]) ?? []);
 
       const firstOfMonth = new Date();
       firstOfMonth.setDate(1);
@@ -58,13 +60,23 @@ function OrdersPage() {
         .select("id", { count: "exact", head: true })
         .gte("created_at", firstOfMonth.toISOString());
       if (branchId) historyQuery = historyQuery.eq("branch_id", branchId);
-      const { count } = await historyQuery;
-      if (mounted) setMonthCount(count ?? 0);
-      if (mounted) setLoading(false);
-    };
-    load();
-    return () => { mounted = false; };
-  }, [role, isSuperAdmin, branchId]);
+      const { count, error: histErr } = await historyQuery;
+      if (histErr) throw histErr;
+      if (signal?.aborted) return;
+      setMonthCount(count ?? 0);
+    } catch (err) {
+      if (!signal?.aborted) toastError(err, "טעינת רשימת הספקים נכשלה.");
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, [branchId]);
+
+  useEffect(() => {
+    if (role !== "admin") return;
+    const signal = { aborted: false };
+    void load(signal);
+    return () => { signal.aborted = true; };
+  }, [role, isSuperAdmin, branchId, load]);
 
   const grid = useMemo(() => list, [list]);
 
@@ -79,6 +91,7 @@ function OrdersPage() {
   }
 
   return (
+    <PullToRefresh onRefresh={() => load()}>
     <div className="max-w-6xl mx-auto px-4 py-6" dir="rtl">
       <div className="mb-6 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Supplier Ordering</div>
@@ -167,5 +180,6 @@ function OrdersPage() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
 }
