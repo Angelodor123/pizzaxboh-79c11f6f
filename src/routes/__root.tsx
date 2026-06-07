@@ -338,94 +338,108 @@ function AuthedShell() {
     if (pathname === "/recipes") clearLastRecipe();
   }, [pathname, clearLastRecipe]);
 
+  const previewMode = useDevicePreview((s) => s.mode);
+  const wrapperClass = devicePreviewWrapperClass(previewMode);
+  // When simulating mobile/tablet, force the desktop sidebar off so the layout
+  // mirrors the smaller viewport.
+  const sidebarEnabled = previewMode === "auto" || previewMode === "desktop";
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 overflow-visible backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
-          <div className="flex items-center gap-2 shrink-0">
-            <CategoryDrawer />
-          </div>
+    <div className="min-h-screen flex flex-col" dir="rtl">
+      {sidebarEnabled && <DesktopSidebar />}
+      <div className={sidebarEnabled ? "lg:pr-64 flex-1 flex flex-col" : "flex-1 flex flex-col"}>
+        <header className="sticky top-0 z-40 overflow-visible backdrop-blur-md bg-background/80 border-b-2 border-border transition-colors">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 h-20 sm:h-24 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className={sidebarEnabled ? "lg:hidden" : ""}>
+                <CategoryDrawer />
+              </div>
+            </div>
 
-          <Link
-            to="/"
-            className="flex flex-col items-center gap-0.5 min-w-0 flex-1 max-w-[128px] sm:max-w-none shrink-0"
-            aria-label="Pizza X — בית"
-          >
-            <img
-              src={pizzaXLogo}
-              alt="Pizza X"
-              width={216}
-              height={72}
-              fetchPriority="high"
-              decoding="async"
-              className="h-9 sm:h-[72px] w-auto max-w-full object-contain"
-              style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
-            />
-            <span className="text-[9px] sm:text-[12px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
-              Back of House
-            </span>
-            <ActiveBranchBadge />
-          </Link>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-visible sm:gap-3">
-            <GlobalSearch />
-            <div className="shrink-0">
-              <UnifiedBell />
-            </div>
-            <div className="shrink-0">
-              <BranchSwitcher />
-            </div>
             <Link
-              to="/my-profile"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
-              aria-label="האזור האישי שלי"
-              title="האזור האישי שלי"
+              to="/"
+              className="flex flex-col items-center gap-0.5 min-w-0 flex-1 max-w-[128px] sm:max-w-none shrink-0"
+              aria-label="Pizza X — בית"
             >
-              <User className="h-4 w-4" />
+              <img
+                src={pizzaXLogo}
+                alt="Pizza X"
+                width={216}
+                height={72}
+                fetchPriority="high"
+                decoding="async"
+                className="h-9 sm:h-[72px] w-auto max-w-full object-contain"
+                style={{ filter: "drop-shadow(0 0 8px rgba(255,20,147,0.35))" }}
+              />
+              <span className="text-[9px] sm:text-[12px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase text-neon whitespace-nowrap">
+                Back of House
+              </span>
+              <ActiveBranchBadge />
             </Link>
-            {pathname !== "/" && (
-              <button
-                onClick={() => {
-                  if (typeof window !== "undefined" && window.history.length > 1) {
-                    window.history.back();
-                  } else {
-                    router.navigate({ to: "/" });
-                  }
-                }}
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-visible sm:gap-3">
+              <DevicePreviewToggle />
+              <GlobalSearch />
+              <div className="shrink-0">
+                <UnifiedBell />
+              </div>
+              <div className="shrink-0">
+                <BranchSwitcher />
+              </div>
+              <Link
+                to="/my-profile"
                 className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
-                aria-label="חזרה"
-                title="חזרה"
+                aria-label="האזור האישי שלי"
+                title="האזור האישי שלי"
               >
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
+                <User className="h-4 w-4" />
+              </Link>
+              {pathname !== "/" && (
+                <button
+                  onClick={() => {
+                    if (typeof window !== "undefined" && window.history.length > 1) {
+                      window.history.back();
+                    } else {
+                      router.navigate({ to: "/" });
+                    }
+                  }}
+                  className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border bg-card/60 text-foreground hover:text-neon hover:border-neon/60 transition"
+                  aria-label="חזרה"
+                  title="חזרה"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
-      <main
-        className="flex-1"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
-      >
-        <PageHeader isDishesView={isDishesView} />
-        <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
-        <PageTransition>
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
-        </PageTransition>
-      </main>
+        </header>
+        <main
+          className="flex-1"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
+        >
+          <div className={wrapperClass}>
+            <PageHeader isDishesView={isDishesView} />
+            <PageOnboarding pageKey={isDishesView ? "dishes" : pageKeyFromPath(pathname)} />
+            <PageTransition>
+              <ErrorBoundary>
+                <Outlet />
+              </ErrorBoundary>
+            </PageTransition>
+          </div>
+        </main>
 
-      <Suspense fallback={null}>
-        <GuidedTour />
-        <CopilotFab />
-      </Suspense>
-      <CriticalMaintenanceInterceptor />
-      {showQuickBack && <QuickBackBubble />}
-      <footer className="border-t border-border py-4 px-4 text-center space-y-1">
-        <p className="text-xs text-muted-foreground/70">Pizza X • Urban Jungle Kitchen OS</p>
-        <p className="text-[11px] text-foreground/40 tracking-wide" dir="rtl">
-          {footerCredit}
-        </p>
-      </footer>
+        <Suspense fallback={null}>
+          <GuidedTour />
+          <CopilotFab />
+        </Suspense>
+        <CriticalMaintenanceInterceptor />
+        {showQuickBack && <QuickBackBubble />}
+        <footer className="border-t border-border py-4 px-4 text-center space-y-1">
+          <p className="text-xs text-muted-foreground/70">Pizza X • Urban Jungle Kitchen OS</p>
+          <p className="text-[11px] text-foreground/40 tracking-wide" dir="rtl">
+            {footerCredit}
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
