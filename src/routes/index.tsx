@@ -145,7 +145,7 @@ function OperationalDashboard() {
   const titleParts = homeTitle.split("Pizza X");
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6" data-tour="home-header">
         <div className="flex items-start justify-between gap-3">
@@ -184,104 +184,103 @@ function OperationalDashboard() {
 
 
 
-      {/* Live operational telemetry */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 items-stretch">
-        <div className="h-full"><CurrentShiftProgressCard /></div>
-        <div className="h-full"><DoughStatusCard /></div>
-      </div>
+      {/* Main operational grid — 1 col mobile, 2 col tablet, 3 col desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-start">
+        {/* Column 1: AI brief / Feed */}
+        <div className="space-y-4">
+          <div data-tour="shift-feed">
+            <ShiftFeedCard />
+          </div>
+          <PersonalTasksCard />
+        </div>
 
-      {/* Quick Stats — top row features the Shift Checklist prominently */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
-        <Link
-          to="/tasks"
-          data-tour="stat-tasks-top"
-          aria-label="פתח צ'ק-ליסט משמרות"
-          className="rounded-xl border-2 border-neon glow-neon bg-neon/10 p-4 min-h-24 flex flex-col items-center justify-center gap-1.5 text-center transition hover:bg-neon/15"
-        >
-          <ClipboardCheck className="h-6 w-6 text-neon" />
-          <span className="text-[11px] font-bold leading-tight text-neon">צ'ק-ליסט משמרות</span>
-        </Link>
-        <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" tourId="stat-events-today" />
-      </div>
+        {/* Column 2: Active operations & telemetry */}
+        <div className="space-y-4">
+          <CurrentShiftProgressCard />
+          <DoughStatusCard />
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
+            <Link
+              to="/tasks"
+              data-tour="stat-tasks-top"
+              aria-label="פתח צ'ק-ליסט משמרות"
+              className="rounded-xl border-2 border-neon glow-neon bg-neon/10 p-4 min-h-24 flex flex-col items-center justify-center gap-1.5 text-center transition hover:bg-neon/15"
+            >
+              <ClipboardCheck className="h-6 w-6 text-neon" />
+              <span className="text-[11px] font-bold leading-tight text-neon">צ'ק-ליסט משמרות</span>
+            </Link>
+            <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" tourId="stat-events-today" />
+          </div>
+        </div>
 
-      {/* Personal tasks — private per-user todo list */}
-      <div className="mb-6">
-        <PersonalTasksCard />
-      </div>
-
-      {/* Shift Updates Feed — branch-scoped team chat */}
-      <div className="mb-6" data-tour="shift-feed">
-        <ShiftFeedCard />
-      </div>
-
-
-
-
-      {/* Quick Access Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Today's Schedule */}
-        <Link
-          to="/calendar"
-          aria-label="מעבר ללוח אירועים מלא"
-          className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <CalendarDays className="h-5 w-5 text-neon shrink-0" />
-              <h2 className="font-display text-lg font-bold truncate">📅 לוח אירועים – היום</h2>
+        {/* Column 3: Quick navigation cards (today/notebook) */}
+        <div className="space-y-4 md:col-span-2 lg:col-span-1">
+          {/* Today's Schedule */}
+          <Link
+            to="/calendar"
+            aria-label="מעבר ללוח אירועים מלא"
+            className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <CalendarDays className="h-5 w-5 text-neon shrink-0" />
+                <h2 className="font-display text-lg font-bold truncate">📅 לוח אירועים – היום</h2>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">{WEEKDAYS_HE[today.getDay()]}</span>
             </div>
-            <span className="text-xs text-muted-foreground shrink-0">{WEEKDAYS_HE[today.getDay()]}</span>
-          </div>
-          {todayEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {todayEvents.slice(0, 4).map((e) => (
-                <li
-                  key={e.id}
-                  className={`text-sm flex items-center justify-between gap-2 rounded-md px-2 py-1.5 ${
-                    e.high_priority ? "bg-neon/10 text-neon" : "bg-background/40"
-                  }`}
-                >
-                  <span className="truncate">{e.title}</span>
-                  {e.supplier && (
-                    <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
-                  )}
-                </li>
-              ))}
-              {todayEvents.length > 4 && (
-                <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
-              )}
-            </ul>
-          )}
-          <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
-            פתח לוח מלא ←
-          </span>
-        </Link>
+            {todayEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {todayEvents.slice(0, 4).map((e) => (
+                  <li
+                    key={e.id}
+                    className={`text-sm flex items-center justify-between gap-2 rounded-md px-2 py-1.5 ${
+                      e.high_priority ? "bg-neon/10 text-neon" : "bg-background/40"
+                    }`}
+                  >
+                    <span className="truncate">{e.title}</span>
+                    {e.supplier && (
+                      <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
+                    )}
+                  </li>
+                ))}
+                {todayEvents.length > 4 && (
+                  <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
+                )}
+              </ul>
+            )}
+            <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
+              פתח לוח מלא ←
+            </span>
+          </Link>
 
-        {/* Daily Notebook */}
-        <Link
-          to="/notebook"
-          data-tour="card-notebook"
-          aria-label="מעבר לפנקס הערות ומשימות"
-          className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <StickyNote className="h-5 w-5 text-neon shrink-0" />
-            <h2 className="font-display text-lg font-bold truncate">📝 פנקס הערות ומשימות</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-center">
-            <NotebookMini label="משימות" value={openTasks} />
-            <NotebookMini label="קניות" value={shoppingCount} />
-            <NotebookMini label="הזמנות" value={ordersCount} />
-            <NotebookMini label="חוסרים" value={shortagesCount} />
-          </div>
-          <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
-            פתח פנקס ←
-          </span>
-        </Link>
+          {/* Daily Notebook */}
+          <Link
+            to="/notebook"
+            data-tour="card-notebook"
+            aria-label="מעבר לפנקס הערות ומשימות"
+            className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <StickyNote className="h-5 w-5 text-neon shrink-0" />
+              <h2 className="font-display text-lg font-bold truncate">📝 פנקס הערות ומשימות</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <NotebookMini label="משימות" value={openTasks} />
+              <NotebookMini label="קניות" value={shoppingCount} />
+              <NotebookMini label="הזמנות" value={ordersCount} />
+              <NotebookMini label="חוסרים" value={shortagesCount} />
+            </div>
+            <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
+              פתח פנקס ←
+            </span>
+          </Link>
+        </div>
       </div>
+
+
+
 
       {/* Supplier reminders — tomorrow */}
       {tomorrowDeliveries.length > 0 && (

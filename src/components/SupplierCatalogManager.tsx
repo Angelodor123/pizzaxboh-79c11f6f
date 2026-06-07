@@ -278,7 +278,7 @@ export function SupplierCatalogManager({ supplierId, supplierName, open, onClose
                     <div className="text-[11px] font-bold uppercase tracking-wider text-amber-brand mb-2 px-1">
                       {cat} <span className="text-muted-foreground">({list.length})</span>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-1.5">
                       {list.map((p) => (
                         <div key={p.id} className="border border-border rounded-lg p-2 bg-background/30 flex items-center gap-3">
                           <div className="h-14 w-14 shrink-0 rounded-md bg-zinc-900/60 grid place-items-center overflow-hidden">
