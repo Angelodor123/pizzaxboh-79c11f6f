@@ -50,7 +50,7 @@ export function useComplaints() {
     };
     load();
     const ch = supabase
-      .channel("complaints-realtime")
+      .channel(`complaints-realtime-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "customer_complaints" },
