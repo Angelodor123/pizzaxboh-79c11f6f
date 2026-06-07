@@ -1436,6 +1436,7 @@ function TasksPage() {
         </SheetContent>
       </Sheet>
     </div>
+    </PullToRefresh>
   );
 }
 
