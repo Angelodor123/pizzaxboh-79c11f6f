@@ -9,6 +9,7 @@ import {
 } from "@/lib/complaints-store";
 import { supabase } from "@/integrations/supabase/client";
 import { confirmDelete } from "@/lib/confirm";
+import { deleteWithUndo } from "@/lib/delete-with-undo";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -200,18 +201,19 @@ function ComplaintDetailDialog({
     if (!complaint) return;
     const ok = await confirmDelete({
       title: "מחיקת פנייה",
-      description: "למחוק את הפנייה לצמיתות? פעולה זו אינה ניתנת לשחזור.",
+      description: "למחוק את הפנייה? יהיו לך 5 שניות לבטל.",
     });
     if (!ok) return;
-    setDeleting(true);
-    const { error } = await supabase.from("customer_complaints").delete().eq("id", complaint.id);
-    setDeleting(false);
-    if (error) {
-      toast.error("שגיאה במחיקה");
-      return;
-    }
-    toast.success("נמחק");
+    const id = complaint.id;
+    // Optimistic: close the modal now; commit the delete after 5s.
     onClose();
+    deleteWithUndo({
+      label: "הפנייה נמחקה",
+      onCommit: async () => {
+        const { error } = await supabase.from("customer_complaints").delete().eq("id", id);
+        if (error) throw error;
+      },
+    });
   };
 
   return (
