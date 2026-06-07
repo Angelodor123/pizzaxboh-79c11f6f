@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSwipe } from "@/hooks/use-swipe";
 import { CheckCircle2, AlertTriangle, Search, Plus, Pencil } from "lucide-react";
-import { toast } from "sonner";
 import { QuickAddItemModal } from "@/components/QuickAddItemModal";
 import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEditStockItemDialog";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
 
 
 export const Route = createFileRoute("/prep")({
@@ -82,8 +83,7 @@ function PrepPage() {
       updated_by: userId,
     };
     setLog((p) => ({ ...p, [id]: { prep_item_id: id, current_stock: stock, completed: row.completed } }));
-    const { error } = await supabase.from("prep_log").upsert(row, { onConflict: "prep_item_id,log_date" });
-    if (error) toast.error("שמירה נכשלה");
+    await runOrQueue(QK.PrepLogUpsert, { row }, "עדכון הכנה");
   };
 
   return (

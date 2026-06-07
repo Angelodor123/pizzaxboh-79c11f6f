@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { QuickAddItemModal } from "@/components/QuickAddItemModal";
 import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEditStockItemDialog";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
 
 
 export const Route = createFileRoute("/restock")({
@@ -74,9 +76,7 @@ function RestockPage() {
       updated_by: userId,
     };
     setLog((p) => ({ ...p, [id]: { restock_item_id: id, current_stock: stock, completed: row.completed } }));
-    const { error } = await supabase.from("restock_log")
-      .upsert(row, { onConflict: "restock_item_id,log_date" });
-    if (error) toast.error("שמירה נכשלה");
+    await runOrQueue(QK.RestockLogUpsert, { row }, "עדכון מלאי");
   };
 
   const onScan = (text: string) => {

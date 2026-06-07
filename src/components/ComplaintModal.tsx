@@ -4,10 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useAuth } from "@/lib/auth";
 import { getCurrentBranchId } from "@/lib/current-branch";
 import { toast } from "sonner";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
 
 const SUCCESS_SCRIPT =
   "חברים רשמתי את הפרטים שלכם, המנהל יצור איתכם קשר בהקדם האפשרי במהלך היום כדי לדבר איתכם ולפתור את הדברים על הצד הטוב ביותר.";
@@ -58,7 +60,7 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
     }
     setSubmitting(true);
     const branchId = await getCurrentBranchId();
-    const { error } = await supabase.from("customer_complaints").insert({
+    const row = {
       created_by: uid,
       branch_id: branchId,
       customer_name: name.trim(),
@@ -67,13 +69,15 @@ export function ComplaintModal({ open, onOpenChange }: Props) {
       description: desc.trim(),
       order_date: orderDate || null,
       order_number: orderNumber.trim() || null,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error("שגיאה בפתיחת הפנייה");
-      return;
+    };
+    try {
+      await runOrQueue(QK.ComplaintInsert, { row }, "פתיחת תלונה");
+      setDone(true);
+    } catch {
+      // toast handled inside runOrQueue
+    } finally {
+      setSubmitting(false);
     }
-    setDone(true);
   };
 
   return (
