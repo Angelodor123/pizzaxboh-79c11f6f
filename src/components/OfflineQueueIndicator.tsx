@@ -24,10 +24,19 @@ export function OfflineQueueIndicator() {
       className="fixed bottom-3 left-3 z-[60] flex items-center gap-2 rounded-full border border-border bg-background/95 backdrop-blur px-3 py-1.5 shadow-lg text-xs"
     >
       {!online ? (
-        <>
+        <button
+          onClick={async () => {
+            const ok = await recheckOnlineStatus();
+            toast[ok ? "success" : "error"](
+              ok ? "החיבור חזר" : "עדיין אין חיבור — נסה שוב בעוד רגע",
+            );
+          }}
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition"
+          title="בדוק חיבור שוב"
+        >
           <CloudOff className="h-3.5 w-3.5 text-amber-500" />
-          <span className="text-muted-foreground">לא מקוון</span>
-        </>
+          <span>לא מקוון</span>
+        </button>
       ) : busy ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
       ) : (
