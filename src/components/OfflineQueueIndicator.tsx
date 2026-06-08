@@ -13,7 +13,9 @@ export function OfflineQueueIndicator() {
 
   useEffect(() => {
     const unsub = subscribeQueueCount(setCount);
-    return () => { unsub; };
+    return () => {
+      unsub();
+    };
   }, []);
 
   if (count === 0) return null;
