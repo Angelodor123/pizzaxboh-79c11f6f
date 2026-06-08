@@ -16,7 +16,7 @@ export function OfflineQueueIndicator() {
     return () => { unsub; };
   }, []);
 
-  if (count === 0 && online) return null;
+  if (count === 0) return null;
 
   return (
     <div
