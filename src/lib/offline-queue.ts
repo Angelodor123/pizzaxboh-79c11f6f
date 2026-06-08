@@ -148,10 +148,7 @@ export async function runOrQueue(
     return inFlight.get(dedupeKey)!;
   }
   const exec = async (): Promise<{ queued: boolean }> => {
-    const online =
-      typeof navigator === "undefined" || navigator.onLine
-        ? true
-        : await recheckOnlineStatus();
+    const online = typeof navigator === "undefined" || navigator.onLine ? true : await recheckOnlineStatus();
     const handler = handlers.get(kind);
     if (online && handler) {
       try {
