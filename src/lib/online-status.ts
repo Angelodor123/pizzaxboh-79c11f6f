@@ -8,8 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 // perfectly good connection. We verify with a tiny network probe and only
 // flip to "offline" once the probe also confirms it.
 
-let currentOnline: boolean =
-  typeof navigator === "undefined" ? true : navigator.onLine;
+let currentOnline = true;
 const listeners = new Set<(v: boolean) => void>();
 
 function emit(next: boolean) {
@@ -26,8 +25,10 @@ function emit(next: boolean) {
 
 let probing = false;
 let lastProbeAt = 0;
+let failedProbeCount = 0;
 const PROBE_TIMEOUT_MS = 4000;
 const PROBE_MIN_INTERVAL_MS = 5000;
+const FAILED_PROBES_BEFORE_OFFLINE = 2;
 
 async function probeConnection(): Promise<boolean> {
   if (typeof window === "undefined") return true;
@@ -63,7 +64,13 @@ async function probeConnection(): Promise<boolean> {
       }
     }
     clearTimeout(t);
-    emit(ok);
+    if (ok) {
+      failedProbeCount = 0;
+      emit(true);
+    } else {
+      failedProbeCount += 1;
+      if (failedProbeCount >= FAILED_PROBES_BEFORE_OFFLINE) emit(false);
+    }
     return ok;
   } finally {
     probing = false;
@@ -81,6 +88,7 @@ function bootstrap() {
   };
   const onOffline = () => {
     // Don't trust the pessimistic flip — verify before showing the banner.
+    failedProbeCount = 0;
     void probeConnection();
   };
   window.addEventListener("online", onOnline);
