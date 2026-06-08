@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { CloudOff, Loader2, RefreshCw } from "lucide-react";
 import { subscribeQueueCount, flushQueue } from "@/lib/offline-queue";
-import { useOnlineStatus } from "@/lib/online-status";
+import { useOnlineStatus, recheckOnlineStatus } from "@/lib/online-status";
+import { toast } from "sonner";
 
 export function OfflineQueueIndicator() {
   const [count, setCount] = useState(0);
