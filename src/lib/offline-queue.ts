@@ -13,6 +13,7 @@
 //   the new payload replaces it instead of stacking.
 import { toast } from "sonner";
 import { toastError } from "./error-messages";
+import { recheckOnlineStatus } from "./online-status";
 
 const STORAGE_KEY = "lovable.offline-queue.v1";
 
@@ -87,7 +88,10 @@ function ensureInit() {
 
 export async function flushQueue() {
   if (flushing) return;
-  if (typeof navigator !== "undefined" && !navigator.onLine) return;
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const online = await recheckOnlineStatus();
+    if (!online) return;
+  }
   flushing = true;
   try {
     const actions = read();
@@ -144,7 +148,8 @@ export async function runOrQueue(
     return inFlight.get(dedupeKey)!;
   }
   const exec = async (): Promise<{ queued: boolean }> => {
-    const online = typeof navigator === "undefined" ? true : navigator.onLine;
+    const online =
+      typeof navigator === "undefined" || navigator.onLine ? true : await recheckOnlineStatus();
     const handler = handlers.get(kind);
     if (online && handler) {
       try {

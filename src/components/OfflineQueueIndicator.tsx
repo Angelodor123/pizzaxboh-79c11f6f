@@ -13,10 +13,12 @@ export function OfflineQueueIndicator() {
 
   useEffect(() => {
     const unsub = subscribeQueueCount(setCount);
-    return () => { unsub; };
+    return () => {
+      unsub();
+    };
   }, []);
 
-  if (count === 0 && online) return null;
+  if (count === 0) return null;
 
   return (
     <div
