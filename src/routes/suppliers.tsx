@@ -90,7 +90,7 @@ function SuppliersPage() {
       destructive: next,
     });
     if (!ok) return;
-    const { error } = await supabase.from("suppliers").update({ is_archived: next }).eq("id", s.id);
+    const error = await fanOutUpdateById("suppliers", s.id, { is_archived: next }, "name").then(() => null).catch((e) => e);
     if (error) toast.error("שגיאה: " + error.message);
     else toast.success(next ? "הספק הועבר לארכיון" : "הספק שוחזר");
   };
