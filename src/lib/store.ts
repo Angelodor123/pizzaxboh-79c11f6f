@@ -3,7 +3,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { pizzaXCookbook, type Recipe, type RecipeCategory, type Ingredient, type SpiceBag } from "./cookbook";
 import { supabase } from "@/integrations/supabase/client";
-import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
+import { fanOutInsert, fanOutUpdate, fanOutSoftDelete } from "@/lib/branch-fanout";
 
 export interface IngredientPrice {
   name: string;
@@ -123,36 +124,35 @@ export const useCookbookStore = create<RecipesState>((set, get) => ({
     });
   },
   addRecipe: async (r) => {
-    const row = recipeToRow(r);
+    // Fan-out: insert into ALL active branches with unique ids per branch.
+    const { id: _omitId, ...rowNoId } = recipeToRow(r);
+    void _omitId;
     const sortOrder = (get().recipes.length + 1) * 10 + 1000;
-    const branch_id = await requireCurrentBranchId();
-    const { data, error } = await supabase
-      .from("recipes")
-      .insert({ ...row, sort_order: sortOrder, branch_id } as never)
-      .select()
-      .single();
-    if (error) throw error;
-    if (data) get().upsertLocal(rowToRecipe(data as unknown as DbRecipeRow));
+    await fanOutInsert(
+      "recipes",
+      { ...rowNoId, sort_order: sortOrder },
+      { naturalKey: r.nameHebrew },
+    );
+    await get().refresh();
   },
   updateRecipe: async (id, r) => {
-    const row = recipeToRow(r);
-    const { data, error } = await supabase
-      .from("recipes")
-      .update(row as never)
-      .eq("id", id)
-      .select()
-      .single();
-    if (error) throw error;
-    if (data) get().upsertLocal(rowToRecipe(data as unknown as DbRecipeRow));
+    // Find the original name (to match siblings in other branches),
+    // then update by name across all branches with the new payload.
+    const existing = get().recipes.find((x) => x.id === id);
+    const matchName = existing?.nameHebrew ?? r.nameHebrew;
+    const { id: _omitId, ...rowNoId } = recipeToRow(r);
+    void _omitId;
+    await fanOutUpdate("recipes", "name_hebrew", matchName, rowNoId);
+    await get().refresh();
   },
   softDeleteRecipe: async (id) => {
-    const { error } = await supabase
-      .from("recipes")
-      .update({ deleted: true })
-      .eq("id", id);
-    if (error) throw error;
+    const existing = get().recipes.find((x) => x.id === id);
+    if (!existing) return;
+    await fanOutSoftDelete("recipes", "name_hebrew", existing.nameHebrew);
     set((s) => ({
-      recipes: s.recipes.map((x) => (x.id === id ? { ...x, deleted: true } : x)),
+      recipes: s.recipes.map((x) =>
+        x.nameHebrew === existing.nameHebrew ? { ...x, deleted: true } : x,
+      ),
     }));
   },
 }));

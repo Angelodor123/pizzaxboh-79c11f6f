@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare, Archive, ArchiveRestore, Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GridSkeleton } from "@/components/ui/skeletons";
-import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
@@ -15,6 +15,7 @@ import { Package } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 import { supplierFormSchema, validateOrToast } from "@/lib/schemas";
+import { fanOutInsert, fanOutUpdateById } from "@/lib/branch-fanout";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
@@ -89,7 +90,7 @@ function SuppliersPage() {
       destructive: next,
     });
     if (!ok) return;
-    const { error } = await supabase.from("suppliers").update({ is_archived: next }).eq("id", s.id);
+    const error = await fanOutUpdateById("suppliers", s.id, { is_archived: next }, "name").then(() => null).catch((e) => e);
     if (error) toast.error("שגיאה: " + error.message);
     else toast.success(next ? "הספק הועבר לארכיון" : "הספק שוחזר");
   };
@@ -294,10 +295,15 @@ function SuppliersPage() {
               label: "הפעל",
               icon: Power,
               onClick: async () => {
-                const { error } = await supabase.from("suppliers").update({ active: true }).in("id", bulk.ids);
-                if (error) return toast.error(error.message);
-                toast.success(`הופעלו ${bulk.count} ספקים`);
-                bulk.clear();
+                try {
+                  for (const id of bulk.ids) {
+                    await fanOutUpdateById("suppliers", id, { active: true }, "name");
+                  }
+                  toast.success(`הופעלו ${bulk.count} ספקים`);
+                  bulk.clear();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "שגיאה");
+                }
               },
             },
             {
@@ -305,10 +311,15 @@ function SuppliersPage() {
               label: "השבת",
               icon: Power,
               onClick: async () => {
-                const { error } = await supabase.from("suppliers").update({ active: false }).in("id", bulk.ids);
-                if (error) return toast.error(error.message);
-                toast.success(`הושבתו ${bulk.count} ספקים`);
-                bulk.clear();
+                try {
+                  for (const id of bulk.ids) {
+                    await fanOutUpdateById("suppliers", id, { active: false }, "name");
+                  }
+                  toast.success(`הושבתו ${bulk.count} ספקים`);
+                  bulk.clear();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "שגיאה");
+                }
               },
             },
             {
@@ -318,11 +329,15 @@ function SuppliersPage() {
               variant: "destructive",
               confirm: "להעביר {count} ספקים לארכיון? אירועי הסחורה האוטומטיים שלהם יוסרו מהלוח.",
               onClick: async () => {
-                const ids = bulk.ids;
-                const { error } = await supabase.from("suppliers").update({ is_archived: true }).in("id", ids);
-                if (error) return toast.error(error.message);
-                toast.success(`${ids.length} ספקים הועברו לארכיון`);
-                bulk.clear();
+                try {
+                  for (const id of bulk.ids) {
+                    await fanOutUpdateById("suppliers", id, { is_archived: true }, "name");
+                  }
+                  toast.success(`${bulk.ids.length} ספקים הועברו לארכיון`);
+                  bulk.clear();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "שגיאה");
+                }
               },
             },
           ]}
@@ -431,12 +446,17 @@ function SupplierForm({
 
     setSaving(true);
     const basePayload = validated;
-    let error;
-    if (existing) {
-      ({ error } = await supabase.from("suppliers").update(basePayload).eq("id", existing.id));
-    } else {
-      const branchId = await requireCurrentBranchId();
-      ({ error } = await supabase.from("suppliers").insert({ ...basePayload, branch_id: branchId }));
+    let error: { message: string } | null = null;
+    try {
+      if (existing) {
+        await fanOutUpdateById("suppliers", existing.id, basePayload, "name");
+      } else {
+        await fanOutInsert("suppliers", basePayload as Record<string, unknown>, {
+          naturalKey: (basePayload as { name?: string }).name ?? "supplier",
+        });
+      }
+    } catch (e) {
+      error = { message: e instanceof Error ? e.message : "שגיאה" };
     }
     setSaving(false);
     if (error) {
