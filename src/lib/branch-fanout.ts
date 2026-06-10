@@ -60,7 +60,7 @@ export async function fanOutInsert<T extends Record<string, unknown>>(
     branch_id,
   }));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from(table) as any).insert(rows);
+  const { error } = await ((supabase as any).from(table)).insert(rows);
   if (error) throw error;
 }
 
@@ -75,7 +75,7 @@ export async function fanOutUpdate(
   changes: Record<string, unknown>,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from(table) as any)
+  const { error } = await ((supabase as any).from(table))
     .update(changes)
     .eq(matchColumn, matchValue);
   if (error) throw error;
@@ -90,7 +90,7 @@ export async function fanOutSoftDelete(
   matchValue: string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from(table) as any)
+  const { error } = await ((supabase as any).from(table))
     .update({ deleted: true })
     .eq(matchColumn, matchValue);
   if (error) throw error;
@@ -105,7 +105,7 @@ export async function fanOutHardDelete(
   matchValue: string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from(table) as any)
+  const { error } = await ((supabase as any).from(table))
     .delete()
     .eq(matchColumn, matchValue);
   if (error) throw error;
