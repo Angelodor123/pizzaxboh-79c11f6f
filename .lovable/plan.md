@@ -1,45 +1,50 @@
-## ספרינט: מרכז התראות מאוחד, תפקידים תפעוליים, ודף קשר סניף
 
-### 1. מרכז התראות מאוחד + תיוגי קבוצה
-- **DB**: ודא ש-`notifications` כולל `link` (כבר קיים). אין צורך במיגרציה.
-- **UnifiedBell**: כבר מאחד `notifications` + tickets + complaints. אוסיף Realtime גם ל-`notifications` (כרגע רק polling דרך store).
-- **MentionInput**:
-  - הסר את החסימה של תיוג עצמי.
-  - הוסף הצעות לקבוצות: `@כולם`, `@מטבח`, `@דלפק`, `@שליחים`, `@מנהלים` בנוסף ליוזרים.
-- **Shift Feed parser**: בעת שליחת פוסט, פרס תגיות קבוצה ויוזרים → צור רשומות `notifications` לכל הנמענים (כולל self אם תויג).
-  - `@כולם` → כל המשתמשים הפעילים בסניף.
-  - `@מטבח/@דלפק/@שליחים` → לפי `department`.
-  - `@מנהלים` → role `admin`/`super_admin`/`shift_manager`.
-- **רנדור פיד**: רכיב חדש `<FeedText>` שמזהה את התגיות ומעטר אותן בצ׳יפים צבעוניים (זהב/כתום/כחול/ירוק/סגול).
+## המטרה
+אותה חברה = אותו בסיס. כל שינוי במתכון/ספק/מנה/משימה/prep/restock יחול **אוטומטית על כל הסניפים הפעילים**. בעתיד נוסיף שכבת "overrides פר סניף" לדברים שכן צריכים להיות שונים (רכבים, ספקים מקומיים וכו'), בלי לשבור את הבסיס המשותף.
 
-### 2. שדות פרופיל תפעוליים
-- **מיגרציה** ל-`profiles`: `department` (enum: kitchen/counter/delivery/management), `seniority` (text), `address` (text), `phone` (text).
-- **RLS / View לפרטיות**:
-  - שמירה על מדיניות SELECT קיימת.
-  - יצירת VIEW `public.employee_directory` עם `security_invoker=on` שמסתיר `address` למי שאינו admin/super_admin (CASE לפי `current_user_role()`/`is_super_admin`).
-  - דף הקשר ישלוף מה-VIEW; דף עריכת אדמין ימשיך לעבוד מול `profiles`.
-- **טופס Admin → Users**: הוספת שדות חדשים בטופס העריכה הקיים (מחלקה/ותק/טלפון/כתובת).
+## הגישה שנבחרה (אופציה 4)
+**"Fan-out by natural key"** — בלי שינוי סכמה גדול עכשיו:
+- כל טבלה נשארת `branch_id`-aware כמו היום (כך RLS וה-DB לא משתנים).
+- בשכבת הקוד (store/mutations) — כל הוספה/עדכון/מחיקה רצה בלולאה על **כל הסניפים הפעילים**, ומתאימה לפי "מפתח טבעי" (בד"כ `name`).
+- ה-`branch_id` של המשתמש קובע רק **מה רואים** (כדי שכל סניף יראה רק את הנתונים שלו), אבל **לא** מגביל מה משנים.
 
-### 3. דף קשר של הסניף (`/aids/contacts` כבר קיים — שדרוג)
-- שדרוג העמוד הקיים מ"אנשי קשר חיצוניים" לכלול טאב **"צוות הסניף"** (employees) בנוסף לקיים, או הוספת מסך חדש `/aids/staff` אם נוח יותר.
-- **כרטיס עובד**:
-  - אווטאר, שם, מחלקה (badge צבעוני), ותק.
-  - כפתורי פעולה: 📞 (`tel:`) ו-💬 וואטסאפ (`https://wa.me/` + ניקוי מספר לפורמט 972).
-  - `address` מוצג רק אם `isSuperAdmin` או role admin/manager.
-- **Manager CRUD**: כפתור "ערוך" → מודאל קטן לעדכון `phone/department/seniority/address`.
-- **קישור בסיידבר/אינדקס עזרים**: הוספת כפתור "דף קשר צוות" עם אייקון `Users`/`Contact`.
+### למה זו הגישה הנכונה כרגע
+1. אפס שינוי סכמה → אפס סיכון לנתונים קיימים.
+2. RLS, מדיניות, וטריגרים נשארים בדיוק כפי שהם.
+3. ה-UI נשאר זהה — המשתמש לא מבחין בשינוי.
+4. כשנרצה override (למשל "מודל רכבים רק במודיעין") — פשוט לא נכלול את הסניף השני בלולאת ה-fan-out, או נוסיף עמודה `is_branch_specific boolean` בעתיד.
 
-### 4. שאלת התמחור (מענה מהיר בלי שינויי קוד)
-- **כן** — מחירי קוסט מוצגים בקטלוג הספק (`SupplierCatalogManager`) למנהלים בלבד. הם מתעדכנים אוטומטית אחרי כל סריקת קבלה: ה-OCR מזהה מחיר ליחידה, מעדכן `supplier_products.cost_price`, ומציג "Estimated Loss" בדוחות חוסרים. הקלט הראשוני יכול להיות ידני בקטלוג; ככל שתסרוק יותר קבלות — הקטלוג ייבנה ויתעדכן מעצמו.
+## שלבי ביצוע
 
-### קבצים שייווצרו/ישונו
-- מיגרציה: `profiles` + view `employee_directory` + grants.
-- חדש: `src/components/FeedText.tsx`, `src/components/EditEmployeeDialog.tsx`, אולי `src/routes/aids.staff.tsx`.
-- עריכה: `MentionInput.tsx`, `ShiftFeedCard.tsx` (שליחה + רנדור), `UnifiedBell.tsx` (realtime), `admin.tsx`/טופס משתמשים, `aids.index.tsx` (קישור), `notifications-store.ts` (realtime).
+### שלב 1 — תשתית משותפת (קובץ חדש)
+- `src/lib/branch-fanout.ts`:
+  - `getActiveBranchIds(): Promise<string[]>` — שולף את כל הסניפים הפעילים.
+  - `fanOutInsert(table, baseRow, naturalKey)` — מכניס את הרשומה לכל סניף, עם ID ייחודי לכל אחד.
+  - `fanOutUpdate(table, naturalKey, changes)` — מעדכן את כל הרשומות עם אותו `name` בכל הסניפים.
+  - `fanOutDelete(table, naturalKey)` — מוחק (soft) בכל הסניפים.
 
----
+### שלב 2 — מתכונים ומנות (recipes)
+- `src/lib/store.ts`: `addRecipe`, `updateRecipe`, `softDeleteRecipe` ישתמשו ב-fan-out.
+- `NewRecipeDialog` כבר עושה את זה ✓ — להמיר אותו להשתמש ב-helper המשותף.
 
-**שאלות לפני שאני מתחיל:**
-1. **דף קשר** — להוסיף כטאב בתוך `/aids/contacts` הקיים, או מסך חדש נפרד `/aids/staff` עם קישור משלו בעמוד עזרים? (אני נוטה לחדש כדי לא לערבב עם ספקים/לקוחות חיצוניים)
-2. **תיוג `@מנהלים`** — לכלול גם `shift_manager` או רק `admin` + `super_admin`?
-3. **ותק (seniority)** — להשאיר טקסט חופשי ("שנה וחצי") או להוסיף גם `start_date` תאריך לחישוב אוטומטי?
+### שלב 3 — ספקים ומוצרי ספקים (suppliers, supplier_products)
+- כל יצירה/עדכון/מחיקה של ספק → fan-out לכל הסניפים.
+- אותו דבר ל-`supplier_products`.
+
+### שלב 4 — משימות, prep, restock (tasks, prep_items, restock_items)
+- אותה לוגיקה. ⚠️ חשוב: `daily_task_logs`, `prep_log`, `restock_log` נשארים **פר סניף** (אלה לוגי ביצוע יומי, לא תבניות).
+
+### שלב 5 — בדיקה ושחרור
+- בדיקה ידנית: לערוך מתכון בסניף A → לוודא שמופיע גם בסניף B.
+- להוסיף ספק חדש → לוודא שקיים בשני הסניפים.
+
+## מה **לא** נכלל בתוכנית הזו
+- שינויי סכמה (להוסיף `is_branch_specific`, או טבלת `overrides`).
+- שינויים ב-RLS.
+- לוגי ביצוע יומי (`daily_task_logs`, `prep_log`, `restock_log`, `shortage_items`, `orders`, `invoices`) — אלה נשארים פר סניף כי הם תיעוד של פעולה אמיתית שקרתה בסניף ספציפי.
+- העמודה `branches` עצמה.
+
+## הערות טכניות
+- "מפתח טבעי" = `name` ברוב המקרים. אם יש שני פריטים עם אותו שם בסניף אחד (לא אמור לקרות) — ה-fan-out יעדכן את שניהם. אפשר להוסיף בדיקת ייחודיות בעתיד.
+- ID חדש לכל סניף: `${slug}-${timestamp}-${branchIndex}` (כמו שכבר עושים ב-`NewRecipeDialog`).
+- כל שלב יוצא לפרודקשן בנפרד — אם משהו נשבר נדע
