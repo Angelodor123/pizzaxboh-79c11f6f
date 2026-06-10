@@ -339,11 +339,15 @@ function KitchenDashboard() {
               <RecipeCard
                 recipe={r}
                 forceOpen={forcedOpenRecipeId === r.id}
-                onForcedOpen={(recipeId) => {
-                  setForcedOpenRecipeId((current) => (current === recipeId ? null : current));
-                  navigate({ search: {} as any, replace: true });
+                onForcedOpen={() => {
+                  // Clear the URL param without re-triggering the open effect mid-mount.
+                  // We delay so the card finishes its open animation/scroll first.
+                  setTimeout(() => {
+                    navigate({ search: {} as any, replace: true });
+                  }, 600);
                 }}
               />
+
             </SelectableRecipeCard>
           ))}
         </div>
