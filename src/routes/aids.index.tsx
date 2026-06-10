@@ -24,6 +24,7 @@ type Folder = {
 function AidsHubPage() {
   const navigate = useNavigate();
   const openDishes = useUIStore((s) => s.openDishes);
+  const setCategory = useUIStore((s) => s.setCategory);
 
   const FOLDERS: Folder[] = [
     {
@@ -37,7 +38,12 @@ function AidsHubPage() {
       title: "ספרי מתכונים",
       emoji: "📖",
       Icon: BookOpen,
-      to: "/recipes",
+      onClick: () => {
+        // Reset to back-of-house "all" so we don't land on the dishes view
+        // if the user previously opened "כל המנות".
+        setCategory("all");
+        navigate({ to: "/recipes" });
+      },
       accent: "from-amber-500/20 to-amber-500/5 border-amber-500/40 text-amber-300",
     },
     {
