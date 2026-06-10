@@ -29,13 +29,6 @@ interface Props {
   trigger?: React.ReactNode;
 }
 
-function slugify(s: string): string {
-  return s
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9\-א-ת]/g, "")
-    .slice(0, 40);
-}
 
 export function NewRecipeDialog({ mode, trigger }: Props) {
   const [open, setOpen] = useState(false);
