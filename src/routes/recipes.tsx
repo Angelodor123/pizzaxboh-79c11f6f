@@ -22,6 +22,7 @@ import {
 
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection, useLongPress } from "@/hooks/use-bulk-selection";
+import { NewRecipeDialog } from "@/components/NewRecipeDialog";
 import {
   Dialog,
   DialogContent,
