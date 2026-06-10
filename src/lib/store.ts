@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { pizzaXCookbook, type Recipe, type RecipeCategory, type Ingredient, type SpiceBag } from "./cookbook";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
+import { fanOutInsert, fanOutUpdate, fanOutSoftDelete } from "@/lib/branch-fanout";
 
 export interface IngredientPrice {
   name: string;
