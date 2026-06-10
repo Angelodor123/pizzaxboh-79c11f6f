@@ -81,36 +81,21 @@ export function NewRecipeDialog({ mode, trigger }: Props) {
 
     setSaving(true);
     try {
-      // Insert into ALL active branches (per user preference: changes apply
-      // to both branches unless stated otherwise).
-      const { data: branches, error: bErr } = await supabase
-        .from("branches")
-        .select("id")
-        .eq("active", true);
-      if (bErr) throw bErr;
-
-      const baseSlug = slugify(name) || "recipe";
-      const stamp = Date.now().toString(36);
-      const rows = (branches ?? []).map((b, idx) => ({
-        id: `${baseSlug}-${stamp}-${idx}`,
-        branch_id: b.id,
-        category,
-        name_hebrew: name.trim(),
-        base_yield_hebrew: baseYield.trim(),
-        ingredients: cleanIngredients,
-        instructions_hebrew: instructions.trim(),
-        sort_order: 9999,
-        deleted: false,
-      }));
-
-      if (rows.length === 0) throw new Error("לא נמצאו סניפים פעילים");
-
-      const { error } = await supabase.from("recipes").insert(rows as never);
-      if (error) throw error;
-
-      toast.success(
-        `נוסף ${mode === "dish" ? "מנה" : "מתכון"} ל-${rows.length} סניפים`,
+      await fanOutInsert(
+        "recipes",
+        {
+          category,
+          name_hebrew: name.trim(),
+          base_yield_hebrew: baseYield.trim(),
+          ingredients: cleanIngredients,
+          instructions_hebrew: instructions.trim(),
+          sort_order: 9999,
+          deleted: false,
+        },
+        { naturalKey: name.trim() },
       );
+
+      toast.success(`נוסף ${mode === "dish" ? "מנה" : "מתכון"} לכל הסניפים`);
       await useCookbookStore.getState().refresh();
       reset();
       setOpen(false);
