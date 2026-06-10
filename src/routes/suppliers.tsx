@@ -15,6 +15,7 @@ import { Package } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 import { supplierFormSchema, validateOrToast } from "@/lib/schemas";
+import { fanOutInsert, fanOutUpdateById, getActiveBranchIds } from "@/lib/branch-fanout";
 
 export const Route = createFileRoute("/suppliers")({
   component: SuppliersPage,
