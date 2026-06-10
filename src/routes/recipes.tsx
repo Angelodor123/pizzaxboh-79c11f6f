@@ -309,16 +309,19 @@ function KitchenDashboard() {
         </div>
       </div>
 
-      {canEdit && filtered.length > 0 && (
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <button
-            type="button"
-            onClick={() => bulk.toggleAll(filtered.map((r) => r.id))}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
-          >
-            <CheckSquare className="h-3.5 w-3.5" />
-            {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
-          </button>
+      {canEdit && (
+        <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+          <NewRecipeDialog mode={isDishesView ? "dish" : "recipe"} />
+          {filtered.length > 0 && (
+            <button
+              type="button"
+              onClick={() => bulk.toggleAll(filtered.map((r) => r.id))}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-xs font-bold hover:border-neon hover:text-neon"
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              {bulk.selectionMode ? "סיים בחירה" : "בחר מרובה"}
+            </button>
+          )}
         </div>
       )}
 
