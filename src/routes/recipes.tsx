@@ -86,7 +86,11 @@ function KitchenDashboard() {
 
   useEffect(() => {
     const id = search.openRecipeId;
-    if (!id || activeAll.length === 0) return;
+    if (!id) {
+      setForcedOpenRecipeId(null);
+      return;
+    }
+    if (activeAll.length === 0) return;
     const found = activeAll.find((r) => r.id === id);
     if (!found) return;
     if (isMenuItem(found)) {
@@ -97,11 +101,17 @@ function KitchenDashboard() {
     }
     setQ("");
     setForcedOpenRecipeId(id);
-    // Scroll the target card into view after it mounts
-    requestAnimationFrame(() => {
+    // Retry scroll a few times — card may not be mounted yet on first frame
+    let attempts = 0;
+    const tryScroll = () => {
       const el = document.querySelector(`[data-recipe-row="${id}"]`);
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (attempts++ < 10) setTimeout(tryScroll, 80);
+    };
+    requestAnimationFrame(tryScroll);
   }, [search.openRecipeId, activeAll, setCategory, setMenuCat]);
 
   // Treat any menu-item category selection as the dishes view so legacy
