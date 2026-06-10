@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, X, Trash2, Pencil, Truck, Check, Power, CheckSquare, Archive, ArchiveRestore, Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GridSkeleton } from "@/components/ui/skeletons";
-import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { confirmDelete } from "@/lib/confirm";
