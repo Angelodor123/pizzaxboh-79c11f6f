@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { fanOutInsert } from "@/lib/branch-fanout";
 import { useCookbookStore } from "@/lib/store";
 import {
   categoryLabels,
