@@ -26,7 +26,6 @@ import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as CibusRouteImport } from './routes/cibus'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AidsRouteImport } from './routes/aids'
-import { Route as AdminHubRouteImport } from './routes/admin-hub'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AidsIndexRouteImport } from './routes/aids.index'
@@ -124,11 +123,6 @@ const AidsRoute = AidsRouteImport.update({
   path: '/aids',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminHubRoute = AdminHubRouteImport.update({
-  id: '/admin-hub',
-  path: '/admin-hub',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -189,7 +183,6 @@ const ApiPublicHooksDoughAlertRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/admin-hub': typeof AdminHubRoute
   '/aids': typeof AidsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
@@ -220,7 +213,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/admin-hub': typeof AdminHubRoute
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
   '/complaints': typeof ComplaintsRoute
@@ -251,7 +243,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/admin-hub': typeof AdminHubRoute
   '/aids': typeof AidsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cibus': typeof CibusRoute
@@ -284,7 +275,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/admin-hub'
     | '/aids'
     | '/calendar'
     | '/cibus'
@@ -315,7 +305,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
-    | '/admin-hub'
     | '/calendar'
     | '/cibus'
     | '/complaints'
@@ -345,7 +334,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
-    | '/admin-hub'
     | '/aids'
     | '/calendar'
     | '/cibus'
@@ -377,7 +365,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  AdminHubRoute: typeof AdminHubRoute
   AidsRoute: typeof AidsRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   CibusRoute: typeof CibusRoute
@@ -519,13 +506,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AidsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin-hub': {
-      id: '/admin-hub'
-      path: '/admin-hub'
-      fullPath: '/admin-hub'
-      preLoaderRoute: typeof AdminHubRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -641,7 +621,6 @@ const AidsRouteWithChildren = AidsRoute._addFileChildren(AidsRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  AdminHubRoute: AdminHubRoute,
   AidsRoute: AidsRouteWithChildren,
   CalendarRoute: CalendarRoute,
   CibusRoute: CibusRoute,
@@ -664,13 +643,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
