@@ -446,12 +446,17 @@ function SupplierForm({
 
     setSaving(true);
     const basePayload = validated;
-    let error;
-    if (existing) {
-      ({ error } = await supabase.from("suppliers").update(basePayload).eq("id", existing.id));
-    } else {
-      const branchId = await requireCurrentBranchId();
-      ({ error } = await supabase.from("suppliers").insert({ ...basePayload, branch_id: branchId }));
+    let error: { message: string } | null = null;
+    try {
+      if (existing) {
+        await fanOutUpdateById("suppliers", existing.id, basePayload, "name");
+      } else {
+        await fanOutInsert("suppliers", basePayload as Record<string, unknown>, {
+          naturalKey: (basePayload as { name?: string }).name ?? "supplier",
+        });
+      }
+    } catch (e) {
+      error = { message: e instanceof Error ? e.message : "שגיאה" };
     }
     setSaving(false);
     if (error) {
