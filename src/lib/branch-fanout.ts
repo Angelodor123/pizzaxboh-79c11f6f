@@ -110,3 +110,62 @@ export async function fanOutHardDelete(
     .eq(matchColumn, matchValue);
   if (error) throw error;
 }
+
+/**
+ * Update a single row's siblings across all branches.
+ * Looks up the row by id to find its natural key, then updates all rows
+ * with the same natural key in every branch.
+ */
+export async function fanOutUpdateById(
+  table: string,
+  id: string,
+  changes: Record<string, unknown>,
+  naturalKeyColumn: string = "name",
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data, error: fetchErr } = await sb
+    .from(table)
+    .select(naturalKeyColumn)
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
+  const keyVal = data?.[naturalKeyColumn];
+  if (!keyVal) {
+    // Fallback: update by id only
+    const { error } = await sb.from(table).update(changes).eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await sb
+    .from(table)
+    .update(changes)
+    .eq(naturalKeyColumn, keyVal);
+  if (error) throw error;
+}
+
+/**
+ * Hard-delete a row's siblings across all branches using a natural key lookup.
+ */
+export async function fanOutDeleteById(
+  table: string,
+  id: string,
+  naturalKeyColumn: string = "name",
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+  const { data, error: fetchErr } = await sb
+    .from(table)
+    .select(naturalKeyColumn)
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
+  const keyVal = data?.[naturalKeyColumn];
+  if (!keyVal) {
+    const { error } = await sb.from(table).delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await sb.from(table).delete().eq(naturalKeyColumn, keyVal);
+  if (error) throw error;
+}
