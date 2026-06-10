@@ -295,10 +295,15 @@ function SuppliersPage() {
               label: "הפעל",
               icon: Power,
               onClick: async () => {
-                const { error } = await supabase.from("suppliers").update({ active: true }).in("id", bulk.ids);
-                if (error) return toast.error(error.message);
-                toast.success(`הופעלו ${bulk.count} ספקים`);
-                bulk.clear();
+                try {
+                  for (const id of bulk.ids) {
+                    await fanOutUpdateById("suppliers", id, { active: true }, "name");
+                  }
+                  toast.success(`הופעלו ${bulk.count} ספקים`);
+                  bulk.clear();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "שגיאה");
+                }
               },
             },
             {
@@ -306,10 +311,15 @@ function SuppliersPage() {
               label: "השבת",
               icon: Power,
               onClick: async () => {
-                const { error } = await supabase.from("suppliers").update({ active: false }).in("id", bulk.ids);
-                if (error) return toast.error(error.message);
-                toast.success(`הושבתו ${bulk.count} ספקים`);
-                bulk.clear();
+                try {
+                  for (const id of bulk.ids) {
+                    await fanOutUpdateById("suppliers", id, { active: false }, "name");
+                  }
+                  toast.success(`הושבתו ${bulk.count} ספקים`);
+                  bulk.clear();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "שגיאה");
+                }
               },
             },
             {
@@ -319,11 +329,15 @@ function SuppliersPage() {
               variant: "destructive",
               confirm: "להעביר {count} ספקים לארכיון? אירועי הסחורה האוטומטיים שלהם יוסרו מהלוח.",
               onClick: async () => {
-                const ids = bulk.ids;
-                const { error } = await supabase.from("suppliers").update({ is_archived: true }).in("id", ids);
-                if (error) return toast.error(error.message);
-                toast.success(`${ids.length} ספקים הועברו לארכיון`);
-                bulk.clear();
+                try {
+                  for (const id of bulk.ids) {
+                    await fanOutUpdateById("suppliers", id, { is_archived: true }, "name");
+                  }
+                  toast.success(`${bulk.ids.length} ספקים הועברו לארכיון`);
+                  bulk.clear();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "שגיאה");
+                }
               },
             },
           ]}
