@@ -1783,6 +1783,76 @@ export type Database = {
           },
         ]
       }
+      shift_feed_comments: {
+        Row: {
+          created_at: string
+          id: string
+          mentions: string[]
+          message: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentions?: string[]
+          message: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentions?: string[]
+          message?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_feed_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "shift_feed"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_feed_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_feed_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "shift_feed"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
           active: boolean
