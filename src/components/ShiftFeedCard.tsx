@@ -1,10 +1,26 @@
 // Internal team "Shift Updates" board, scoped to the active branch.
 // Realtime sync via Supabase channels; integrates @mentions which trigger
 // notifications (and push) for tagged users — including group tags.
-// Now with emoji reactions and threaded comments.
+// Features: reactions, threaded comments, pinning, edit-within-15min, categories,
+// seen-by tracking, image attachments, search, and AI daily summary.
 
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { Send, Trash2, MessageSquare, MessageCircle, SmilePlus } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import {
+  Send,
+  Trash2,
+  MessageSquare,
+  MessageCircle,
+  SmilePlus,
+  Pin,
+  PinOff,
+  Pencil,
+  X,
+  Image as ImageIcon,
+  Search,
+  Sparkles,
+  Eye,
+  Check,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
@@ -18,7 +34,10 @@ import { fetchGroupUserIds, GROUP_TAGS } from "@/lib/employee-directory";
 import { FeedText } from "@/components/FeedText";
 import { useServerFn } from "@tanstack/react-start";
 import { sendPushToUsers } from "@/lib/push-send.functions";
+import { summarizeShiftFeedToday } from "@/lib/shift-feed-summary.functions";
 import { toast } from "sonner";
+
+type Category = "general" | "urgent" | "shift" | "fix" | "celebration";
 
 interface FeedRow {
   id: string;
@@ -27,6 +46,11 @@ interface FeedRow {
   message: string;
   mentions: string[];
   created_at: string;
+  category?: Category;
+  pinned_at?: string | null;
+  pinned_by?: string | null;
+  edited_at?: string | null;
+  image_url?: string | null;
 }
 interface ReactionRow {
   id: string;
@@ -42,8 +66,22 @@ interface CommentRow {
   mentions: string[];
   created_at: string;
 }
+interface ReadRow {
+  post_id: string;
+  user_id: string;
+}
 
 const QUICK_EMOJIS = ["👍", "❤️", "🔥", "😂", "✅", "🙏"];
+
+const CATEGORIES: Record<Category, { label: string; emoji: string; ring: string; chip: string }> = {
+  general: { label: "כללי", emoji: "💬", ring: "border-r-border", chip: "bg-muted text-muted-foreground" },
+  urgent: { label: "דחוף", emoji: "🚨", ring: "border-r-red-500", chip: "bg-red-500/15 text-red-400" },
+  shift: { label: "משמרת", emoji: "🕒", ring: "border-r-neon", chip: "bg-neon/15 text-neon" },
+  fix: { label: "תיקון", emoji: "🛠", ring: "border-r-amber-500", chip: "bg-amber-500/15 text-amber-400" },
+  celebration: { label: "חגיגה", emoji: "🎉", ring: "border-r-fuchsia-500", chip: "bg-fuchsia-500/15 text-fuchsia-400" },
+};
+
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 function initials(name?: string | null) {
   if (!name) return "??";
@@ -70,17 +108,29 @@ export function ShiftFeedCard() {
   const [rows, setRows] = useState<FeedRow[]>([]);
   const [reactions, setReactions] = useState<ReactionRow[]>([]);
   const [comments, setComments] = useState<CommentRow[]>([]);
+  const [reads, setReads] = useState<ReadRow[]>([]);
   const [message, setMessage] = useState("");
+  const [category, setCategory] = useState<Category>("general");
   const [sending, setSending] = useState(false);
   const [mentionUsers, setMentionUsers] = useState<MentionUser[]>([]);
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [openEmojiFor, setOpenEmojiFor] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [search, setSearch] = useState("");
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [seenByOpen, setSeenByOpen] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const markedReadRef = useRef<Set<string>>(new Set());
   const pushFn = useServerFn(sendPushToUsers);
+  const summarizeFn = useServerFn(summarizeShiftFeedToday);
 
   useEffect(() => subscribeBranch((b) => setBranchId(b)), []);
 
-  // Load feed + reactions + comments and subscribe to realtime
   useEffect(() => {
     if (!branchId) return;
     let mounted = true;
@@ -96,21 +146,25 @@ export function ShiftFeedCard() {
       setRows(list);
       const ids = list.map((r) => r.id);
       if (ids.length) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const [{ data: rxs }, { data: cms }] = await Promise.all([
+        const [{ data: rxs }, { data: cms }, { data: rds }] = await Promise.all([
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase.from("shift_feed_reactions" as never) as any).select("*").in("post_id", ids),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase.from("shift_feed_comments" as never) as any)
             .select("*")
             .in("post_id", ids)
             .order("created_at", { ascending: true }),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase.from("shift_feed_reads" as never) as any).select("post_id,user_id").in("post_id", ids),
         ]);
         if (!mounted) return;
         setReactions((rxs ?? []) as ReactionRow[]);
         setComments((cms ?? []) as CommentRow[]);
+        setReads((rds ?? []) as ReadRow[]);
       } else {
         setReactions([]);
         setComments([]);
+        setReads([]);
       }
     };
     void load();
@@ -121,6 +175,14 @@ export function ShiftFeedCard() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "shift_feed", filter: `branch_id=eq.${branchId}` },
         (p) => setRows((prev) => [p.new as FeedRow, ...prev].slice(0, 50)),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "shift_feed", filter: `branch_id=eq.${branchId}` },
+        (p) =>
+          setRows((prev) =>
+            prev.map((r) => (r.id === (p.new as FeedRow).id ? (p.new as FeedRow) : r)),
+          ),
       )
       .on(
         "postgres_changes",
@@ -147,6 +209,11 @@ export function ShiftFeedCard() {
         { event: "DELETE", schema: "public", table: "shift_feed_comments" },
         (p) => setComments((prev) => prev.filter((r) => r.id !== (p.old as CommentRow).id)),
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "shift_feed_reads" },
+        (p) => setReads((prev) => [...prev, p.new as ReadRow]),
+      )
       .subscribe();
 
     return () => {
@@ -157,14 +224,58 @@ export function ShiftFeedCard() {
 
   useEffect(() => {
     if (!mentionUsers.length) return;
-    const map: Record<string, string> = {};
-    for (const u of mentionUsers) map[u.user_id] = u.full_name;
-    setProfileNames(map);
+    setProfileNames((prev) => {
+      const map = { ...prev };
+      for (const u of mentionUsers) map[u.user_id] = u.full_name;
+      return map;
+    });
   }, [mentionUsers]);
+
+  // Auto mark-as-read for posts that aren't authored by current user
+  useEffect(() => {
+    if (!uid || !rows.length) return;
+    const toMark = rows
+      .filter((r) => r.user_id !== uid && !markedReadRef.current.has(r.id))
+      .filter((r) => !reads.some((x) => x.post_id === r.id && x.user_id === uid));
+    if (!toMark.length) return;
+    toMark.forEach((r) => markedReadRef.current.add(r.id));
+    void (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("shift_feed_reads" as never) as any).upsert(
+        toMark.map((r) => ({ post_id: r.id, user_id: uid })),
+        { onConflict: "post_id,user_id", ignoreDuplicates: true },
+      );
+    })();
+  }, [rows, reads, uid]);
+
+  const onPickImage = (f: File | null) => {
+    setPendingImage(f);
+    if (pendingImagePreview) URL.revokeObjectURL(pendingImagePreview);
+    setPendingImagePreview(f ? URL.createObjectURL(f) : null);
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    if (!uid) return null;
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${uid}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("shift-feed").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+    if (error) {
+      toast.error("העלאת התמונה נכשלה");
+      return null;
+    }
+    const { data: signed } = await supabase.storage
+      .from("shift-feed")
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+    return signed?.signedUrl ?? null;
+  };
 
   const send = async () => {
     const text = message.trim();
-    if (!text || !uid || !branchId || sending) return;
+    if ((!text && !pendingImage) || !uid || !branchId || sending) return;
     setSending(true);
     try {
       const directIds = extractMentionedUserIds(text, mentionUsers);
@@ -174,15 +285,22 @@ export function ShiftFeedCard() {
       const groupExpansions = await Promise.all(groupKeys.map((k) => fetchGroupUserIds(k)));
       const allMentioned = new Set<string>([...directIds, ...groupExpansions.flat()]);
 
+      let image_url: string | null = null;
+      if (pendingImage) image_url = await uploadImage(pendingImage);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from("shift_feed" as never) as any).insert({
         user_id: uid,
         branch_id: branchId,
         message: text,
         mentions: Array.from(allMentioned),
+        category,
+        image_url,
       });
       if (error) throw error;
       setMessage("");
+      setCategory("general");
+      onPickImage(null);
 
       const targets = Array.from(allMentioned);
       if (targets.length) {
@@ -217,6 +335,35 @@ export function ShiftFeedCard() {
     await (supabase.from("shift_feed" as never) as any).delete().eq("id", id);
   };
 
+  const togglePin = async (r: FeedRow) => {
+    if (!isSuperAdmin || !uid) return;
+    const next = r.pinned_at ? null : new Date().toISOString();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("shift_feed" as never) as any)
+      .update({ pinned_at: next, pinned_by: next ? uid : null })
+      .eq("id", r.id);
+    if (error) toast.error("ההצמדה נכשלה");
+  };
+
+  const startEdit = (r: FeedRow) => {
+    setEditingId(r.id);
+    setEditText(r.message);
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+  const saveEdit = async (r: FeedRow) => {
+    const t = editText.trim();
+    if (!t) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("shift_feed" as never) as any)
+      .update({ message: t, edited_at: new Date().toISOString() })
+      .eq("id", r.id);
+    if (error) toast.error("עדכון נכשל");
+    else cancelEdit();
+  };
+
   const toggleReaction = useCallback(
     async (postId: string, emoji: string) => {
       if (!uid) return;
@@ -246,71 +393,266 @@ export function ShiftFeedCard() {
     [reactions, uid],
   );
 
-  const sorted = useMemo(() => [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at)), [rows]);
+  const runSummary = async () => {
+    if (!branchId) return;
+    setSummaryLoading(true);
+    try {
+      const res = await summarizeFn({ data: { branchId } });
+      setSummary(res.summary);
+    } catch (e) {
+      console.error(e);
+      toast.error("סיכום AI נכשל");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = q ? rows.filter((r) => r.message.toLowerCase().includes(q)) : rows;
+    return [...list].sort((a, b) => {
+      const ap = a.pinned_at ? 1 : 0;
+      const bp = b.pinned_at ? 1 : 0;
+      if (ap !== bp) return bp - ap;
+      return b.created_at.localeCompare(a.created_at);
+    });
+  }, [rows, search]);
+
+  const todayCount = useMemo(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return rows.filter((r) => new Date(r.created_at) >= start).length;
+  }, [rows]);
 
   return (
     <div dir="rtl" className="rounded-xl border-2 border-jungle/30 bg-card p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <MessageSquare className="h-5 w-5 text-neon" />
-        <h2 className="font-display text-lg font-bold">עדכוני משמרת</h2>
-      </div>
-
-      <div className="flex items-end gap-2 mb-3">
-        <div className="flex-1">
-          <MentionInput
-            value={message}
-            onChange={setMessage}
-            onMentionUsersChange={setMentionUsers}
-            placeholder="כתוב עדכון לצוות… השתמש ב-@ לתיוג (גם @כולם / @מטבח / @דלפק / @שליחים / @מנהלים)"
-            multiline
-            rows={2}
-            disabled={!uid || !branchId}
-            onSubmit={() => void send()}
-          />
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-neon" />
+          <h2 className="font-display text-lg font-bold">עדכוני משמרת</h2>
+          {todayCount > 0 && (
+            <span className="text-[10px] bg-neon/15 text-neon px-2 py-0.5 rounded-full font-bold">
+              {todayCount} היום
+            </span>
+          )}
         </div>
         <button
           type="button"
-          onClick={() => void send()}
-          disabled={!message.trim() || sending}
-          className="inline-flex items-center gap-1 rounded-lg bg-neon text-primary-foreground font-bold px-4 py-2 text-sm glow-neon hover:brightness-110 transition disabled:opacity-50"
+          onClick={() => void runSummary()}
+          disabled={summaryLoading || !branchId}
+          className="inline-flex items-center gap-1 text-xs rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 px-2 py-1 hover:bg-fuchsia-500/20 transition disabled:opacity-50"
+          title="סיכום AI ליום"
         >
-          <Send className="h-4 w-4" />
-          {sending ? "שולח…" : "שלח"}
+          <Sparkles className="h-3.5 w-3.5 text-fuchsia-400" />
+          {summaryLoading ? "מסכם…" : "סיכום AI"}
         </button>
       </div>
 
-      <ul className="space-y-2 max-h-[32rem] overflow-auto pr-1">
-        {sorted.length === 0 && (
+      {summary && (
+        <div className="mb-3 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5 p-3 text-sm whitespace-pre-line">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <span className="text-xs font-bold text-fuchsia-400 inline-flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> סיכום של היום
+            </span>
+            <button
+              type="button"
+              onClick={() => setSummary(null)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="סגור"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <p className="text-foreground/90">{summary}</p>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative mb-3">
+        <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="חיפוש בפיד…"
+          className="w-full bg-background/40 border border-border rounded-lg pr-8 pl-3 py-1.5 text-sm focus:border-neon/60 outline-none"
+        />
+      </div>
+
+      {/* Composer */}
+      <div className="space-y-2 mb-3">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <MentionInput
+              value={message}
+              onChange={setMessage}
+              onMentionUsersChange={setMentionUsers}
+              placeholder="כתוב עדכון לצוות… @ לתיוג (גם @כולם / @מטבח / @דלפק / @שליחים / @מנהלים)"
+              multiline
+              rows={2}
+              disabled={!uid || !branchId}
+              onSubmit={() => void send()}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => void send()}
+            disabled={(!message.trim() && !pendingImage) || sending}
+            className="inline-flex items-center gap-1 rounded-lg bg-neon text-primary-foreground font-bold px-4 py-2 text-sm glow-neon hover:brightness-110 transition disabled:opacity-50"
+          >
+            <Send className="h-4 w-4" />
+            {sending ? "שולח…" : "שלח"}
+          </button>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(Object.keys(CATEGORIES) as Category[]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setCategory(k)}
+              className={`text-[11px] rounded-full px-2 py-0.5 border transition ${
+                category === k
+                  ? "border-neon/70 bg-neon/15 text-foreground font-bold"
+                  : "border-border text-muted-foreground hover:border-neon/40"
+              }`}
+            >
+              {CATEGORIES[k].emoji} {CATEGORIES[k].label}
+            </button>
+          ))}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-[11px] inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-dashed border-border text-muted-foreground hover:border-neon/40 hover:text-foreground transition"
+          >
+            <ImageIcon className="h-3 w-3" /> תמונה
+          </button>
+          {pendingImagePreview && (
+            <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 rounded-full pr-1 pl-2 py-0.5">
+              <img src={pendingImagePreview} alt="" className="h-5 w-5 rounded object-cover" />
+              <button
+                type="button"
+                onClick={() => onPickImage(null)}
+                className="text-muted-foreground hover:text-red-500"
+                aria-label="הסר תמונה"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+        </div>
+      </div>
+
+      <ul className="space-y-2 max-h-[34rem] overflow-auto pr-1">
+        {filtered.length === 0 && (
           <li className="text-sm text-muted-foreground text-center py-6">
-            עדיין אין עדכונים. תהיה הראשון!
+            {search ? "לא נמצאו עדכונים תואמים." : "עדיין אין עדכונים. תהיה הראשון!"}
           </li>
         )}
-        {sorted.map((r) => {
+        {filtered.map((r) => {
+          const cat = (r.category ?? "general") as Category;
+          const meta = CATEGORIES[cat] ?? CATEGORIES.general;
           const name = profileNames[r.user_id] ?? (r.user_id === uid ? fullName : null);
-          const canDelete = r.user_id === uid || isSuperAdmin;
+          const isOwner = r.user_id === uid;
+          const canDelete = isOwner || isSuperAdmin;
+          const canEdit =
+            isOwner && Date.now() - new Date(r.created_at).getTime() < EDIT_WINDOW_MS;
           const postReactions = reactions.filter((x) => x.post_id === r.id);
           const postComments = comments.filter((x) => x.post_id === r.id);
+          const postReads = reads.filter((x) => x.post_id === r.id);
           const grouped = postReactions.reduce<Record<string, ReactionRow[]>>((acc, rx) => {
             (acc[rx.emoji] ||= []).push(rx);
             return acc;
           }, {});
           const isOpen = !!openComments[r.id];
+          const isEditing = editingId === r.id;
+          const isPinned = !!r.pinned_at;
+
           return (
-            <li key={r.id} className="rounded-lg border border-border/60 bg-background/40 p-3">
+            <li
+              key={r.id}
+              className={`rounded-lg border border-border/60 bg-background/40 p-3 border-r-4 ${meta.ring} ${
+                isPinned ? "ring-1 ring-amber-500/40 bg-amber-500/5" : ""
+              }`}
+            >
               <div className="flex items-start gap-2">
                 <div className="h-8 w-8 shrink-0 rounded-full bg-neon/15 text-neon text-xs font-bold flex items-center justify-center">
                   {initials(name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-foreground truncate">
-                      {name ?? "משתמש"}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-xs font-bold text-foreground truncate">
+                        {name ?? "משתמש"}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${meta.chip}`}>
+                        {meta.emoji} {meta.label}
+                      </span>
+                      {isPinned && (
+                        <span className="text-[10px] inline-flex items-center gap-0.5 text-amber-400">
+                          <Pin className="h-2.5 w-2.5" /> מוצמד
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {relTime(r.created_at)}
+                      {r.edited_at && " · נערך"}
                     </span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">{relTime(r.created_at)}</span>
                   </div>
-                  <p className="text-sm text-foreground/90 mt-1">
-                    <FeedText text={r.message} users={mentionUsers} />
-                  </p>
+
+                  {isEditing ? (
+                    <div className="mt-1 space-y-1">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        rows={2}
+                        className="w-full bg-background/60 border border-border rounded p-2 text-sm focus:border-neon/60 outline-none"
+                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => void saveEdit(r)}
+                          className="inline-flex items-center gap-1 rounded bg-neon text-primary-foreground px-2 py-1 text-xs font-bold"
+                        >
+                          <Check className="h-3 w-3" /> שמור
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs"
+                        >
+                          ביטול
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-foreground/90 mt-1">
+                        <FeedText text={r.message} users={mentionUsers} />
+                      </p>
+                      {r.image_url && (
+                        <a
+                          href={r.image_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block mt-2"
+                        >
+                          <img
+                            src={r.image_url}
+                            alt="תמונה מצורפת"
+                            loading="lazy"
+                            className="max-h-60 rounded-lg border border-border object-cover"
+                          />
+                        </a>
+                      )}
+                    </>
+                  )}
 
                   {/* Reactions row */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -368,9 +710,36 @@ export function ShiftFeedCard() {
                       <MessageCircle className="h-3 w-3" />
                       <span>{postComments.length || "תגובה"}</span>
                     </button>
+                    {postReads.length > 0 && (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSeenByOpen((cur) => (cur === r.id ? null : r.id))
+                          }
+                          className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground hover:border-neon/40 hover:text-foreground transition"
+                          title="נקרא על־ידי"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span>{postReads.length}</span>
+                        </button>
+                        {seenByOpen === r.id && (
+                          <div className="absolute z-10 top-full mt-1 right-0 min-w-[140px] rounded-lg border border-border bg-popover p-2 shadow-lg text-[11px] space-y-0.5">
+                            <div className="font-bold text-muted-foreground mb-1">
+                              נקרא על־ידי
+                            </div>
+                            {postReads.map((rd) => (
+                              <div key={rd.user_id} className="truncate">
+                                {profileNames[rd.user_id] ??
+                                  (rd.user_id === uid ? fullName : "משתמש")}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Comments thread */}
                   {isOpen && (
                     <CommentsThread
                       postId={r.id}
@@ -384,16 +753,46 @@ export function ShiftFeedCard() {
                     />
                   )}
                 </div>
-                {canDelete && (
-                  <button
-                    type="button"
-                    onClick={() => void remove(r.id)}
-                    aria-label="מחק"
-                    className="text-muted-foreground hover:text-red-500 transition"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
+                <div className="flex flex-col items-center gap-1">
+                  {isSuperAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => void togglePin(r)}
+                      aria-label={isPinned ? "בטל הצמדה" : "הצמד"}
+                      className={`transition ${
+                        isPinned
+                          ? "text-amber-400 hover:text-amber-300"
+                          : "text-muted-foreground hover:text-amber-400"
+                      }`}
+                    >
+                      {isPinned ? (
+                        <PinOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Pin className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  )}
+                  {canEdit && !isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(r)}
+                      aria-label="ערוך"
+                      className="text-muted-foreground hover:text-foreground transition"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={() => void remove(r.id)}
+                      aria-label="מחק"
+                      className="text-muted-foreground hover:text-red-500 transition"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </li>
           );
@@ -448,7 +847,6 @@ function CommentsThread({
       if (error) throw error;
       setText("");
 
-      // Notify post author + mentioned (de-dup, exclude self for push)
       const targets = new Set<string>(mentioned);
       if (postAuthorId && postAuthorId !== uid) targets.add(postAuthorId);
       const ids = Array.from(targets);
