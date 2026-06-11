@@ -1751,26 +1751,44 @@ export type Database = {
       shift_feed: {
         Row: {
           branch_id: string
+          category: string
           created_at: string
+          edited_at: string | null
           id: string
+          image_url: string | null
           mentions: string[]
           message: string
+          pinned_at: string | null
+          pinned_by: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
           branch_id: string
+          category?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
+          image_url?: string | null
           mentions?: string[]
           message: string
+          pinned_at?: string | null
+          pinned_by?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
           branch_id?: string
+          category?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
+          image_url?: string | null
           mentions?: string[]
           message?: string
+          pinned_at?: string | null
+          pinned_by?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -1846,6 +1864,32 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "shift_feed_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "shift_feed"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_feed_reads: {
+        Row: {
+          post_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          post_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          post_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_feed_reads_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "shift_feed"
