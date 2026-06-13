@@ -263,9 +263,21 @@ function AdminPage() {
 
       {/* Grouped navigation: sidebar on desktop, two pill rows on mobile */}
       <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6 lg:items-start">
-        <AdminNav tab={tab} setTab={setTab} isSuperAdmin={isSuperAdmin} />
+        <AdminNav
+          tab={tab}
+          setTab={(t) => {
+            setTab(t);
+            if (typeof window !== "undefined" && window.innerWidth < 1024) {
+              requestAnimationFrame(() => {
+                document.getElementById("admin-content")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              });
+            }
+          }}
+          isSuperAdmin={isSuperAdmin}
+        />
 
-        <div className="mt-6 lg:mt-0 min-w-0">
+        <div id="admin-content" className="mt-6 lg:mt-0 min-w-0 scroll-mt-24">
+
           {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
 
           {tab === "users" && (
