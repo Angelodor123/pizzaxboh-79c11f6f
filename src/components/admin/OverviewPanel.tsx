@@ -157,50 +157,6 @@ function CircularProgress({ value, label, total, done }: { value: number; label:
   );
 }
 
-function KpiCard({
-  icon,
-  label,
-  value,
-  alert,
-  href,
-  sub,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-  alert?: boolean;
-  href?: string;
-  sub?: string;
-}) {
-  const inner = (
-    <div
-      className={`rounded-xl border p-4 bg-card/60 backdrop-blur transition h-full ${
-        alert
-          ? "border-destructive/60 shadow-[0_0_24px_-8px_hsl(var(--destructive))]"
-          : "border-border hover:border-neon/60"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`p-2 rounded-md ${alert ? "bg-destructive/15 text-destructive" : "bg-neon/10 text-neon"}`}>
-          {icon}
-        </div>
-        <div className={`text-3xl font-bold tabular-nums ${alert ? "text-destructive" : "text-foreground"}`}>
-          {value}
-        </div>
-      </div>
-      <div className="mt-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</div>
-      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
-    </div>
-  );
-  if (href) {
-    return (
-      <Link to={href} className="block">
-        {inner}
-      </Link>
-    );
-  }
-  return inner;
-}
 
 export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
   const [m, setM] = useState<Metrics>(EMPTY);
