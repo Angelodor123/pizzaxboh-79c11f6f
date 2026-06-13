@@ -281,97 +281,100 @@ function AdminPage() {
           {tab === "prep" && <PrepItemsPanel />}
           {tab === "restock" && <RestockItemsPanel />}
 
-      {tab === "recipes" && (
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="font-display text-xl font-bold text-right">
-                ניהול מתכונים
-              </h2>
-              <p className="text-muted-foreground mt-1 text-sm">
-                הוסף, ערוך ומחק מתכונים. השינויים מסונכרנים בענן בזמן אמת לכל המשתמשים.
-              </p>
-            </div>
-            <button
-              onClick={startNew}
-              className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
-            >
-              <Plus className="h-4 w-4" /> מתכון חדש
-            </button>
-          </div>
+          {tab === "recipes" && (
+            <section>
+              <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="font-display text-xl font-bold text-right">
+                    ניהול מתכונים
+                  </h2>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    הוסף, ערוך ומחק מתכונים. השינויים מסונכרנים בענן בזמן אמת לכל המשתמשים.
+                  </p>
+                </div>
+                <button
+                  onClick={startNew}
+                  className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
+                >
+                  <Plus className="h-4 w-4" /> מתכון חדש
+                </button>
+              </div>
 
-          <div className="mb-4 flex flex-col sm:flex-row gap-2">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="חיפוש מתכון..."
-              className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
-            />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
-            >
-              <option value="all">📋 כל הקטגוריות</option>
-              {categoryOrder.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_EMOJI[c]} {categoryLabels[c]}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="mb-4 flex flex-col sm:flex-row gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="חיפוש מתכון..."
+                  className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
+                />
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
+                >
+                  <option value="all">📋 כל הקטגוריות</option>
+                  {categoryOrder.map((c) => (
+                    <option key={c} value={c}>
+                      {CATEGORY_EMOJI[c]} {categoryLabels[c]}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="border border-border rounded-md overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="text-right px-3 py-2">שם</th>
-                  <th className="text-right px-3 py-2">קטגוריה</th>
-                  <th className="px-3 py-2 w-32" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr key={r.id} className="border-t border-border">
-                    <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button
-                          onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
-                          className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
-                          aria-label="ערוך"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
-                            if (ok) void softDeleteRecipe(r.id);
-                          }}
-                          className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
-                          aria-label="מחק"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {visible.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
-                      לא נמצאו מתכונים.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+              <div className="border border-border rounded-md overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
+                    <tr>
+                      <th className="text-right px-3 py-2">שם</th>
+                      <th className="text-right px-3 py-2">קטגוריה</th>
+                      <th className="px-3 py-2 w-32" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((r) => (
+                      <tr key={r.id} className="border-t border-border">
+                        <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
+                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
+                              aria-label="ערוך"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
+                                if (ok) void softDeleteRecipe(r.id);
+                              }}
+                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
+                              aria-label="מחק"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {visible.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
+                          לא נמצאו מתכונים.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
+
 
       {editing && (
         <div
