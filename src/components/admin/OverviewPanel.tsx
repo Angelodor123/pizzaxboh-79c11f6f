@@ -273,77 +273,103 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         </p>
       </div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <KpiCard
-          icon={<Pizza className="h-5 w-5" />}
-          label="מיכלי בצק כעת"
-          value={loading ? "…" : doughTotal ?? "—"}
-          sub={
-            loading
-              ? `סף התראה: ${m.doughThreshold}`
-              : `בפיצה: ${m.doughShop ?? 0} · במחסן: ${m.doughWarehouse ?? 0}`
-          }
-          alert={doughLow}
-        />
-        <KpiCard
-          icon={<Wrench className="h-5 w-5" />}
-          label="קריאות שירות פתוחות"
-          value={loading ? "…" : m.openTickets}
-          href="/service-calls"
-          alert={m.openTickets > 0}
-        />
-        <KpiCard
-          icon={<AlertTriangle className="h-5 w-5" />}
-          label="חוסרים פעילים"
-          value={loading ? "…" : m.activeShortages}
-          href="/notebook"
-          alert={m.activeShortages > 0}
-        />
-      </div>
+      {/* Section A — מצב עכשווי */}
+      <section>
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold mb-2">
+          מצב עכשווי
+        </div>
+        <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-5">
+          <div className="grid grid-cols-3 divide-x divide-x-reverse divide-border">
+            <StatColumn
+              icon={<Pizza className="h-5 w-5" />}
+              label="בצק"
+              value={loading ? "…" : doughTotal ?? "—"}
+              alert={doughLow}
+              sub={
+                loading
+                  ? `סף התראה: ${m.doughThreshold}`
+                  : doughTotal != null
+                    ? `בפיצה: ${m.doughShop ?? 0} · במחסן: ${m.doughWarehouse ?? 0}`
+                    : `סף התראה: ${m.doughThreshold}`
+              }
+            />
+            <StatColumn
+              icon={<Wrench className="h-5 w-5" />}
+              label="קריאות שירות"
+              value={loading ? "…" : m.openTickets}
+              alert={m.openTickets > 0}
+              href="/service-calls"
+            />
+            <StatColumn
+              icon={<AlertTriangle className="h-5 w-5" />}
+              label="חוסרים"
+              value={loading ? "…" : m.activeShortages}
+              alert={m.activeShortages > 0}
+              href="/notebook"
+            />
+          </div>
+        </div>
 
-      {/* Today's Deliveries */}
-      {(() => {
-        const hasDeliveries = m.todaySuppliers.length > 0;
-        return (
-          <div
-            className={`rounded-xl border p-5 backdrop-blur transition ${
-              hasDeliveries
-                ? "border-neon/60 bg-neon/5 shadow-[0_0_28px_-10px_hsl(var(--neon))]"
-                : "border-border bg-card/60"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={`p-2 rounded-md shrink-0 ${
-                  hasDeliveries ? "bg-neon/15 text-neon" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                <PackageCheck className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  סחורה שהתקבלה היום
+        {/* Today's Deliveries — kept inline under the live status row */}
+        {(() => {
+          const hasDeliveries = m.todaySuppliers.length > 0;
+          return (
+            <div
+              className={`mt-3 rounded-xl border p-4 backdrop-blur transition ${
+                hasDeliveries
+                  ? "border-neon/60 bg-neon/5 shadow-[0_0_28px_-10px_hsl(var(--neon))]"
+                  : "border-border bg-card/60"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`p-2 rounded-md shrink-0 ${
+                    hasDeliveries ? "bg-neon/15 text-neon" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <PackageCheck className="h-5 w-5" />
                 </div>
-                {loading ? (
-                  <div className="mt-2 text-sm text-muted-foreground">…</div>
-                ) : hasDeliveries ? (
-                  <div className="mt-2 text-base font-bold text-foreground leading-relaxed">
-                    התקבלה סחורה מ:{" "}
-                    <span className="text-neon">{m.todaySuppliers.join(", ")}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    סחורה שהתקבלה היום
                   </div>
-                ) : (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    טרם נקלטה סחורה היום
-                  </div>
-                )}
+                  {loading ? (
+                    <div className="mt-2 text-sm text-muted-foreground">…</div>
+                  ) : hasDeliveries ? (
+                    <div className="mt-2 text-base font-bold text-foreground leading-relaxed">
+                      התקבלה סחורה מ:{" "}
+                      <span className="text-neon">{m.todaySuppliers.join(", ")}</span>
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      טרם נקלטה סחורה היום
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
+      </section>
 
-      {/* Upcoming Sports Events */}
+      {/* Section B — התקדמות היום */}
+      <section>
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold mb-2">
+          התקדמות היום
+        </div>
+        <div className="rounded-2xl border border-border bg-card/60 p-5">
+          <div className="grid grid-cols-2 gap-4">
+            <Link to="/prep" className="flex justify-center">
+              <CircularProgress value={prepPct} label="הכנות יומיות" done={m.prepDone} total={m.prepTotal} />
+            </Link>
+            <Link to="/tasks" className="flex justify-center">
+              <CircularProgress value={tasksPct} label="צ'קליסטים" done={m.tasksDone} total={m.tasksTotal} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Sports events — between Section B and Section C */}
       <div className="rounded-xl border border-border bg-card/60 p-5 backdrop-blur">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <div className="flex items-center gap-2">
@@ -396,60 +422,115 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         )}
       </div>
 
-      {/* Progress visuals */}
-      <div className="rounded-xl border border-border bg-card/60 p-5">
-        <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
-          התקדמות יומית
+      {/* Section C — פעולות מהירות + קיצורי דרך */}
+      <section>
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold mb-2">
+          פעולות מהירות וקיצורי דרך
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Link to="/prep" className="flex justify-center">
-            <CircularProgress value={prepPct} label="הכנות יומיות" done={m.prepDone} total={m.prepTotal} />
-          </Link>
-          <Link to="/tasks" className="flex justify-center">
-            <CircularProgress value={tasksPct} label="צ'קליסטים" done={m.tasksDone} total={m.tasksTotal} />
-          </Link>
-        </div>
-      </div>
+        <div className="rounded-2xl border border-border bg-card/60 p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link
+              to="/admin/alerts"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-neon text-primary-foreground font-bold px-4 py-3 glow-neon hover:brightness-110 transition"
+            >
+              <Send className="h-4 w-4" />
+              שלח התראת צוות
+            </Link>
+            <button
+              type="button"
+              onClick={onGoToUsers}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-neon/60 text-neon font-bold px-4 py-3 hover:bg-neon/10 transition"
+            >
+              <UserPlus className="h-4 w-4" />
+              הוסף עובד
+            </button>
+          </div>
 
-      {/* Quick actions */}
-      <div className="rounded-xl border border-border bg-card/60 p-5">
-        <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-          פעולות מהירות
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link
-            to="/admin/alerts"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-neon text-primary-foreground font-bold px-4 py-3 glow-neon hover:brightness-110 transition"
-          >
-            <Send className="h-4 w-4" />
-            שלח התראת צוות
-          </Link>
-          <button
-            type="button"
-            onClick={onGoToUsers}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-neon/60 text-neon font-bold px-4 py-3 hover:bg-neon/10 transition"
-          >
-            <UserPlus className="h-4 w-4" />
-            הוסף עובד
-          </button>
-        </div>
-      </div>
+          <div className="h-px bg-border/60" />
 
-      {/* Notification settings & testing */}
-      <NotificationTestCard />
+          <div className="grid grid-cols-3 gap-2">
+            <Link to="/tasks" className="rounded-lg border border-border p-3 text-xs sm:text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center justify-center gap-1.5 text-center">
+              <ListChecks className="h-4 w-4 shrink-0" />
+              <span className="truncate">צ'קליסטים</span>
+            </Link>
+            <Link to="/prep" className="rounded-lg border border-border p-3 text-xs sm:text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center justify-center gap-1.5 text-center">
+              <ChefHat className="h-4 w-4 shrink-0" />
+              <span className="truncate">הכנות יומיות</span>
+            </Link>
+            <Link to="/notebook" className="rounded-lg border border-border p-3 text-xs sm:text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center justify-center gap-1.5 text-center">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span className="truncate">פנקס וחוסרים</span>
+            </Link>
+          </div>
+        </div>
+      </section>
 
-      {/* Shortcut grid to operational pages */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        <Link to="/tasks" className="rounded-lg border border-border p-3 text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center gap-2">
-          <ListChecks className="h-4 w-4" /> צ'קליסטים
-        </Link>
-        <Link to="/prep" className="rounded-lg border border-border p-3 text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center gap-2">
-          <ChefHat className="h-4 w-4" /> הכנות יומיות
-        </Link>
-        <Link to="/notebook" className="rounded-lg border border-border p-3 text-sm font-bold text-foreground hover:border-neon/60 hover:text-neon transition inline-flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4" /> פנקס וחוסרים
-        </Link>
-      </div>
+      {/* Notification settings & testing — collapsed by default */}
+      <Collapsible>
+        <div className="rounded-xl border border-border bg-card/60">
+          <CollapsibleTrigger className="group w-full flex items-center justify-between gap-2 px-4 py-3 text-right">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-neon/10 text-neon">
+                <Send className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-bold text-foreground">בדיקת התראות</span>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4">
+              <NotificationTestCard />
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
     </div>
   );
+}
+
+function StatColumn({
+  icon,
+  label,
+  value,
+  alert,
+  href,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  alert?: boolean;
+  href?: string;
+  sub?: string;
+}) {
+  const content = (
+    <div className="flex flex-col items-center text-center px-3 py-1">
+      <div
+        className={`p-2 rounded-md mb-2 ${
+          alert ? "bg-destructive/15 text-destructive" : "bg-neon/10 text-neon"
+        }`}
+      >
+        {icon}
+      </div>
+      <div
+        className={`text-3xl sm:text-4xl font-black tabular-nums leading-none ${
+          alert ? "text-destructive drop-shadow-[0_0_10px_hsl(var(--destructive))]" : "text-foreground"
+        }`}
+      >
+        {value}
+      </div>
+      <div className="mt-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+        {label}
+      </div>
+      {sub && <div className="mt-1 text-[10px] text-muted-foreground/80 line-clamp-2">{sub}</div>}
+    </div>
+  );
+  if (href) {
+    return (
+      <Link to={href} className="block hover:opacity-90 transition">
+        {content}
+      </Link>
+    );
+  }
+  return content;
 }
