@@ -1133,7 +1133,133 @@ function VersionHistory({
 // Admin sub-components: tabs, supplier reminders, CMS texts
 // ---------------------------------------------------------------------------
 
-function TabButton({
+type AdminTab =
+  | "overview"
+  | "recipes"
+  | "users"
+  | "branches"
+  | "tasks"
+  | "reminders"
+  | "units"
+  | "prep"
+  | "restock"
+  | "onboarding";
+
+type AdminNavItem = { key: AdminTab; label: string; icon: React.ReactNode };
+
+function AdminNav({
+  tab,
+  setTab,
+  isSuperAdmin,
+}: {
+  tab: AdminTab;
+  setTab: (t: AdminTab) => void;
+  isSuperAdmin: boolean;
+}) {
+  const operations: AdminNavItem[] = [
+    { key: "overview", label: "סקירה כללית", icon: <LayoutDashboard className="h-4 w-4" /> },
+    { key: "users", label: "הרשאות", icon: <Users className="h-4 w-4" /> },
+    { key: "reminders", label: "תזכורות ספקים", icon: <Bell className="h-4 w-4" /> },
+  ];
+  const settings: AdminNavItem[] = isSuperAdmin
+    ? [
+        { key: "branches", label: "סניפים", icon: <Building2 className="h-4 w-4" /> },
+        { key: "tasks", label: "משימות קבועות", icon: <ListChecks className="h-4 w-4" /> },
+        { key: "prep", label: "הכנות יומיות", icon: <ChefHat className="h-4 w-4" /> },
+        { key: "restock", label: "השלמות מהמחסן", icon: <ChefHat className="h-4 w-4" /> },
+        { key: "units", label: "יחידות מידה", icon: <FileText className="h-4 w-4" /> },
+        { key: "onboarding", label: "הסברי דפים", icon: <FileText className="h-4 w-4" /> },
+        { key: "recipes", label: "מתכונים", icon: <ChefHat className="h-4 w-4" /> },
+      ]
+    : [];
+
+  return (
+    <nav dir="rtl" aria-label="ניווט ניהול">
+      {/* Mobile: two pill rows */}
+      <div className="lg:hidden">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
+          תפעול
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {operations.map((item) => (
+            <PillTab
+              key={item.key}
+              active={tab === item.key}
+              icon={item.icon}
+              onClick={() => setTab(item.key)}
+            >
+              {item.label}
+            </PillTab>
+          ))}
+        </div>
+
+        {settings.length > 0 && (
+          <>
+            <div className="my-4 border-t border-border/60" />
+            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
+              הגדרות
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {settings.map((item) => (
+                <PillTab
+                  key={item.key}
+                  active={tab === item.key}
+                  icon={item.icon}
+                  onClick={() => setTab(item.key)}
+                >
+                  {item.label}
+                </PillTab>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Desktop: sticky sidebar */}
+      <div className="hidden lg:block lg:sticky lg:top-24">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2 mb-2">
+          תפעול
+        </div>
+        <ul className="space-y-1">
+          {operations.map((item) => (
+            <li key={item.key}>
+              <SidebarTab
+                active={tab === item.key}
+                icon={item.icon}
+                onClick={() => setTab(item.key)}
+              >
+                {item.label}
+              </SidebarTab>
+            </li>
+          ))}
+        </ul>
+
+        {settings.length > 0 && (
+          <>
+            <div className="mt-5 mb-2 text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2">
+              הגדרות
+            </div>
+            <ul className="space-y-1">
+              {settings.map((item) => (
+                <li key={item.key}>
+                  <SidebarTab
+                    active={tab === item.key}
+                    icon={item.icon}
+                    onClick={() => setTab(item.key)}
+                  >
+                    {item.label}
+                  </SidebarTab>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+function PillTab({
   active,
   onClick,
   icon,
@@ -1147,20 +1273,49 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`relative inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
+      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border transition ${
         active
-          ? "text-neon"
-          : "text-muted-foreground hover:text-foreground"
+          ? "bg-neon/15 border-neon text-neon shadow-[0_0_18px_-6px_var(--neon)]"
+          : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-neon/40"
       }`}
     >
       {icon}
-      {children}
-      {active && (
-        <span className="absolute right-0 left-0 -bottom-px h-0.5 bg-neon shadow-[0_0_8px_var(--neon)]" />
-      )}
+      <span className="whitespace-nowrap">{children}</span>
     </button>
   );
 }
+
+function SidebarTab({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group relative w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold transition ${
+        active
+          ? "bg-neon/10 text-neon"
+          : "text-muted-foreground hover:text-foreground hover:bg-card/60"
+      }`}
+    >
+      {active && (
+        <span className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-full bg-neon shadow-[0_0_8px_var(--neon)]" />
+      )}
+      <span className={active ? "text-neon" : "text-muted-foreground group-hover:text-foreground"}>
+        {icon}
+      </span>
+      <span className="text-right flex-1">{children}</span>
+    </button>
+  );
+}
+
 
 function SupplierRemindersPanel() {
   const { settings, setLocal, save, loading } = useSupplierReminderSettings();
