@@ -631,6 +631,8 @@ function TasksPage() {
 
   // Lightweight keyword matching against active notebook tasks.
   const scanNotebookForMatch = async (taskName: string) => {
+    const branchId = getActiveBranchIdSync();
+    if (!branchId) return;
     const stop = new Set([
       "של", "את", "על", "עם", "אל", "כל", "זה", "זו", "או", "גם",
       "ל", "מ", "ב", "ה", "ו", "ש",
@@ -645,6 +647,7 @@ function TasksPage() {
       const { data } = await supabase
         .from("notebook_items")
         .select("id,text,list_key,done,archived_at")
+        .eq("branch_id", branchId)
         .is("archived_at", null)
         .eq("done", false)
         .eq("list_key", "tasks");
