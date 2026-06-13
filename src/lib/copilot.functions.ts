@@ -1,10 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText, tool, stepCountIs } from "ai";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadLearningDictionary } from "@/lib/ai-learning.functions";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { wrapError, SAFE_TABLES } from "./copilot-shared";
+import { buildInventoryTools } from "./copilot-inventory.functions";
+import { buildPrepTools } from "./copilot-prep.functions";
+import { buildTasksTools } from "./copilot-tasks.functions";
+import { buildCalendarTools } from "./copilot-calendar.functions";
+import { buildStaffTools } from "./copilot-staff.functions";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "model"]),
