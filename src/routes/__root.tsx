@@ -416,12 +416,12 @@ function AuthedShell() {
           </div>
         </main>
 
-        <ErrorBoundary fallback={null}>
+        <ErrorBoundary fallback={() => null}>
           <Suspense fallback={null}>
             <GuidedTour />
           </Suspense>
         </ErrorBoundary>
-        <ErrorBoundary fallback={null}>
+        <ErrorBoundary fallback={() => null}>
           <Suspense fallback={null}>
             <CopilotFab />
           </Suspense>
