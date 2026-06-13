@@ -259,60 +259,27 @@ function AdminPage() {
         </h1>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border-border flex gap-1 overflow-x-auto scrollbar-hide" dir="rtl">
-        <TabButton active={tab === "overview"} onClick={() => setTab("overview")} icon={<LayoutDashboard className="h-4 w-4" />}>
-          סקירה כללית
-        </TabButton>
-        <TabButton active={tab === "recipes"} onClick={() => setTab("recipes")} icon={<ChefHat className="h-4 w-4" />}>
-          מתכונים
-        </TabButton>
-        <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={<Users className="h-4 w-4" />}>
-          הרשאות
-        </TabButton>
-        {isSuperAdmin && (
-          <TabButton active={tab === "branches"} onClick={() => setTab("branches")} icon={<Building2 className="h-4 w-4" />}>
-            סניפים
-          </TabButton>
-        )}
-        {isSuperAdmin && (
-          <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")} icon={<ListChecks className="h-4 w-4" />}>
-            משימות קבועות
-          </TabButton>
-        )}
-        <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
-          תזכורות ספקים
-        </TabButton>
-        <TabButton active={tab === "onboarding"} onClick={() => setTab("onboarding")} icon={<FileText className="h-4 w-4" />}>
-          הסברי דפים
-        </TabButton>
-        <TabButton active={tab === "units"} onClick={() => setTab("units")} icon={<FileText className="h-4 w-4" />}>
-          יחידות מידה
-        </TabButton>
-        <TabButton active={tab === "prep"} onClick={() => setTab("prep")} icon={<ChefHat className="h-4 w-4" />}>
-          הכנות יומיות
-        </TabButton>
-        <TabButton active={tab === "restock"} onClick={() => setTab("restock")} icon={<ChefHat className="h-4 w-4" />}>
-          השלמות מהמחסן
-        </TabButton>
-      </div>
+      {/* Grouped navigation: sidebar on desktop, two pill rows on mobile */}
+      <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+        <AdminNav tab={tab} setTab={setTab} isSuperAdmin={isSuperAdmin} />
 
-      {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
+        <div className="mt-6 lg:mt-0 min-w-0">
+          {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
 
-      {tab === "users" && (
-        <div className="space-y-6">
-          <InvitationsPanel />
-          {isSuperAdmin && <SuperAdminUsersPanel />}
-        </div>
-      )}
-      {tab === "branches" && isSuperAdmin && <BranchesPanel />}
-      {tab === "tasks" && isSuperAdmin && <TasksPanel />}
-      {tab === "reminders" && <SupplierRemindersPanel />}
-      
-      {tab === "onboarding" && <OnboardingPanel />}
-      {tab === "units" && <UnitsPanel />}
-      {tab === "prep" && <PrepItemsPanel />}
-      {tab === "restock" && <RestockItemsPanel />}
+          {tab === "users" && (
+            <div className="space-y-6">
+              <InvitationsPanel />
+              {isSuperAdmin && <SuperAdminUsersPanel />}
+            </div>
+          )}
+          {tab === "branches" && isSuperAdmin && <BranchesPanel />}
+          {tab === "tasks" && isSuperAdmin && <TasksPanel />}
+          {tab === "reminders" && <SupplierRemindersPanel />}
+
+          {tab === "onboarding" && <OnboardingPanel />}
+          {tab === "units" && <UnitsPanel />}
+          {tab === "prep" && <PrepItemsPanel />}
+          {tab === "restock" && <RestockItemsPanel />}
 
       {tab === "recipes" && (
         <section>
