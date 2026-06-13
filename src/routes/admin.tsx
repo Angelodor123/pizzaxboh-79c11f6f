@@ -323,55 +323,15 @@ function AdminPage() {
                 </select>
               </div>
 
-              <div className="border border-border rounded-md overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="text-right px-3 py-2">שם</th>
-                      <th className="text-right px-3 py-2">קטגוריה</th>
-                      <th className="px-3 py-2 w-32" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((r) => (
-                      <tr key={r.id} className="border-t border-border">
-                        <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-1 justify-end">
-                            <button
-                              onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
-                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
-                              aria-label="ערוך"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
-                                if (ok) void softDeleteRecipe(r.id);
-                              }}
-                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
-                              aria-label="מחק"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {visible.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
-                          לא נמצאו מתכונים.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <RecipesGroupedList
+                recipes={visible}
+                onEdit={(r) => { setOpenedFromCard(false); setEditing({ ...r }); }}
+                onDelete={async (r) => {
+                  const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
+                  if (ok) void softDeleteRecipe(r.id);
+                }}
+              />
+
             </section>
           )}
         </div>
