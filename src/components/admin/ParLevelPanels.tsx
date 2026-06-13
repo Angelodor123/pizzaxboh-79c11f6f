@@ -203,7 +203,67 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
         </div>
       </div>
 
-      <div className="mt-4 border border-border rounded-md overflow-x-auto">
+      {/* Mobile: card-per-item */}
+      <div className="mt-4 space-y-2 lg:hidden">
+        {rows.map((r) => {
+          const selected = bulk.isSelected(r.id);
+          return (
+            <div
+              key={r.id}
+              onClickCapture={(e) => {
+                if (bulk.selectionMode) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  bulk.toggle(r.id);
+                }
+              }}
+              className={`rounded-xl border p-3 transition ${
+                selected ? "border-neon ring-2 ring-neon/40 bg-neon/5" : "border-border bg-card/60"
+              } ${!r.active ? "opacity-50" : ""}`}
+            >
+              <div className="flex items-center gap-2">
+                {bulk.selectionMode && (
+                  <span className={`shrink-0 inline-grid place-content-center h-5 w-5 rounded border-2 ${
+                    selected ? "bg-neon border-neon text-primary-foreground" : "border-border"
+                  }`}>{selected ? "✓" : ""}</span>
+                )}
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="font-bold text-foreground truncate">
+                    {r.name} {!r.active && <span className="text-[10px] text-muted-foreground">(לא פעיל)</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{r.unit}</div>
+                </div>
+                {!bulk.selectionMode && (
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => setEditing({ ...r })} className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => remove(r.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {DAY_COLS.map((c, i) => {
+                  const v = Number(r[c]) || 0;
+                  return (
+                    <div
+                      key={c}
+                      className="rounded-md bg-card border border-border px-2 py-1 text-center text-xs min-w-[2.5rem]"
+                    >
+                      <div className="text-[10px] text-muted-foreground leading-tight">{DAY_LABELS[i]}</div>
+                      <div className={`font-bold tabular-nums ${v > 0 ? "text-neon" : "text-muted-foreground/40"}`}>{v}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        {rows.length === 0 && (
+          <div className="text-center text-muted-foreground text-sm py-6">אין פריטים עדיין.</div>
+        )}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="mt-4 border border-border rounded-md overflow-x-auto hidden lg:block">
         <table className="w-full text-sm">
           <thead className="bg-card text-muted-foreground text-xs">
             <tr>
@@ -227,7 +287,7 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
                       bulk.toggle(r.id);
                     }
                   }}
-                  className={`border-t border-border ${selected ? "bg-neon/10" : ""}`}
+                  className={`border-t border-border ${selected ? "bg-neon/10" : ""} ${!r.active ? "opacity-50" : ""}`}
                 >
                   {bulk.selectionMode && (
                     <td className="px-2 py-2 text-center">
@@ -258,6 +318,7 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
           </tbody>
         </table>
       </div>
+
 
       <BulkActionBar
         count={bulk.count}
