@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
+import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, ChevronDown } from "lucide-react";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,10 +10,11 @@ import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
 import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
-import { useBranchFeature } from "@/components/BranchGate";
+import { useBranchFeature, useActiveBranchData } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
 import { PersonalTasksCard } from "@/components/PersonalTasksCard";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { ShiftFeedCard } from "@/components/ShiftFeedCard";
 
@@ -39,8 +40,6 @@ interface CalOverride {
   order_verification_status: "pending" | "ordered" | "skipped" | null;
 }
 
-const WEEKDAYS_HE = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
-
 function todayIso() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -49,6 +48,7 @@ function todayIso() {
 function OperationalDashboard() {
   const { role, isSuperAdmin } = useAuth();
   const vehiclesEnabled = useBranchFeature("vehicles", true);
+  const activeBranch = useActiveBranchData();
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -102,6 +102,7 @@ function OperationalDashboard() {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, overrides]);
+  void todayEvents;
 
   const tomorrowDeliveries = useMemo(() => {
     const d = new Date();
@@ -121,166 +122,73 @@ function OperationalDashboard() {
   const shoppingCount = lists.shopping.filter((t) => !t.done).length;
   const ordersCount = lists.orders.filter((t) => !t.done).length;
   const shortagesCount = (lists.shortages ?? []).filter((t) => !t.done).length;
+  const notebookTotal = openTasks + shoppingCount + ordersCount + shortagesCount;
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("he-IL", {
     weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
   });
 
-  const homeTitle = useSiteText("home.title", "ברוכים הבאים למרכז השליטה של Pizza X");
-  const homeSubtitle = useSiteText(
+  // Site texts kept for compatibility but no longer rendered in the header.
+  useSiteText("home.title", "ברוכים הבאים למרכז השליטה של Pizza X");
+  useSiteText(
     "home.subtitle",
     "מרכז הבקרה התפעולי של המטבח. הנה תמונת מצב יומית מהירה לכל מה שקורה היום במטבח.",
   );
-  // (Weather title is computed inside WeatherWidget from the active branch.)
   const rainAlert = useSiteText(
     "home.rain_alert",
     "⚠️ צפי לגשם, אין לפתוח שולחנות וכיסאות בחוץ",
   );
 
-  // Replace generic brand mention with neon-styled "Pizza X"
-  const titleParts = homeTitle.split("Pizza X");
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6" data-tour="home-header">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="font-display text-2xl sm:text-4xl font-bold leading-tight tracking-tight text-foreground">
-            {titleParts.length > 1 ? (
-              <>
-                {titleParts[0]}
-                <span className="text-neon font-bold text-glow-neon">Pizza X</span>
-                {titleParts.slice(1).join("Pizza X")}
-              </>
-            ) : (
-              homeTitle
-            )}
-          </h1>
-        </div>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          {homeSubtitle} <span className="text-muted-foreground/80">• {dateLabel}</span>
-        </p>
+      {/* Compact status bar */}
+      <div
+        className="mb-4 py-3 flex items-center justify-between gap-3 border-b border-border/60"
+        data-tour="home-header"
+        dir="rtl"
+      >
+        <span className="text-sm text-muted-foreground">{dateLabel}</span>
+        <span className="text-sm font-bold text-foreground truncate">
+          {activeBranch?.name ?? ""}
+        </span>
+        <span className="w-0" />
       </div>
 
       <NotificationPermissionBanner />
 
-
-      {/* Weather + EV grouped (related ambient widgets) */}
-      <div className="mb-4">
-        <WeatherWidget alertText={rainAlert} />
+      {/* Weather (collapsible) + EV */}
+      <div className="mb-4 space-y-2">
+        <Collapsible>
+          <CollapsibleTrigger className="group w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-card/60 px-3 py-2 text-right text-sm text-muted-foreground hover:text-foreground transition">
+            <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180 shrink-0" />
+            <span className="font-bold text-foreground">מזג אוויר</span>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <WeatherWidget alertText={rainAlert} />
+          </CollapsibleContent>
+        </Collapsible>
+        {vehiclesEnabled && <EvChargingWidget />}
       </div>
-      {vehiclesEnabled && (
-        <div className="mb-6">
-          <EvChargingWidget />
-        </div>
-      )}
 
       {/* Supplier ordering alerts — must order today */}
       <SupplierAlertsBanner />
 
-
-
-      {/* Main operational grid — 1 col mobile, 2 col tablet, 3 col desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-start">
-        {/* Column 1: AI brief / Feed */}
-        <div className="space-y-4">
-          <div data-tour="shift-feed">
-            <ShiftFeedCard />
-          </div>
-          <PersonalTasksCard />
+      {/* Shift feed + personal tasks: stacked on mobile, side-by-side on lg */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 items-start">
+        <div data-tour="shift-feed">
+          <ShiftFeedCard />
         </div>
-
-        {/* Column 2: Active operations & telemetry */}
-        <div className="space-y-4">
-          <CurrentShiftProgressCard />
-          <DoughStatusCard />
-          <div className="grid grid-cols-3 gap-3">
-            <StatCard label="משימות פתוחות" value={openTasks} to="/notebook" />
-            <Link
-              to="/tasks"
-              data-tour="stat-tasks-top"
-              aria-label="פתח צ'ק-ליסט משמרות"
-              className="rounded-xl border-2 border-neon glow-neon bg-neon/10 p-4 min-h-24 flex flex-col items-center justify-center gap-1.5 text-center transition hover:bg-neon/15"
-            >
-              <ClipboardCheck className="h-6 w-6 text-neon" />
-              <span className="text-[11px] font-bold leading-tight text-neon">צ'ק-ליסט משמרות</span>
-            </Link>
-            <StatCard label="אירועים היום" value={todayEvents.length} to="/calendar" tourId="stat-events-today" />
-          </div>
-        </div>
-
-        {/* Column 3: Quick navigation cards (today/notebook) */}
-        <div className="space-y-4 md:col-span-2 lg:col-span-1">
-          {/* Today's Schedule */}
-          <Link
-            to="/calendar"
-            aria-label="מעבר ללוח אירועים מלא"
-            className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <CalendarDays className="h-5 w-5 text-neon shrink-0" />
-                <h2 className="font-display text-lg font-bold truncate">📅 לוח אירועים – היום</h2>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0">{WEEKDAYS_HE[today.getDay()]}</span>
-            </div>
-            {todayEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">אין אירועים מתוזמנים להיום.</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {todayEvents.slice(0, 4).map((e) => (
-                  <li
-                    key={e.id}
-                    className={`text-sm flex items-center justify-between gap-2 rounded-md px-2 py-1.5 ${
-                      e.high_priority ? "bg-neon/10 text-neon" : "bg-background/40"
-                    }`}
-                  >
-                    <span className="truncate">{e.title}</span>
-                    {e.supplier && (
-                      <span className="text-[10px] text-muted-foreground shrink-0">{e.supplier}</span>
-                    )}
-                  </li>
-                ))}
-                {todayEvents.length > 4 && (
-                  <li className="text-xs text-muted-foreground">+ {todayEvents.length - 4} נוספים</li>
-                )}
-              </ul>
-            )}
-            <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
-              פתח לוח מלא ←
-            </span>
-          </Link>
-
-          {/* Daily Notebook */}
-          <Link
-            to="/notebook"
-            data-tour="card-notebook"
-            aria-label="מעבר לפנקס הערות ומשימות"
-            className="group rounded-xl border-2 border-jungle/30 hover:border-neon bg-card p-5 transition flex flex-col gap-3"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <StickyNote className="h-5 w-5 text-neon shrink-0" />
-              <h2 className="font-display text-lg font-bold truncate">📝 פנקס הערות ומשימות</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <NotebookMini label="משימות" value={openTasks} />
-              <NotebookMini label="קניות" value={shoppingCount} />
-              <NotebookMini label="הזמנות" value={ordersCount} />
-              <NotebookMini label="חוסרים" value={shortagesCount} />
-            </div>
-            <span className="text-xs text-neon font-bold mt-auto group-hover:underline">
-              פתח פנקס ←
-            </span>
-          </Link>
-        </div>
+        <PersonalTasksCard />
       </div>
 
-
-
+      {/* Dough + current shift progress — compact side by side */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 items-start">
+        <CurrentShiftProgressCard />
+        <DoughStatusCard />
+      </div>
 
       {/* Supplier reminders — tomorrow */}
       {tomorrowDeliveries.length > 0 && (
@@ -319,11 +227,10 @@ function OperationalDashboard() {
           <>
             <SectionHeader>מטבח ותפעול</SectionHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              
-              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
+              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={openTasks} />
               <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
               <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
-              <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" />
+              <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} />
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
             </div>
 
@@ -354,49 +261,6 @@ function OperationalDashboard() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  to,
-  highlight,
-  tourId,
-}: {
-  label: string;
-  value: number;
-  to: string;
-  highlight?: boolean;
-  tourId?: string;
-}) {
-  return (
-    <Link
-      to={to}
-      data-tour={tourId}
-      aria-label={`${label}: ${value}`}
-      className={`rounded-xl border-2 p-4 min-h-24 flex flex-col justify-between text-right transition hover:border-neon ${
-        highlight ? "border-neon glow-neon bg-neon/5" : "border-zinc-800 bg-zinc-900/40"
-      }`}
-    >
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold leading-snug">
-        {label}
-      </div>
-      <div className="font-display text-3xl font-black text-neon tabular-nums mt-1 leading-none">
-        {value}
-      </div>
-    </Link>
-  );
-}
-
-function NotebookMini({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md bg-jungle/5 border border-jungle/30 py-2">
-      <div className="font-display text-xl font-black text-neon tabular-nums leading-none">
-        {value}
-      </div>
-      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
-    </div>
-  );
-}
-
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-zinc-400 text-sm font-bold mb-3 mt-6 border-b border-zinc-800/50 pb-1">
@@ -410,19 +274,26 @@ function ShortcutTile({
   icon,
   label,
   tourId,
+  badgeCount,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   tourId?: string;
+  badgeCount?: number;
 }) {
   return (
     <Link
       to={to}
       data-tour={tourId}
       aria-label={label}
-      className="rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 min-h-24 flex flex-col items-center justify-center gap-2 text-center transition"
+      className="relative rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 min-h-20 flex flex-col items-center justify-center gap-2 text-center transition"
     >
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <span className="absolute top-2 left-2 rounded-full bg-neon text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center">
+          {badgeCount}
+        </span>
+      )}
       <div className="text-neon">{icon}</div>
       <span className="text-sm font-bold leading-snug">{label}</span>
     </Link>
