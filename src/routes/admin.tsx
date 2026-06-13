@@ -15,6 +15,8 @@ import {
   Bell,
   FileText,
   Save,
+  ChevronLeft,
+  ChevronDown,
 } from "lucide-react";
 import {
   categoryLabels,
