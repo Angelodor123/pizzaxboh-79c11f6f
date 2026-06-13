@@ -67,13 +67,20 @@ function SuppliersPage() {
       setLoading(false);
     };
     load();
-    const ch = supabase
-      .channel("suppliers_rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, () => load())
-      .subscribe();
+    const branchId = getActiveBranchIdSync();
+    const ch = branchId
+      ? supabase
+          .channel("suppliers_rt")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "suppliers", filter: `branch_id=eq.${branchId}` },
+            () => load(),
+          )
+          .subscribe()
+      : null;
     return () => {
       mounted = false;
-      supabase.removeChannel(ch);
+      if (ch) supabase.removeChannel(ch);
     };
   }, []);
 

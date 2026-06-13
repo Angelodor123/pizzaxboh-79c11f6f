@@ -180,7 +180,7 @@ const TASK_PHOTOS_BUCKET = "task-photos";
 export async function uploadTaskPhoto(
   file: File,
   opts: { branchId: string; taskId: string; userId: string | null },
-): Promise<{ path: string; signedUrl: string }> {
+): Promise<{ path: string }> {
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
   const stamp = Date.now();
   const rand = Math.random().toString(36).slice(2, 8);
@@ -191,8 +191,7 @@ export async function uploadTaskPhoto(
     .upload(path, file, { upsert: false, contentType: file.type || "image/jpeg" });
   if (uploadErr) throw uploadErr;
 
-  const signed = await getTaskPhotoSignedUrl(path);
-  return { path, signedUrl: signed ?? "" };
+  return { path };
 }
 
 export async function getTaskPhotoSignedUrl(
@@ -200,6 +199,8 @@ export async function getTaskPhotoSignedUrl(
   expiresInSeconds = 3600,
 ): Promise<string | null> {
   if (!path) return null;
+  // Backwards compat: older logs stored a full signed URL in photo_url.
+  if (path.startsWith("https://")) return path;
   const { data, error } = await supabase.storage
     .from(TASK_PHOTOS_BUCKET)
     .createSignedUrl(path, expiresInSeconds);
