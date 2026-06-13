@@ -240,90 +240,38 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
   }, [fetchWeather, reloadKey, cacheKey]);
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
-  const staleLabel = staleAt
-    ? new Date(staleAt).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
-    : null;
 
   return (
-    <div className="rounded-xl border-2 border-jungle/30 bg-card p-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-bold flex items-center gap-2">
-          {data ? iconFor(data.currentCode, "h-5 w-5 text-neon") : <Cloud className="h-5 w-5 text-neon" />}
-          {displayTitle}
-        </h2>
-        <div className="flex items-center gap-2">
-          {(failed || staleAt) && !loading && (
-            <button
-              type="button"
-              onClick={() => setReloadKey((k) => k + 1)}
-              className="inline-flex items-center gap-1 text-[10px] font-bold text-neon hover:underline"
-              aria-label="רענון מזג אוויר"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </button>
-          )}
-          {data && (
-            <div className="text-right">
-              <div className="font-display text-3xl font-black text-neon tabular-nums leading-none">
-                {data.currentTemp}°
-              </div>
-              <div className="text-[10px] text-foreground/70 mt-0.5">{descFor(data.currentCode)}</div>
-            </div>
-          )}
-        </div>
-      </div>
-
+    <div className="rounded-xl border border-border bg-card/60 px-4 py-2 flex items-center gap-3" dir="rtl">
       {loading && !data && (
-        <div className="flex items-center justify-center py-4 text-muted-foreground text-xs">
-          <Loader2 className="h-4 w-4 animate-spin ml-2" /> טוען מזג אוויר…
-        </div>
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
       )}
 
       {failed && !data && !loading && (
-        <div className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/40 px-3 py-2">
-          <span className="text-xs text-muted-foreground">מזג האוויר אינו זמין כעת</span>
-          <button
-            type="button"
-            onClick={() => setReloadKey((k) => k + 1)}
-            className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:underline"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> רענון
-          </button>
-        </div>
-      )}
-
-      {data && staleAt && (
-        <div className="text-[10px] text-foreground/60">
-          עודכן לאחרונה: {staleLabel}
-        </div>
+        <button
+          type="button"
+          onClick={() => setReloadKey((k) => k + 1)}
+          className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:underline shrink-0"
+          aria-label="רענון מזג אוויר"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          רענון
+        </button>
       )}
 
       {data && (
-        <div dir="ltr" className="grid grid-cols-6 gap-1 text-center">
-          {data.hours.map((h) => (
-            <div
-              key={h.time}
-              className="rounded-md bg-background/40 border border-border/40 py-2 flex flex-col items-center gap-1"
-            >
-              <span className="text-[9px] text-foreground/70 tabular-nums">{HEBREW_HOURS(h.time)}</span>
-              <span className="text-neon">{iconFor(h.code, "h-4 w-4")}</span>
-              <span className="text-[11px] font-bold tabular-nums">{h.temp}°</span>
-              {h.precipProb >= 30 && (
-                <span className="text-[9px] text-neon-soft tabular-nums">{h.precipProb}%</span>
-              )}
-            </div>
-          ))}
-        </div>
+        <>
+          {iconFor(data.currentCode, "h-5 w-5 text-neon shrink-0")}
+          <span className="font-bold text-foreground tabular-nums">{data.currentTemp}°</span>
+          <span className="text-sm text-muted-foreground">{descFor(data.currentCode)}</span>
+        </>
       )}
 
       {rainSoon && (
-        <div
-          className="rounded-md border-2 border-neon bg-neon/10 text-neon px-3 py-2 flex items-center gap-2 pulse-alarm"
-          role="alert"
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span className="text-xs font-bold leading-snug">{alertText}</span>
-        </div>
+        <span className="mr-auto inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-bold px-2 py-0.5 shrink-0">
+          <AlertTriangle className="h-3 w-3" />
+          {alertText}
+        </span>
       )}
     </div>
   );
