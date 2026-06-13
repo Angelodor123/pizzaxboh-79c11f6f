@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, ChevronDown } from "lucide-react";
+import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import { useBranchFeature, useActiveBranchData } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
 import { PersonalTasksCard } from "@/components/PersonalTasksCard";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 
 import { ShiftFeedCard } from "@/components/ShiftFeedCard";
 
@@ -159,17 +159,9 @@ function OperationalDashboard() {
 
       <NotificationPermissionBanner />
 
-      {/* Weather (collapsible) + EV */}
+      {/* Weather strip + EV */}
       <div className="mb-4 space-y-2">
-        <Collapsible>
-          <CollapsibleTrigger className="group w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-card/60 px-3 py-2 text-right text-sm text-muted-foreground hover:text-foreground transition">
-            <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180 shrink-0" />
-            <span className="font-bold text-foreground">מזג אוויר</span>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2">
-            <WeatherWidget alertText={rainAlert} />
-          </CollapsibleContent>
-        </Collapsible>
+        <WeatherWidget alertText={rainAlert} />
         {vehiclesEnabled && <EvChargingWidget />}
       </div>
 
