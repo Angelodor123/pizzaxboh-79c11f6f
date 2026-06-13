@@ -1208,6 +1208,89 @@ function RowTab({
   );
 }
 
+function RecipesGroupedList({
+  recipes,
+  onEdit,
+  onDelete,
+}: {
+  recipes: Recipe[];
+  onEdit: (r: Recipe) => void;
+  onDelete: (r: Recipe) => void;
+}) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const groups = categoryOrder
+    .map((c) => ({ cat: c, items: recipes.filter((r) => r.category === c) }))
+    .filter((g) => g.items.length > 0);
+
+  if (recipes.length === 0) {
+    return (
+      <div className="border border-border rounded-xl bg-card/40 px-3 py-8 text-center text-muted-foreground text-sm">
+        לא נמצאו מתכונים.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4" dir="rtl">
+      {groups.map(({ cat, items }) => {
+        const isCollapsed = collapsed[cat];
+        return (
+          <section key={cat} className="rounded-xl border border-border bg-card/40 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-card/70 transition"
+            >
+              <ChevronDown
+                className={`h-4 w-4 text-muted-foreground transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+              />
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                <span className="inline-flex items-center justify-center rounded-full bg-neon/10 text-neon text-xs font-bold px-2 py-0.5 tabular-nums">
+                  {items.length}
+                </span>
+                <span className="font-bold text-foreground">{categoryLabels[cat]}</span>
+                <span className="text-lg leading-none">{CATEGORY_EMOJI[cat]}</span>
+              </div>
+            </button>
+            {!isCollapsed && (
+              <ul className="px-3 pb-3 space-y-2">
+                {items.map((r) => (
+                  <li
+                    key={r.id}
+                    className="rounded-lg border border-border bg-card/60 px-4 py-3 flex items-center gap-2"
+                  >
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => onEdit(r)}
+                        className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
+                        aria-label="ערוך"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(r)}
+                        className="p-2 rounded-md hover:bg-destructive/10 text-foreground hover:text-destructive"
+                        aria-label="מחק"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 text-right font-bold text-foreground truncate">
+                      {r.nameHebrew}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
 
 
 
