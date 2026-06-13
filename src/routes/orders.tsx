@@ -35,6 +35,7 @@ function OrdersPage() {
   const [receiving, setReceiving] = useState<{ orderId: string | null } | null>(null);
   const [monthCount, setMonthCount] = useState(0);
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
+  const [openShortages, setOpenShortages] = useState<{ text: string }[]>([]);
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
