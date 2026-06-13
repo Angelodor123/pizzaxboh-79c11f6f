@@ -322,18 +322,8 @@ function AuthedShell() {
     void import("@/lib/queue-handlers").then((m) => m.registerOfflineHandlers());
   }, []);
 
-  // Gentle one-time prompt for notification permission
-  useEffect(() => {
-    const KEY = "pizzax-notif-prompt-v1";
-    if (typeof window === "undefined") return;
-    if (notificationPermission() !== "default") return;
-    if (localStorage.getItem(KEY)) return;
-    const t = setTimeout(() => {
-      localStorage.setItem(KEY, "1");
-      void requestNotificationPermission();
-    }, 4000);
-    return () => clearTimeout(t);
-  }, []);
+  // Notification permission prompt is intentionally NOT auto-triggered here.
+  // It is surfaced from the profile page with proper context.
 
   // When the user is back on the recipes page, the "return to recipe" hint
   // is no longer useful — clear it.
