@@ -145,9 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
-      setTimeout(() => {
-        loadRole(s?.user?.id);
-      }, 0);
+      loadRole(s?.user?.id);
     });
 
     supabase.auth.getSession().then(({ data }) => {
