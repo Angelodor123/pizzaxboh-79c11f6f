@@ -416,10 +416,16 @@ function AuthedShell() {
           </div>
         </main>
 
-        <Suspense fallback={null}>
-          <GuidedTour />
-          <CopilotFab />
-        </Suspense>
+        <ErrorBoundary fallback={() => null}>
+          <Suspense fallback={null}>
+            <GuidedTour />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary fallback={() => null}>
+          <Suspense fallback={null}>
+            <CopilotFab />
+          </Suspense>
+        </ErrorBoundary>
         <CriticalMaintenanceInterceptor />
         {showQuickBack && <QuickBackBubble />}
         <footer className="border-t border-border py-4 px-4 text-center space-y-1">
