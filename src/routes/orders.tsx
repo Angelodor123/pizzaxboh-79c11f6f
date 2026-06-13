@@ -80,6 +80,29 @@ function OrdersPage() {
     return () => { signal.aborted = true; };
   }, [role, isSuperAdmin, branchId, load]);
 
+  useEffect(() => {
+    if (!selected || !branchId) {
+      setOpenShortages([]);
+      return;
+    }
+    const fetchShortages = async () => {
+      const { data, error } = await supabase
+        .from("notebook_items")
+        .select("text, catalog_product_id, supplier_products!inner(supplier_id)")
+        .eq("list_key", "shortages")
+        .eq("done", false)
+        .is("archived_at", null)
+        .eq("branch_id", branchId)
+        .eq("supplier_products.supplier_id", selected.id);
+      if (error) {
+        setOpenShortages([]);
+        return;
+      }
+      setOpenShortages(data ?? []);
+    };
+    fetchShortages();
+  }, [selected, branchId]);
+
   const grid = useMemo(() => list, [list]);
 
   if (authLoading) return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
