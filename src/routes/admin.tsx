@@ -259,152 +259,122 @@ function AdminPage() {
         </h1>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border-border flex gap-1 overflow-x-auto scrollbar-hide" dir="rtl">
-        <TabButton active={tab === "overview"} onClick={() => setTab("overview")} icon={<LayoutDashboard className="h-4 w-4" />}>
-          סקירה כללית
-        </TabButton>
-        <TabButton active={tab === "recipes"} onClick={() => setTab("recipes")} icon={<ChefHat className="h-4 w-4" />}>
-          מתכונים
-        </TabButton>
-        <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={<Users className="h-4 w-4" />}>
-          הרשאות
-        </TabButton>
-        {isSuperAdmin && (
-          <TabButton active={tab === "branches"} onClick={() => setTab("branches")} icon={<Building2 className="h-4 w-4" />}>
-            סניפים
-          </TabButton>
-        )}
-        {isSuperAdmin && (
-          <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")} icon={<ListChecks className="h-4 w-4" />}>
-            משימות קבועות
-          </TabButton>
-        )}
-        <TabButton active={tab === "reminders"} onClick={() => setTab("reminders")} icon={<Bell className="h-4 w-4" />}>
-          תזכורות ספקים
-        </TabButton>
-        <TabButton active={tab === "onboarding"} onClick={() => setTab("onboarding")} icon={<FileText className="h-4 w-4" />}>
-          הסברי דפים
-        </TabButton>
-        <TabButton active={tab === "units"} onClick={() => setTab("units")} icon={<FileText className="h-4 w-4" />}>
-          יחידות מידה
-        </TabButton>
-        <TabButton active={tab === "prep"} onClick={() => setTab("prep")} icon={<ChefHat className="h-4 w-4" />}>
-          הכנות יומיות
-        </TabButton>
-        <TabButton active={tab === "restock"} onClick={() => setTab("restock")} icon={<ChefHat className="h-4 w-4" />}>
-          השלמות מהמחסן
-        </TabButton>
+      {/* Grouped navigation: sidebar on desktop, two pill rows on mobile */}
+      <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+        <AdminNav tab={tab} setTab={setTab} isSuperAdmin={isSuperAdmin} />
+
+        <div className="mt-6 lg:mt-0 min-w-0">
+          {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
+
+          {tab === "users" && (
+            <div className="space-y-6">
+              <InvitationsPanel />
+              {isSuperAdmin && <SuperAdminUsersPanel />}
+            </div>
+          )}
+          {tab === "branches" && isSuperAdmin && <BranchesPanel />}
+          {tab === "tasks" && isSuperAdmin && <TasksPanel />}
+          {tab === "reminders" && <SupplierRemindersPanel />}
+
+          {tab === "onboarding" && <OnboardingPanel />}
+          {tab === "units" && <UnitsPanel />}
+          {tab === "prep" && <PrepItemsPanel />}
+          {tab === "restock" && <RestockItemsPanel />}
+
+          {tab === "recipes" && (
+            <section>
+              <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="font-display text-xl font-bold text-right">
+                    ניהול מתכונים
+                  </h2>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    הוסף, ערוך ומחק מתכונים. השינויים מסונכרנים בענן בזמן אמת לכל המשתמשים.
+                  </p>
+                </div>
+                <button
+                  onClick={startNew}
+                  className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
+                >
+                  <Plus className="h-4 w-4" /> מתכון חדש
+                </button>
+              </div>
+
+              <div className="mb-4 flex flex-col sm:flex-row gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="חיפוש מתכון..."
+                  className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
+                />
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
+                >
+                  <option value="all">📋 כל הקטגוריות</option>
+                  {categoryOrder.map((c) => (
+                    <option key={c} value={c}>
+                      {CATEGORY_EMOJI[c]} {categoryLabels[c]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="border border-border rounded-md overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
+                    <tr>
+                      <th className="text-right px-3 py-2">שם</th>
+                      <th className="text-right px-3 py-2">קטגוריה</th>
+                      <th className="px-3 py-2 w-32" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((r) => (
+                      <tr key={r.id} className="border-t border-border">
+                        <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
+                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
+                              aria-label="ערוך"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
+                                if (ok) void softDeleteRecipe(r.id);
+                              }}
+                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
+                              aria-label="מחק"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {visible.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
+                          לא נמצאו מתכונים.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
 
-      {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
-
-      {tab === "users" && (
-        <div className="space-y-6">
-          <InvitationsPanel />
-          {isSuperAdmin && <SuperAdminUsersPanel />}
-        </div>
-      )}
-      {tab === "branches" && isSuperAdmin && <BranchesPanel />}
-      {tab === "tasks" && isSuperAdmin && <TasksPanel />}
-      {tab === "reminders" && <SupplierRemindersPanel />}
-      
-      {tab === "onboarding" && <OnboardingPanel />}
-      {tab === "units" && <UnitsPanel />}
-      {tab === "prep" && <PrepItemsPanel />}
-      {tab === "restock" && <RestockItemsPanel />}
-
-      {tab === "recipes" && (
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="font-display text-xl font-bold text-right">
-                ניהול מתכונים
-              </h2>
-              <p className="text-muted-foreground mt-1 text-sm">
-                הוסף, ערוך ומחק מתכונים. השינויים מסונכרנים בענן בזמן אמת לכל המשתמשים.
-              </p>
-            </div>
-            <button
-              onClick={startNew}
-              className="inline-flex items-center gap-2 bg-neon text-primary-foreground font-bold px-4 py-2 rounded-md glow-neon"
-            >
-              <Plus className="h-4 w-4" /> מתכון חדש
-            </button>
-          </div>
-
-          <div className="mb-4 flex flex-col sm:flex-row gap-2">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="חיפוש מתכון..."
-              className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-right"
-            />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as RecipeCategory | "all")}
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
-            >
-              <option value="all">📋 כל הקטגוריות</option>
-              {categoryOrder.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_EMOJI[c]} {categoryLabels[c]}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="border border-border rounded-md overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="text-right px-3 py-2">שם</th>
-                  <th className="text-right px-3 py-2">קטגוריה</th>
-                  <th className="px-3 py-2 w-32" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr key={r.id} className="border-t border-border">
-                    <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button
-                          onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
-                          className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
-                          aria-label="ערוך"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
-                            if (ok) void softDeleteRecipe(r.id);
-                          }}
-                          className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
-                          aria-label="מחק"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {visible.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
-                      לא נמצאו מתכונים.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
       {editing && (
         <div
@@ -1163,7 +1133,133 @@ function VersionHistory({
 // Admin sub-components: tabs, supplier reminders, CMS texts
 // ---------------------------------------------------------------------------
 
-function TabButton({
+type AdminTab =
+  | "overview"
+  | "recipes"
+  | "users"
+  | "branches"
+  | "tasks"
+  | "reminders"
+  | "units"
+  | "prep"
+  | "restock"
+  | "onboarding";
+
+type AdminNavItem = { key: AdminTab; label: string; icon: React.ReactNode };
+
+function AdminNav({
+  tab,
+  setTab,
+  isSuperAdmin,
+}: {
+  tab: AdminTab;
+  setTab: (t: AdminTab) => void;
+  isSuperAdmin: boolean;
+}) {
+  const operations: AdminNavItem[] = [
+    { key: "overview", label: "סקירה כללית", icon: <LayoutDashboard className="h-4 w-4" /> },
+    { key: "users", label: "הרשאות", icon: <Users className="h-4 w-4" /> },
+    { key: "reminders", label: "תזכורות ספקים", icon: <Bell className="h-4 w-4" /> },
+  ];
+  const settings: AdminNavItem[] = isSuperAdmin
+    ? [
+        { key: "branches", label: "סניפים", icon: <Building2 className="h-4 w-4" /> },
+        { key: "tasks", label: "משימות קבועות", icon: <ListChecks className="h-4 w-4" /> },
+        { key: "prep", label: "הכנות יומיות", icon: <ChefHat className="h-4 w-4" /> },
+        { key: "restock", label: "השלמות מהמחסן", icon: <ChefHat className="h-4 w-4" /> },
+        { key: "units", label: "יחידות מידה", icon: <FileText className="h-4 w-4" /> },
+        { key: "onboarding", label: "הסברי דפים", icon: <FileText className="h-4 w-4" /> },
+        { key: "recipes", label: "מתכונים", icon: <ChefHat className="h-4 w-4" /> },
+      ]
+    : [];
+
+  return (
+    <nav dir="rtl" aria-label="ניווט ניהול">
+      {/* Mobile: two pill rows */}
+      <div className="lg:hidden">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
+          תפעול
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {operations.map((item) => (
+            <PillTab
+              key={item.key}
+              active={tab === item.key}
+              icon={item.icon}
+              onClick={() => setTab(item.key)}
+            >
+              {item.label}
+            </PillTab>
+          ))}
+        </div>
+
+        {settings.length > 0 && (
+          <>
+            <div className="my-4 border-t border-border/60" />
+            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
+              הגדרות
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {settings.map((item) => (
+                <PillTab
+                  key={item.key}
+                  active={tab === item.key}
+                  icon={item.icon}
+                  onClick={() => setTab(item.key)}
+                >
+                  {item.label}
+                </PillTab>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Desktop: sticky sidebar */}
+      <div className="hidden lg:block lg:sticky lg:top-24">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2 mb-2">
+          תפעול
+        </div>
+        <ul className="space-y-1">
+          {operations.map((item) => (
+            <li key={item.key}>
+              <SidebarTab
+                active={tab === item.key}
+                icon={item.icon}
+                onClick={() => setTab(item.key)}
+              >
+                {item.label}
+              </SidebarTab>
+            </li>
+          ))}
+        </ul>
+
+        {settings.length > 0 && (
+          <>
+            <div className="mt-5 mb-2 text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2">
+              הגדרות
+            </div>
+            <ul className="space-y-1">
+              {settings.map((item) => (
+                <li key={item.key}>
+                  <SidebarTab
+                    active={tab === item.key}
+                    icon={item.icon}
+                    onClick={() => setTab(item.key)}
+                  >
+                    {item.label}
+                  </SidebarTab>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+function PillTab({
   active,
   onClick,
   icon,
@@ -1177,20 +1273,49 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`relative inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
+      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border transition ${
         active
-          ? "text-neon"
-          : "text-muted-foreground hover:text-foreground"
+          ? "bg-neon/15 border-neon text-neon shadow-[0_0_18px_-6px_var(--neon)]"
+          : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-neon/40"
       }`}
     >
       {icon}
-      {children}
-      {active && (
-        <span className="absolute right-0 left-0 -bottom-px h-0.5 bg-neon shadow-[0_0_8px_var(--neon)]" />
-      )}
+      <span className="whitespace-nowrap">{children}</span>
     </button>
   );
 }
+
+function SidebarTab({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group relative w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold transition ${
+        active
+          ? "bg-neon/10 text-neon"
+          : "text-muted-foreground hover:text-foreground hover:bg-card/60"
+      }`}
+    >
+      {active && (
+        <span className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-full bg-neon shadow-[0_0_8px_var(--neon)]" />
+      )}
+      <span className={active ? "text-neon" : "text-muted-foreground group-hover:text-foreground"}>
+        {icon}
+      </span>
+      <span className="text-right flex-1">{children}</span>
+    </button>
+  );
+}
+
 
 function SupplierRemindersPanel() {
   const { settings, setLocal, save, loading } = useSupplierReminderSettings();
