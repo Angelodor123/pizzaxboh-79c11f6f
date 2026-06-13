@@ -188,6 +188,17 @@ function OrdersPage() {
         </Link>
       </div>
 
+      {selected && role === "admin" && openShortages.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-500/60 bg-amber-500/15 px-4 py-3 text-sm" dir="rtl">
+          <div className="flex items-center gap-2 text-amber-400 font-semibold">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>חוסרים פתוחים מספק זה:</span>
+          </div>
+          <div className="mt-1 text-amber-200/90 leading-relaxed">
+            {openShortages.map((s) => s.text).join(" · ")}
+          </div>
+        </div>
+      )}
 
       {selected && (
         <OrderModal
