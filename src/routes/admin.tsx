@@ -1176,92 +1176,50 @@ function AdminNav({
     : [];
 
   return (
-    <nav dir="rtl" aria-label="ניווט ניהול">
-      {/* Mobile: two pill rows */}
-      <div className="lg:hidden">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
-          תפעול
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {operations.map((item) => (
-            <PillTab
-              key={item.key}
+    <nav dir="rtl" aria-label="ניווט ניהול" className="lg:sticky lg:top-24">
+      <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
+        תפעול
+      </div>
+      <ul className="space-y-2">
+        {operations.map((item) => (
+          <li key={item.key}>
+            <RowTab
               active={tab === item.key}
               icon={item.icon}
               onClick={() => setTab(item.key)}
             >
               {item.label}
-            </PillTab>
-          ))}
-        </div>
+            </RowTab>
+          </li>
+        ))}
+      </ul>
 
-        {settings.length > 0 && (
-          <>
-            <div className="my-4 border-t border-border/60" />
-            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
-              הגדרות
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {settings.map((item) => (
-                <PillTab
-                  key={item.key}
+      {settings.length > 0 && (
+        <>
+          <div className="my-5 border-t border-border/60" />
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold px-1 mb-2">
+            הגדרות
+          </div>
+          <ul className="space-y-2">
+            {settings.map((item) => (
+              <li key={item.key}>
+                <RowTab
                   active={tab === item.key}
                   icon={item.icon}
                   onClick={() => setTab(item.key)}
                 >
                   {item.label}
-                </PillTab>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Desktop: sticky sidebar */}
-      <div className="hidden lg:block lg:sticky lg:top-24">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2 mb-2">
-          תפעול
-        </div>
-        <ul className="space-y-1">
-          {operations.map((item) => (
-            <li key={item.key}>
-              <SidebarTab
-                active={tab === item.key}
-                icon={item.icon}
-                onClick={() => setTab(item.key)}
-              >
-                {item.label}
-              </SidebarTab>
-            </li>
-          ))}
-        </ul>
-
-        {settings.length > 0 && (
-          <>
-            <div className="mt-5 mb-2 text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2">
-              הגדרות
-            </div>
-            <ul className="space-y-1">
-              {settings.map((item) => (
-                <li key={item.key}>
-                  <SidebarTab
-                    active={tab === item.key}
-                    icon={item.icon}
-                    onClick={() => setTab(item.key)}
-                  >
-                    {item.label}
-                  </SidebarTab>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+                </RowTab>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </nav>
   );
 }
 
-function PillTab({
+function RowTab({
   active,
   onClick,
   icon,
@@ -1275,48 +1233,22 @@ function PillTab({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border transition ${
+      className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm font-bold transition ${
         active
-          ? "bg-neon/15 border-neon text-neon shadow-[0_0_18px_-6px_var(--neon)]"
-          : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-neon/40"
+          ? "bg-neon/5 border-neon text-neon shadow-[0_0_18px_-8px_var(--neon)]"
+          : "bg-card/60 border-border text-foreground hover:border-neon/40 hover:text-neon"
       }`}
     >
-      {icon}
-      <span className="whitespace-nowrap">{children}</span>
+      <ChevronLeft className={`h-4 w-4 shrink-0 ${active ? "text-neon" : "text-muted-foreground"}`} />
+      <span className="flex-1 text-right truncate">{children}</span>
+      <span className={`shrink-0 grid place-content-center h-8 w-8 rounded-lg ${active ? "bg-neon/10 text-neon" : "bg-background/40 text-muted-foreground"}`}>
+        {icon}
+      </span>
     </button>
   );
 }
 
-function SidebarTab({
-  active,
-  onClick,
-  icon,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`group relative w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold transition ${
-        active
-          ? "bg-neon/10 text-neon"
-          : "text-muted-foreground hover:text-foreground hover:bg-card/60"
-      }`}
-    >
-      {active && (
-        <span className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-full bg-neon shadow-[0_0_8px_var(--neon)]" />
-      )}
-      <span className={active ? "text-neon" : "text-muted-foreground group-hover:text-foreground"}>
-        {icon}
-      </span>
-      <span className="text-right flex-1">{children}</span>
-    </button>
-  );
-}
+
 
 
 function SupplierRemindersPanel() {
