@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Truck, ChevronRight, Camera } from "lucide-react";
+import { Truck, ChevronRight, Camera, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GridSkeleton } from "@/components/ui/skeletons";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +10,7 @@ import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { toastError } from "@/lib/error-messages";
+
 
 
 export const Route = createFileRoute("/orders")({
