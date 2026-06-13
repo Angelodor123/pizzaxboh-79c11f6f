@@ -50,11 +50,7 @@ import { useNotebookRealtime } from "@/lib/notebook-store";
 import { useSiteTextsSync, useSiteText } from "@/lib/site-texts";
 import { useUIStore } from "@/lib/ui-store";
 import { MENU_ITEM_CATEGORIES } from "@/lib/menu-categories";
-import {
-  ensureServiceWorker,
-  notificationPermission,
-  requestNotificationPermission,
-} from "@/lib/notifications";
+import { ensureServiceWorker } from "@/lib/notifications";
 import pizzaXLogo from "@/assets/pizza-x-logo.png";
 
 function ActiveBranchBadge() {
