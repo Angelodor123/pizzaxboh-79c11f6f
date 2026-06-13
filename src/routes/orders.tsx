@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Truck, ChevronRight, Camera } from "lucide-react";
+import { Truck, ChevronRight, Camera, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GridSkeleton } from "@/components/ui/skeletons";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +10,7 @@ import { SmartReceivingModal } from "@/components/SmartReceivingModal";
 import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { toastError } from "@/lib/error-messages";
+
 
 
 export const Route = createFileRoute("/orders")({
@@ -34,6 +35,7 @@ function OrdersPage() {
   const [receiving, setReceiving] = useState<{ orderId: string | null } | null>(null);
   const [monthCount, setMonthCount] = useState(0);
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
+  const [openShortages, setOpenShortages] = useState<{ text: string }[]>([]);
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
@@ -77,6 +79,29 @@ function OrdersPage() {
     void load(signal);
     return () => { signal.aborted = true; };
   }, [role, isSuperAdmin, branchId, load]);
+
+  useEffect(() => {
+    if (!selected || !branchId) {
+      setOpenShortages([]);
+      return;
+    }
+    const fetchShortages = async () => {
+      const { data, error } = await supabase
+        .from("notebook_items")
+        .select("text, catalog_product_id, supplier_products!inner(supplier_id)")
+        .eq("list_key", "shortages")
+        .eq("done", false)
+        .is("archived_at", null)
+        .eq("branch_id", branchId)
+        .eq("supplier_products.supplier_id", selected.id);
+      if (error) {
+        setOpenShortages([]);
+        return;
+      }
+      setOpenShortages(data ?? []);
+    };
+    fetchShortages();
+  }, [selected, branchId]);
 
   const grid = useMemo(() => list, [list]);
 
@@ -163,6 +188,17 @@ function OrdersPage() {
         </Link>
       </div>
 
+      {selected && role === "admin" && openShortages.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-500/60 bg-amber-500/15 px-4 py-3 text-sm" dir="rtl">
+          <div className="flex items-center gap-2 text-amber-400 font-semibold">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>חוסרים פתוחים מספק זה:</span>
+          </div>
+          <div className="mt-1 text-amber-200/90 leading-relaxed">
+            {openShortages.map((s) => s.text).join(" · ")}
+          </div>
+        </div>
+      )}
 
       {selected && (
         <OrderModal
