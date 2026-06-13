@@ -241,37 +241,67 @@ export function WeatherWidget({ alertText }: { title?: string; alertText: string
 
   const rainSoon = !!data?.hours.some((h) => isRainCode(h.code) || h.precipProb >= 50);
 
+  const isStale = staleAt !== null;
+  const showRefresh = failed || isStale;
+
   return (
-    <div className="rounded-xl border border-border bg-card/60 px-4 py-2 flex items-center gap-3" dir="rtl">
-      {loading && !data && (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+    <div className="space-y-2" dir="rtl">
+      {/* TOP ROW */}
+      <div className="rounded-xl border border-border bg-card/60 px-4 py-3 flex items-center gap-3">
+        {loading && !data && (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+        )}
+
+        {data && (
+          <>
+            {iconFor(data.currentCode, "h-6 w-6 text-neon shrink-0")}
+            <span className="font-bold text-2xl text-foreground tabular-nums">{data.currentTemp}°</span>
+            <span className="text-sm text-muted-foreground">{descFor(data.currentCode)}</span>
+          </>
+        )}
+
+        {showRefresh && (
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="ms-auto inline-flex items-center gap-1 text-xs font-bold text-neon hover:underline shrink-0"
+            aria-label="רענון מזג אוויר"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            רענון
+          </button>
+        )}
+
+        {!data && failed && !showRefresh && (
+          <span className="text-sm text-muted-foreground">לא ניתן לטעון מזג אוויר</span>
+        )}
+      </div>
+
+      {/* HOURLY FORECAST */}
+      {data && data.hours.length > 0 && (
+        <div className="grid grid-cols-6 gap-1.5">
+          {data.hours.slice(0, 6).map((h) => (
+            <div
+              key={h.time}
+              className="rounded-lg border border-border bg-card/40 px-1 py-2 flex flex-col items-center gap-1 text-center"
+            >
+              <span className="text-[10px] text-muted-foreground tabular-nums">{HEBREW_HOURS(h.time)}</span>
+              {iconFor(h.code, "h-4 w-4 text-foreground")}
+              <span className="text-xs font-bold tabular-nums">{h.temp}°</span>
+              {h.precipProb >= 30 && (
+                <span className="text-[10px] text-sky-400 tabular-nums">{h.precipProb}%</span>
+              )}
+            </div>
+          ))}
+        </div>
       )}
 
-      {failed && !data && !loading && (
-        <button
-          type="button"
-          onClick={() => setReloadKey((k) => k + 1)}
-          className="inline-flex items-center gap-1 text-xs font-bold text-neon hover:underline shrink-0"
-          aria-label="רענון מזג אוויר"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          רענון
-        </button>
-      )}
-
-      {data && (
-        <>
-          {iconFor(data.currentCode, "h-5 w-5 text-neon shrink-0")}
-          <span className="font-bold text-foreground tabular-nums">{data.currentTemp}°</span>
-          <span className="text-sm text-muted-foreground">{descFor(data.currentCode)}</span>
-        </>
-      )}
-
+      {/* RAIN ALERT */}
       {rainSoon && (
-        <span className="mr-auto inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-bold px-2 py-0.5 shrink-0">
-          <AlertTriangle className="h-3 w-3" />
-          {alertText}
-        </span>
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 flex items-center gap-2 text-amber-500">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="text-xs font-bold">{alertText}</span>
+        </div>
       )}
     </div>
   );
