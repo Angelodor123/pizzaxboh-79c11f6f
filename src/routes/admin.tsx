@@ -15,6 +15,8 @@ import {
   Bell,
   FileText,
   Save,
+  ChevronLeft,
+  ChevronDown,
 } from "lucide-react";
 import {
   categoryLabels,
@@ -321,55 +323,15 @@ function AdminPage() {
                 </select>
               </div>
 
-              <div className="border border-border rounded-md overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-card text-muted-foreground text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="text-right px-3 py-2">שם</th>
-                      <th className="text-right px-3 py-2">קטגוריה</th>
-                      <th className="px-3 py-2 w-32" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((r) => (
-                      <tr key={r.id} className="border-t border-border">
-                        <td className="px-3 py-2 font-bold text-foreground">{r.nameHebrew}</td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {CATEGORY_EMOJI[r.category]} {categoryLabels[r.category]}
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-1 justify-end">
-                            <button
-                              onClick={() => { setOpenedFromCard(false); setEditing({ ...r }); }}
-                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
-                              aria-label="ערוך"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
-                                if (ok) void softDeleteRecipe(r.id);
-                              }}
-                              className="p-2 rounded-md hover:bg-card text-foreground hover:text-destructive"
-                              aria-label="מחק"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {visible.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
-                          לא נמצאו מתכונים.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <RecipesGroupedList
+                recipes={visible}
+                onEdit={(r) => { setOpenedFromCard(false); setEditing({ ...r }); }}
+                onDelete={async (r) => {
+                  const ok = await confirmDelete({ title: "מחיקת מתכון", itemName: r.nameHebrew });
+                  if (ok) void softDeleteRecipe(r.id);
+                }}
+              />
+
             </section>
           )}
         </div>
@@ -1174,92 +1136,50 @@ function AdminNav({
     : [];
 
   return (
-    <nav dir="rtl" aria-label="ניווט ניהול">
-      {/* Mobile: two pill rows */}
-      <div className="lg:hidden">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
-          תפעול
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {operations.map((item) => (
-            <PillTab
-              key={item.key}
+    <nav dir="rtl" aria-label="ניווט ניהול" className="lg:sticky lg:top-24">
+      <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
+        תפעול
+      </div>
+      <ul className="space-y-2">
+        {operations.map((item) => (
+          <li key={item.key}>
+            <RowTab
               active={tab === item.key}
               icon={item.icon}
               onClick={() => setTab(item.key)}
             >
               {item.label}
-            </PillTab>
-          ))}
-        </div>
+            </RowTab>
+          </li>
+        ))}
+      </ul>
 
-        {settings.length > 0 && (
-          <>
-            <div className="my-4 border-t border-border/60" />
-            <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
-              הגדרות
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {settings.map((item) => (
-                <PillTab
-                  key={item.key}
+      {settings.length > 0 && (
+        <>
+          <div className="my-5 border-t border-border/60" />
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold px-1 mb-2">
+            הגדרות
+          </div>
+          <ul className="space-y-2">
+            {settings.map((item) => (
+              <li key={item.key}>
+                <RowTab
                   active={tab === item.key}
                   icon={item.icon}
                   onClick={() => setTab(item.key)}
                 >
                   {item.label}
-                </PillTab>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Desktop: sticky sidebar */}
-      <div className="hidden lg:block lg:sticky lg:top-24">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2 mb-2">
-          תפעול
-        </div>
-        <ul className="space-y-1">
-          {operations.map((item) => (
-            <li key={item.key}>
-              <SidebarTab
-                active={tab === item.key}
-                icon={item.icon}
-                onClick={() => setTab(item.key)}
-              >
-                {item.label}
-              </SidebarTab>
-            </li>
-          ))}
-        </ul>
-
-        {settings.length > 0 && (
-          <>
-            <div className="mt-5 mb-2 text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-2">
-              הגדרות
-            </div>
-            <ul className="space-y-1">
-              {settings.map((item) => (
-                <li key={item.key}>
-                  <SidebarTab
-                    active={tab === item.key}
-                    icon={item.icon}
-                    onClick={() => setTab(item.key)}
-                  >
-                    {item.label}
-                  </SidebarTab>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+                </RowTab>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </nav>
   );
 }
 
-function PillTab({
+function RowTab({
   active,
   onClick,
   icon,
@@ -1273,48 +1193,105 @@ function PillTab({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border transition ${
+      className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm font-bold transition ${
         active
-          ? "bg-neon/15 border-neon text-neon shadow-[0_0_18px_-6px_var(--neon)]"
-          : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-neon/40"
+          ? "bg-neon/5 border-neon text-neon shadow-[0_0_18px_-8px_var(--neon)]"
+          : "bg-card/60 border-border text-foreground hover:border-neon/40 hover:text-neon"
       }`}
     >
-      {icon}
-      <span className="whitespace-nowrap">{children}</span>
+      <ChevronLeft className={`h-4 w-4 shrink-0 ${active ? "text-neon" : "text-muted-foreground"}`} />
+      <span className="flex-1 text-right truncate">{children}</span>
+      <span className={`shrink-0 grid place-content-center h-8 w-8 rounded-lg ${active ? "bg-neon/10 text-neon" : "bg-background/40 text-muted-foreground"}`}>
+        {icon}
+      </span>
     </button>
   );
 }
 
-function SidebarTab({
-  active,
-  onClick,
-  icon,
-  children,
+function RecipesGroupedList({
+  recipes,
+  onEdit,
+  onDelete,
 }: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  children: React.ReactNode;
+  recipes: Recipe[];
+  onEdit: (r: Recipe) => void;
+  onDelete: (r: Recipe) => void;
 }) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const groups = categoryOrder
+    .map((c) => ({ cat: c, items: recipes.filter((r) => r.category === c) }))
+    .filter((g) => g.items.length > 0);
+
+  if (recipes.length === 0) {
+    return (
+      <div className="border border-border rounded-xl bg-card/40 px-3 py-8 text-center text-muted-foreground text-sm">
+        לא נמצאו מתכונים.
+      </div>
+    );
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={`group relative w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold transition ${
-        active
-          ? "bg-neon/10 text-neon"
-          : "text-muted-foreground hover:text-foreground hover:bg-card/60"
-      }`}
-    >
-      {active && (
-        <span className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-full bg-neon shadow-[0_0_8px_var(--neon)]" />
-      )}
-      <span className={active ? "text-neon" : "text-muted-foreground group-hover:text-foreground"}>
-        {icon}
-      </span>
-      <span className="text-right flex-1">{children}</span>
-    </button>
+    <div className="space-y-4" dir="rtl">
+      {groups.map(({ cat, items }) => {
+        const isCollapsed = collapsed[cat];
+        return (
+          <section key={cat} className="rounded-xl border border-border bg-card/40 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-card/70 transition"
+            >
+              <ChevronDown
+                className={`h-4 w-4 text-muted-foreground transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+              />
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                <span className="inline-flex items-center justify-center rounded-full bg-neon/10 text-neon text-xs font-bold px-2 py-0.5 tabular-nums">
+                  {items.length}
+                </span>
+                <span className="font-bold text-foreground">{categoryLabels[cat]}</span>
+                <span className="text-lg leading-none">{CATEGORY_EMOJI[cat]}</span>
+              </div>
+            </button>
+            {!isCollapsed && (
+              <ul className="px-3 pb-3 space-y-2">
+                {items.map((r) => (
+                  <li
+                    key={r.id}
+                    className="rounded-lg border border-border bg-card/60 px-4 py-3 flex items-center gap-2"
+                  >
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => onEdit(r)}
+                        className="p-2 rounded-md hover:bg-card text-foreground hover:text-neon"
+                        aria-label="ערוך"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(r)}
+                        className="p-2 rounded-md hover:bg-destructive/10 text-foreground hover:text-destructive"
+                        aria-label="מחק"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 text-right font-bold text-foreground truncate">
+                      {r.nameHebrew}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+      })}
+    </div>
   );
 }
+
+
+
+
 
 
 function SupplierRemindersPanel() {
