@@ -224,6 +224,8 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   },
 
   reorderList: async (list, reordered) => {
+    // Mark this list as manually ordered so future sorts respect drag order.
+    writeManualOrderFlag(list, true);
     // Reassign sort_order based on visible order; persisted items only.
     const withOrder = reordered.map((it, idx) => ({ ...it, sortOrder: idx }));
     set((s) => ({ lists: { ...s.lists, [list]: withOrder } }));
