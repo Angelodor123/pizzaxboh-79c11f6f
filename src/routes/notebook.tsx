@@ -235,7 +235,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
               {bulk.selectionMode ? "סיים" : "בחר"}
             </button>
           )}
-          {doneCount > 0 && (
+          {doneCount > 0 && isAdmin && (
             <button
               type="button"
               onClick={() => void clearDone(cfg.key)}
