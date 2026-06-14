@@ -62,6 +62,29 @@ const EMPTY: Record<NotebookListKey, NotebookItem[]> = {
   shortages: [],
 };
 
+const MANUAL_ORDER_STORAGE_KEY = "pizzax-notebook-manual-order-v1";
+
+function readManualOrderFlags(): Partial<Record<NotebookListKey, boolean>> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(MANUAL_ORDER_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeManualOrderFlag(list: NotebookListKey, value: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    const flags = readManualOrderFlags();
+    flags[list] = value;
+    localStorage.setItem(MANUAL_ORDER_STORAGE_KEY, JSON.stringify(flags));
+  } catch {
+    /* noop */
+  }
+}
+
 function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
   const out: Record<NotebookListKey, NotebookItem[]> = {
     tasks: [],
@@ -85,11 +108,17 @@ function groupRows(rows: DbRow[]): Record<NotebookListKey, NotebookItem[]> {
       unit: r.unit,
     });
   }
+  const manualFlags = readManualOrderFlags();
   for (const k of Object.keys(out) as NotebookListKey[]) {
+    const isManual = !!manualFlags[k];
     out[k].sort((a, b) => {
-      // urgent first, then by sort_order, then alphabetical (Hebrew)
+      // urgent first
       if (a.priority !== b.priority) return a.priority === "urgent" ? -1 : 1;
-      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      if (isManual) {
+        // user-defined drag order, fall back to name
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      }
+      // default: alphabetical by name (Hebrew)
       return a.text.localeCompare(b.text, "he");
     });
   }
