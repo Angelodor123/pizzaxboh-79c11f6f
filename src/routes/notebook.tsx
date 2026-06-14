@@ -129,6 +129,9 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
   const bulk = useBulkSelection();
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
+
 
   const doneCount = items.filter((i) => i.done).length;
 
