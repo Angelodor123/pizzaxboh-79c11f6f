@@ -15,6 +15,8 @@ import { useSiteText } from "@/lib/site-texts";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { ShortageCatalogInput } from "@/components/ShortageCatalogInput";
+import { useAuth } from "@/lib/auth";
+
 
 export const Route = createFileRoute("/notebook")({
   component: NotebookPage,
@@ -127,6 +129,9 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
   const bulk = useBulkSelection();
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
+
 
   const doneCount = items.filter((i) => i.done).length;
 
@@ -230,7 +235,7 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
               {bulk.selectionMode ? "סיים" : "בחר"}
             </button>
           )}
-          {doneCount > 0 && (
+          {doneCount > 0 && isAdmin && (
             <button
               type="button"
               onClick={() => void clearDone(cfg.key)}
