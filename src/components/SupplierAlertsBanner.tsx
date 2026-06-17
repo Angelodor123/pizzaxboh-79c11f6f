@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Clock, Truck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useActiveBranch } from "@/components/BranchGate";
 
 interface Row {
   id: string;
@@ -18,27 +19,37 @@ interface Row {
 export function SupplierAlertsBanner() {
   const [rows, setRows] = useState<Row[]>([]);
   const today = new Date().getDay();
+  const activeBranchId = useActiveBranch();
 
   useEffect(() => {
+    if (!activeBranchId) {
+      setRows([]);
+      return;
+    }
     let mounted = true;
     const load = async () => {
       const { data } = await supabase
         .from("suppliers")
         .select("id,name,order_days,order_cutoff_time,delivery_days")
         .eq("active", true)
-        .eq("is_archived", false);
+        .eq("is_archived", false)
+        .eq("branch_id", activeBranchId);
       if (mounted && data) setRows(data as Row[]);
     };
     load();
     const ch = supabase
-      .channel("supplier_alerts_rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, () => load())
+      .channel(`supplier_alerts_rt_${activeBranchId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "suppliers", filter: `branch_id=eq.${activeBranchId}` },
+        () => load(),
+      )
       .subscribe();
     return () => {
       mounted = false;
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [activeBranchId]);
 
   const dueToday = rows.filter((r) => (r.order_days ?? []).includes(today));
   if (dueToday.length === 0) return null;
