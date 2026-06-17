@@ -216,6 +216,8 @@ function WalletDetail({
   onClose: () => void;
   userId: string | null;
 }) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const [amount, setAmount] = useState("");
   const [txDate, setTxDate] = useState<string>(todayLocal());
   const [receipt, setReceipt] = useState<File | null>(null);
