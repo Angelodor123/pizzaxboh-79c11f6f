@@ -216,6 +216,8 @@ function WalletDetail({
   onClose: () => void;
   userId: string | null;
 }) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const [amount, setAmount] = useState("");
   const [txDate, setTxDate] = useState<string>(todayLocal());
   const [receipt, setReceipt] = useState<File | null>(null);
@@ -445,14 +447,16 @@ function WalletDetail({
             <Minus className="h-5 w-5 ml-2" />
             מימוש יתרה
           </Button>
-          <Button
-            onClick={() => apply(1)}
-            disabled={busy}
-            className="h-14 bg-success text-success-foreground hover:opacity-90 font-bold text-base"
-          >
-            <Plus className="h-5 w-5 ml-2" />
-            הוסף צבירה
-          </Button>
+          {isAdmin && (
+            <Button
+              onClick={() => apply(1)}
+              disabled={busy}
+              className="h-14 bg-success text-success-foreground hover:opacity-90 font-bold text-base"
+            >
+              <Plus className="h-5 w-5 ml-2" />
+              הוסף צבירה
+            </Button>
+          )}
         </div>
 
         {/* Transaction history timeline */}
