@@ -2487,7 +2487,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_complaint_branch: { Args: { c_id: string }; Returns: boolean }
       create_notifications_for_users: {
         Args: {
           _body: string
