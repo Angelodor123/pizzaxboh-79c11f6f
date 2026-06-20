@@ -659,22 +659,26 @@ export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Pr
                                 <Eye className="h-3.5 w-3.5" />
                                 צפה בחשבונית
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => openEditInvoice(inv)}
-                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border hover:border-amber-brand hover:text-amber-brand transition"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                                ערוך
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setDeletingInvoiceId(inv.id)}
-                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-destructive/60 text-destructive hover:bg-destructive/10 transition"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                מחק
-                              </button>
+                              {isAdmin && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditInvoice(inv)}
+                                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border hover:border-amber-brand hover:text-amber-brand transition"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                    ערוך
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingInvoiceId(inv.id)}
+                                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-destructive/60 text-destructive hover:bg-destructive/10 transition"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    מחק
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
