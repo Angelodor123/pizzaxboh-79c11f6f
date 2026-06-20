@@ -29,6 +29,7 @@ interface Supplier {
 
 function OrdersPage() {
   const { role, loading: authLoading, isSuperAdmin } = useAuth();
+  const isAdmin = role === "admin" || isSuperAdmin;
   const [list, setList] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Supplier | null>(null);
@@ -74,7 +75,6 @@ function OrdersPage() {
   }, [branchId]);
 
   useEffect(() => {
-    if (role !== "admin") return;
     const signal = { aborted: false };
     void load(signal);
     return () => { signal.aborted = true; };
@@ -109,14 +109,6 @@ function OrdersPage() {
   );
 
   if (authLoading) return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
-  if (role !== "admin") {
-    return (
-      <div className="max-w-md mx-auto p-8 text-center" dir="rtl">
-        <p className="text-muted-foreground">אין הרשאה. מודול הזמנות זמין למנהלים בלבד.</p>
-        <Link to="/" className="text-neon font-bold mt-3 inline-block">חזרה לדף הבית</Link>
-      </div>
-    );
-  }
 
   return (
     <PullToRefresh onRefresh={() => load()}>
@@ -208,6 +200,7 @@ function OrdersPage() {
           supplier={selected}
           onClose={() => setSelected(null)}
           onReceive={(orderId) => setReceiving({ orderId })}
+          isAdmin={isAdmin}
         />
       )}
       {receiving && (
