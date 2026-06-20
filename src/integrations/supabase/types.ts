@@ -254,6 +254,7 @@ export type Database = {
         Row: {
           amount: number
           balance_after: number
+          branch_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -266,6 +267,7 @@ export type Database = {
         Insert: {
           amount: number
           balance_after: number
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -278,6 +280,7 @@ export type Database = {
         Update: {
           amount?: number
           balance_after?: number
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -300,6 +303,7 @@ export type Database = {
       cibus_wallets: {
         Row: {
           balance: number
+          branch_id: string | null
           created_at: string
           created_by: string | null
           customer_name: string
@@ -309,6 +313,7 @@ export type Database = {
         }
         Insert: {
           balance?: number
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_name: string
@@ -318,6 +323,7 @@ export type Database = {
         }
         Update: {
           balance?: number
+          branch_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_name?: string
@@ -2481,6 +2487,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_complaint_branch: { Args: { c_id: string }; Returns: boolean }
       create_notifications_for_users: {
         Args: {
           _body: string
