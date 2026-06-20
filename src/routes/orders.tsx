@@ -103,7 +103,10 @@ function OrdersPage() {
     fetchShortages();
   }, [selected, branchId]);
 
-  const grid = useMemo(() => list, [list]);
+  const grid = useMemo(
+    () => [...list].sort((a, b) => a.name.localeCompare(b.name, "he")),
+    [list],
+  );
 
   if (authLoading) return <div className="p-8 text-center text-muted-foreground">טוען…</div>;
   if (role !== "admin") {
