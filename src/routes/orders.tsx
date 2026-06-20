@@ -75,7 +75,6 @@ function OrdersPage() {
   }, [branchId]);
 
   useEffect(() => {
-    if (role !== "admin") return;
     const signal = { aborted: false };
     void load(signal);
     return () => { signal.aborted = true; };
