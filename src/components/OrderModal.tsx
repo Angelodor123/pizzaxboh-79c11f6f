@@ -63,7 +63,7 @@ type HistoryEntry = {
   status?: "draft" | "sent" | "received" | "cancelled" | null;
 };
 
-export function OrderModal({ supplier, onClose, onReceive }: Props) {
+export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Props) {
   const [rows, setRows] = useState<OrderRow[]>([{ name: "", qty: "" }]);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
