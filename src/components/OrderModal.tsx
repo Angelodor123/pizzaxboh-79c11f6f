@@ -576,7 +576,7 @@ export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Pr
                           <span className="text-zinc-300 font-bold">{formatDate(h.created_at)}</span>
                         </div>
                         <div className="text-xs text-zinc-300 line-clamp-2">{summary}</div>
-                        {isPending && onReceive ? (
+                        {isPending && onReceive && isAdmin ? (
                           <button
                             type="button"
                             onClick={() => { onReceive(h.orderId!); onClose(); }}
