@@ -49,6 +49,7 @@ interface Props {
   supplier: Supplier;
   onClose: () => void;
   onReceive?: (orderId: string) => void;
+  isAdmin?: boolean;
 }
 
 const cacheKey = (id: string) => `order-draft:${id}`;
