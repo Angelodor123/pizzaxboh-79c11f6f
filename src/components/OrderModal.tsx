@@ -458,15 +458,17 @@ export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Pr
                 dir="rtl"
                 maxLength={40}
               />
-              <button
-                type="button"
-                onClick={() => removeRow(i)}
-                disabled={rows.length === 1}
-                className="h-10 w-10 grid place-content-center rounded-md border border-border hover:border-destructive hover:text-destructive disabled:opacity-30"
-                aria-label="הסר שורה"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  disabled={rows.length === 1}
+                  className="h-10 w-10 grid place-content-center rounded-md border border-border hover:border-destructive hover:text-destructive disabled:opacity-30"
+                  aria-label="הסר שורה"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           ))}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
