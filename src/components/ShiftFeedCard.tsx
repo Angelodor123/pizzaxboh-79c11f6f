@@ -425,12 +425,26 @@ export function ShiftFeedCard() {
     return rows.filter((r) => new Date(r.created_at) >= start).length;
   }, [rows]);
 
+  const unreadCount = useMemo(() => {
+    if (!uid) return 0;
+    return rows.filter(
+      (r) =>
+        r.user_id !== uid &&
+        !reads.some((x) => x.post_id === r.id && x.user_id === uid),
+    ).length;
+  }, [rows, reads, uid]);
+
   return (
     <div dir="rtl" className="rounded-xl border-2 border-jungle/30 bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-neon" />
           <h2 className="font-display text-lg font-bold">עדכוני משמרת</h2>
+          {unreadCount > 0 && (
+            <span className="text-[10px] bg-neon text-primary-foreground px-2 py-0.5 rounded-full font-bold glow-neon">
+              {unreadCount}
+            </span>
+          )}
           {todayCount > 0 && (
             <span className="text-[10px] bg-neon/15 text-neon px-2 py-0.5 rounded-full font-bold">
               {todayCount} היום
