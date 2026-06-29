@@ -14,6 +14,8 @@ import { useBranchFeature, useActiveBranchData } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
 import { PersonalTasksCard } from "@/components/PersonalTasksCard";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 
 import { ShiftFeedCard } from "@/components/ShiftFeedCard";
@@ -53,6 +55,9 @@ function OperationalDashboard() {
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [overrides, setOverrides] = useState<CalOverride[]>([]);
+  const [loadingHome, setLoadingHome] = useState(true);
+  const [tasksOpenCount, setTasksOpenCount] = useState(0);
+  const [prepOpenCount, setPrepOpenCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -69,6 +74,7 @@ function OperationalDashboard() {
       const eventIds = evData.map((e) => e.id);
       if (eventIds.length === 0) {
         setOverrides([]);
+        setLoadingHome(false);
         return;
       }
       const ov = await supabase
@@ -77,6 +83,7 @@ function OperationalDashboard() {
         .in("event_id", eventIds);
       if (!mounted) return;
       if (ov.data) setOverrides(ov.data as CalOverride[]);
+      setLoadingHome(false);
     };
     void load();
 
@@ -89,6 +96,57 @@ function OperationalDashboard() {
     return () => {
       mounted = false;
       void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Live badge counts for tasks + prep tiles
+  useEffect(() => {
+    let mounted = true;
+    const today = todayIso();
+    const loadCounts = async () => {
+      const branchId = getActiveBranchIdSync();
+
+      // Tasks: total active tasks (branch-scoped) minus those completed today
+      let tasksQuery = supabase.from("tasks").select("id").eq("active", true);
+      if (branchId) tasksQuery = tasksQuery.eq("branch_id", branchId);
+      const { data: tasksData } = await tasksQuery;
+      const taskIds = (tasksData ?? []).map((t: any) => t.id);
+      let tasksDone = 0;
+      if (taskIds.length > 0) {
+        const { count } = await supabase
+          .from("daily_task_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("log_date", today)
+          .eq("completed", true)
+          .in("task_id", taskIds);
+        tasksDone = count ?? 0;
+      }
+      if (!mounted) return;
+      setTasksOpenCount(Math.max(0, (tasksData?.length ?? 0) - tasksDone));
+
+      // Prep: total active prep items (branch-scoped) minus completed today
+      let prepQuery = supabase.from("prep_items").select("id").eq("active", true);
+      if (branchId) prepQuery = prepQuery.eq("branch_id", branchId);
+      const { data: prepData } = await prepQuery;
+      const prepIds = (prepData ?? []).map((p: any) => p.id);
+      let prepDone = 0;
+      if (prepIds.length > 0) {
+        const { count } = await supabase
+          .from("prep_log")
+          .select("id", { count: "exact", head: true })
+          .eq("log_date", today)
+          .eq("completed", true)
+          .in("prep_item_id", prepIds);
+        prepDone = count ?? 0;
+      }
+      if (!mounted) return;
+      setPrepOpenCount(Math.max(0, (prepData?.length ?? 0) - prepDone));
+    };
+    void loadCounts();
+    const interval = setInterval(() => void loadCounts(), 30000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
     };
   }, []);
 
@@ -189,30 +247,49 @@ function OperationalDashboard() {
       </div>
 
       {/* Supplier reminders — tomorrow */}
-      {tomorrowDeliveries.length > 0 && (
-        <Link
-          to="/calendar"
-          aria-label={`תזכורת: מחר מגיעים ${tomorrowDeliveries.length} ספקים`}
-          className="block mb-6 rounded-xl border-2 border-neon/40 hover:border-neon bg-neon/5 p-4 transition"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Truck className="h-5 w-5 text-neon shrink-0" />
-            <h2 className="font-display text-base font-bold leading-snug">
-              <bdi>🔔 תזכורת • מחר מגיעים {tomorrowDeliveries.length} ספקים</bdi>
-            </h2>
-          </div>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {tomorrowDeliveries.slice(0, 6).map((e) => (
-              <li key={e.id} className="text-xs text-foreground/90 truncate">
-                • {e.supplier || e.title}
-              </li>
-            ))}
-          </ul>
-        </Link>
+      {loadingHome ? (
+        <Skeleton className="block mb-6 h-24 w-full rounded-xl" />
+      ) : (
+        tomorrowDeliveries.length > 0 && (
+          <Link
+            to="/calendar"
+            aria-label={`תזכורת: מחר מגיעים ${tomorrowDeliveries.length} ספקים`}
+            className="block mb-6 rounded-xl border-2 border-neon/40 hover:border-neon bg-neon/5 p-4 transition"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Truck className="h-5 w-5 text-neon shrink-0" />
+              <h2 className="font-display text-base font-bold leading-snug">
+                <bdi>🔔 תזכורת • מחר מגיעים {tomorrowDeliveries.length} ספקים</bdi>
+              </h2>
+            </div>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {tomorrowDeliveries.slice(0, 6).map((e) => (
+                <li key={e.id} className="text-xs text-foreground/90 truncate">
+                  • {e.supplier || e.title}
+                </li>
+              ))}
+            </ul>
+          </Link>
+        )
       )}
 
       {/* Categorized shortcut sections (RBAC) */}
-      {(() => {
+      {loadingHome ? (
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-32" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-5 w-32" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      ) : (() => {
         const effectiveRole = isSuperAdmin
           ? "super_admin"
           : role === "admin"
@@ -225,8 +302,8 @@ function OperationalDashboard() {
           <>
             <SectionHeader>מטבח ותפעול</SectionHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
-              <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
+              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} />
+              <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} />
               <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
               <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} />
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />

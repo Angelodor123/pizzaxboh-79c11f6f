@@ -211,7 +211,7 @@ function PrepRow(p: RowProps) {
   return (
     <li
       {...swipe}
-      className={`rounded-xl border-2 px-3 py-3 transition ${
+      className={`rounded-xl border-2 px-3 py-4 sm:py-3 transition ${
         p.done
           ? "bg-success/15 border-success/60"
           : "bg-card border-border"
@@ -247,7 +247,7 @@ function PrepRow(p: RowProps) {
             onFocus={p.onFocus}
             onChange={(e) => p.onChange(e.target.value)}
             onBlur={p.onBlur}
-            className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-base text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
+            className="mt-1 w-full bg-input border border-border rounded-md px-3 py-3 sm:py-2 text-base text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
             placeholder="0"
           />
         </label>

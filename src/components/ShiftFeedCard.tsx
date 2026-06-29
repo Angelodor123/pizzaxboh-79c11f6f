@@ -124,6 +124,7 @@ export function ShiftFeedCard() {
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [seenByOpen, setSeenByOpen] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const markedReadRef = useRef<Set<string>>(new Set());
   const pushFn = useServerFn(sendPushToUsers);
@@ -637,19 +638,19 @@ export function ShiftFeedCard() {
                         <FeedText text={r.message} users={mentionUsers} />
                       </p>
                       {r.image_url && (
-                        <a
-                          href={r.image_url}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => setLightboxUrl(r.image_url!)}
                           className="block mt-2"
+                          aria-label="הצג תמונה מצורפת"
                         >
                           <img
                             src={r.image_url}
                             alt="תמונה מצורפת"
                             loading="lazy"
-                            className="max-h-60 rounded-lg border border-border object-cover"
+                            className="w-20 h-20 rounded-lg border border-border object-cover float-left ml-2"
                           />
-                        </a>
+                        </button>
                       )}
                     </>
                   )}
@@ -798,6 +799,30 @@ export function ShiftFeedCard() {
           );
         })}
       </ul>
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxUrl(null);
+            }}
+            className="absolute top-4 right-4 rounded-full bg-white/10 hover:bg-white/20 p-2 text-white"
+            aria-label="סגור"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="תמונה מצורפת"
+            className="max-h-full max-w-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
