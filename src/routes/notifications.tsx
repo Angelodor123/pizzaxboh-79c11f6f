@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useNotifications } from "@/lib/notifications-store";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({ meta: [{ title: "התראות — Pizza X" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/notifications" }] }),
+  head: () => ({ meta: [{ title: "התראות — Pizza X" }, { name: "description", content: "מרכז ההתראות של מערכת Pizza X." }, { property: "og:title", content: "התראות — Pizza X" }, { property: "og:description", content: "מרכז ההתראות של מערכת Pizza X." }, { property: "og:url", content: "https://pizzaxboh.lovable.app/notifications" }, { property: "og:type", content: "website" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/notifications" }] }),
   component: NotificationsPage,
 });
 

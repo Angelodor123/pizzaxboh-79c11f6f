@@ -17,7 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/aids/contacts")({
-  head: () => ({ meta: [{ title: "אנשי קשר — עזרים" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/contacts" }] }),
+  head: () => ({ meta: [{ title: "אנשי קשר — עזרים" }, { name: "description", content: "ספרייה של אנשי קשר חיצוניים לסניף Pizza X." }, { property: "og:title", content: "אנשי קשר — עזרים" }, { property: "og:description", content: "ספרייה של אנשי קשר חיצוניים לסניף Pizza X." }, { property: "og:url", content: "https://pizzaxboh.lovable.app/aids/contacts" }, { property: "og:type", content: "website" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/contacts" }] }),
   component: AidsContactsPage,
 });
 
