@@ -417,7 +417,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
               total_price: total,
             };
           })
-          .filter((it) => it.name.length > 0),
+          .filter((it) => it.name.length > 0 && !isNonGoodsLine(it.name)),
       };
       setParsed(normalizedParsed);
 
