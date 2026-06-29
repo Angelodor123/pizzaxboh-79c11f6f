@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import type { EquipmentType, MaintenanceTicket, Urgency } from "@/lib/maintenance-store";
 
 export const Route = createFileRoute("/maintenance")({
+  head: () => ({
+    meta: [
+      { title: 'תחזוקה — Pizza X' },
+      { name: "description", content: 'מעקב תקלות וטיפול בתחזוקת ציוד.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/maintenance" }],
+  }),
   component: MaintenancePage,
 });
 

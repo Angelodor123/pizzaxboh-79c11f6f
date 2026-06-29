@@ -18,6 +18,13 @@ import { supplierFormSchema, validateOrToast } from "@/lib/schemas";
 import { fanOutInsert, fanOutUpdateById } from "@/lib/branch-fanout";
 
 export const Route = createFileRoute("/suppliers")({
+  head: () => ({
+    meta: [
+      { title: 'ספקים — Pizza X' },
+      { name: "description", content: 'ניהול ספקים ופרטי קשר.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/suppliers" }],
+  }),
   component: SuppliersPage,
 });
 

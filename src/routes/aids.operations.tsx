@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/aids/operations")({
-  head: () => ({ meta: [{ title: "תפעול ומכשור — עזרים" }] }),
+  head: () => ({ meta: [{ title: "תפעול ומכשור — עזרים" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/operations" }] }),
   component: ComingSoon,
 });
 

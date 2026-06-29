@@ -14,7 +14,7 @@ import { QK } from "@/lib/queue-handlers";
 export const Route = createFileRoute("/prep")({
   component: PrepPage,
   head: () => ({
-    meta: [{ title: "הכנות יומיות — Pizza X" }],
+    meta: [{ title: "הכנות יומיות — Pizza X" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/prep" }],
   }),
 });
 

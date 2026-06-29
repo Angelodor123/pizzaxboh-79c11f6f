@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useNotifications } from "@/lib/notifications-store";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({ meta: [{ title: "התראות — Pizza X" }] }),
+  head: () => ({ meta: [{ title: "התראות — Pizza X" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/notifications" }] }),
   component: NotificationsPage,
 });
 

@@ -22,6 +22,13 @@ import { ShiftFeedCard } from "@/components/ShiftFeedCard";
 
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: 'Pizza X — מערכת ניהול מטבח' },
+      { name: "description", content: 'מסך הבית של מערכת ניהול המטבח של Pizza X.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/" }],
+  }),
   component: OperationalDashboard,
 });
 

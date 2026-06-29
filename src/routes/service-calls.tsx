@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import type { MaintenanceTicket, TicketStatus, Urgency } from "@/lib/maintenance-store";
 
 export const Route = createFileRoute("/service-calls")({
+  head: () => ({
+    meta: [
+      { title: 'קריאות שירות — Pizza X' },
+      { name: "description", content: 'ניהול קריאות שירות וטיפול בתקלות.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/service-calls" }],
+  }),
   component: AdminMaintenancePage,
 });
 

@@ -11,7 +11,7 @@ export const Route = createFileRoute("/my-profile")({
     meta: [
       { title: "האזור האישי שלי — Pizza X" },
       { name: "description", content: "אזור אישי לעובד Pizza X — סיכום, מדריך וגישה ל-NDA." },
-    ],
+    ], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/my-profile" }],
   }),
   component: MyProfilePage,
 });

@@ -8,6 +8,13 @@ import { confirmDelete } from "@/lib/confirm";
 import type { EquipmentType } from "@/lib/maintenance-store";
 
 export const Route = createFileRoute("/admin/settings/equipment")({
+  head: () => ({
+    meta: [
+      { title: 'Pizza X' },
+      { name: "description", content: 'Pizza X' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/admin/settings/equipment" }],
+  }),
   component: EquipmentSettingsPage,
 });
 

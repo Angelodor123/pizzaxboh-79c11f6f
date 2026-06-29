@@ -56,6 +56,13 @@ import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: 'פאנל ניהול — Pizza X' },
+      { name: "description", content: 'פאנל ניהול ראשי של מערכת Pizza X.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/admin" }],
+  }),
   component: AdminGate,
   validateSearch: (search: Record<string, unknown>) => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,
