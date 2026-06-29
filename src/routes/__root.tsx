@@ -114,14 +114,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Pizza X — מטבח" },
+      { title: "Pizza X — מערכת ניהול מטבח" },
       {
         name: "description",
         content:
           "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
       },
-      { property: "og:title", content: "Pizza X — מטבח" },
-      { name: "twitter:title", content: "Pizza X — מטבח" },
+      { property: "og:title", content: "Pizza X — מערכת ניהול מטבח" },
+      { name: "twitter:title", content: "Pizza X — מערכת ניהול מטבח" },
       {
         property: "og:description",
         content:
