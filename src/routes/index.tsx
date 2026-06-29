@@ -314,10 +314,10 @@ function OperationalDashboard() {
           <>
             <SectionHeader>מטבח ותפעול</SectionHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} />
-              <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} />
+              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-6 w-6" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} primary />
+              <ShortcutTile to="/prep" icon={<ChefHat className="h-6 w-6" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} primary />
               <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
-              <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} />
+              <ShortcutTile to="/notebook" icon={<StickyNote className="h-6 w-6" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} primary />
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
             </div>
 
@@ -362,19 +362,23 @@ function ShortcutTile({
   label,
   tourId,
   badgeCount,
+  primary,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   tourId?: string;
   badgeCount?: number;
+  primary?: boolean;
 }) {
   return (
     <Link
       to={to}
       data-tour={tourId}
       aria-label={label}
-      className="relative rounded-xl border border-jungle/30 hover:border-neon hover:text-neon bg-card p-4 min-h-20 flex flex-col items-center justify-center gap-2 text-center transition"
+      className={`relative rounded-xl border hover:border-neon hover:text-neon bg-card p-4 flex flex-col items-center justify-center gap-2 text-center transition ${
+        primary ? "min-h-28 border-neon/20" : "min-h-20 border-jungle/30"
+      }`}
     >
       {badgeCount !== undefined && badgeCount > 0 && (
         <span className="absolute top-2 left-2 rounded-full bg-neon text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center">
