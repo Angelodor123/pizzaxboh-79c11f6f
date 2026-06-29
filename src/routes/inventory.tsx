@@ -629,6 +629,190 @@ function ShortagesTab() {
 }
 
 // ============================================================================
+// Tab 4 — Count (admin only)
+// ============================================================================
+
+function CountTab() {
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [counts, setCounts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function load() {
+    setLoading(true);
+    const branchId = getActiveBranchIdSync();
+    let q = supabase.from("inventory_items").select("*").order("name");
+    if (branchId) q = q.eq("branch_id", branchId);
+    const { data, error } = await q;
+    if (error) {
+      toast.error("טעינת המלאי נכשלה", { description: error.message });
+      setLoading(false);
+      return;
+    }
+    setItems(((data ?? []) as InventoryItem[]).sort((a, b) => a.name.localeCompare(b.name, "he")));
+    setLoading(false);
+  }
+
+  const filtered = useMemo(() => {
+    const qx = query.trim().toLowerCase();
+    return qx ? items.filter((i) => i.name.toLowerCase().includes(qx)) : items;
+  }, [items, query]);
+
+  const filledCount = useMemo(
+    () => Object.values(counts).filter((v) => v.trim() !== "" && !Number.isNaN(Number(v))).length,
+    [counts],
+  );
+
+  async function saveAll() {
+    const entries = Object.entries(counts).filter(([, v]) => v.trim() !== "");
+    if (entries.length === 0) {
+      toast.error("לא הוזנה שום ספירה");
+      return;
+    }
+    setSaving(true);
+    try {
+      const branchId = await requireCurrentBranchId();
+      const nowIso = new Date().toISOString();
+      let success = 0;
+      for (const [id, raw] of entries) {
+        const newStock = Number(raw);
+        if (!Number.isFinite(newStock) || newStock < 0) continue;
+        const item = items.find((i) => i.id === id);
+        if (!item) continue;
+        const delta = newStock - item.current_stock;
+        if (delta === 0) continue;
+        const { error: upErr } = await supabase
+          .from("inventory_items")
+          .update({ current_stock: newStock, updated_at: nowIso })
+          .eq("id", id);
+        if (upErr) continue;
+        await supabase.from("inventory_movements").insert({
+          branch_id: branchId,
+          inventory_item_id: id,
+          qty_delta: delta,
+          source: "count",
+          note: `ספירת מלאי · קודם: ${item.current_stock} · נספר: ${newStock}`,
+        });
+        success++;
+      }
+      toast.success(`הספירה נשמרה`, { description: `${success} פריטים עודכנו` });
+      setCounts({});
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("שמירה נכשלה", { description: msg });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
+        <div className="flex items-start gap-2">
+          <ClipboardList className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+          <div>
+            <div className="font-medium">ספירת מלאי ידנית</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              הזן את הכמות שנספרה בפועל לכל פריט. בשמירה — המערכת תעדכן את המלאי ותתעד תנועה עם ההפרש.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="חיפוש פריט…"
+            className="pr-9"
+          />
+        </div>
+        <Button onClick={saveAll} disabled={saving || filledCount === 0} className="shrink-0">
+          <Save className="h-4 w-4 ml-1" />
+          סיים ספירה{filledCount > 0 ? ` (${filledCount})` : ""}
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<Package className="h-10 w-10 text-muted-foreground" />}
+          text="אין פריטים לספירה."
+        />
+      ) : (
+        <ul className="space-y-2">
+          {filtered.map((item) => {
+            const raw = counts[item.id] ?? "";
+            const num = Number(raw);
+            const hasInput = raw.trim() !== "" && Number.isFinite(num);
+            const delta = hasInput ? num - item.current_stock : 0;
+            return (
+              <li
+                key={item.id}
+                className="rounded-xl border border-border bg-card p-3 shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{item.name}</div>
+                    <div className="mt-0.5 text-[12px] text-muted-foreground">
+                      במערכת:{" "}
+                      <span className="font-semibold text-foreground">{item.current_stock}</span>{" "}
+                      {item.unit}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24">
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        placeholder="נספר"
+                        value={raw}
+                        onChange={(e) =>
+                          setCounts((p) => ({ ...p, [item.id]: e.target.value }))
+                        }
+                        className="text-right"
+                      />
+                    </div>
+                    <div className="w-16 text-center text-xs font-mono">
+                      {hasInput ? (
+                        delta === 0 ? (
+                          <span className="text-muted-foreground">0</span>
+                        ) : delta > 0 ? (
+                          <span className="text-emerald-500">+{delta}</span>
+                        ) : (
+                          <span className="text-red-500">{delta}</span>
+                        )
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+
+
+// ============================================================================
 // Shared
 // ============================================================================
 
