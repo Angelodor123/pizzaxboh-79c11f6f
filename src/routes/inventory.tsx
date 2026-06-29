@@ -18,7 +18,10 @@ import {
   History,
   Sparkles,
   X,
+  ClipboardList,
+  Save,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/inventory")({
   component: InventoryPage,
