@@ -277,6 +277,8 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
         </div>
       </header>
 
+      {!collapsed && (
+        <>
       {cfg.key === "shortages" ? (
         <div className="mb-3">
           <ShortageCatalogInput
@@ -430,7 +432,9 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             },
           },
         ]}
-      />
+        />
+        </>
+      )}
     </section>
   );
 }
