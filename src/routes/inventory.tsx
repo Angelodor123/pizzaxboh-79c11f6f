@@ -698,6 +698,16 @@ function CountTab() {
           source: "count",
           note: `ספירת מלאי · קודם: ${item.current_stock} · נספר: ${newStock}`,
         });
+        // Daily snapshot — infrastructure for future Tabit integration
+        const today = new Date().toISOString().slice(0, 10);
+        await (supabase.rpc as any)("record_inventory_snapshot", {
+          _branch_id: branchId,
+          _item_id: id,
+          _snapshot_date: today,
+          _counted_stock: newStock,
+          _source: "count",
+          _note: `ספירה ידנית · קודם: ${item.current_stock}`,
+        });
         success++;
       }
       toast.success(`הספירה נשמרה`, { description: `${success} פריטים עודכנו` });

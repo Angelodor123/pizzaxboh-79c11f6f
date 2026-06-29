@@ -711,6 +711,81 @@ export type Database = {
           },
         ]
       }
+      inventory_daily_snapshots: {
+        Row: {
+          branch_id: string
+          counted_stock: number | null
+          created_at: string
+          created_by: string | null
+          expected_closing: number | null
+          id: string
+          item_id: string
+          note: string | null
+          opening_stock: number
+          purchases_qty: number
+          snapshot_date: string
+          source: Database["public"]["Enums"]["inventory_snapshot_source"]
+          total_value: number | null
+          unit_cost: number | null
+          updated_at: string
+          usage_qty: number
+          variance: number | null
+        }
+        Insert: {
+          branch_id: string
+          counted_stock?: number | null
+          created_at?: string
+          created_by?: string | null
+          expected_closing?: number | null
+          id?: string
+          item_id: string
+          note?: string | null
+          opening_stock?: number
+          purchases_qty?: number
+          snapshot_date: string
+          source?: Database["public"]["Enums"]["inventory_snapshot_source"]
+          total_value?: number | null
+          unit_cost?: number | null
+          updated_at?: string
+          usage_qty?: number
+          variance?: number | null
+        }
+        Update: {
+          branch_id?: string
+          counted_stock?: number | null
+          created_at?: string
+          created_by?: string | null
+          expected_closing?: number | null
+          id?: string
+          item_id?: string
+          note?: string | null
+          opening_stock?: number
+          purchases_qty?: number
+          snapshot_date?: string
+          source?: Database["public"]["Enums"]["inventory_snapshot_source"]
+          total_value?: number | null
+          unit_cost?: number | null
+          updated_at?: string
+          usage_qty?: number
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_daily_snapshots_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_daily_snapshots_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           branch_id: string
@@ -2513,6 +2588,16 @@ export type Database = {
           similarity: number
         }[]
       }
+      get_daily_food_cost: {
+        Args: { _branch_id: string; _date: string }
+        Returns: {
+          item_count: number
+          total_closing_value: number
+          total_opening_value: number
+          total_purchases_value: number
+          total_usage_value: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2581,6 +2666,20 @@ export type Database = {
       notebook_daily_reset: { Args: never; Returns: undefined }
       operational_day_start: { Args: never; Returns: string }
       operational_today: { Args: never; Returns: string }
+      record_inventory_snapshot: {
+        Args: {
+          _branch_id: string
+          _counted_stock?: number
+          _item_id: string
+          _note?: string
+          _purchases_qty?: number
+          _snapshot_date: string
+          _source?: Database["public"]["Enums"]["inventory_snapshot_source"]
+          _unit_cost?: number
+          _usage_qty?: number
+        }
+        Returns: string
+      }
       rollover_daily_operations: { Args: never; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
@@ -2598,6 +2697,7 @@ export type Database = {
         | "employee"
         | "shift_manager"
       complaint_status: "new" | "in_progress" | "resolved"
+      inventory_snapshot_source: "count" | "auto" | "tabit" | "manual"
       invoice_status: "pending_review" | "approved"
       order_status: "draft" | "sent" | "received" | "cancelled"
       staff_department: "kitchen" | "counter" | "delivery" | "management"
@@ -2738,6 +2838,7 @@ export const Constants = {
         "shift_manager",
       ],
       complaint_status: ["new", "in_progress", "resolved"],
+      inventory_snapshot_source: ["count", "auto", "tabit", "manual"],
       invoice_status: ["pending_review", "approved"],
       order_status: ["draft", "sent", "received", "cancelled"],
       staff_department: ["kitchen", "counter", "delivery", "management"],
