@@ -211,7 +211,7 @@ function PrepRow(p: RowProps) {
   return (
     <li
       {...swipe}
-      className={`rounded-xl border-2 px-3 py-3 transition ${
+      className={`rounded-xl border-2 px-3 py-4 sm:py-3 transition ${
         p.done
           ? "bg-success/15 border-success/60"
           : "bg-card border-border"
