@@ -958,6 +958,19 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
 
       toast.success("החשבונית נקלטה והמלאי עודכן");
       onSaved();
+      // Fire-and-forget: train supplier parsing_instructions from this correction.
+      // Uses the effective supplierId (auto-detected during scan if user didn't pick one),
+      // which is the same value that was just used for the invoice insert.
+      try {
+        void runLearn({
+          data: {
+            supplierId,
+            invoiceId: invoiceRow!.id,
+            raw: parsed,
+            final: finalFeedbackData,
+          },
+        }).catch(() => { /* silent: learning failure must never break save */ });
+      } catch { /* swallow */ }
       onClose();
 
     } catch (e) {
