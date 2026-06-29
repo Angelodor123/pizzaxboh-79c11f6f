@@ -57,19 +57,25 @@ function OperationalDashboard() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const [ev, ov] = await Promise.all([
-        withBranch(
-          supabase
-            .from("calendar_events")
-            .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
-            .limit(200),
-        ),
+      const ev = await withBranch(
         supabase
-          .from("calendar_event_overrides")
-          .select("event_id,override_date,deleted,order_verification_status"),
-      ]);
+          .from("calendar_events")
+          .select("id,title,category,event_date,recurring_weekday,high_priority,supplier")
+          .limit(200),
+      );
       if (!mounted) return;
-      if (ev.data) setEvents(ev.data as CalEvent[]);
+      const evData = (ev.data ?? []) as CalEvent[];
+      setEvents(evData);
+      const eventIds = evData.map((e) => e.id);
+      if (eventIds.length === 0) {
+        setOverrides([]);
+        return;
+      }
+      const ov = await supabase
+        .from("calendar_event_overrides")
+        .select("event_id,override_date,deleted,order_verification_status")
+        .in("event_id", eventIds);
+      if (!mounted) return;
       if (ov.data) setOverrides(ov.data as CalOverride[]);
     };
     void load();
