@@ -258,7 +258,12 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
               icon={<Pizza className="h-5 w-5" />}
               label="בצק"
               value={loading ? "…" : doughTotal ?? "—"}
-              alert={doughLow}
+              alert={doughTotal != null && doughTotal < m.doughThreshold / 2}
+              warn={
+                doughTotal != null &&
+                doughTotal < m.doughThreshold &&
+                doughTotal >= m.doughThreshold / 2
+              }
               sub={
                 loading
                   ? `סף התראה: ${m.doughThreshold}`
