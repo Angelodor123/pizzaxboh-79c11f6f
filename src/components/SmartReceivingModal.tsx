@@ -382,7 +382,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     if (!targetFile) return toast.error("יש להעלות תמונת חשבונית");
     setStage("processing");
     try {
-      const dataUrl = dataUrlOverride ?? await fileToDataUrl(targetFile);
+      const rawDataUrl = dataUrlOverride ?? await fileToDataUrl(targetFile);
+      const dataUrl = await compressImage(rawDataUrl);
       const catalogPayload = catalog.slice(0, 200).map((p) => ({
         name: p.name,
         sku: p.sku ?? null,
