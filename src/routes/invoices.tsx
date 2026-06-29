@@ -21,6 +21,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/invoices")({
+  head: () => ({
+    meta: [
+      { title: 'חשבוניות — Pizza X' },
+      { name: "description", content: 'ניהול חשבוניות ספקים וקבלות סחורה.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/invoices" }],
+  }),
   component: InvoicesPage,
 });
 

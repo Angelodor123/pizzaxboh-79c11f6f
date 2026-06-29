@@ -60,6 +60,13 @@ import { TaskPhotoButton } from "@/components/TaskPhotoEvidence";
 type TasksSearch = { edit?: string };
 
 export const Route = createFileRoute("/tasks")({
+  head: () => ({
+    meta: [
+      { title: 'משימות — Pizza X' },
+      { name: "description", content: 'ניהול משימות יומיות לצוות המשמרת.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/tasks" }],
+  }),
   component: TasksPage,
   validateSearch: (search: Record<string, unknown>): TasksSearch => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,

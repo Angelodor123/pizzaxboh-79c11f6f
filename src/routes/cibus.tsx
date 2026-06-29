@@ -10,6 +10,13 @@ import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/cibus")({
+  head: () => ({
+    meta: [
+      { title: 'סיבוס — Pizza X' },
+      { name: "description", content: 'מעקב צבירת סיבוס ותנועות עובדים.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/cibus" }],
+  }),
   beforeLoad: async () => {
     // Feature-flag: this module is currently active only for the Modiin branch.
     const id = getActiveBranchIdSync();

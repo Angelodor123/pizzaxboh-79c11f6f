@@ -7,7 +7,7 @@ export const Route = createFileRoute("/aids/")({
     meta: [
       { title: "עזרים — ספרייה דיגיטלית" },
       { name: "description", content: "ספרייה דיגיטלית: ספקים, מתכונים, ניקיון ואנשי קשר." },
-    ],
+    ], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids" }],
   }),
   component: AidsHubPage,
 });

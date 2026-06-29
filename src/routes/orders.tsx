@@ -14,6 +14,13 @@ import { toastError } from "@/lib/error-messages";
 
 
 export const Route = createFileRoute("/orders")({
+  head: () => ({
+    meta: [
+      { title: 'הזמנת סחורה — Pizza X' },
+      { name: "description", content: 'ניהול הזמנות סחורה מספקים.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/orders" }],
+  }),
   component: OrdersPage,
 });
 

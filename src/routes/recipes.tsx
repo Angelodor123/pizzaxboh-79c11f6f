@@ -33,6 +33,13 @@ import {
 type RecipesSearch = { openRecipeId?: string };
 
 export const Route = createFileRoute("/recipes")({
+  head: () => ({
+    meta: [
+      { title: 'מתכונים — Pizza X' },
+      { name: "description", content: 'ספריית המתכונים של מטבח Pizza X.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/recipes" }],
+  }),
   validateSearch: (search: Record<string, unknown>): RecipesSearch => ({
     openRecipeId: typeof search.openRecipeId === "string" ? search.openRecipeId : undefined,
   }),

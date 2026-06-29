@@ -19,6 +19,13 @@ import { useAuth } from "@/lib/auth";
 
 
 export const Route = createFileRoute("/notebook")({
+  head: () => ({
+    meta: [
+      { title: 'Pizza X' },
+      { name: "description", content: 'Pizza X' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/notebook" }],
+  }),
   component: NotebookPage,
 });
 

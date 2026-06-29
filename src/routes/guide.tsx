@@ -3,6 +3,13 @@ import { useMemo } from "react";
 import { pizzaXCookbook, type Recipe } from "@/lib/cookbook";
 
 export const Route = createFileRoute("/guide")({
+  head: () => ({
+    meta: [
+      { title: 'מדריך הצוות — Pizza X' },
+      { name: "description", content: 'מדריך תפעולי לעובדי Pizza X.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/guide" }],
+  }),
   component: GuidePage,
 });
 

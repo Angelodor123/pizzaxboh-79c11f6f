@@ -20,7 +20,7 @@ export const Route = createFileRoute("/aids/suppliers")({
     meta: [
       { title: "ספקים ותקנים — עזרים" },
       { name: "description", content: "קטלוג ספקים ותקני הזמנה תפעוליים." },
-    ],
+    ], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/suppliers" }],
   }),
   component: AidsSuppliersPage,
 });

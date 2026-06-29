@@ -17,7 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/aids/contacts")({
-  head: () => ({ meta: [{ title: "אנשי קשר — עזרים" }] }),
+  head: () => ({ meta: [{ title: "אנשי קשר — עזרים" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/contacts" }] }),
   component: AidsContactsPage,
 });
 

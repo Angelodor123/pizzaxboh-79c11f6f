@@ -11,6 +11,13 @@ import { confirmDelete } from "@/lib/confirm";
 
 
 export const Route = createFileRoute("/calendar")({
+  head: () => ({
+    meta: [
+      { title: 'לוח שנה — Pizza X' },
+      { name: "description", content: 'לוח אירועי הצוות והמשמרות של Pizza X.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/calendar" }],
+  }),
   component: CalendarPage,
 });
 

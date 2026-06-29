@@ -12,7 +12,7 @@ export const Route = createFileRoute("/admin/alerts")({
     meta: [
       { title: "ניהול התראות — Pizza X" },
       { name: "description", content: "פאנל ניהול התראות ומלאי בצק" },
-    ],
+    ], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/admin/alerts" }],
   }),
   component: AdminAlertsPage,
 });

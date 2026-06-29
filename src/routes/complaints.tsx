@@ -17,6 +17,13 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/complaints")({
+  head: () => ({
+    meta: [
+      { title: 'פניות ותלונות — Pizza X' },
+      { name: "description", content: 'ניהול פניות לקוחות וטיפול בתלונות.' },
+    ],
+    links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/complaints" }],
+  }),
   component: ComplaintsAdminPage,
 });
 

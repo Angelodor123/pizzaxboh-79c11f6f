@@ -7,7 +7,7 @@ import { getActiveBranchIdSync, subscribeBranch } from "@/lib/current-branch";
 
 export const Route = createFileRoute("/admin/history")({
   component: HistoryGate,
-  head: () => ({ meta: [{ title: "היסטוריית פעילות — Pizza X" }] }),
+  head: () => ({ meta: [{ title: "היסטוריית פעילות — Pizza X" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/admin/history" }] }),
 });
 
 type Kind = "prep" | "restock" | "orders" | "shortages";
