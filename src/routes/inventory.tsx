@@ -125,8 +125,9 @@ function sourceLabel(s: string): string {
 // ============================================================================
 
 function InventoryPage() {
-  const { role } = useAuth();
-  const isAdmin = role === "admin" || role === "super_admin";
+  const { role, isSuperAdmin } = useAuth();
+  const isAdmin = role === "admin" || isSuperAdmin;
+
   return (
     <main dir="rtl" className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <header className="space-y-1">
