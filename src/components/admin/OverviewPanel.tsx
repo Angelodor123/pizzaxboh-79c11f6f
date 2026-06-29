@@ -199,7 +199,8 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
     let alive = true;
     const run = async () => {
       try {
-        const data = await loadMetrics();
+        const branchId = getActiveBranchIdSync();
+        const data = await loadMetrics(branchId);
         if (alive) setM(data);
         await loadSports();
       } finally {
