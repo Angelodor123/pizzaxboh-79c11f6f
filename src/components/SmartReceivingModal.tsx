@@ -17,6 +17,28 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
+/**
+ * Filters out invoice lines that aren't actual goods — deposits (פקדון),
+ * tax lines (מס/מע"מ), rounding, and similar bookkeeping rows. These are
+ * tracked on the invoice total but should not appear as catalog items
+ * (e.g. Redux pallet deposit is the equivalent of "משטח" at the central supplier).
+ */
+function isNonGoodsLine(rawName: string): boolean {
+  const name = rawName.trim().toLowerCase();
+  if (!name) return false;
+  // Hebrew terms — match as whole words to avoid eating "משטח", "מסגרת" etc.
+  const patterns = [
+    /(^|[\s\-:])פקדון($|[\s\-:])/,
+    /(^|[\s\-:])פיקדון($|[\s\-:])/,
+    /(^|[\s\-:])מס($|[\s\-:])/,
+    /מע["׳']?מ/,
+    /(^|[\s\-:])מע"מ($|[\s\-:])/,
+    /(^|[\s\-:])עיגול($|[\s\-:])/,
+  ];
+  return patterns.some((re) => re.test(name));
+}
+
+
 
 
 interface SupplierOpt { id: string; name: string }
@@ -417,7 +439,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
               total_price: total,
             };
           })
-          .filter((it) => it.name.length > 0),
+          .filter((it) => it.name.length > 0 && !isNonGoodsLine(it.name)),
       };
       setParsed(normalizedParsed);
 
