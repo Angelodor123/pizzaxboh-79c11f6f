@@ -134,6 +134,7 @@ const looseEq = (a: string, b: string) => {
 
 export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId = null }: Props) {
   const ocr = useServerFn(parseInvoiceImage);
+  const runLearn = useServerFn(learnFromCorrection);
   const [stage, setStage] = useState<Stage>("pick");
   const [supplierId, setSupplierId] = useState("");
   const [file, setFile] = useState<File | null>(null);
