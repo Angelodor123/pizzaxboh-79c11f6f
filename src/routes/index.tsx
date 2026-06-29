@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote } from "lucide-react";
+import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, Package } from "lucide-react";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -325,6 +325,7 @@ function OperationalDashboard() {
               <>
                 <SectionHeader>לוגיסטיקה ומלאי</SectionHeader>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <ShortcutTile to="/inventory" icon={<Package className="h-5 w-5" />} label="מלאי וסטוק" />
                   <ShortcutTile to="/invoices" icon={<ClipboardCheck className="h-5 w-5" />} label="קליטת סחורה" />
                   <ShortcutTile to="/orders" icon={<Truck className="h-5 w-5" />} label="הזמנת סחורה" />
                   <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
