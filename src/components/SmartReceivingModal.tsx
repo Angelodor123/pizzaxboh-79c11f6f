@@ -556,7 +556,7 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
         const now = new Date();
         const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
         const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-        path = `${supplierId}/${ym}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        path = `${branchId}/${supplierId}/${ym}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
         const { error: upErr } = await supabase.storage.from("invoice-images").upload(path, file, {
           contentType: file.type || "image/jpeg",
           upsert: false,
