@@ -247,7 +247,7 @@ function PrepRow(p: RowProps) {
             onFocus={p.onFocus}
             onChange={(e) => p.onChange(e.target.value)}
             onBlur={p.onBlur}
-            className="mt-1 w-full bg-input border border-border rounded-md px-3 py-2 text-base text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
+            className="mt-1 w-full bg-input border border-border rounded-md px-3 py-3 sm:py-2 text-base text-right font-bold focus:outline-none focus:ring-2 focus:ring-neon"
             placeholder="0"
           />
         </label>
