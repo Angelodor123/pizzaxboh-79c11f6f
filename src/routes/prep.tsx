@@ -96,6 +96,11 @@ function PrepPage() {
     await runOrQueue(QK.PrepLogUpsert, { row }, "עדכון הכנה");
   };
 
+  const completedCount = visible.filter((it) => log[it.id]?.completed).length;
+  const totalCount = visible.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const allDone = totalCount > 0 && completedCount === totalCount;
+
   return (
     <div dir="rtl" className="max-w-3xl mx-auto px-4 py-4">
       <div className="mb-4 text-center">
@@ -107,6 +112,31 @@ function PrepPage() {
           יום {WEEKDAY_HE[wd]} • {today}
         </div>
       </div>
+
+      {totalCount > 0 && (
+        <div className="mb-3">
+          {allDone ? (
+            <div
+              className="text-center text-sm font-bold text-success py-2"
+              style={{ textShadow: "0 0 12px hsl(var(--success) / 0.6)" }}
+            >
+              ✓ כל ההכנות הושלמו להיום
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full bg-neon transition-all duration-300"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                {completedCount} / {totalCount} הושלמו
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1">

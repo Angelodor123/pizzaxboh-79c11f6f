@@ -247,6 +247,28 @@ function SuppliersPage() {
                       </span>
                     ))}
                   </div>
+                  {(() => {
+                    if (!s.delivery_weekdays || s.delivery_weekdays.length === 0) return null;
+                    const today = new Date().getDay();
+                    if (s.delivery_weekdays.includes(today)) {
+                      return (
+                        <div className="text-[11px] text-neon font-bold mt-1.5">
+                          משלוח הבא: היום
+                        </div>
+                      );
+                    }
+                    for (let i = 1; i <= 7; i++) {
+                      const d = (today + i) % 7;
+                      if (s.delivery_weekdays.includes(d)) {
+                        return (
+                          <div className="text-[11px] text-muted-foreground mt-1.5">
+                            משלוח הבא: יום {WEEKDAYS_HE[d]}
+                          </div>
+                        );
+                      }
+                    }
+                    return null;
+                  })()}
                   <div className="text-xs text-muted-foreground mt-2 tabular-nums">
                     {s.default_start_time?.slice(0, 5) || "—"}
                     {s.default_end_time ? ` – ${s.default_end_time.slice(0, 5)}` : ""}

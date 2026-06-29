@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw, GripVertical } from "lucide-react";
+import { Plus, Trash2, X, Share2, Copy, MessageCircle, Users, Flame, Pencil, Check, CheckSquare, CheckCheck, RotateCcw, GripVertical, ChevronDown } from "lucide-react";
 import { ReactNode } from "react";
 import { SortableList } from "@/components/SortableList";
 import { toast } from "sonner";
@@ -140,12 +140,14 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   const reorderList = useNotebookStore((s) => s.reorderList);
   const [draft, setDraft] = useState("");
   const [urgent, setUrgent] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const bulk = useBulkSelection();
   const { role } = useAuth();
   const isAdmin = role === "admin";
 
 
   const doneCount = items.filter((i) => i.done).length;
+  const openCount = items.length - doneCount;
 
   const submit = async () => {
     if (!draft.trim()) return;
@@ -200,14 +202,29 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
   return (
     <section className="rounded-2xl border border-border bg-card/80 backdrop-blur p-4 sm:p-5">
       <header className="mb-3">
-        <div className="text-center">
-          <h2 className="font-display text-lg font-bold">
-            {cfg.emoji} {cfg.title}
-          </h2>
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          className="w-full text-center group"
+        >
+          <div className="inline-flex items-center justify-center gap-2">
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform ${collapsed ? "-rotate-90" : ""}`}
+            />
+            <h2 className="font-display text-lg font-bold">
+              {cfg.emoji} {cfg.title}
+            </h2>
+            {openCount > 0 && (
+              <span className="text-[10px] bg-neon/15 text-neon px-2 py-0.5 rounded-full font-bold tabular-nums">
+                {openCount}
+              </span>
+            )}
+          </div>
           <div className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
             <bdi>{items.length}</bdi> פריטים · <bdi>{doneCount}</bdi> הושלמו
           </div>
-        </div>
+        </button>
         <div className="mt-3 flex items-center justify-center flex-wrap gap-1.5">
           <button
             type="button"
@@ -260,6 +277,8 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
         </div>
       </header>
 
+      {!collapsed && (
+        <>
       {cfg.key === "shortages" ? (
         <div className="mb-3">
           <ShortageCatalogInput
@@ -413,7 +432,9 @@ function NotebookList({ cfg }: { cfg: ListConfig }) {
             },
           },
         ]}
-      />
+        />
+        </>
+      )}
     </section>
   );
 }

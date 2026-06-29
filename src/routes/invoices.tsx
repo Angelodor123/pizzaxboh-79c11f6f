@@ -109,6 +109,24 @@ function InvoicesPage() {
       .reduce((a, b) => a + Number(b.total_amount || 0), 0);
   })();
 
+  const weekTotal = (() => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun..6=Sat
+    const mondayOffset = (day + 6) % 7; // days since Monday
+    const monday = new Date(now);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(now.getDate() - mondayOffset);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return rows
+      .filter((r) => {
+        const d = new Date(r.document_date);
+        return d >= monday && d <= sunday;
+      })
+      .reduce((a, b) => a + Number(b.total_amount || 0), 0);
+  })();
+
   const openViewImage = async (row: InvoiceRow) => {
     setViewImageRow(row);
     setViewImageUrl(null);
@@ -175,6 +193,18 @@ function InvoicesPage() {
         <h1 className="font-display text-3xl sm:text-4xl font-bold mt-2 leading-tight">
           📥 דף בית <span className="text-neon text-glow-neon">קליטת סחורה</span>
         </h1>
+      </div>
+
+      {/* Weekly + monthly summary strip */}
+      <div className="grid grid-cols-2 rounded-xl border border-border bg-card/60 overflow-hidden">
+        <div className="p-4 text-center border-l border-border">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-neon font-bold">השבוע</div>
+          <div className="font-display text-2xl font-bold text-neon tabular-nums mt-1">{fmtIls(weekTotal)}</div>
+        </div>
+        <div className="p-4 text-center">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">החודש</div>
+          <div className="font-display text-2xl font-bold text-foreground tabular-nums mt-1">{fmtIls(monthTotal)}</div>
+        </div>
       </div>
 
       {/* KPI */}

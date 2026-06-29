@@ -24,7 +24,7 @@ import {
   useDevicePreview,
 } from "@/lib/device-preview";
 
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 const GuidedTour = lazy(() =>
   import("@/components/GuidedTour").then((m) => ({ default: m.GuidedTour })),
@@ -257,8 +257,23 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function useResponsiveToastPosition(): "top-right" | "bottom-center" {
+  const getPos = (): "top-right" | "bottom-center" =>
+    typeof window !== "undefined" && window.innerWidth < 640 ? "bottom-center" : "top-right";
+  const [pos, setPos] = useState<"top-right" | "bottom-center">("top-right");
+  useEffect(() => {
+    setPos(getPos());
+    const onResize = () => setPos(getPos());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return pos;
+}
+
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const toastPosition = useResponsiveToastPosition();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -273,7 +288,7 @@ function RootComponent() {
           </AccessGate>
         </ErrorBoundary>
       </AuthProvider>
-      <Toaster position="top-center" richColors closeButton />
+      <Toaster position={toastPosition} richColors closeButton />
       <OfflineQueueIndicator />
       <ConfirmHost />
     </QueryClientProvider>
