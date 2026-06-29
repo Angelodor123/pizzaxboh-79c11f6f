@@ -210,6 +210,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://pizzaxboh.lovable.app/#organization",
+              name: "Pizza X",
+              url: "https://pizzaxboh.lovable.app/",
+              logo: "https://pizzaxboh.lovable.app/android-chrome-512x512.png",
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://pizzaxboh.lovable.app/#website",
+              name: "Pizza X — מערכת ניהול מטבח",
+              url: "https://pizzaxboh.lovable.app/",
+              inLanguage: "he",
+              publisher: { "@id": "https://pizzaxboh.lovable.app/#organization" },
+            },
+          ],
+        }),
+      },
+    ],
   }),
 
   shellComponent: RootShell,

@@ -44,6 +44,33 @@ export const Route = createFileRoute("/recipes")({
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/recipes" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "מתכונים — Pizza X",
+          description: "ספריית המתכונים של מטבח Pizza X — רטבים, בצקים, מנות ותוספות.",
+          url: "https://pizzaxboh.lovable.app/recipes",
+          inLanguage: "he",
+          isPartOf: { "@id": "https://pizzaxboh.lovable.app/#website" },
+          about: { "@type": "Thing", name: "Recipe collection" },
+          mainEntity: {
+            "@type": "ItemList",
+            name: "מתכוני Pizza X",
+            itemListElement: [
+              { "@type": "Recipe", name: "מתכוני בצקים ובסיסים", recipeCategory: "Dough & Bases", inLanguage: "he" },
+              { "@type": "Recipe", name: "רטבי בסיס", recipeCategory: "Sauces", inLanguage: "he" },
+              { "@type": "Recipe", name: "איולי ורטבים", recipeCategory: "Aiolis", inLanguage: "he" },
+              { "@type": "Recipe", name: "ריבות וקרמים", recipeCategory: "Jams & Creams", inLanguage: "he" },
+              { "@type": "Recipe", name: "מנות פתיחה", recipeCategory: "Starters", inLanguage: "he" },
+              { "@type": "Recipe", name: "מנות עיקריות", recipeCategory: "Main Dishes", inLanguage: "he" },
+            ],
+          },
+        }),
+      },
+    ],
   }),
   validateSearch: (search: Record<string, unknown>): RecipesSearch => ({
     openRecipeId: typeof search.openRecipeId === "string" ? search.openRecipeId : undefined,
