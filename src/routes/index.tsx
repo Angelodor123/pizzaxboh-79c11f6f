@@ -247,30 +247,49 @@ function OperationalDashboard() {
       </div>
 
       {/* Supplier reminders — tomorrow */}
-      {tomorrowDeliveries.length > 0 && (
-        <Link
-          to="/calendar"
-          aria-label={`תזכורת: מחר מגיעים ${tomorrowDeliveries.length} ספקים`}
-          className="block mb-6 rounded-xl border-2 border-neon/40 hover:border-neon bg-neon/5 p-4 transition"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Truck className="h-5 w-5 text-neon shrink-0" />
-            <h2 className="font-display text-base font-bold leading-snug">
-              <bdi>🔔 תזכורת • מחר מגיעים {tomorrowDeliveries.length} ספקים</bdi>
-            </h2>
-          </div>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {tomorrowDeliveries.slice(0, 6).map((e) => (
-              <li key={e.id} className="text-xs text-foreground/90 truncate">
-                • {e.supplier || e.title}
-              </li>
-            ))}
-          </ul>
-        </Link>
+      {loadingHome ? (
+        <Skeleton className="block mb-6 h-24 w-full rounded-xl" />
+      ) : (
+        tomorrowDeliveries.length > 0 && (
+          <Link
+            to="/calendar"
+            aria-label={`תזכורת: מחר מגיעים ${tomorrowDeliveries.length} ספקים`}
+            className="block mb-6 rounded-xl border-2 border-neon/40 hover:border-neon bg-neon/5 p-4 transition"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Truck className="h-5 w-5 text-neon shrink-0" />
+              <h2 className="font-display text-base font-bold leading-snug">
+                <bdi>🔔 תזכורת • מחר מגיעים {tomorrowDeliveries.length} ספקים</bdi>
+              </h2>
+            </div>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {tomorrowDeliveries.slice(0, 6).map((e) => (
+                <li key={e.id} className="text-xs text-foreground/90 truncate">
+                  • {e.supplier || e.title}
+                </li>
+              ))}
+            </ul>
+          </Link>
+        )
       )}
 
       {/* Categorized shortcut sections (RBAC) */}
-      {(() => {
+      {loadingHome ? (
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-32" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-5 w-32" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      ) : (() => {
         const effectiveRole = isSuperAdmin
           ? "super_admin"
           : role === "admin"
@@ -283,8 +302,8 @@ function OperationalDashboard() {
           <>
             <SectionHeader>מטבח ותפעול</SectionHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" />
-              <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" />
+              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-5 w-5" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} />
+              <ShortcutTile to="/prep" icon={<ChefHat className="h-5 w-5" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} />
               <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
               <ShortcutTile to="/notebook" icon={<StickyNote className="h-5 w-5" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} />
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
