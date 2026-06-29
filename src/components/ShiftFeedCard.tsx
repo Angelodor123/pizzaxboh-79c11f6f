@@ -638,19 +638,19 @@ export function ShiftFeedCard() {
                         <FeedText text={r.message} users={mentionUsers} />
                       </p>
                       {r.image_url && (
-                        <a
-                          href={r.image_url}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => setLightboxUrl(r.image_url!)}
                           className="block mt-2"
+                          aria-label="הצג תמונה מצורפת"
                         >
                           <img
                             src={r.image_url}
                             alt="תמונה מצורפת"
                             loading="lazy"
-                            className="max-h-60 rounded-lg border border-border object-cover"
+                            className="w-20 h-20 rounded-lg border border-border object-cover float-left ml-2"
                           />
-                        </a>
+                        </button>
                       )}
                     </>
                   )}
