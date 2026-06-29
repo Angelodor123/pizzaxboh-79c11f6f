@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServiceCallsRouteImport } from './routes/service-calls'
 import { Route as RestockRouteImport } from './routes/restock'
 import { Route as RecipesRouteImport } from './routes/recipes'
@@ -46,6 +47,11 @@ const TasksRoute = TasksRouteImport.update({
 const SuppliersRoute = SuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServiceCallsRoute = ServiceCallsRouteImport.update({
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
   '/service-calls': typeof ServiceCallsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
@@ -227,6 +234,7 @@ export interface FileRoutesByTo {
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
   '/service-calls': typeof ServiceCallsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/recipes': typeof RecipesRoute
   '/restock': typeof RestockRoute
   '/service-calls': typeof ServiceCallsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
   '/admin/alerts': typeof AdminAlertsRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/restock'
     | '/service-calls'
+    | '/sitemap.xml'
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/restock'
     | '/service-calls'
+    | '/sitemap.xml'
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/restock'
     | '/service-calls'
+    | '/sitemap.xml'
     | '/suppliers'
     | '/tasks'
     | '/admin/alerts'
@@ -380,6 +392,7 @@ export interface RootRouteChildren {
   RecipesRoute: typeof RecipesRoute
   RestockRoute: typeof RestockRoute
   ServiceCallsRoute: typeof ServiceCallsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuppliersRoute: typeof SuppliersRoute
   TasksRoute: typeof TasksRoute
   ApiPublicHooksDoughAlertRoute: typeof ApiPublicHooksDoughAlertRoute
@@ -399,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/suppliers'
       fullPath: '/suppliers'
       preLoaderRoute: typeof SuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/service-calls': {
@@ -636,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecipesRoute: RecipesRoute,
   RestockRoute: RestockRoute,
   ServiceCallsRoute: ServiceCallsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SuppliersRoute: SuppliersRoute,
   TasksRoute: TasksRoute,
   ApiPublicHooksDoughAlertRoute: ApiPublicHooksDoughAlertRoute,
