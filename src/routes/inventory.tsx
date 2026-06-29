@@ -112,10 +112,13 @@ function sourceLabel(s: string): string {
       return "קליטה ידנית";
     case "adjustment":
       return "תיקון ידני";
+    case "count":
+      return "ספירת מלאי";
     default:
       return s;
   }
 }
+
 
 // ============================================================================
 // Page
