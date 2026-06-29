@@ -11,6 +11,11 @@ export const Route = createFileRoute("/maintenance")({
     meta: [
       { title: 'תחזוקה — Pizza X' },
       { name: "description", content: 'מעקב תקלות וטיפול בתחזוקת ציוד.' },
+    
+      { property: "og:title", content: 'תחזוקה — Pizza X' },
+      { property: "og:description", content: 'מעקב תקלות וטיפול בתחזוקת ציוד.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/maintenance" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/maintenance" }],
   }),

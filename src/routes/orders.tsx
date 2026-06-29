@@ -18,6 +18,11 @@ export const Route = createFileRoute("/orders")({
     meta: [
       { title: 'הזמנת סחורה — Pizza X' },
       { name: "description", content: 'ניהול הזמנות סחורה מספקים.' },
+    
+      { property: "og:title", content: 'הזמנת סחורה — Pizza X' },
+      { property: "og:description", content: 'ניהול הזמנות סחורה מספקים.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/orders" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/orders" }],
   }),

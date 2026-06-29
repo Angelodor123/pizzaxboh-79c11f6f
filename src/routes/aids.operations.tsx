@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/aids/operations")({
-  head: () => ({ meta: [{ title: "תפעול ומכשור — עזרים" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/operations" }] }),
+  head: () => ({ meta: [{ title: "תפעול ומכשור — עזרים" }, { name: "description", content: "מסמכי תפעול ומדריכי מכשור עבור צוות Pizza X." }, { property: "og:title", content: "תפעול ומכשור — עזרים" }, { property: "og:description", content: "מסמכי תפעול ומדריכי מכשור עבור צוות Pizza X." }, { property: "og:url", content: "https://pizzaxboh.lovable.app/aids/operations" }, { property: "og:type", content: "website" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/operations" }] }),
   component: ComingSoon,
 });
 

@@ -21,6 +21,11 @@ export const Route = createFileRoute("/complaints")({
     meta: [
       { title: 'פניות ותלונות — Pizza X' },
       { name: "description", content: 'ניהול פניות לקוחות וטיפול בתלונות.' },
+    
+      { property: "og:title", content: 'פניות ותלונות — Pizza X' },
+      { property: "og:description", content: 'ניהול פניות לקוחות וטיפול בתלונות.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/complaints" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/complaints" }],
   }),

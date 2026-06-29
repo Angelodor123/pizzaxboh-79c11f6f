@@ -120,18 +120,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
       },
-      { property: "og:title", content: "Pizza X — מערכת ניהול מטבח" },
-      { name: "twitter:title", content: "Pizza X — מערכת ניהול מטבח" },
-      {
-        property: "og:description",
-        content:
-          "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
-      },
-      {
-        name: "twitter:description",
-        content:
-          "מערכת ניהול המטבח הרשמית של Pizza X. ריכוז מתכונים, מחשבוני כמויות ודיוק תפעולי לצוות ה-Back of House.",
-      },
+      { property: "og:site_name", content: "Pizza X" },
       {
         property: "og:image",
         content:

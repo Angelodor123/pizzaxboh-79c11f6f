@@ -26,6 +26,11 @@ export const Route = createFileRoute("/aids/staff")({
     meta: [
       { title: "דף קשר — צוות הסניף" },
       { name: "description", content: "ספריית עובדים: התקשרות מהירה ו-WhatsApp." },
+    
+      { property: "og:title", content: "דף קשר — צוות הסניף" },
+      { property: "og:description", content: "ספריית עובדים: התקשרות מהירה ו-WhatsApp." },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/aids/staff" },
+      { property: "og:type", content: "website" },
     ], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/aids/staff" }],
   }),
   component: StaffDirectoryPage,

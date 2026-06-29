@@ -37,6 +37,11 @@ export const Route = createFileRoute("/recipes")({
     meta: [
       { title: 'מתכונים — Pizza X' },
       { name: "description", content: 'ספריית המתכונים של מטבח Pizza X.' },
+    
+      { property: "og:title", content: 'מתכונים — Pizza X' },
+      { property: "og:description", content: 'ספריית המתכונים של מטבח Pizza X.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/recipes" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/recipes" }],
   }),

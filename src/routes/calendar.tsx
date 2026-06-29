@@ -15,6 +15,11 @@ export const Route = createFileRoute("/calendar")({
     meta: [
       { title: 'לוח שנה — Pizza X' },
       { name: "description", content: 'לוח אירועי הצוות והמשמרות של Pizza X.' },
+    
+      { property: "og:title", content: 'לוח שנה — Pizza X' },
+      { property: "og:description", content: 'לוח אירועי הצוות והמשמרות של Pizza X.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/calendar" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/calendar" }],
   }),

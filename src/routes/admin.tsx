@@ -60,6 +60,11 @@ export const Route = createFileRoute("/admin")({
     meta: [
       { title: 'פאנל ניהול — Pizza X' },
       { name: "description", content: 'פאנל ניהול ראשי של מערכת Pizza X.' },
+    
+      { property: "og:title", content: 'פאנל ניהול — Pizza X' },
+      { property: "og:description", content: 'פאנל ניהול ראשי של מערכת Pizza X.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/admin" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/admin" }],
   }),

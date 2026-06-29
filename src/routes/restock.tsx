@@ -15,7 +15,7 @@ import { QK } from "@/lib/queue-handlers";
 
 export const Route = createFileRoute("/restock")({
   component: RestockPage,
-  head: () => ({ meta: [{ title: "השלמות מהמחסן — Pizza X" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/restock" }] }),
+  head: () => ({ meta: [{ title: "השלמות מהמחסן — Pizza X" }, { name: "description", content: "רשימת השלמות מהמחסן לסניף Pizza X." }, { property: "og:title", content: "השלמות מהמחסן — Pizza X" }, { property: "og:description", content: "רשימת השלמות מהמחסן לסניף Pizza X." }, { property: "og:url", content: "https://pizzaxboh.lovable.app/restock" }, { property: "og:type", content: "website" }], links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/restock" }] }),
 });
 
 const DAY_COLS = ["target_sun","target_mon","target_tue","target_wed","target_thu","target_fri","target_sat"] as const;

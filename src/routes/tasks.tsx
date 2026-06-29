@@ -64,6 +64,11 @@ export const Route = createFileRoute("/tasks")({
     meta: [
       { title: 'משימות — Pizza X' },
       { name: "description", content: 'ניהול משימות יומיות לצוות המשמרת.' },
+    
+      { property: "og:title", content: 'משימות — Pizza X' },
+      { property: "og:description", content: 'ניהול משימות יומיות לצוות המשמרת.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/tasks" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/tasks" }],
   }),
