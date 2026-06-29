@@ -430,8 +430,8 @@ function AuthedShell() {
         <CriticalMaintenanceInterceptor />
         {showQuickBack && <QuickBackBubble />}
         <footer className="border-t border-border py-4 px-4 text-center space-y-1">
-          <p className="text-xs text-muted-foreground/70">Pizza X • Urban Jungle Kitchen OS</p>
-          <p className="text-[11px] text-foreground/40 tracking-wide" dir="rtl">
+          <p className="text-xs text-muted-foreground">Pizza X • Urban Jungle Kitchen OS</p>
+          <p className="text-[11px] text-foreground/80 tracking-wide" dir="rtl">
             {footerCredit}
           </p>
         </footer>
