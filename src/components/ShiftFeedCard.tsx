@@ -124,6 +124,7 @@ export function ShiftFeedCard() {
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [seenByOpen, setSeenByOpen] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const markedReadRef = useRef<Set<string>>(new Set());
   const pushFn = useServerFn(sendPushToUsers);
