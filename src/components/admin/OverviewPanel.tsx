@@ -32,7 +32,7 @@ const EMPTY: Metrics = {
   todaySuppliers: [],
 };
 
-async function loadMetrics(): Promise<Metrics> {
+async function loadMetrics(branchId: string | null): Promise<Metrics> {
   const out: Metrics = { ...EMPTY };
 
   // Threshold
@@ -44,11 +44,13 @@ async function loadMetrics(): Promise<Metrics> {
   out.doughThreshold = Number((thr?.value as any)?.value ?? 15);
 
   // Latest dough trays per location (shop / warehouse)
-  const { data: dough } = await supabase
+  let doughQuery = supabase
     .from("dough_updates_log")
     .select("trays_count, location, created_at")
     .order("created_at", { ascending: false })
     .limit(50);
+  if (branchId) doughQuery = doughQuery.eq("branch_id", branchId);
+  const { data: dough } = await doughQuery;
   const rows = (dough ?? []) as Array<{ trays_count: number; location: string }>;
   const latestShop = rows.find((r) => r.location === "shop");
   const latestWh = rows.find((r) => r.location === "warehouse");
@@ -56,20 +58,24 @@ async function loadMetrics(): Promise<Metrics> {
   out.doughWarehouse = latestWh ? Number(latestWh.trays_count) : null;
 
   // Open maintenance tickets (unread by admin)
-  const { count: ticketCount } = await supabase
+  let ticketQuery = supabase
     .from("maintenance_tickets")
     .select("id", { count: "exact", head: true })
     .eq("is_read_by_admin", false)
     .eq("status", "open");
+  if (branchId) ticketQuery = ticketQuery.eq("branch_id", branchId);
+  const { count: ticketCount } = await ticketQuery;
   out.openTickets = ticketCount ?? 0;
 
   // Active shortages (from notebook)
-  const { count: shortageCount } = await supabase
+  let shortageQuery = supabase
     .from("notebook_items")
     .select("id", { count: "exact", head: true })
     .eq("list_key", "shortages")
     .eq("done", false)
     .is("archived_at", null);
+  if (branchId) shortageQuery = shortageQuery.eq("branch_id", branchId);
+  const { count: shortageCount } = await shortageQuery;
   out.activeShortages = shortageCount ?? 0;
 
   // Today's date
@@ -77,41 +83,51 @@ async function loadMetrics(): Promise<Metrics> {
   const today = String(todayData);
 
   // Prep progress
-  const { data: prepItems } = await supabase
+  let prepQuery = supabase
     .from("prep_items")
     .select("id")
     .eq("active", true);
+  if (branchId) prepQuery = prepQuery.eq("branch_id", branchId);
+  const { data: prepItems } = await prepQuery;
   out.prepTotal = prepItems?.length ?? 0;
-  if (out.prepTotal > 0) {
+  const prepIds = (prepItems ?? []).map((r: any) => r.id);
+  if (out.prepTotal > 0 && prepIds.length > 0) {
     const { count: doneCount } = await supabase
       .from("prep_log")
       .select("id", { count: "exact", head: true })
       .eq("log_date", today)
-      .eq("completed", true);
+      .eq("completed", true)
+      .in("prep_item_id", prepIds);
     out.prepDone = doneCount ?? 0;
   }
 
   // Tasks progress
-  const { data: tasks } = await supabase
+  let tasksQuery = supabase
     .from("tasks")
     .select("id")
     .eq("active", true);
+  if (branchId) tasksQuery = tasksQuery.eq("branch_id", branchId);
+  const { data: tasks } = await tasksQuery;
   out.tasksTotal = tasks?.length ?? 0;
-  if (out.tasksTotal > 0) {
+  const taskIds = (tasks ?? []).map((r: any) => r.id);
+  if (out.tasksTotal > 0 && taskIds.length > 0) {
     const { count: tDone } = await supabase
       .from("daily_task_logs")
       .select("id", { count: "exact", head: true })
       .eq("log_date", today)
-      .eq("completed", true);
+      .eq("completed", true)
+      .in("task_id", taskIds);
     out.tasksDone = tDone ?? 0;
   }
 
   // Today's received goods
-  const { data: todayInvoices } = await supabase
+  let invQuery = supabase
     .from("invoices")
     .select("supplier_id, suppliers:supplier_id(name)")
     .eq("document_date", today)
     .eq("is_archived", false);
+  if (branchId) invQuery = invQuery.eq("branch_id", branchId);
+  const { data: todayInvoices } = await invQuery;
   const names = Array.from(
     new Set(
       (todayInvoices ?? [])
