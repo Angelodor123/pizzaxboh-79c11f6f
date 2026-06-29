@@ -317,7 +317,7 @@ function TrainingHistoryModal({
         .eq("supplier_id", supplierId)
         .order("created_at", { ascending: false })
         .limit(100);
-      if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
+      if (branchId) q = q.eq("branch_id", branchId);
       const { data } = await q;
       const { data: sup } = await supabase
         .from("suppliers")
