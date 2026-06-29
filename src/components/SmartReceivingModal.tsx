@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId } from "@/lib/current-branch";
-import { parseInvoiceImage } from "@/lib/invoice-ocr.functions";
+import { parseInvoiceImage, learnFromCorrection } from "@/lib/invoice-ocr.functions";
 import { receivingHeaderSchema, validateOrToast } from "@/lib/schemas";
 
 
@@ -84,6 +84,36 @@ const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, rej
   r.onerror = reject;
   r.readAsDataURL(file);
 });
+
+// Compress a data URL via off-screen canvas (max 1920px longest side, JPEG q=0.82).
+// Skips compression for inputs already under ~800KB to avoid needless work.
+async function compressImage(dataUrl: string): Promise<string> {
+  try {
+    // Approximate byte size of the base64 payload.
+    const b64 = dataUrl.split(",")[1] ?? "";
+    const approxBytes = Math.floor((b64.length * 3) / 4);
+    if (approxBytes < 800 * 1024) return dataUrl;
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = dataUrl;
+    });
+    const maxSide = 1920;
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.82);
+  } catch {
+    return dataUrl;
+  }
+}
 const blankMatch = (): Pick<RowPair, "catalogProductId" | "catalogCostPrice" | "matchSimilarity" | "aiSuggestedProductId" | "matchStatus" | "received" | "notReceivedReason"> => ({
   catalogProductId: null,
   catalogCostPrice: null,
@@ -104,6 +134,7 @@ const looseEq = (a: string, b: string) => {
 
 export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId = null }: Props) {
   const ocr = useServerFn(parseInvoiceImage);
+  const runLearn = useServerFn(learnFromCorrection);
   const [stage, setStage] = useState<Stage>("pick");
   const [supplierId, setSupplierId] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -351,7 +382,8 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
     if (!targetFile) return toast.error("יש להעלות תמונת חשבונית");
     setStage("processing");
     try {
-      const dataUrl = dataUrlOverride ?? await fileToDataUrl(targetFile);
+      const rawDataUrl = dataUrlOverride ?? await fileToDataUrl(targetFile);
+      const dataUrl = await compressImage(rawDataUrl);
       const catalogPayload = catalog.slice(0, 200).map((p) => ({
         name: p.name,
         sku: p.sku ?? null,
@@ -620,24 +652,25 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       const deliveryIssues = cleanItems
         .filter((r) => !r.received)
         .map((r) => ({ name: r.name, reason: r.notReceivedReason ?? "missing", quantity: r.invoiceQty }));
+      const finalFeedbackData = {
+        invoice_number: invoiceNumber.trim(),
+        total_amount: totalNum,
+        document_date: docDate,
+        items: cleanItems.map((r, idx) => ({
+          name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
+          _val: itemVal[idx] ?? "pending",
+          _received: r.received,
+          _not_received_reason: r.notReceivedReason,
+        })),
+        _validation: { header: headerVal, approved, corrected: edits, summary: { approved, corrected: edits } },
+        _delivery: { total: deliveryTotal, received: deliveryReceived, issues: deliveryIssues },
+      };
       await supabase.from("invoice_ocr_feedback").insert({
         branch_id: branchId,
         supplier_id: supplierId,
         invoice_id: invoiceRow!.id,
         raw_ocr: (parsed as unknown) as never,
-        final_data: {
-          invoice_number: invoiceNumber.trim(),
-          total_amount: totalNum,
-          document_date: docDate,
-          items: cleanItems.map((r, idx) => ({
-            name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
-            _val: itemVal[idx] ?? "pending",
-            _received: r.received,
-            _not_received_reason: r.notReceivedReason,
-          })),
-          _validation: { header: headerVal, approved, corrected: edits },
-          _delivery: { total: deliveryTotal, received: deliveryReceived, issues: deliveryIssues },
-        },
+        final_data: finalFeedbackData as unknown as never,
         diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
       });
 
@@ -925,6 +958,19 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
 
       toast.success("החשבונית נקלטה והמלאי עודכן");
       onSaved();
+      // Fire-and-forget: train supplier parsing_instructions from this correction.
+      // Uses the effective supplierId (auto-detected during scan if user didn't pick one),
+      // which is the same value that was just used for the invoice insert.
+      try {
+        void runLearn({
+          data: {
+            supplierId,
+            invoiceId: invoiceRow!.id,
+            raw: parsed,
+            final: finalFeedbackData,
+          },
+        }).catch(() => { /* silent: learning failure must never break save */ });
+      } catch { /* swallow */ }
       onClose();
 
     } catch (e) {

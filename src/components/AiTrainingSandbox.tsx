@@ -78,7 +78,7 @@ export function AiTrainingSandbox({ suppliers, isSuperAdmin }: Props) {
       .select("supplier_id,diff_summary,created_at,raw_ocr,final_data")
       .order("created_at", { ascending: false })
       .limit(2000);
-    if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
+    if (branchId) q = q.eq("branch_id", branchId);
     const { data } = await q;
     const rows = ((data as unknown) as FeedbackRow[]) ?? [];
     const bySup = new Map<string, FeedbackRow[]>();
@@ -317,7 +317,7 @@ function TrainingHistoryModal({
         .eq("supplier_id", supplierId)
         .order("created_at", { ascending: false })
         .limit(100);
-      if (isSuperAdmin && branchId) q = q.eq("branch_id", branchId);
+      if (branchId) q = q.eq("branch_id", branchId);
       const { data } = await q;
       const { data: sup } = await supabase
         .from("suppliers")
