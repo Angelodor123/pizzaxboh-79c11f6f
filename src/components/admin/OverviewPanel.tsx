@@ -472,6 +472,7 @@ function StatColumn({
   label,
   value,
   alert,
+  warn,
   href,
   sub,
 }: {
@@ -479,6 +480,7 @@ function StatColumn({
   label: string;
   value: React.ReactNode;
   alert?: boolean;
+  warn?: boolean;
   href?: string;
   sub?: string;
 }) {
@@ -486,14 +488,22 @@ function StatColumn({
     <div className="flex flex-col items-center text-center px-3 py-1">
       <div
         className={`p-2 rounded-md mb-2 ${
-          alert ? "bg-destructive/15 text-destructive" : "bg-neon/10 text-neon"
+          alert
+            ? "bg-destructive/15 text-destructive"
+            : warn
+              ? "bg-amber-brand/15 text-amber-brand"
+              : "bg-neon/10 text-neon"
         }`}
       >
         {icon}
       </div>
       <div
         className={`text-3xl sm:text-4xl font-black tabular-nums leading-none ${
-          alert ? "text-destructive drop-shadow-[0_0_10px_hsl(var(--destructive))]" : "text-foreground"
+          alert
+            ? "text-destructive drop-shadow-[0_0_10px_hsl(var(--destructive))]"
+            : warn
+              ? "text-amber-brand drop-shadow-[0_0_10px_hsl(var(--amber-brand))]"
+              : "text-foreground"
         }`}
       >
         {value}
