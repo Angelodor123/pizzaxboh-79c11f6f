@@ -74,6 +74,7 @@ function OperationalDashboard() {
       const eventIds = evData.map((e) => e.id);
       if (eventIds.length === 0) {
         setOverrides([]);
+        setLoadingHome(false);
         return;
       }
       const ov = await supabase
@@ -82,6 +83,7 @@ function OperationalDashboard() {
         .in("event_id", eventIds);
       if (!mounted) return;
       if (ov.data) setOverrides(ov.data as CalOverride[]);
+      setLoadingHome(false);
     };
     void load();
 
@@ -94,6 +96,57 @@ function OperationalDashboard() {
     return () => {
       mounted = false;
       void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Live badge counts for tasks + prep tiles
+  useEffect(() => {
+    let mounted = true;
+    const today = todayIso();
+    const loadCounts = async () => {
+      const branchId = getActiveBranchIdSync();
+
+      // Tasks: total active tasks (branch-scoped) minus those completed today
+      let tasksQuery = supabase.from("tasks").select("id").eq("active", true);
+      if (branchId) tasksQuery = tasksQuery.eq("branch_id", branchId);
+      const { data: tasksData } = await tasksQuery;
+      const taskIds = (tasksData ?? []).map((t: any) => t.id);
+      let tasksDone = 0;
+      if (taskIds.length > 0) {
+        const { count } = await supabase
+          .from("daily_task_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("log_date", today)
+          .eq("completed", true)
+          .in("task_id", taskIds);
+        tasksDone = count ?? 0;
+      }
+      if (!mounted) return;
+      setTasksOpenCount(Math.max(0, (tasksData?.length ?? 0) - tasksDone));
+
+      // Prep: total active prep items (branch-scoped) minus completed today
+      let prepQuery = supabase.from("prep_items").select("id").eq("active", true);
+      if (branchId) prepQuery = prepQuery.eq("branch_id", branchId);
+      const { data: prepData } = await prepQuery;
+      const prepIds = (prepData ?? []).map((p: any) => p.id);
+      let prepDone = 0;
+      if (prepIds.length > 0) {
+        const { count } = await supabase
+          .from("prep_log")
+          .select("id", { count: "exact", head: true })
+          .eq("log_date", today)
+          .eq("completed", true)
+          .in("prep_item_id", prepIds);
+        prepDone = count ?? 0;
+      }
+      if (!mounted) return;
+      setPrepOpenCount(Math.max(0, (prepData?.length ?? 0) - prepDone));
+    };
+    void loadCounts();
+    const interval = setInterval(() => void loadCounts(), 30000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
     };
   }, []);
 
