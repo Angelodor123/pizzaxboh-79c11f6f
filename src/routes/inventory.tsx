@@ -125,6 +125,8 @@ function sourceLabel(s: string): string {
 // ============================================================================
 
 function InventoryPage() {
+  const { role } = useAuth();
+  const isAdmin = role === "admin" || role === "super_admin";
   return (
     <main dir="rtl" className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <header className="space-y-1">
@@ -139,8 +141,9 @@ function InventoryPage() {
       </header>
 
       <Tabs defaultValue="stock" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${isAdmin ? "grid-cols-4" : "grid-cols-3"}`}>
           <TabsTrigger value="stock">מצב מלאי</TabsTrigger>
+          {isAdmin && <TabsTrigger value="count">ספירה</TabsTrigger>}
           <TabsTrigger value="movements">תנועות מלאי</TabsTrigger>
           <TabsTrigger value="shortages">חוסרים ואזהרות</TabsTrigger>
         </TabsList>
@@ -148,6 +151,11 @@ function InventoryPage() {
         <TabsContent value="stock" className="mt-4">
           <StockLevelsTab />
         </TabsContent>
+        {isAdmin && (
+          <TabsContent value="count" className="mt-4">
+            <CountTab />
+          </TabsContent>
+        )}
         <TabsContent value="movements" className="mt-4">
           <MovementsTab />
         </TabsContent>
@@ -158,6 +166,7 @@ function InventoryPage() {
     </main>
   );
 }
+
 
 // ============================================================================
 // Tab 1 — Stock Levels
