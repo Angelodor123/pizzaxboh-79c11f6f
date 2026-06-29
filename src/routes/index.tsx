@@ -14,6 +14,8 @@ import { useBranchFeature, useActiveBranchData } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
 import { PersonalTasksCard } from "@/components/PersonalTasksCard";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 
 
 import { ShiftFeedCard } from "@/components/ShiftFeedCard";
