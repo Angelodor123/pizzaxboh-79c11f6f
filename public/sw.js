@@ -56,18 +56,25 @@ self.addEventListener("push", (event) => {
       dir: "rtl",
       lang: "he",
       tag: payload.tag,
+      data: { url: payload.url },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/";
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const c of clients) {
-        if ("focus" in c) return c.focus();
+        if ("focus" in c) {
+          if ("navigate" in c) {
+            return c.navigate(targetUrl).then(() => c.focus()).catch(() => c.focus());
+          }
+          return c.focus();
+        }
       }
-      if (self.clients.openWindow) return self.clients.openWindow("/");
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     }),
   );
 });
