@@ -55,6 +55,9 @@ function OperationalDashboard() {
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [overrides, setOverrides] = useState<CalOverride[]>([]);
+  const [loadingHome, setLoadingHome] = useState(true);
+  const [tasksOpenCount, setTasksOpenCount] = useState(0);
+  const [prepOpenCount, setPrepOpenCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
