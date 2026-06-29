@@ -652,24 +652,25 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       const deliveryIssues = cleanItems
         .filter((r) => !r.received)
         .map((r) => ({ name: r.name, reason: r.notReceivedReason ?? "missing", quantity: r.invoiceQty }));
+      const finalFeedbackData = {
+        invoice_number: invoiceNumber.trim(),
+        total_amount: totalNum,
+        document_date: docDate,
+        items: cleanItems.map((r, idx) => ({
+          name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
+          _val: itemVal[idx] ?? "pending",
+          _received: r.received,
+          _not_received_reason: r.notReceivedReason,
+        })),
+        _validation: { header: headerVal, approved, corrected: edits, summary: { approved, corrected: edits } },
+        _delivery: { total: deliveryTotal, received: deliveryReceived, issues: deliveryIssues },
+      };
       await supabase.from("invoice_ocr_feedback").insert({
         branch_id: branchId,
         supplier_id: supplierId,
         invoice_id: invoiceRow!.id,
         raw_ocr: (parsed as unknown) as never,
-        final_data: {
-          invoice_number: invoiceNumber.trim(),
-          total_amount: totalNum,
-          document_date: docDate,
-          items: cleanItems.map((r, idx) => ({
-            name: r.name, quantity: r.invoiceQty, unit_price: r.unitPrice, category: r.category,
-            _val: itemVal[idx] ?? "pending",
-            _received: r.received,
-            _not_received_reason: r.notReceivedReason,
-          })),
-          _validation: { header: headerVal, approved, corrected: edits },
-          _delivery: { total: deliveryTotal, received: deliveryReceived, issues: deliveryIssues },
-        },
+        final_data: finalFeedbackData as unknown as never,
         diff_summary: isPerfect ? "perfect" : `edits:${edits}`,
       });
 
