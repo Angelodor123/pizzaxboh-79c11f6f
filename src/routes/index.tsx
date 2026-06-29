@@ -26,6 +26,11 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: 'Pizza X — מערכת ניהול מטבח' },
       { name: "description", content: 'מסך הבית של מערכת ניהול המטבח של Pizza X.' },
+    
+      { property: "og:title", content: 'Pizza X — מערכת ניהול מטבח' },
+      { property: "og:description", content: 'מסך הבית של מערכת ניהול המטבח של Pizza X.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/" }],
   }),

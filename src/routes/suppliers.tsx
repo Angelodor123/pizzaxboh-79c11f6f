@@ -22,6 +22,11 @@ export const Route = createFileRoute("/suppliers")({
     meta: [
       { title: 'ספקים — Pizza X' },
       { name: "description", content: 'ניהול ספקים ופרטי קשר.' },
+    
+      { property: "og:title", content: 'ספקים — Pizza X' },
+      { property: "og:description", content: 'ניהול ספקים ופרטי קשר.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/suppliers" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/suppliers" }],
   }),

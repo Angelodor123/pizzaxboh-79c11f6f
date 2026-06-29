@@ -14,6 +14,11 @@ export const Route = createFileRoute("/cibus")({
     meta: [
       { title: 'סיבוס — Pizza X' },
       { name: "description", content: 'מעקב צבירת סיבוס ותנועות עובדים.' },
+    
+      { property: "og:title", content: 'סיבוס — Pizza X' },
+      { property: "og:description", content: 'מעקב צבירת סיבוס ותנועות עובדים.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/cibus" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/cibus" }],
   }),

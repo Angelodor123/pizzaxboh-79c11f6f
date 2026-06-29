@@ -7,6 +7,11 @@ export const Route = createFileRoute("/guide")({
     meta: [
       { title: 'מדריך הצוות — Pizza X' },
       { name: "description", content: 'מדריך תפעולי לעובדי Pizza X.' },
+    
+      { property: "og:title", content: 'מדריך הצוות — Pizza X' },
+      { property: "og:description", content: 'מדריך תפעולי לעובדי Pizza X.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/guide" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/guide" }],
   }),

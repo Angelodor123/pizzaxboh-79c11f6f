@@ -23,6 +23,11 @@ export const Route = createFileRoute("/notebook")({
     meta: [
       { title: 'Pizza X' },
       { name: "description", content: 'Pizza X' },
+    
+      { property: "og:title", content: 'Pizza X' },
+      { property: "og:description", content: 'Pizza X' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/notebook" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/notebook" }],
   }),

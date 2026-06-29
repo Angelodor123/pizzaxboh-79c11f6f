@@ -11,6 +11,11 @@ export const Route = createFileRoute("/service-calls")({
     meta: [
       { title: 'קריאות שירות — Pizza X' },
       { name: "description", content: 'ניהול קריאות שירות וטיפול בתקלות.' },
+    
+      { property: "og:title", content: 'קריאות שירות — Pizza X' },
+      { property: "og:description", content: 'ניהול קריאות שירות וטיפול בתקלות.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/service-calls" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/service-calls" }],
   }),

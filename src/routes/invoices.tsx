@@ -25,6 +25,11 @@ export const Route = createFileRoute("/invoices")({
     meta: [
       { title: 'חשבוניות — Pizza X' },
       { name: "description", content: 'ניהול חשבוניות ספקים וקבלות סחורה.' },
+    
+      { property: "og:title", content: 'חשבוניות — Pizza X' },
+      { property: "og:description", content: 'ניהול חשבוניות ספקים וקבלות סחורה.' },
+      { property: "og:url", content: "https://pizzaxboh.lovable.app/invoices" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://pizzaxboh.lovable.app/invoices" }],
   }),
