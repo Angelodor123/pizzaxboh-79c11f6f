@@ -257,8 +257,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function useResponsiveToastPosition(): "top-right" | "bottom-center" {
+  const getPos = (): "top-right" | "bottom-center" =>
+    typeof window !== "undefined" && window.innerWidth < 640 ? "bottom-center" : "top-right";
+  const [pos, setPos] = (require("react") as typeof import("react")).useState(getPos);
+  (require("react") as typeof import("react")).useEffect(() => {
+    const onResize = () => setPos(getPos());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return pos;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const toastPosition = useResponsiveToastPosition();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -273,7 +286,7 @@ function RootComponent() {
           </AccessGate>
         </ErrorBoundary>
       </AuthProvider>
-      <Toaster position="top-center" richColors closeButton />
+      <Toaster position={toastPosition} richColors closeButton />
       <OfflineQueueIndicator />
       <ConfirmHost />
     </QueryClientProvider>
