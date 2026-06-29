@@ -149,6 +149,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Pizza X" },
+      { name: "google-site-verification", content: "NYsIWy2EumCcmWzJwIPglUidoL3DQi7L4PZoAg0iCdc" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
