@@ -281,6 +281,10 @@ function TasksPage() {
   const extractFn = useServerFn(extractIngredientFromTitle);
   const [rejectingTask, setRejectingTask] = useState<{ id: string; name: string } | null>(null);
   const [rejectNoteDraft, setRejectNoteDraft] = useState("");
+  const [expandedCompleted, setExpandedCompleted] = useState<Map<string, boolean>>(new Map());
+  const [commentOpenMap, setCommentOpenMap] = useState<Map<string, boolean>>(new Map());
+  const groupCompletionRef = useRef<Map<string, number>>(new Map());
+  const notifyCommentFn = useServerFn(notifyTaskComment);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
