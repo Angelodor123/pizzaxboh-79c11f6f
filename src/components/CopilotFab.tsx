@@ -331,8 +331,13 @@ export function CopilotFab() {
             type="button"
             onClick={handleFabClick}
             aria-label="פתח את ג'וני, מנהל התפעול הדיגיטלי"
+            style={{
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              animation: showDailyCta ? "johnny-pulse 2s ease-in-out infinite" : undefined,
+            }}
             className={cn(
-              "relative h-14 w-14 rounded-full cursor-grab active:cursor-grabbing",
+              "relative rounded-full cursor-grab active:cursor-grabbing",
               "bg-gradient-to-br from-zinc-900 to-black border-2",
               showDailyCta ? "border-[#39ff88] shadow-[0_8px_24px_-4px_rgba(57,255,136,0.65)]" : "border-[#ff3d8a]/60 shadow-[0_8px_24px_-4px_rgba(255,61,138,0.55)]",
               "flex items-center justify-center hover:scale-105 active:scale-95 transition-transform",
