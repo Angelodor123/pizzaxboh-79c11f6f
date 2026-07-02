@@ -825,7 +825,7 @@ function TasksPage() {
       const gDone = gCountable.filter((t) => logs.get(t.id)?.completed).length;
       const prev = groupCompletionRef.current.get(g.id) ?? 0;
       if (gCountable.length > 0 && gDone === gCountable.length && prev < gCountable.length) {
-        triggerHaptic("medium");
+        triggerHaptic("success");
         toast.success("קבוצה הושלמה", { description: `✅ ${g.name}` });
       }
       groupCompletionRef.current.set(g.id, gDone);
