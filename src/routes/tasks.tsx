@@ -722,6 +722,23 @@ function TasksPage() {
     await persistTask(taskId, state);
     triggerHaptic("light");
     toast.success("הערה נשמרה");
+    // Fire-and-forget push to branch admin + super admins.
+    const trimmed = (state.comments ?? "").trim().slice(0, 300);
+    if (trimmed && branchId) {
+      const taskName = allTasks.find((x) => x.id === taskId)?.name ?? "";
+      try {
+        void notifyCommentFn({
+          data: {
+            taskId,
+            taskName,
+            commentText: trimmed,
+            branchId,
+          },
+        }).catch(() => {});
+      } catch {
+        /* swallow — push failure must never break save */
+      }
+    }
   };
 
   const saveShortage = async (
