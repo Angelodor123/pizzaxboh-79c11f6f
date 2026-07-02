@@ -78,6 +78,16 @@ export function CopilotFab() {
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
 
   // Show daily briefing CTA if user hasn't opened today
+  // Inject the johnny-pulse keyframes once on mount
+  useEffect(() => {
+    const id = "johnny-pulse-keyframes";
+    if (document.getElementById(id)) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = `@keyframes johnny-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(57,255,20,0); } 50% { box-shadow: 0 0 0 8px rgba(57,255,20,0.35); } }`;
+    document.head.appendChild(style);
+  }, []);
+
   useEffect(() => {
     if (!hasOpenedToday()) setShowDailyCta(true);
   }, []);
