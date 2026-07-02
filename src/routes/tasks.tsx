@@ -1123,9 +1123,15 @@ function TasksPage() {
                                       />
                                       <div className="flex-1 min-w-0 text-right">
                                         <div
-                                          className={`text-sm font-bold leading-snug transition-all duration-300 ${done ? "line-through text-gray-500" : "text-foreground"}`}
+                                          className={`text-sm font-bold leading-snug transition-all duration-300 flex items-center gap-1.5 flex-wrap ${done ? "line-through text-gray-500" : "text-foreground"}`}
                                         >
-                                          {t.name}
+                                          {isUrgent && <Flame className="h-4 w-4 text-amber-400 shrink-0" aria-hidden />}
+                                          <span>{t.name}</span>
+                                          {isUrgent && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                                              דחוף
+                                            </span>
+                                          )}
                                         </div>
                                         {stamp && (
                                           <div className="text-[11px] text-primary/90 mt-1 leading-snug">
