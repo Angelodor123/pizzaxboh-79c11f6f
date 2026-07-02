@@ -994,18 +994,15 @@ function TasksPage() {
 
 
 
-                        {isGroupOpen && (
-                          <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
-                            <DndContext
-                              sensors={sensors}
-                              collisionDetection={closestCenter}
-                              onDragEnd={handleGroupDragEnd(g.id)}
-                            >
-                              <SortableContext
-                                items={gTasks.map((t) => t.id)}
-                                strategy={verticalListSortingStrategy}
-                              >
-                            {gTasks.map((t) => {
+                        {isGroupOpen && (() => {
+                          const pendingList = gTasks.filter((t) => {
+                            const subs = subtasksFor(t.id);
+                            if (subs.length > 0) return !subs.every((s) => logs.get(s.id)?.completed);
+                            return !(logs.get(t.id)?.completed);
+                          });
+                          const completedList = gTasks.filter((t) => !pendingList.includes(t));
+                          const isCompletedOpen = expandedCompleted.get(g.id) ?? false;
+                          const renderTaskCard = (t: Task) => {
                               const subs = subtasksFor(t.id);
                               if (subs.length > 0) {
                                 const subsDone = subs.filter((s) => logs.get(s.id)?.completed).length;
