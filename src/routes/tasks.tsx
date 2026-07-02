@@ -1227,28 +1227,96 @@ function TasksPage() {
 
 
                                   <div className="mt-3">
-                                    <label
-                                      htmlFor={`note-${t.id}`}
-                                      className="block text-[11px] text-muted-foreground text-right mb-1"
-                                    >
-                                      הוספת הערה למשימה
-                                    </label>
-                                    <textarea
-                                      id={`note-${t.id}`}
-                                      value={log?.comments ?? ""}
-                                      onChange={(e) =>
-                                        updateComment(t.id, e.target.value)
-                                      }
-                                      maxLength={2000}
-                                      rows={2}
-                                      placeholder="הערה אופציונלית…"
-                                      className="w-full bg-background/60 border border-border focus:border-primary/60 focus:outline-none rounded-md px-2 py-1.5 text-xs text-right resize-y transition"
-                                    />
-                                    <div className="text-[10px] text-muted-foreground text-end mt-0.5 tabular-nums" dir="ltr">
-                                      {(log?.comments ?? "").length}/2000
-                                    </div>
-                                    <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
-                                      {t.is_purchased_good ? (
+                                    {(() => {
+                                      const existingComment = (log?.comments ?? "").trim();
+                                      const isCommentOpen = commentOpenMap.get(t.id) ?? false;
+                                      const showTextarea = isCommentOpen || (!existingComment && false);
+                                      const toggleOpen = (open: boolean) =>
+                                        setCommentOpenMap((m) => {
+                                          const n = new Map(m);
+                                          n.set(t.id, open);
+                                          return n;
+                                        });
+                                      return (
+                                        <>
+                                          {!showTextarea && existingComment && (
+                                            <div className="flex items-start justify-between gap-2 text-right">
+                                              <button
+                                                type="button"
+                                                onClick={() => toggleOpen(true)}
+                                                className="p-1 rounded-md text-muted-foreground hover:text-neon hover:bg-accent/40 shrink-0 transition"
+                                                aria-label="ערוך הערה"
+                                                title="ערוך הערה"
+                                              >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                              </button>
+                                              <div className="text-[11px] text-muted-foreground flex-1 whitespace-pre-wrap leading-snug">
+                                                {existingComment}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {!showTextarea && !existingComment && (
+                                            <button
+                                              type="button"
+                                              onClick={() => toggleOpen(true)}
+                                              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-neon transition"
+                                            >
+                                              <MessageSquarePlus className="h-3.5 w-3.5" />
+                                              הוסף הערה
+                                            </button>
+                                          )}
+                                          {showTextarea && (
+                                            <>
+                                              <label
+                                                htmlFor={`note-${t.id}`}
+                                                className="block text-[11px] text-muted-foreground text-right mb-1"
+                                              >
+                                                הוספת הערה למשימה
+                                              </label>
+                                              <textarea
+                                                id={`note-${t.id}`}
+                                                value={log?.comments ?? ""}
+                                                onChange={(e) =>
+                                                  updateComment(t.id, e.target.value)
+                                                }
+                                                maxLength={2000}
+                                                rows={2}
+                                                placeholder="הערה אופציונלית…"
+                                                className="w-full bg-background/60 border border-border focus:border-primary/60 focus:outline-none rounded-md px-2 py-1.5 text-xs text-right resize-y transition"
+                                                autoFocus
+                                              />
+                                              <div className="text-[10px] text-muted-foreground text-end mt-0.5 tabular-nums" dir="ltr">
+                                                {(log?.comments ?? "").length}/2000
+                                              </div>
+                                              <div className="mt-2 flex items-center justify-end gap-2">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => toggleOpen(false)}
+                                                  className="px-2.5 py-1.5 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent/40 transition"
+                                                >
+                                                  ביטול
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={async () => {
+                                                    await saveComment(t.id);
+                                                    toggleOpen(false);
+                                                  }}
+                                                  disabled={!t.id || t.id.startsWith("__virtual_")}
+                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold bg-neon/90 text-black hover:bg-neon transition disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_8px_rgba(57,255,20,0.4)]"
+                                                  title="שמור הערה"
+                                                >
+                                                  <Save className="h-3.5 w-3.5" />
+                                                  שמור הערה
+                                                </button>
+                                              </div>
+                                            </>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
+                                    {t.is_purchased_good && (
+                                      <div className="mt-2 flex justify-start">
                                         <button
                                           type="button"
                                           onClick={() => reportShortage(t.id)}
@@ -1268,20 +1336,8 @@ function TasksPage() {
                                             </>
                                           )}
                                         </button>
-                                      ) : (
-                                        <span />
-                                      )}
-                                      <button
-                                        type="button"
-                                        onClick={() => saveComment(t.id)}
-                                        disabled={!t.id || t.id.startsWith("__virtual_")}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold bg-neon/90 text-black hover:bg-neon transition disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_8px_rgba(57,255,20,0.4)]"
-                                        title="שמור הערה"
-                                      >
-                                        <Save className="h-3.5 w-3.5" />
-                                        שמור הערה
-                                      </button>
-                                    </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                                 </SortableTaskItem>
