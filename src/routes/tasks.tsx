@@ -1096,6 +1096,7 @@ function TasksPage() {
                               const recipe = t.recipe_id
                                 ? recipes.find((r) => r.id === t.recipe_id)
                                 : null;
+                              const isUrgent = !done && t.is_urgent === true;
                               return (
                                 <SortableTaskItem key={t.id} id={t.id} showHandle={isSuperAdmin && !t.id.startsWith("__virtual_")}>
                                 <div
@@ -1104,7 +1105,9 @@ function TasksPage() {
                                       ? "bg-card/40 border-emerald-500/40 shadow-[0_0_6px_rgba(16,185,129,0.25)]"
                                       : done
                                         ? "bg-card/40 border-border"
-                                        : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
+                                        : isUrgent
+                                          ? "bg-card border-amber-500/70 shadow-[0_0_8px_rgba(245,158,11,0.4)] hover:border-amber-400 hover:shadow-[0_0_16px_rgba(245,158,11,0.55)]"
+                                          : "bg-card border-pink-500/50 shadow-[0_0_4px_rgba(236,72,153,0.3)] hover:border-pink-500/80 hover:shadow-[0_0_14px_rgba(236,72,153,0.5)]"
                                   } ${isPulsing ? "neon-pulse-card" : ""}`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
