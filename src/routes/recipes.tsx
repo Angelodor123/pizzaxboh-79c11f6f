@@ -149,9 +149,14 @@ function KitchenDashboard() {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
-      if (attempts++ < 10) setTimeout(tryScroll, 80);
+      if (attempts++ < 20) setTimeout(tryScroll, 120);
     };
     requestAnimationFrame(tryScroll);
+    // Slow-device fallback: one more scroll attempt after category re-render settles
+    setTimeout(() => {
+      const el = document.querySelector(`[data-recipe-row="${id}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 600);
   }, [search.openRecipeId, activeAll, setCategory, setMenuCat]);
 
   // Treat any menu-item category selection as the dishes view so legacy
