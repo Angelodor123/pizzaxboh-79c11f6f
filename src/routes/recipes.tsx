@@ -124,15 +124,22 @@ function KitchenDashboard() {
     [activeAll],
   );
 
+  const handledOpenIdRef = useRef<string | null>(null);
   useEffect(() => {
     const id = search.openRecipeId;
     if (!id) {
       setForcedOpenRecipeId(null);
+      handledOpenIdRef.current = null;
       return;
     }
+    // Only handle each openRecipeId once — prevents re-runs (from activeAll
+    // reference changes on re-render) from re-triggering setQ/setCategory and
+    // yanking the page back to the top after the user has scrolled.
+    if (handledOpenIdRef.current === id) return;
     if (activeAll.length === 0) return;
     const found = activeAll.find((r) => r.id === id);
     if (!found) return;
+    handledOpenIdRef.current = id;
     if (isMenuItem(found)) {
       setCategory("dishes");
       setMenuCat("all");
@@ -158,6 +165,7 @@ function KitchenDashboard() {
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 600);
   }, [search.openRecipeId, activeAll, setCategory, setMenuCat]);
+
 
   // Treat any menu-item category selection as the dishes view so legacy
   // persisted state (e.g. cat === "pastas") doesn't strand items off-screen.
