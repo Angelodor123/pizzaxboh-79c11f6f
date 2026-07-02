@@ -48,8 +48,14 @@ function triggerTutorial() {
   window.dispatchEvent(new Event("pizzax:start-tour"));
 }
 
-const FAB_SIZE = 56;
+const FAB_SIZE = 60;
 const MARGIN = 16;
+
+const QUICK_ACTIONS = [
+  "מה מצב המלאי?",
+  "כמה הכנות נשארו?",
+  "מה החוסרים היום?",
+];
 
 export function CopilotFab() {
   const [open, setOpen] = useState(false);
