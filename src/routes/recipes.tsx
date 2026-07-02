@@ -153,7 +153,7 @@ function KitchenDashboard() {
     const tryScroll = () => {
       const el = document.querySelector(`[data-recipe-row="${id}"]`);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
       if (attempts++ < 20) setTimeout(tryScroll, 120);
@@ -162,7 +162,7 @@ function KitchenDashboard() {
     // Slow-device fallback: one more scroll attempt after category re-render settles
     setTimeout(() => {
       const el = document.querySelector(`[data-recipe-row="${id}"]`);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 600);
   }, [search.openRecipeId, activeAll, setCategory, setMenuCat]);
 
@@ -503,7 +503,7 @@ function SelectableRecipeCard({
   const lp = useLongPress(onLongPress);
   return (
     <div
-      className={`relative rounded-2xl transition ${
+      className={`relative rounded-2xl transition scroll-mt-20 ${
         selected ? "ring-2 ring-neon ring-offset-2 ring-offset-background" : ""
       }`}
       {...lp}
