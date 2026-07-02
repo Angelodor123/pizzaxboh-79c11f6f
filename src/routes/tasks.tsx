@@ -814,6 +814,24 @@ function TasksPage() {
     prevPctRef.current = pct;
   }, [pct, total]);
 
+  // Group micro-celebration: fire once per group when it hits 100%.
+  useEffect(() => {
+    for (const g of groups) {
+      const gTasks = allTasks.filter((t) => t.group_id === g.id && !t.parent_task_id);
+      const gCountable = gTasks.flatMap((t) => {
+        const subs = allTasks.filter((x) => x.parent_task_id === t.id);
+        return subs.length > 0 ? subs : [t];
+      });
+      const gDone = gCountable.filter((t) => logs.get(t.id)?.completed).length;
+      const prev = groupCompletionRef.current.get(g.id) ?? 0;
+      if (gCountable.length > 0 && gDone === gCountable.length && prev < gCountable.length) {
+        triggerHaptic("medium");
+        toast.success("קבוצה הושלמה", { description: `✅ ${g.name}` });
+      }
+      groupCompletionRef.current.set(g.id, gDone);
+    }
+  }, [logs, groups, allTasks]);
+
   const displayShifts: Array<{ id: string; name: string }> = [
     ...shifts.map((s) => ({ id: s.id, name: s.name })),
     ...(winter ? [{ id: VIRTUAL_WINTER_SHIFT_ID, name: "היערכות חורף" }] : []),
