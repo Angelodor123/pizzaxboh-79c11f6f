@@ -1277,32 +1277,72 @@ function TasksPage() {
                                 </div>
                                 </SortableTaskItem>
                               );
-                            })}
-                              </SortableContext>
-                            </DndContext>
-                            {gTasks.length === 0 && (
-                              <div className="px-5 py-4 text-center text-xs text-muted-foreground">
-                                אין משימות בקבוצה זו.
+                            };
+                            return (
+                              <div className="border-t border-border/60 px-3 sm:px-4 py-4 flex flex-col gap-3 bg-background/30">
+                                <DndContext
+                                  sensors={sensors}
+                                  collisionDetection={closestCenter}
+                                  onDragEnd={handleGroupDragEnd(g.id)}
+                                >
+                                  <SortableContext
+                                    items={pendingList.map((t) => t.id)}
+                                    strategy={verticalListSortingStrategy}
+                                  >
+                                    {pendingList.map(renderTaskCard)}
+                                  </SortableContext>
+                                </DndContext>
+                                {completedList.length > 0 && (
+                                  <div className="mt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setExpandedCompleted((m) => {
+                                          const n = new Map(m);
+                                          n.set(g.id, !(m.get(g.id) ?? false));
+                                          return n;
+                                        })
+                                      }
+                                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-background/40 hover:bg-background/60 transition border border-border/40"
+                                      aria-expanded={isCompletedOpen}
+                                    >
+                                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isCompletedOpen ? "rotate-180" : ""}`} />
+                                      <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                                        הושלם {completedList.length}
+                                      </span>
+                                    </button>
+                                    {isCompletedOpen && (
+                                      <div className="mt-3 space-y-3 opacity-60 transition-opacity">
+                                        {completedList.map(renderTaskCard)}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                {gTasks.length === 0 && (
+                                  <div className="px-5 py-4 text-center text-xs text-muted-foreground">
+                                    אין משימות בקבוצה זו.
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenGroup(null);
+                                    requestAnimationFrame(() => {
+                                      groupRefs.current
+                                        .get(g.id)
+                                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                    });
+                                  }}
+                                  aria-label={`סגור קטגוריה: ${g.name}`}
+                                  className="w-full mt-4 py-3 bg-zinc-800/40 hover:bg-zinc-800 text-zinc-400 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors border border-zinc-800/50"
+                                >
+                                  <ChevronUp className="h-4 w-4" />
+                                  <span>סגור קטגוריה</span>
+                                </button>
                               </div>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setOpenGroup(null);
-                                requestAnimationFrame(() => {
-                                  groupRefs.current
-                                    .get(g.id)
-                                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                                });
-                              }}
-                              aria-label={`סגור קטגוריה: ${g.name}`}
-                              className="w-full mt-4 py-3 bg-zinc-800/40 hover:bg-zinc-800 text-zinc-400 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors border border-zinc-800/50"
-                            >
-                              <ChevronUp className="h-4 w-4" />
-                              <span>סגור קטגוריה</span>
-                            </button>
-                          </div>
-                        )}
+                            );
+                          })()}
                       </div>
                     );
                   })}
