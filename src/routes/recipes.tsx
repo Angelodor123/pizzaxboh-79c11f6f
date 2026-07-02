@@ -503,7 +503,7 @@ function SelectableRecipeCard({
   const lp = useLongPress(onLongPress);
   return (
     <div
-      className={`relative rounded-2xl transition ${
+      className={`relative rounded-2xl transition scroll-mt-20 ${
         selected ? "ring-2 ring-neon ring-offset-2 ring-offset-background" : ""
       }`}
       {...lp}
