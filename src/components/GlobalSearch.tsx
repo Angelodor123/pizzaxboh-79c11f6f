@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, X, BookOpen, ListChecks, Loader2 } from "lucide-react";
+import { Search, X, BookOpen, ListChecks, Loader2, Truck, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/components/BranchGate";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 type RecipeHit = { kind: "recipe"; id: string; title: string; subtitle?: string };
 type TaskHit = { kind: "task"; id: string; title: string; subtitle?: string };
-type Hit = RecipeHit | TaskHit;
+type SupplierHit = { kind: "supplier"; id: string; title: string; subtitle?: string };
+type NotebookHit = { kind: "notebook"; id: string; title: string; subtitle?: string };
+type Hit = RecipeHit | TaskHit | SupplierHit | NotebookHit;
 
 export function GlobalSearch() {
   const branchId = useActiveBranch();
@@ -54,11 +56,26 @@ export function GlobalSearch() {
         .ilike("name", like)
         .eq("active", true)
         .limit(6);
+      const suppliersQ = supabase
+        .from("suppliers")
+        .select("id,name,category,branch_id,active")
+        .ilike("name", like)
+        .eq("active", true)
+        .limit(4);
+      const notebookQ = supabase
+        .from("notebook_items")
+        .select("id,text,branch_id,done,archived_at")
+        .ilike("text", like)
+        .eq("done", false)
+        .is("archived_at", null)
+        .limit(4);
       if (branchId) {
         recipesQ.eq("branch_id", branchId);
         tasksQ.eq("branch_id", branchId);
+        suppliersQ.eq("branch_id", branchId);
+        notebookQ.eq("branch_id", branchId);
       }
-      const [r, t] = await Promise.all([recipesQ, tasksQ]);
+      const [r, t, s, n] = await Promise.all([recipesQ, tasksQ, suppliersQ, notebookQ]);
       if (abort) return;
       const recipes: Hit[] = (r.data ?? []).map((row: any) => ({
         kind: "recipe",
@@ -71,7 +88,19 @@ export function GlobalSearch() {
         id: row.id,
         title: row.name,
       }));
-      setHits([...recipes, ...tasks]);
+      const suppliers: Hit[] = (s.data ?? []).map((row: any) => ({
+        kind: "supplier",
+        id: row.id,
+        title: row.name,
+        subtitle: row.category,
+      }));
+      const notebook: Hit[] = (n.data ?? []).map((row: any) => ({
+        kind: "notebook",
+        id: row.id,
+        title: row.text,
+        subtitle: "חוסר פעיל",
+      }));
+      setHits([...recipes, ...tasks, ...suppliers, ...notebook]);
       setLoading(false);
     })();
     return () => {
@@ -85,13 +114,19 @@ export function GlobalSearch() {
     setHits([]);
     if (h.kind === "recipe") {
       navigate({ to: "/recipes", search: { openRecipeId: h.id } as any });
-    } else {
+    } else if (h.kind === "task") {
       navigate({ to: "/tasks", search: { edit: h.id } as any });
+    } else if (h.kind === "supplier") {
+      navigate({ to: "/suppliers" });
+    } else {
+      navigate({ to: "/notebook" });
     }
   };
 
   const recipeHits = useMemo(() => hits.filter((h) => h.kind === "recipe"), [hits]);
   const taskHits = useMemo(() => hits.filter((h) => h.kind === "task"), [hits]);
+  const supplierHits = useMemo(() => hits.filter((h) => h.kind === "supplier"), [hits]);
+  const notebookHits = useMemo(() => hits.filter((h) => h.kind === "notebook"), [hits]);
 
   return (
     <div
@@ -119,7 +154,7 @@ export function GlobalSearch() {
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="חפש מתכון או משימה…"
+            placeholder="חפש מתכון, משימה, ספק, חוסר"
             dir="rtl"
             maxLength={120}
             className="flex-1 min-w-0 bg-transparent text-sm focus:outline-none text-right placeholder:text-muted-foreground/60"
@@ -197,6 +232,52 @@ export function GlobalSearch() {
                   <ListChecks className="h-4 w-4 text-neon shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-foreground truncate">{h.title}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {supplierHits.length > 0 && (
+            <div>
+              <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                ספקים
+              </div>
+              {supplierHits.map((h) => (
+                <button
+                  key={`s-${h.id}`}
+                  type="button"
+                  onClick={() => onPick(h)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-right hover:bg-accent/50 transition"
+                >
+                  <Truck className="h-4 w-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-foreground truncate">{h.title}</div>
+                    {h.subtitle && (
+                      <div className="text-[10px] text-muted-foreground truncate">{h.subtitle}</div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {notebookHits.length > 0 && (
+            <div>
+              <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                חוסרים
+              </div>
+              {notebookHits.map((h) => (
+                <button
+                  key={`n-${h.id}`}
+                  type="button"
+                  onClick={() => onPick(h)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-right hover:bg-accent/50 transition"
+                >
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-foreground truncate">{h.title}</div>
+                    {h.subtitle && (
+                      <div className="text-[10px] text-muted-foreground truncate">{h.subtitle}</div>
+                    )}
                   </div>
                 </button>
               ))}
