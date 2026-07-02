@@ -458,6 +458,23 @@ export function CopilotFab() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-border p-3 bg-card/80">
+            {messages.length === 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {QUICK_ACTIONS.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      setInput(chip);
+                      void handleSend(chip);
+                    }}
+                    className="rounded-full border border-border bg-card/60 text-xs text-muted-foreground px-3 py-1.5 hover:border-neon/60 hover:text-neon transition"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
