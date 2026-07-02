@@ -48,8 +48,14 @@ function triggerTutorial() {
   window.dispatchEvent(new Event("pizzax:start-tour"));
 }
 
-const FAB_SIZE = 56;
+const FAB_SIZE = 60;
 const MARGIN = 16;
+
+const QUICK_ACTIONS = [
+  "מה מצב המלאי?",
+  "כמה הכנות נשארו?",
+  "מה החוסרים היום?",
+];
 
 export function CopilotFab() {
   const [open, setOpen] = useState(false);
@@ -72,6 +78,16 @@ export function CopilotFab() {
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
 
   // Show daily briefing CTA if user hasn't opened today
+  // Inject the johnny-pulse keyframes once on mount
+  useEffect(() => {
+    const id = "johnny-pulse-keyframes";
+    if (document.getElementById(id)) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = `@keyframes johnny-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(57,255,20,0); } 50% { box-shadow: 0 0 0 8px rgba(57,255,20,0.35); } }`;
+    document.head.appendChild(style);
+  }, []);
+
   useEffect(() => {
     if (!hasOpenedToday()) setShowDailyCta(true);
   }, []);
@@ -315,8 +331,13 @@ export function CopilotFab() {
             type="button"
             onClick={handleFabClick}
             aria-label="פתח את ג'וני, מנהל התפעול הדיגיטלי"
+            style={{
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              animation: showDailyCta ? "johnny-pulse 2s ease-in-out infinite" : undefined,
+            }}
             className={cn(
-              "relative h-14 w-14 rounded-full cursor-grab active:cursor-grabbing",
+              "relative rounded-full cursor-grab active:cursor-grabbing",
               "bg-gradient-to-br from-zinc-900 to-black border-2",
               showDailyCta ? "border-[#39ff88] shadow-[0_8px_24px_-4px_rgba(57,255,136,0.65)]" : "border-[#ff3d8a]/60 shadow-[0_8px_24px_-4px_rgba(255,61,138,0.55)]",
               "flex items-center justify-center hover:scale-105 active:scale-95 transition-transform",
@@ -437,6 +458,23 @@ export function CopilotFab() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-border p-3 bg-card/80">
+            {messages.length === 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {QUICK_ACTIONS.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      setInput(chip);
+                      void handleSend(chip);
+                    }}
+                    className="rounded-full border border-border bg-card/60 text-xs text-muted-foreground px-3 py-1.5 hover:border-neon/60 hover:text-neon transition"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
