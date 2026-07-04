@@ -127,7 +127,7 @@ function MaintenancePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6" dir="rtl">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6" dir="rtl">
       <div className="flex items-center gap-2 mb-6">
         <Wrench className="h-6 w-6 text-neon" />
         <h1 className="text-2xl font-bold">פתיחת קריאת שירות</h1>
@@ -135,7 +135,7 @@ function MaintenancePage() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border border-border bg-card/40 p-4"
+        className="space-y-5 rounded-xl border border-border bg-card/40 p-4"
       >
         <div>
           <label className="block text-sm font-medium mb-1.5">ציוד</label>
@@ -251,7 +251,7 @@ function MaintenancePage() {
             {tickets.map((t) => (
               <div
                 key={t.id}
-                className="rounded-lg border border-border bg-card/40 p-3"
+                className="rounded-xl border border-border bg-card/40 p-4"
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-2">

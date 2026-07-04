@@ -143,10 +143,11 @@ function InventoryPage() {
 
       <Tabs defaultValue="stock" className="w-full">
         <TabsList className={`grid w-full ${isAdmin ? "grid-cols-4" : "grid-cols-3"}`}>
-          <TabsTrigger value="stock">מצב מלאי</TabsTrigger>
-          {isAdmin && <TabsTrigger value="count">ספירה</TabsTrigger>}
-          <TabsTrigger value="movements">תנועות מלאי</TabsTrigger>
-          <TabsTrigger value="shortages">חוסרים ואזהרות</TabsTrigger>
+          <TabsTrigger value="stock" className={isAdmin ? "text-[11px]" : undefined}><span className="overflow-hidden text-ellipsis whitespace-nowrap">מצב מלאי</span></TabsTrigger>
+          {isAdmin && <TabsTrigger value="count" className="text-[11px]"><span className="overflow-hidden text-ellipsis whitespace-nowrap">ספירה</span></TabsTrigger>}
+          <TabsTrigger value="movements" className={isAdmin ? "text-[11px]" : undefined}><span className="overflow-hidden text-ellipsis whitespace-nowrap">תנועות מלאי</span></TabsTrigger>
+          <TabsTrigger value="shortages" className={isAdmin ? "text-[11px]" : undefined}><span className="overflow-hidden text-ellipsis whitespace-nowrap">חוסרים ואזהרות</span></TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="stock" className="mt-4">

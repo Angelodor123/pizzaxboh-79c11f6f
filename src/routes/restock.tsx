@@ -151,7 +151,7 @@ function RestockPage() {
         );
       })()}
 
-      <div className="mb-3 flex gap-2">
+      <div className="mb-3 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
@@ -270,9 +270,10 @@ function RestockRow(p: RowProps) {
   return (
     <li
       {...swipe}
-      className={`rounded-xl border-2 px-3 py-3 transition ${
+      className={`rounded-xl border-2 px-3 sm:px-4 py-3 transition ${
         p.done ? "bg-success/15 border-success/60" : "bg-card border-border"
       }`}
+
     >
       <div className="flex items-center justify-between gap-2">
         <div className="font-bold flex items-center gap-2">

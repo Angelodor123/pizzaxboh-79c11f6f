@@ -155,14 +155,14 @@ function OrdersPage() {
           אין ספקים פעילים. הוסף ספקים במסך <Link to="/suppliers" className="text-neon font-bold">ניהול ספקים</Link>.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {grid.map((s) => {
             const logo = resolveSupplierLogo(s.name, s.logo_url);
             return (
               <button
                 key={s.id}
                 onClick={() => setSelected(s)}
-                className="group rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
+                className="group min-w-0 rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
               >
                 <div className="h-32 w-full flex items-center justify-center p-4 rounded-t-lg bg-zinc-800/50">
                   {logo ? (
