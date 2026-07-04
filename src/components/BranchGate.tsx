@@ -1,5 +1,14 @@
-import { useEffect, useState } from "react";
-import { Building2, LogOut, ShieldAlert, MapPin, Wheat } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Building2,
+  LogOut,
+  ShieldAlert,
+  MapPin,
+  Wheat,
+  CheckCircle2,
+  AlertTriangle,
+  Wrench,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import {
