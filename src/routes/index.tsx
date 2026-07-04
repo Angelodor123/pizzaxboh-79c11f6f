@@ -240,6 +240,23 @@ function OperationalDashboard() {
         <CurrentShiftProgressCard />
       </div>
 
+      {/* Quick-access notebook */}
+      <Link
+        to="/notebook"
+        className="mb-4 rounded-2xl border-2 border-neon/30 hover:border-neon bg-card/60 hover:bg-neon/5 p-4 flex items-center gap-4 transition"
+      >
+        <StickyNote className="h-7 w-7 text-neon shrink-0" />
+        <div className="flex-1">
+          <span className="text-base font-bold block">פנקס עבודה</span>
+          <span className="text-xs text-muted-foreground">הערות, משימות ורשימות</span>
+        </div>
+        {notebookTotal > 0 && (
+          <span className="inline-flex items-center justify-center rounded-full bg-neon/20 text-neon text-xs font-bold h-6 min-w-6 px-1.5">
+            {notebookTotal}
+          </span>
+        )}
+      </Link>
+
       {/* Dough — standalone */}
       <div className="mb-4">
         <DoughStatusCard />
