@@ -87,7 +87,7 @@ type BranchStats = {
   shortages: number;
 };
 
-function NetworkKpiBanner() {
+function useNetworkStats() {
   const { branches } = useBranches();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Record<string, BranchStats>>({});
@@ -129,10 +129,8 @@ function NetworkKpiBanner() {
         return map[id];
       };
 
-      // seed all branches
       branches.forEach((b) => ensure(b.id));
 
-      // dough via RPC uses branch_name — map by name
       const doughRows =
         (doughRes.data as { branch_name: string; total_trays: number }[] | null) ?? [];
       doughRows.forEach((r) => {
@@ -205,125 +203,102 @@ function NetworkKpiBanner() {
     return list;
   }, [branches, stats]);
 
-  if (loading) {
+  return { stats, loading, alerts };
+}
+
+function BranchKpiCard({ branch, stats }: { branch: Branch; stats: BranchStats }) {
+  const pct = stats.tasksTotal > 0 ? (stats.tasksDone / stats.tasksTotal) * 100 : 100;
+  const tasksColor =
+    stats.tasksTotal > 0 && stats.tasksDone >= stats.tasksTotal
+      ? "text-neon"
+      : pct < 50
+        ? "text-amber-500"
+        : "text-muted-foreground";
+  const accent =
+    stats.criticalTickets > 0
+      ? "border-l-2 border-l-red-500"
+      : stats.shortages > 0
+        ? "border-l-2 border-l-amber-500"
+        : "border-l-2 border-l-neon";
+  return (
+    <div
+      className={`rounded-xl border border-border bg-card/60 p-4 w-full flex flex-col gap-2 ${accent}`}
+    >
+      <div className="font-bold text-sm">{branch.name}</div>
+      <div className="flex flex-col gap-1.5">
+        <div
+          className="items-center gap-2 text-xs"
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <Wheat className="h-3.5 w-3.5 shrink-0 text-neon" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">{stats.dough}</span>
+          <span className="text-muted-foreground">מיכלי בצק</span>
+        </div>
+        <div
+          className={`items-center gap-2 text-xs ${tasksColor}`}
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">
+            {stats.tasksDone} / {stats.tasksTotal}
+          </span>
+          <span className="text-muted-foreground">משימות</span>
+        </div>
+        <div
+          className={`items-center gap-2 text-xs ${stats.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <Wrench className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">{stats.openTickets}</span>
+          <span className="text-muted-foreground">
+            {stats.openTickets > 0 ? "קריאות פתוחות" : "אין קריאות ✓"}
+          </span>
+        </div>
+        <div
+          className={`items-center gap-2 text-xs ${stats.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">{stats.shortages}</span>
+          <span className="text-muted-foreground">חוסרים</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NetworkAlerts({ alerts }: { alerts: ReturnType<typeof useNetworkStats>["alerts"] }) {
+  if (alerts.length > 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="rounded-xl bg-card/40 animate-pulse h-24" />
-        <div className="rounded-xl bg-card/40 animate-pulse h-24" />
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-xs font-bold text-amber-500">
+          <AlertTriangle className="h-4 w-4" />
+          <span>דורש תשומת לב</span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {alerts.map((a, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm">
+              <span
+                className={`h-2 w-2 rounded-full shrink-0 ${
+                  a.kind === "critical"
+                    ? "bg-red-500"
+                    : a.kind === "shortage"
+                      ? "bg-amber-500"
+                      : "bg-orange-500"
+                }`}
+              />
+              <span className="font-semibold">{a.branchName}</span>
+              <span className="text-muted-foreground">— {a.text}</span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
-
-  const multi = branches.length >= 2;
-
   return (
-    <div className="flex flex-col gap-4">
-      {/* Section 1: branch comparison */}
-      <div className="flex flex-col gap-3">
-
-        {branches.map((b) => {
-          const s = stats[b.id] ?? {
-            dough: 0,
-            tasksTotal: 0,
-            tasksDone: 0,
-            openTickets: 0,
-            criticalTickets: 0,
-            shortages: 0,
-          };
-          const pct = s.tasksTotal > 0 ? (s.tasksDone / s.tasksTotal) * 100 : 100;
-          const tasksColor =
-            s.tasksTotal > 0 && s.tasksDone >= s.tasksTotal
-              ? "text-neon"
-              : pct < 50
-                ? "text-amber-500"
-                : "text-muted-foreground";
-          const accent =
-            s.criticalTickets > 0
-              ? "border-l-2 border-l-red-500"
-              : s.shortages > 0
-                ? "border-l-2 border-l-amber-500"
-                : "border-l-2 border-l-neon";
-          return (
-            <div
-              key={b.id}
-              className={`rounded-xl border border-border bg-card/60 p-4 w-full flex flex-col gap-2 ${accent}`}
-            >
-              <div className="font-bold text-sm">{b.name}</div>
-              <div className="flex flex-col gap-1.5">
-                <div
-                  className="items-center gap-2 text-xs"
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <Wheat className="h-3.5 w-3.5 shrink-0 text-neon" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.dough}</span>
-                  <span className="text-muted-foreground">מיכלי בצק</span>
-                </div>
-                <div
-                  className={`items-center gap-2 text-xs ${tasksColor}`}
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">
-                    {s.tasksDone} / {s.tasksTotal}
-                  </span>
-                  <span className="text-muted-foreground">משימות</span>
-                </div>
-                <div
-                  className={`items-center gap-2 text-xs ${s.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <Wrench className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.openTickets}</span>
-                  <span className="text-muted-foreground">
-                    {s.openTickets > 0 ? "קריאות פתוחות" : "אין קריאות ✓"}
-                  </span>
-                </div>
-                <div
-                  className={`items-center gap-2 text-xs ${s.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.shortages}</span>
-                  <span className="text-muted-foreground">חוסרים</span>
-                </div>
-              </div>
-
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Section 2: alerts */}
-      {alerts.length > 0 ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-500">
-            <AlertTriangle className="h-4 w-4" />
-            <span>דורש תשומת לב</span>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {alerts.map((a, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                <span
-                  className={`h-2 w-2 rounded-full shrink-0 ${
-                    a.kind === "critical"
-                      ? "bg-red-500"
-                      : a.kind === "shortage"
-                        ? "bg-amber-500"
-                        : "bg-orange-500"
-                  }`}
-                />
-                <span className="font-semibold">{a.branchName}</span>
-                <span className="text-muted-foreground">— {a.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border bg-card/40 p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4 text-neon" />
-          <span>כל הסניפים תקינים</span>
-        </div>
-      )}
+    <div className="rounded-xl border border-border bg-card/40 p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+      <CheckCircle2 className="h-4 w-4 text-neon" />
+      <span>כל הסניפים תקינים</span>
     </div>
   );
 }
