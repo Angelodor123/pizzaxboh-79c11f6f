@@ -165,7 +165,8 @@ function HistoryTable({ kind, rows }: { kind: Kind; rows: any[] }) {
         <div className="text-xs text-muted-foreground text-center mb-2">
           הושלמו: <span className="text-neon font-bold">{completedCount}</span> / {rows.length}
         </div>
-        <div className="rounded-xl border border-border bg-card/60 overflow-hidden">
+        <div className="rounded-xl border border-border bg-card/60 overflow-hidden overflow-x-auto">
+
           <table className="w-full text-sm">
             <thead className="bg-muted/30 text-xs text-muted-foreground">
               <tr>
