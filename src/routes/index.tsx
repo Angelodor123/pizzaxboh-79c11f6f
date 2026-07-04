@@ -236,7 +236,7 @@ function OperationalDashboard() {
       </div>
 
       {/* Current shift progress — hero card */}
-      <div className="mb-4 border-4 border-neon rounded-3xl p-2 bg-gradient-to-br from-neon/10 via-transparent to-neon/5 shadow-[0_0_40px_-10px_rgba(57,255,20,0.4)]">
+      <div className="mb-4 rounded-2xl border-2 border-neon/30 bg-gradient-to-br from-neon/5 to-transparent p-1 shadow-[0_0_24px_-8px_rgba(57,255,20,0.2)]">
         <CurrentShiftProgressCard />
       </div>
 
