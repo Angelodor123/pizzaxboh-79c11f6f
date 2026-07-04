@@ -20,7 +20,11 @@ import {
   ShieldAlert,
   Wallet,
   Bell,
+  ChefHat,
+  BookOpen,
+  UtensilsCrossed,
 } from "lucide-react";
+
 import { ComplaintModal } from "@/components/ComplaintModal";
 import { useNewComplaintCount } from "@/lib/complaints-store";
 import { useIsModiinBranch } from "@/lib/active-branch";
