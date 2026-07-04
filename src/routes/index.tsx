@@ -70,6 +70,8 @@ function OperationalDashboard() {
   const [loadingHome, setLoadingHome] = useState(true);
   const [tasksOpenCount, setTasksOpenCount] = useState(0);
   const [prepOpenCount, setPrepOpenCount] = useState(0);
+  const [goodsMenuOpen, setGoodsMenuOpen] = useState(false);
+
 
   useEffect(() => {
     let mounted = true;
@@ -238,18 +240,14 @@ function OperationalDashboard() {
       {/* Supplier ordering alerts — must order today */}
       <SupplierAlertsBanner />
 
-      {/* Weather strip + EV (compact) */}
+      {/* Weather strip + EV */}
       <div className="mb-4 space-y-2">
         <WeatherWidget alertText={rainAlert} />
-        {vehiclesEnabled && (
-          <div className="max-h-12 overflow-hidden">
-            <EvChargingWidget />
-          </div>
-        )}
+        {vehiclesEnabled && <EvChargingWidget />}
       </div>
 
-      {/* Current shift progress — prominent standalone */}
-      <div className="mb-4 border-2 border-neon/30 rounded-2xl p-1">
+      {/* Current shift progress — hero card */}
+      <div className="mb-4 border-4 border-neon rounded-3xl p-2 bg-gradient-to-br from-neon/10 via-transparent to-neon/5 shadow-[0_0_40px_-10px_rgba(57,255,20,0.4)]">
         <CurrentShiftProgressCard />
       </div>
 
@@ -268,15 +266,82 @@ function OperationalDashboard() {
           <span className="text-lg font-bold">ספר המתכונים</span>
           <span className="text-xs text-muted-foreground">מתכונים, רטבים, בסיסים</span>
         </Link>
-        <Link
-          to="/invoices"
+        <button
+          type="button"
+          onClick={() => setGoodsMenuOpen(true)}
           className="rounded-2xl border-2 border-neon/30 hover:border-neon bg-card/60 hover:bg-neon/5 p-5 flex flex-col items-center justify-center gap-2 text-center transition min-h-32"
         >
           <Truck className="h-8 w-8 text-neon" />
           <span className="text-lg font-bold">ניהול סחורה</span>
           <span className="text-xs text-muted-foreground">קבלה, הזמנות, ספקים</span>
-        </Link>
+        </button>
       </div>
+
+      {/* Goods management picker */}
+      {goodsMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setGoodsMenuOpen(false)}
+        >
+          <div
+            dir="rtl"
+            className="w-full max-w-md rounded-2xl border-2 border-neon/40 bg-card p-5 space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold">ניהול סחורה</h3>
+              <button
+                type="button"
+                onClick={() => setGoodsMenuOpen(false)}
+                className="text-muted-foreground hover:text-foreground text-xl leading-none"
+                aria-label="סגור"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                to="/invoices"
+                onClick={() => setGoodsMenuOpen(false)}
+                className="rounded-xl border-2 border-neon/30 hover:border-neon bg-card/60 hover:bg-neon/5 p-4 flex flex-col items-center gap-2 text-center transition min-h-28"
+              >
+                <ClipboardCheck className="h-7 w-7 text-neon" />
+                <span className="text-sm font-bold">קבלת סחורה</span>
+                <span className="text-[11px] text-muted-foreground">חשבוניות ותעודות</span>
+              </Link>
+              <Link
+                to="/orders"
+                onClick={() => setGoodsMenuOpen(false)}
+                className="rounded-xl border-2 border-neon/30 hover:border-neon bg-card/60 hover:bg-neon/5 p-4 flex flex-col items-center gap-2 text-center transition min-h-28"
+              >
+                <Truck className="h-7 w-7 text-neon" />
+                <span className="text-sm font-bold">הזמנת סחורה</span>
+                <span className="text-[11px] text-muted-foreground">שליחת הזמנות לספקים</span>
+              </Link>
+              <Link
+                to="/restock"
+                onClick={() => setGoodsMenuOpen(false)}
+                className="rounded-xl border-2 border-neon/20 hover:border-neon bg-card/60 hover:bg-neon/5 p-4 flex flex-col items-center gap-2 text-center transition min-h-28"
+              >
+                <Package className="h-7 w-7 text-neon" />
+                <span className="text-sm font-bold">השלמות מחסן</span>
+                <span className="text-[11px] text-muted-foreground">בקשות מהמחסן</span>
+              </Link>
+              <Link
+                to="/suppliers"
+                onClick={() => setGoodsMenuOpen(false)}
+                className="rounded-xl border-2 border-neon/20 hover:border-neon bg-card/60 hover:bg-neon/5 p-4 flex flex-col items-center gap-2 text-center transition min-h-28"
+              >
+                <Truck className="h-7 w-7 text-neon" />
+                <span className="text-sm font-bold">ניהול ספקים</span>
+                <span className="text-[11px] text-muted-foreground">קטלוגים ומחירונים</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
 
       {/* Supplier reminders — tomorrow */}
