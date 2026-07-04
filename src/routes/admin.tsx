@@ -1212,6 +1212,44 @@ function AdminNav({
       ]
     : [];
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(typeof window !== "undefined" && window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const allTabs = [...operations, ...settings];
+
+  if (isMobile) {
+    return (
+      <nav
+        dir="rtl"
+        aria-label="ניווט ניהול"
+        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide sticky top-20 z-30 bg-background/95 backdrop-blur border-b border-border px-2 py-2"
+      >
+        {allTabs.map((item) => {
+          const active = tab === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition inline-flex items-center gap-1.5 ${
+                active
+                  ? "bg-neon text-primary-foreground"
+                  : "bg-card border border-border text-muted-foreground"
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+    );
+  }
+
   return (
     <nav dir="rtl" aria-label="ניווט ניהול" className="lg:sticky lg:top-24">
       <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold px-1 mb-2">
