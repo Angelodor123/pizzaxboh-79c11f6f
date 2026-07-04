@@ -127,7 +127,7 @@ function MaintenancePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6" dir="rtl">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6" dir="rtl">
       <div className="flex items-center gap-2 mb-6">
         <Wrench className="h-6 w-6 text-neon" />
         <h1 className="text-2xl font-bold">פתיחת קריאת שירות</h1>
