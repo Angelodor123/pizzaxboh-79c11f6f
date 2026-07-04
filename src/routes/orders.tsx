@@ -155,7 +155,7 @@ function OrdersPage() {
           אין ספקים פעילים. הוסף ספקים במסך <Link to="/suppliers" className="text-neon font-bold">ניהול ספקים</Link>.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {grid.map((s) => {
             const logo = resolveSupplierLogo(s.name, s.logo_url);
             return (
