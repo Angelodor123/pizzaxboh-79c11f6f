@@ -382,49 +382,69 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {branches.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => setActiveBranchId(b.id)}
-              className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card text-right transition hover:border-neon hover:shadow-[0_0_28px_-4px_rgba(255,20,147,0.6)] aspect-[4/3] min-h-[260px]"
-            >
-              {b.image_url ? (
-                <img
-                  src={b.image_url}
-                  alt={b.name}
-                  className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-card to-background">
-                  <Building2 className="h-16 w-16 text-neon/40" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
-              <div className="relative h-full flex flex-col justify-between p-5">
-                <div className="flex justify-end">
-                  <div className="rounded-full bg-neon/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 opacity-0 group-hover:opacity-100 transition">
-                    כניסה →
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="font-display text-2xl font-black text-white drop-shadow-lg">
-                    {b.name}
-                  </div>
-                  {b.address && (
-                    <div className="flex items-center gap-1.5 text-sm text-white/85">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{b.address}</span>
+        <div className="flex flex-col gap-6">
+          {branches.map((b) => {
+            const s = stats[b.id] ?? {
+              dough: 0,
+              tasksTotal: 0,
+              tasksDone: 0,
+              openTickets: 0,
+              criticalTickets: 0,
+              shortages: 0,
+            };
+            return (
+              <div key={b.id} className="flex flex-col gap-3">
+                <button
+                  onClick={() => setActiveBranchId(b.id)}
+                  className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card text-right transition hover:border-neon hover:shadow-[0_0_28px_-4px_rgba(255,20,147,0.6)] aspect-[4/3] min-h-[220px] sm:min-h-[260px]"
+                >
+                  {b.image_url ? (
+                    <img
+                      src={b.image_url}
+                      alt={b.name}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-card to-background">
+                      <Building2 className="h-16 w-16 text-neon/40" />
                     </div>
                   )}
-                </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+                  <div className="relative h-full flex flex-col justify-between p-5">
+                    <div className="flex justify-end">
+                      <div className="rounded-full bg-neon/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 opacity-0 group-hover:opacity-100 transition">
+                        כניסה →
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-display text-2xl font-black text-white drop-shadow-lg">
+                        {b.name}
+                      </div>
+                      {b.address && (
+                        <div className="flex items-center gap-1.5 text-sm text-white/85">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{b.address}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+                {statsLoading ? (
+                  <div className="rounded-xl bg-card/40 animate-pulse h-24" />
+                ) : (
+                  <BranchKpiCard branch={b} stats={s} />
+                )}
               </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
 
-        <NetworkKpiBanner />
+        {statsLoading ? (
+          <div className="rounded-xl bg-card/40 animate-pulse h-16" />
+        ) : (
+          <NetworkAlerts alerts={alerts} />
+        )}
 
         <div className="flex justify-center">
           <button
