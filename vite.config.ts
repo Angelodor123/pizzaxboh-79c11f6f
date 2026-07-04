@@ -16,16 +16,19 @@ export default defineConfig({
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            "vendor-react": ["react", "react-dom"],
-            "vendor-tanstack": [
-              "@tanstack/react-router",
-              "@tanstack/react-start",
-              "@tanstack/react-query",
-            ],
-            "vendor-supabase": ["@supabase/supabase-js"],
-            "vendor-ui": ["framer-motion", "lucide-react"],
-            "vendor-ai": ["ai", "@ai-sdk/openai-compatible"],
+          manualChunks: (id) => {
+            if (!id.includes("node_modules")) return;
+            if (id.includes("/@supabase/supabase-js/")) return "vendor-supabase";
+            if (
+              id.includes("/@tanstack/react-router/") ||
+              id.includes("/@tanstack/react-start/") ||
+              id.includes("/@tanstack/react-query/")
+            )
+              return "vendor-tanstack";
+            if (id.includes("/framer-motion/") || id.includes("/lucide-react/"))
+              return "vendor-ui";
+            if (id.includes("/ai/") || id.includes("/@ai-sdk/"))
+              return "vendor-ai";
           },
         },
       },
