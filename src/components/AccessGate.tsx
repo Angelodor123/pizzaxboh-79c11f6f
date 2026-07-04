@@ -16,6 +16,8 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
         <img
           src={pizzaXLogo}
           alt="Pizza X"
+          width={360}
+          height={120}
           className="object-contain animate-pulse-glow"
           style={{
             width: "40vw",
@@ -82,6 +84,8 @@ function LoginScreen({
         <img
           src={pizzaXLogo}
           alt="Pizza X"
+          width={192}
+          height={64}
           className="h-16 w-auto mx-auto object-contain"
           style={{ filter: "drop-shadow(0 0 12px rgba(255,20,147,0.4))" }}
         />
