@@ -529,7 +529,7 @@ function NotebookRow({
             type="button"
             onClick={() => void saveEdit()}
             aria-label="שמור שינוי"
-            className="shrink-0 p-2 rounded text-neon hover:text-neon active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
+            className="shrink-0 p-2 rounded text-neon hover:text-neon active:scale-95 transition min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 inline-flex items-center justify-center"
           >
             <Check className="h-4 w-4" />
           </button>
@@ -586,7 +586,7 @@ function NotebookRow({
               startEdit();
             }}
             aria-label={`ערוך: ${item.text}`}
-            className="shrink-0 p-2 rounded text-muted-foreground hover:text-neon active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
+            className="shrink-0 p-2 rounded text-muted-foreground hover:text-neon active:scale-95 transition min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 inline-flex items-center justify-center"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -598,7 +598,7 @@ function NotebookRow({
               if (ok) void removeItem(listKey, item.id);
             }}
             aria-label={`מחק: ${item.text}`}
-            className="shrink-0 p-2 rounded text-muted-foreground hover:text-destructive active:scale-95 transition min-h-9 min-w-9 inline-flex items-center justify-center"
+            className="shrink-0 p-2 rounded text-muted-foreground hover:text-destructive active:scale-95 transition min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 inline-flex items-center justify-center"
           >
             <X className="h-4 w-4" />
           </button>
