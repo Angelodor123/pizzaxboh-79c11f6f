@@ -289,7 +289,7 @@ function RootComponent() {
         </ErrorBoundary>
       </AuthProvider>
       <Toaster position={toastPosition} richColors closeButton />
-      <OfflineQueueIndicator />
+      
       <ConfirmHost />
     </QueryClientProvider>
   );
