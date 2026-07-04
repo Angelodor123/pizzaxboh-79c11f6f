@@ -448,7 +448,7 @@ function MonthView({
             <div key={c.iso + (c.inMonth ? "" : "-o")} className={cellClass}>
               {/* Date anchor — always visible, top-left, transparent bg */}
               <span
-                className={`absolute top-1 left-1 z-10 text-[11px] sm:text-xs font-bold tabular-nums pointer-events-none ${
+                className={`absolute top-1 left-1 z-10 text-[10px] sm:text-xs font-bold tabular-nums pointer-events-none ${
                   isSelected ? "text-neon" : isToday ? "text-neon" : "text-foreground"
                 }`}
               >
