@@ -169,6 +169,8 @@ function OrdersPage() {
                     <img
                       src={logo}
                       alt={s.name}
+                      width={80}
+                      height={80}
                       className="object-contain max-h-full max-w-full transition group-hover:scale-105"
                       loading="lazy"
                     />

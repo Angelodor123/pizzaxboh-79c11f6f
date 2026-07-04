@@ -206,9 +206,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
-        rel: "stylesheet",
+        rel: "preload",
+        as: "style",
         href: "https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap",
       },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap",
+        media: "print",
+        onLoad: "this.media='all'",
+      } as any,
     ],
     scripts: [
       {
@@ -433,6 +440,7 @@ function AuthedShell() {
         </header>
         <main
           className="flex-1"
+          aria-label="תוכן ראשי"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
         >
           <div className={wrapperClass}>

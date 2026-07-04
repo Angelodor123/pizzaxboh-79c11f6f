@@ -84,7 +84,7 @@ export function CopilotFab() {
     if (document.getElementById(id)) return;
     const style = document.createElement("style");
     style.id = id;
-    style.textContent = `@keyframes johnny-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(57,255,20,0); } 50% { box-shadow: 0 0 0 8px rgba(57,255,20,0.35); } }`;
+    style.textContent = `@keyframes johnny-pulse { 0%,100% { opacity: 0; } 50% { opacity: 0.5; } }`;
     document.head.appendChild(style);
   }, []);
 
@@ -325,6 +325,14 @@ export function CopilotFab() {
             <>
               <span className="absolute inset-0 rounded-full ring-2 ring-[#ff3d8a] animate-ping pointer-events-none" />
               <span className="absolute inset-[-4px] rounded-full ring-2 ring-[#ff3d8a]/40 animate-pulse pointer-events-none" />
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 rounded-full pointer-events-none bg-[#39ff88]"
+                style={{
+                  animation: "johnny-pulse 2s ease-in-out infinite",
+                  willChange: "opacity",
+                }}
+              />
             </>
           )}
           <button
@@ -334,7 +342,6 @@ export function CopilotFab() {
             style={{
               width: FAB_SIZE,
               height: FAB_SIZE,
-              animation: showDailyCta ? "johnny-pulse 2s ease-in-out infinite" : undefined,
             }}
             className={cn(
               "relative rounded-full cursor-grab active:cursor-grabbing",
