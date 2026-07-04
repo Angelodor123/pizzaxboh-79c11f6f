@@ -517,7 +517,7 @@ function StatColumn({
   );
   if (href) {
     return (
-      <Link to={href} className="block hover:opacity-90 transition">
+      <Link to={href} className="block cursor-pointer hover:opacity-80 transition">
         {content}
       </Link>
     );
