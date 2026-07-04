@@ -246,17 +246,15 @@
   .page-transition {
     animation: page-transition-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
+  /* Composited pulse: transform + opacity only. The static neon glow is
+     applied via filter on the base image; the pulse itself no longer
+     animates filter (which forces paint on every frame). */
   @keyframes pulse-glow {
-    0%, 100% {
-      opacity: 1;
-      filter: drop-shadow(0 0 18px rgba(255,20,147,0.55)) drop-shadow(0 0 36px rgba(255,20,147,0.35));
-    }
-    50% {
-      opacity: 0.92;
-      filter: drop-shadow(0 0 28px rgba(255,20,147,0.85)) drop-shadow(0 0 60px rgba(255,20,147,0.55));
-    }
+    0%, 100% { opacity: 1;    transform: scale(1); }
+    50%      { opacity: 0.9;  transform: scale(1.03); }
   }
   .animate-pulse-glow {
     animation: pulse-glow 2.2s ease-in-out infinite;
+    will-change: transform, opacity;
   }
 }
