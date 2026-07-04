@@ -1212,9 +1212,11 @@ function AdminNav({
       ]
     : [];
 
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 1024 : false,
+  );
   useEffect(() => {
-    const check = () => setIsMobile(typeof window !== "undefined" && window.innerWidth < 1024);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -1227,7 +1229,7 @@ function AdminNav({
       <nav
         dir="rtl"
         aria-label="ניווט ניהול"
-        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide sticky top-20 z-30 bg-background/95 backdrop-blur border-b border-border px-2 py-2"
+        className="overflow-x-auto flex gap-2 pb-2 px-1 sticky top-20 z-30 bg-background/95 backdrop-blur border-b border-border py-2 scrollbar-hide"
       >
         {allTabs.map((item) => {
           const active = tab === item.key;
@@ -1235,10 +1237,10 @@ function AdminNav({
             <button
               key={item.key}
               onClick={() => setTab(item.key)}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition inline-flex items-center gap-1.5 ${
+              className={`rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition flex items-center gap-1.5 ${
                 active
                   ? "bg-neon text-primary-foreground"
-                  : "bg-card border border-border text-muted-foreground"
+                  : "bg-card border border-border text-muted-foreground hover:border-neon/50"
               }`}
             >
               {item.icon}
@@ -1249,6 +1251,7 @@ function AdminNav({
       </nav>
     );
   }
+
 
   return (
     <nav dir="rtl" aria-label="ניווט ניהול" className="lg:sticky lg:top-24">
