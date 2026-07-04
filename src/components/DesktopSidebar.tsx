@@ -14,7 +14,10 @@ import {
   Settings,
   ShieldAlert,
   LogOut,
+  BookOpen,
+  UtensilsCrossed,
 } from "lucide-react";
+
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useIsModiinBranch } from "@/lib/active-branch";
@@ -87,19 +90,30 @@ export function DesktopSidebar() {
 
   const canSeeManagement = isSuperAdmin || role === "admin";
 
-  const workItems: Item[] = [
+  const kitchenItems: Item[] = [
     { to: "/", label: "דף הבית", icon: <Home className="h-4 w-4" /> },
-    { to: "/aids", label: "עזרים", icon: <Package className="h-4 w-4" /> },
-    { to: "/calendar", label: "יומן אירועים וסחורה", icon: <CalendarDays className="h-4 w-4" /> },
-    { to: "/orders", label: "קבלת סחורה", icon: <Truck className="h-4 w-4" /> },
     { to: "/tasks", label: "משימות יומיות", icon: <ListChecks className="h-4 w-4" /> },
+    { to: "/prep", label: "הכנות יומיות", icon: <UtensilsCrossed className="h-4 w-4" /> },
+    { to: "/recipes", label: "ספר המתכונים", icon: <BookOpen className="h-4 w-4" /> },
     { to: "/notebook", label: "פנקס עבודה", icon: <NotebookPen className="h-4 w-4" /> },
+    { to: "/aids", label: "עזרים", icon: <Package className="h-4 w-4" /> },
+  ];
+
+  const logisticsItems: Item[] = [
+    { to: "/orders", label: "הזמנת סחורה", icon: <Truck className="h-4 w-4" /> },
+    { to: "/invoices", label: "קבלת סחורה", icon: <Truck className="h-4 w-4" /> },
+    { to: "/restock", label: "השלמות מחסן", icon: <Package className="h-4 w-4" /> },
+    { to: "/calendar", label: "יומן ואירועים", icon: <CalendarDays className="h-4 w-4" /> },
+  ];
+
+  const generalItems: Item[] = [
     { to: "/maintenance", label: "קריאת שירות", icon: <Wrench className="h-4 w-4" /> },
     { onClick: () => setComplaintOpen(true), label: "פתיחת תלונה", icon: <MessageSquareWarning className="h-4 w-4" /> },
     ...(isModiinBranch
       ? [{ to: "/cibus", label: "צבירות סיבוס", icon: <Wallet className="h-4 w-4" /> } as Item]
       : []),
   ];
+
 
   const personalItems: Item[] = [
     { to: "/my-profile", label: "הפרופיל שלי", icon: <UserCircle className="h-4 w-4" /> },
@@ -125,7 +139,11 @@ export function DesktopSidebar() {
           </span>
         </Link>
         <nav className="flex-1 overflow-y-auto py-2">
-          <Group label="עבודה שוטפת" items={workItems} pathname={pathname} />
+          <Group label="מטבח" items={kitchenItems} pathname={pathname} />
+          <div className="border-t border-zinc-800/50 mx-3 my-2" />
+          <Group label="לוגיסטיקה" items={logisticsItems} pathname={pathname} />
+          <div className="border-t border-zinc-800/50 mx-3 my-2" />
+          <Group label="כללי" items={generalItems} pathname={pathname} />
           <div className="border-t border-zinc-800/50 mx-3 my-2" />
           <Group label="אזור אישי" items={personalItems} pathname={pathname} />
           {canSeeManagement && (
@@ -135,6 +153,7 @@ export function DesktopSidebar() {
             </>
           )}
         </nav>
+
         <div className="border-t border-zinc-800/60 px-4 py-3 space-y-2">
           <div className="text-right">
             <div className="text-sm font-bold text-foreground truncate">
