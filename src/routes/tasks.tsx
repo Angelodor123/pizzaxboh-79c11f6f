@@ -1111,7 +1111,7 @@ function TasksPage() {
                                   } ${isPulsing ? "neon-pulse-card" : ""}`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
-                                    <label className="flex items-start gap-3 flex-1 cursor-pointer min-w-0">
+                                    <label className="flex items-start gap-3 flex-1 cursor-pointer min-w-0 min-h-[44px]">
                                       <input
                                         type="checkbox"
                                         checked={done}
