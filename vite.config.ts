@@ -12,26 +12,4 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
-  vite: {
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: (id) => {
-            if (!id.includes("node_modules")) return;
-            if (id.includes("/@supabase/supabase-js/")) return "vendor-supabase";
-            if (
-              id.includes("/@tanstack/react-router/") ||
-              id.includes("/@tanstack/react-start/") ||
-              id.includes("/@tanstack/react-query/")
-            )
-              return "vendor-tanstack";
-            if (id.includes("/framer-motion/") || id.includes("/lucide-react/"))
-              return "vendor-ui";
-            if (id.includes("/ai/") || id.includes("/@ai-sdk/"))
-              return "vendor-ai";
-          },
-        },
-      },
-    },
-  },
 });
