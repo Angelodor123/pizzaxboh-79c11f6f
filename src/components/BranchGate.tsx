@@ -448,6 +448,8 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
           ))}
         </div>
 
+        <NetworkKpiBanner />
+
         <div className="flex justify-center">
           <button
             onClick={signOut}
