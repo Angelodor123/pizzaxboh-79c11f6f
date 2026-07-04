@@ -87,7 +87,7 @@ type BranchStats = {
   shortages: number;
 };
 
-function NetworkKpiBanner() {
+function useNetworkStats() {
   const { branches } = useBranches();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Record<string, BranchStats>>({});
@@ -129,10 +129,8 @@ function NetworkKpiBanner() {
         return map[id];
       };
 
-      // seed all branches
       branches.forEach((b) => ensure(b.id));
 
-      // dough via RPC uses branch_name — map by name
       const doughRows =
         (doughRes.data as { branch_name: string; total_trays: number }[] | null) ?? [];
       doughRows.forEach((r) => {
@@ -205,125 +203,102 @@ function NetworkKpiBanner() {
     return list;
   }, [branches, stats]);
 
-  if (loading) {
+  return { stats, loading, alerts };
+}
+
+function BranchKpiCard({ branch, stats }: { branch: Branch; stats: BranchStats }) {
+  const pct = stats.tasksTotal > 0 ? (stats.tasksDone / stats.tasksTotal) * 100 : 100;
+  const tasksColor =
+    stats.tasksTotal > 0 && stats.tasksDone >= stats.tasksTotal
+      ? "text-neon"
+      : pct < 50
+        ? "text-amber-500"
+        : "text-muted-foreground";
+  const accent =
+    stats.criticalTickets > 0
+      ? "border-l-2 border-l-red-500"
+      : stats.shortages > 0
+        ? "border-l-2 border-l-amber-500"
+        : "border-l-2 border-l-neon";
+  return (
+    <div
+      className={`rounded-xl border border-border bg-card/60 p-4 w-full flex flex-col gap-2 ${accent}`}
+    >
+      <div className="font-bold text-sm">{branch.name}</div>
+      <div className="flex flex-col gap-1.5">
+        <div
+          className="items-center gap-2 text-xs"
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <Wheat className="h-3.5 w-3.5 shrink-0 text-neon" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">{stats.dough}</span>
+          <span className="text-muted-foreground">מיכלי בצק</span>
+        </div>
+        <div
+          className={`items-center gap-2 text-xs ${tasksColor}`}
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">
+            {stats.tasksDone} / {stats.tasksTotal}
+          </span>
+          <span className="text-muted-foreground">משימות</span>
+        </div>
+        <div
+          className={`items-center gap-2 text-xs ${stats.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <Wrench className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">{stats.openTickets}</span>
+          <span className="text-muted-foreground">
+            {stats.openTickets > 0 ? "קריאות פתוחות" : "אין קריאות ✓"}
+          </span>
+        </div>
+        <div
+          className={`items-center gap-2 text-xs ${stats.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
+          style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+        >
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-bold tabular-nums text-right min-w-[2rem]">{stats.shortages}</span>
+          <span className="text-muted-foreground">חוסרים</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NetworkAlerts({ alerts }: { alerts: ReturnType<typeof useNetworkStats>["alerts"] }) {
+  if (alerts.length > 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="rounded-xl bg-card/40 animate-pulse h-24" />
-        <div className="rounded-xl bg-card/40 animate-pulse h-24" />
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-xs font-bold text-amber-500">
+          <AlertTriangle className="h-4 w-4" />
+          <span>דורש תשומת לב</span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {alerts.map((a, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm">
+              <span
+                className={`h-2 w-2 rounded-full shrink-0 ${
+                  a.kind === "critical"
+                    ? "bg-red-500"
+                    : a.kind === "shortage"
+                      ? "bg-amber-500"
+                      : "bg-orange-500"
+                }`}
+              />
+              <span className="font-semibold">{a.branchName}</span>
+              <span className="text-muted-foreground">— {a.text}</span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
-
-  const multi = branches.length >= 2;
-
   return (
-    <div className="flex flex-col gap-4">
-      {/* Section 1: branch comparison */}
-      <div className="flex flex-col gap-3">
-
-        {branches.map((b) => {
-          const s = stats[b.id] ?? {
-            dough: 0,
-            tasksTotal: 0,
-            tasksDone: 0,
-            openTickets: 0,
-            criticalTickets: 0,
-            shortages: 0,
-          };
-          const pct = s.tasksTotal > 0 ? (s.tasksDone / s.tasksTotal) * 100 : 100;
-          const tasksColor =
-            s.tasksTotal > 0 && s.tasksDone >= s.tasksTotal
-              ? "text-neon"
-              : pct < 50
-                ? "text-amber-500"
-                : "text-muted-foreground";
-          const accent =
-            s.criticalTickets > 0
-              ? "border-l-2 border-l-red-500"
-              : s.shortages > 0
-                ? "border-l-2 border-l-amber-500"
-                : "border-l-2 border-l-neon";
-          return (
-            <div
-              key={b.id}
-              className={`rounded-xl border border-border bg-card/60 p-4 w-full flex flex-col gap-2 ${accent}`}
-            >
-              <div className="font-bold text-sm">{b.name}</div>
-              <div className="flex flex-col gap-1.5">
-                <div
-                  className="items-center gap-2 text-xs"
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <Wheat className="h-3.5 w-3.5 shrink-0 text-neon" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.dough}</span>
-                  <span className="text-muted-foreground">מיכלי בצק</span>
-                </div>
-                <div
-                  className={`items-center gap-2 text-xs ${tasksColor}`}
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">
-                    {s.tasksDone} / {s.tasksTotal}
-                  </span>
-                  <span className="text-muted-foreground">משימות</span>
-                </div>
-                <div
-                  className={`items-center gap-2 text-xs ${s.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <Wrench className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.openTickets}</span>
-                  <span className="text-muted-foreground">
-                    {s.openTickets > 0 ? "קריאות פתוחות" : "אין קריאות ✓"}
-                  </span>
-                </div>
-                <div
-                  className={`items-center gap-2 text-xs ${s.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
-                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
-                >
-                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.shortages}</span>
-                  <span className="text-muted-foreground">חוסרים</span>
-                </div>
-              </div>
-
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Section 2: alerts */}
-      {alerts.length > 0 ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-500">
-            <AlertTriangle className="h-4 w-4" />
-            <span>דורש תשומת לב</span>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {alerts.map((a, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                <span
-                  className={`h-2 w-2 rounded-full shrink-0 ${
-                    a.kind === "critical"
-                      ? "bg-red-500"
-                      : a.kind === "shortage"
-                        ? "bg-amber-500"
-                        : "bg-orange-500"
-                  }`}
-                />
-                <span className="font-semibold">{a.branchName}</span>
-                <span className="text-muted-foreground">— {a.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border bg-card/40 p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4 text-neon" />
-          <span>כל הסניפים תקינים</span>
-        </div>
-      )}
+    <div className="rounded-xl border border-border bg-card/40 p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+      <CheckCircle2 className="h-4 w-4 text-neon" />
+      <span>כל הסניפים תקינים</span>
     </div>
   );
 }
@@ -333,6 +308,7 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
     useAuth();
   const { branches, loading: branchesLoading } = useBranches();
   const activeId = useActiveBranch();
+  const { stats, loading: statsLoading, alerts } = useNetworkStats();
 
   // Branch Staff: auto-set their assigned branch
   useEffect(() => {
@@ -406,49 +382,69 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {branches.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => setActiveBranchId(b.id)}
-              className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card text-right transition hover:border-neon hover:shadow-[0_0_28px_-4px_rgba(255,20,147,0.6)] aspect-[4/3] min-h-[260px]"
-            >
-              {b.image_url ? (
-                <img
-                  src={b.image_url}
-                  alt={b.name}
-                  className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-card to-background">
-                  <Building2 className="h-16 w-16 text-neon/40" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
-              <div className="relative h-full flex flex-col justify-between p-5">
-                <div className="flex justify-end">
-                  <div className="rounded-full bg-neon/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 opacity-0 group-hover:opacity-100 transition">
-                    כניסה →
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="font-display text-2xl font-black text-white drop-shadow-lg">
-                    {b.name}
-                  </div>
-                  {b.address && (
-                    <div className="flex items-center gap-1.5 text-sm text-white/85">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{b.address}</span>
+        <div className="flex flex-col gap-6">
+          {branches.map((b) => {
+            const s = stats[b.id] ?? {
+              dough: 0,
+              tasksTotal: 0,
+              tasksDone: 0,
+              openTickets: 0,
+              criticalTickets: 0,
+              shortages: 0,
+            };
+            return (
+              <div key={b.id} className="flex flex-col gap-3">
+                <button
+                  onClick={() => setActiveBranchId(b.id)}
+                  className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card text-right transition hover:border-neon hover:shadow-[0_0_28px_-4px_rgba(255,20,147,0.6)] aspect-[4/3] min-h-[220px] sm:min-h-[260px]"
+                >
+                  {b.image_url ? (
+                    <img
+                      src={b.image_url}
+                      alt={b.name}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-card to-background">
+                      <Building2 className="h-16 w-16 text-neon/40" />
                     </div>
                   )}
-                </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+                  <div className="relative h-full flex flex-col justify-between p-5">
+                    <div className="flex justify-end">
+                      <div className="rounded-full bg-neon/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 opacity-0 group-hover:opacity-100 transition">
+                        כניסה →
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-display text-2xl font-black text-white drop-shadow-lg">
+                        {b.name}
+                      </div>
+                      {b.address && (
+                        <div className="flex items-center gap-1.5 text-sm text-white/85">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{b.address}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+                {statsLoading ? (
+                  <div className="rounded-xl bg-card/40 animate-pulse h-24" />
+                ) : (
+                  <BranchKpiCard branch={b} stats={s} />
+                )}
               </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
 
-        <NetworkKpiBanner />
+        {statsLoading ? (
+          <div className="rounded-xl bg-card/40 animate-pulse h-16" />
+        ) : (
+          <NetworkAlerts alerts={alerts} />
+        )}
 
         <div className="flex justify-center">
           <button
