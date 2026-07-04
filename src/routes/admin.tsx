@@ -302,22 +302,63 @@ function AdminPage() {
 
         <div id="admin-content" className="mt-6 lg:mt-0 min-w-0 scroll-mt-24">
 
-          {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
+          {tab === "overview" && (
+            <>
+              <TabHeader title="סקירה כללית" description="תמונת מצב של הסניף הפעיל" />
+              <OverviewPanel onGoToUsers={() => setTab("users")} />
+            </>
+          )}
 
           {tab === "users" && (
             <div className="space-y-6">
+              <TabHeader title="הרשאות וצוות" description="ניהול גישה, הזמנות והרשאות משתמשים" />
               <InvitationsPanel />
               {isSuperAdmin && <SuperAdminUsersPanel />}
             </div>
           )}
-          {tab === "branches" && isSuperAdmin && <BranchesPanel />}
-          {tab === "tasks" && isSuperAdmin && <TasksPanel />}
-          {tab === "reminders" && <SupplierRemindersPanel />}
+          {tab === "branches" && isSuperAdmin && (
+            <>
+              <TabHeader title="ניהול סניפים" description="הגדרות סניפים, קואורדינטות ותכונות" />
+              <BranchesPanel />
+            </>
+          )}
+          {tab === "tasks" && isSuperAdmin && (
+            <>
+              <TabHeader title="משימות קבועות" description="ניהול משמרות, קבוצות ומשימות יומיות" />
+              <TasksPanel />
+            </>
+          )}
+          {tab === "reminders" && (
+            <>
+              <TabHeader title="תזכורות ספקים" description="הגדר ימי הזמנה קבועים לכל ספק" />
+              <SupplierRemindersPanel />
+            </>
+          )}
 
-          {tab === "onboarding" && <OnboardingPanel />}
-          {tab === "units" && <UnitsPanel />}
-          {tab === "prep" && <PrepItemsPanel />}
-          {tab === "restock" && <RestockItemsPanel />}
+          {tab === "onboarding" && (
+            <>
+              <TabHeader title="הסברי דפים" description="עריכת טקסטי הדרכה שמופיעים בכל מסך" />
+              <OnboardingPanel />
+            </>
+          )}
+          {tab === "units" && (
+            <>
+              <TabHeader title="יחידות מידה" description="ניהול יחידות מידה לפריטים ומתכונים" />
+              <UnitsPanel />
+            </>
+          )}
+          {tab === "prep" && (
+            <>
+              <TabHeader title="הכנות יומיות" description="ניהול פריטי הכנה ויעדים יומיים" />
+              <PrepItemsPanel />
+            </>
+          )}
+          {tab === "restock" && (
+            <>
+              <TabHeader title="השלמות מחסן" description="ניהול פריטי השלמה ויעדים" />
+              <RestockItemsPanel />
+            </>
+          )}
 
           {tab === "recipes" && (
             <section>
