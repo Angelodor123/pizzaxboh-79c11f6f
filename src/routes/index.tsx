@@ -235,6 +235,16 @@ function OperationalDashboard() {
         <span className="w-0" />
       </div>
 
+      {/* Current shift progress — hero card */}
+      <div className="mb-4 border-4 border-neon rounded-3xl p-2 bg-gradient-to-br from-neon/10 via-transparent to-neon/5 shadow-[0_0_40px_-10px_rgba(57,255,20,0.4)]">
+        <CurrentShiftProgressCard />
+      </div>
+
+      {/* Dough — standalone */}
+      <div className="mb-4">
+        <DoughStatusCard />
+      </div>
+
       <NotificationPermissionBanner />
 
       {/* Supplier ordering alerts — must order today */}
@@ -244,16 +254,6 @@ function OperationalDashboard() {
       <div className="mb-4 space-y-2">
         <WeatherWidget alertText={rainAlert} />
         {vehiclesEnabled && <EvChargingWidget />}
-      </div>
-
-      {/* Current shift progress — hero card */}
-      <div className="mb-4 border-4 border-neon rounded-3xl p-2 bg-gradient-to-br from-neon/10 via-transparent to-neon/5 shadow-[0_0_40px_-10px_rgba(57,255,20,0.4)]">
-        <CurrentShiftProgressCard />
-      </div>
-
-      {/* Dough — standalone */}
-      <div className="mb-4">
-        <DoughStatusCard />
       </div>
 
       {/* Two large action buttons */}
