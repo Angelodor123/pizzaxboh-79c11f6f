@@ -219,13 +219,8 @@ function NetworkKpiBanner() {
   return (
     <div className="flex flex-col gap-4">
       {/* Section 1: branch comparison */}
-      <div
-        className={
-          multi
-            ? "flex gap-3 overflow-x-auto pb-2 -mx-1 px-1"
-            : "flex flex-col gap-3"
-        }
-      >
+      <div className="flex flex-col gap-3">
+
         {branches.map((b) => {
           const s = stats[b.id] ?? {
             dough: 0,
