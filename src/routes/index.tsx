@@ -235,28 +235,49 @@ function OperationalDashboard() {
 
       <NotificationPermissionBanner />
 
-      {/* Weather strip + EV */}
-      <div className="mb-4 space-y-2">
-        <WeatherWidget alertText={rainAlert} />
-        {vehiclesEnabled && <EvChargingWidget />}
-      </div>
-
       {/* Supplier ordering alerts — must order today */}
       <SupplierAlertsBanner />
 
-      {/* Shift feed + personal tasks: stacked on mobile, side-by-side on lg */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 items-start">
-        <div data-tour="shift-feed">
-          <ShiftFeedCard />
-        </div>
-        <PersonalTasksCard />
+      {/* Weather strip + EV (compact) */}
+      <div className="mb-4 space-y-2">
+        <WeatherWidget alertText={rainAlert} />
+        {vehiclesEnabled && (
+          <div className="max-h-12 overflow-hidden">
+            <EvChargingWidget />
+          </div>
+        )}
       </div>
 
-      {/* Dough + current shift progress — compact side by side */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 items-start">
+      {/* Current shift progress — prominent standalone */}
+      <div className="mb-4 border-2 border-neon/30 rounded-2xl p-1">
         <CurrentShiftProgressCard />
+      </div>
+
+      {/* Dough — standalone */}
+      <div className="mb-4">
         <DoughStatusCard />
       </div>
+
+      {/* Two large action buttons */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <Link
+          to="/recipes"
+          className="rounded-2xl border-2 border-neon/30 hover:border-neon bg-card/60 hover:bg-neon/5 p-5 flex flex-col items-center justify-center gap-2 text-center transition min-h-32"
+        >
+          <ChefHat className="h-8 w-8 text-neon" />
+          <span className="text-lg font-bold">ספר המתכונים</span>
+          <span className="text-xs text-muted-foreground">מתכונים, רטבים, בסיסים</span>
+        </Link>
+        <Link
+          to="/invoices"
+          className="rounded-2xl border-2 border-neon/30 hover:border-neon bg-card/60 hover:bg-neon/5 p-5 flex flex-col items-center justify-center gap-2 text-center transition min-h-32"
+        >
+          <Truck className="h-8 w-8 text-neon" />
+          <span className="text-lg font-bold">ניהול סחורה</span>
+          <span className="text-xs text-muted-foreground">קבלה, הזמנות, ספקים</span>
+        </Link>
+      </div>
+
 
       {/* Supplier reminders — tomorrow */}
       {loadingHome ? (
