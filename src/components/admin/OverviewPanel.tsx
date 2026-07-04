@@ -294,8 +294,9 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         {(() => {
           const hasDeliveries = m.todaySuppliers.length > 0;
           return (
-            <div
-              className={`mt-3 rounded-xl border p-4 backdrop-blur transition ${
+            <Link
+              to="/suppliers"
+              className={`mt-3 block rounded-xl border p-4 backdrop-blur transition cursor-pointer hover:opacity-80 ${
                 hasDeliveries
                   ? "border-neon/60 bg-neon/5 shadow-[0_0_28px_-10px_hsl(var(--neon))]"
                   : "border-border bg-card/60"
@@ -327,7 +328,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })()}
       </section>
