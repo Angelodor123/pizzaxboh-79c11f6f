@@ -1047,7 +1047,7 @@ function TasksPage() {
                                             key={s.id}
                                             className={`rounded-lg border p-3 ${sdone ? "bg-background/30 border-border" : "bg-background/50 border-pink-500/30"}`}
                                           >
-                                            <label className="flex items-start gap-3 cursor-pointer">
+                                            <label className="flex items-start gap-3 cursor-pointer min-h-[44px]">
                                               <input
                                                 type="checkbox"
                                                 checked={sdone}
