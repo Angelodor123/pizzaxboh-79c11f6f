@@ -1,3 +1,5 @@
-# PizzaXBoh
+PizzaXBoh - Back of House management PWA for Pizza X restaurant chain in Israel.
 
-> מערכת ניהול תפעולי למטבחי פיצה — ניהול ספקים, הזמנות, מלאי, משמרות, מתכונים וצ'ק-ליסטים יומיים.
+This application requires authentication. It manages kitchen operations, inventory, suppliers, recipes, tasks, and staff for multi-branch pizza restaurants.
+
+Primary language: Hebrew. Technology: React PWA with Supabase backend.

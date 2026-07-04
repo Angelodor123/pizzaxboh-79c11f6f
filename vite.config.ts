@@ -12,4 +12,23 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            "vendor-react": ["react", "react-dom"],
+            "vendor-tanstack": [
+              "@tanstack/react-router",
+              "@tanstack/react-start",
+              "@tanstack/react-query",
+            ],
+            "vendor-supabase": ["@supabase/supabase-js"],
+            "vendor-ui": ["framer-motion", "lucide-react"],
+            "vendor-ai": ["ai", "@ai-sdk/google"],
+          },
+        },
+      },
+    },
+  },
 });

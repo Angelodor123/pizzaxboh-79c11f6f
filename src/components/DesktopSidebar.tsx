@@ -133,7 +133,7 @@ export function DesktopSidebar() {
         className="hidden lg:flex fixed inset-y-0 right-0 z-30 w-64 flex-col bg-[#18181b] border-l border-zinc-800/60"
       >
         <Link to="/" className="flex items-center gap-2 px-5 py-4 border-b border-zinc-800/60">
-          <img src={pizzaXLogo} alt="Pizza X" className="h-9 w-auto" />
+          <img src={pizzaXLogo} alt="Pizza X" width={144} height={48} className="h-9 w-auto" />
           <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-neon">
             Back of House
           </span>

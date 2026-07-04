@@ -402,6 +402,8 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
                     <img
                       src={b.image_url}
                       alt={b.name}
+                      width={400}
+                      height={300}
                       className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
