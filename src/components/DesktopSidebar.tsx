@@ -139,7 +139,11 @@ export function DesktopSidebar() {
           </span>
         </Link>
         <nav className="flex-1 overflow-y-auto py-2">
-          <Group label="עבודה שוטפת" items={workItems} pathname={pathname} />
+          <Group label="מטבח" items={kitchenItems} pathname={pathname} />
+          <div className="border-t border-zinc-800/50 mx-3 my-2" />
+          <Group label="לוגיסטיקה" items={logisticsItems} pathname={pathname} />
+          <div className="border-t border-zinc-800/50 mx-3 my-2" />
+          <Group label="כללי" items={generalItems} pathname={pathname} />
           <div className="border-t border-zinc-800/50 mx-3 my-2" />
           <Group label="אזור אישי" items={personalItems} pathname={pathname} />
           {canSeeManagement && (
@@ -149,6 +153,7 @@ export function DesktopSidebar() {
             </>
           )}
         </nav>
+
         <div className="border-t border-zinc-800/60 px-4 py-3 space-y-2">
           <div className="text-right">
             <div className="text-sm font-bold text-foreground truncate">
