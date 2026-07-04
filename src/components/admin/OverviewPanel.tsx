@@ -264,6 +264,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
                 doughTotal < m.doughThreshold &&
                 doughTotal >= m.doughThreshold / 2
               }
+              href="/"
               sub={
                 loading
                   ? `סף התראה: ${m.doughThreshold}`
@@ -277,7 +278,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
               label="קריאות שירות"
               value={loading ? "…" : m.openTickets}
               alert={m.openTickets > 0}
-              href="/service-calls"
+              href="/maintenance"
             />
             <StatColumn
               icon={<AlertTriangle className="h-5 w-5" />}
@@ -293,8 +294,9 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
         {(() => {
           const hasDeliveries = m.todaySuppliers.length > 0;
           return (
-            <div
-              className={`mt-3 rounded-xl border p-4 backdrop-blur transition ${
+            <Link
+              to="/suppliers"
+              className={`mt-3 block rounded-xl border p-4 backdrop-blur transition cursor-pointer hover:opacity-80 ${
                 hasDeliveries
                   ? "border-neon/60 bg-neon/5 shadow-[0_0_28px_-10px_hsl(var(--neon))]"
                   : "border-border bg-card/60"
@@ -326,7 +328,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })()}
       </section>
@@ -516,7 +518,7 @@ function StatColumn({
   );
   if (href) {
     return (
-      <Link to={href} className="block hover:opacity-90 transition">
+      <Link to={href} className="block cursor-pointer hover:opacity-80 transition">
         {content}
       </Link>
     );

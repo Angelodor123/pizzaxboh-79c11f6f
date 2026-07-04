@@ -154,6 +154,18 @@ const EMPTY: Recipe = {
   shelfLifeHebrew: "",
 };
 
+function TabHeader({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
+  return (
+    <div className="mb-6 flex items-start justify-between gap-4">
+      <div>
+        <div className="text-xl font-bold text-foreground">{title}</div>
+        <div className="text-sm text-muted-foreground mt-0.5">{description}</div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 function AdminPage() {
   const recipes = useCookbookStore((s) => s.recipes);
   const addRecipe = useCookbookStore((s) => s.addRecipe);
@@ -290,22 +302,63 @@ function AdminPage() {
 
         <div id="admin-content" className="mt-6 lg:mt-0 min-w-0 scroll-mt-24">
 
-          {tab === "overview" && <OverviewPanel onGoToUsers={() => setTab("users")} />}
+          {tab === "overview" && (
+            <>
+              <TabHeader title="סקירה כללית" description="תמונת מצב של הסניף הפעיל" />
+              <OverviewPanel onGoToUsers={() => setTab("users")} />
+            </>
+          )}
 
           {tab === "users" && (
             <div className="space-y-6">
+              <TabHeader title="הרשאות וצוות" description="ניהול גישה, הזמנות והרשאות משתמשים" />
               <InvitationsPanel />
               {isSuperAdmin && <SuperAdminUsersPanel />}
             </div>
           )}
-          {tab === "branches" && isSuperAdmin && <BranchesPanel />}
-          {tab === "tasks" && isSuperAdmin && <TasksPanel />}
-          {tab === "reminders" && <SupplierRemindersPanel />}
+          {tab === "branches" && isSuperAdmin && (
+            <>
+              <TabHeader title="ניהול סניפים" description="הגדרות סניפים, קואורדינטות ותכונות" />
+              <BranchesPanel />
+            </>
+          )}
+          {tab === "tasks" && isSuperAdmin && (
+            <>
+              <TabHeader title="משימות קבועות" description="ניהול משמרות, קבוצות ומשימות יומיות" />
+              <TasksPanel />
+            </>
+          )}
+          {tab === "reminders" && (
+            <>
+              <TabHeader title="תזכורות ספקים" description="הגדר ימי הזמנה קבועים לכל ספק" />
+              <SupplierRemindersPanel />
+            </>
+          )}
 
-          {tab === "onboarding" && <OnboardingPanel />}
-          {tab === "units" && <UnitsPanel />}
-          {tab === "prep" && <PrepItemsPanel />}
-          {tab === "restock" && <RestockItemsPanel />}
+          {tab === "onboarding" && (
+            <>
+              <TabHeader title="הסברי דפים" description="עריכת טקסטי הדרכה שמופיעים בכל מסך" />
+              <OnboardingPanel />
+            </>
+          )}
+          {tab === "units" && (
+            <>
+              <TabHeader title="יחידות מידה" description="ניהול יחידות מידה לפריטים ומתכונים" />
+              <UnitsPanel />
+            </>
+          )}
+          {tab === "prep" && (
+            <>
+              <TabHeader title="הכנות יומיות" description="ניהול פריטי הכנה ויעדים יומיים" />
+              <PrepItemsPanel />
+            </>
+          )}
+          {tab === "restock" && (
+            <>
+              <TabHeader title="השלמות מחסן" description="ניהול פריטי השלמה ויעדים" />
+              <RestockItemsPanel />
+            </>
+          )}
 
           {tab === "recipes" && (
             <section>
@@ -1158,6 +1211,44 @@ function AdminNav({
         { key: "recipes", label: "מתכונים", icon: <ChefHat className="h-4 w-4" /> },
       ]
     : [];
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(typeof window !== "undefined" && window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const allTabs = [...operations, ...settings];
+
+  if (isMobile) {
+    return (
+      <nav
+        dir="rtl"
+        aria-label="ניווט ניהול"
+        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide sticky top-20 z-30 bg-background/95 backdrop-blur border-b border-border px-2 py-2"
+      >
+        {allTabs.map((item) => {
+          const active = tab === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition inline-flex items-center gap-1.5 ${
+                active
+                  ? "bg-neon text-primary-foreground"
+                  : "bg-card border border-border text-muted-foreground"
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+    );
+  }
 
   return (
     <nav dir="rtl" aria-label="ניווט ניהול" className="lg:sticky lg:top-24">

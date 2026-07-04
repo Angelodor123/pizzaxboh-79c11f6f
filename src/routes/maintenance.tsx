@@ -139,34 +139,60 @@ function MaintenancePage() {
       >
         <div>
           <label className="block text-sm font-medium mb-1.5">ציוד</label>
-          <select
-            value={equipmentId}
-            onChange={(e) => setEquipmentId(e.target.value)}
-            className="w-full h-11 rounded-lg border border-border bg-background px-3"
-            required
-          >
-            <option value="">בחר ציוד...</option>
-            {equipment.map((eq) => (
-              <option key={eq.id} value={eq.id}>
-                {eq.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {equipment.map((eq) => {
+              const active = equipmentId === eq.id;
+              return (
+                <button
+                  type="button"
+                  key={eq.id}
+                  onClick={() => setEquipmentId(eq.id)}
+                  className={
+                    active
+                      ? "rounded-full px-3 py-1.5 text-sm font-bold border-2 border-neon text-neon bg-neon/10 shrink-0 whitespace-nowrap transition"
+                      : "rounded-full px-3 py-1.5 text-sm font-bold border border-border text-muted-foreground bg-card shrink-0 whitespace-nowrap hover:border-neon/50 transition"
+                  }
+                >
+                  {eq.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1.5">דחיפות</label>
-          <select
-            value={urgency}
-            onChange={(e) => setUrgency(e.target.value as Urgency)}
-            className="w-full h-11 rounded-lg border border-border bg-background px-3"
-          >
-            {URGENCIES.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            {URGENCIES.map((u) => {
+              const active = urgency === u;
+              const kind: "critical" | "urgent" | "normal" =
+                u === "קריטי - משבית עבודה" ? "critical" : u === "דחוף - מפריע לעבודה" ? "urgent" : "normal";
+              const accent =
+                kind === "critical" ? "bg-red-500" : kind === "urgent" ? "bg-orange-500" : "bg-zinc-500";
+              const desc =
+                kind === "critical"
+                  ? "משביתה את העבודה, דרוש טיפול מיידי"
+                  : kind === "urgent"
+                    ? "מפריעה לעבודה, יש לטפל בהקדם"
+                    : "אינה דחופה, ניתן לתזמן טיפול";
+              return (
+                <button
+                  type="button"
+                  key={u}
+                  onClick={() => setUrgency(u)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 text-right transition ${
+                    active ? "border-neon bg-neon/5" : "border-border bg-card/40 hover:border-border/80"
+                  }`}
+                >
+                  <div className={`w-1 rounded-full h-full shrink-0 ${accent}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-sm">{u}</div>
+                    <div className="text-xs text-muted-foreground">{desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>
