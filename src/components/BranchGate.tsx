@@ -406,8 +406,6 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        <NetworkKpiBanner />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {branches.map((b) => (
             <button
@@ -449,6 +447,8 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
             </button>
           ))}
         </div>
+
+        <NetworkKpiBanner />
 
         <div className="flex justify-center">
           <button
