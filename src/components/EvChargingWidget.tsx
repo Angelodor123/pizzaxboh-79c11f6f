@@ -321,7 +321,9 @@ export function EvChargingWidget() {
                     <div className="text-center text-[10px] text-zinc-600 mt-1" dir="rtl">
                       עודכן לאחרונה:{" "}
                       <span dir="ltr">
-                        {new Date(v.updated_at).toLocaleTimeString("he-IL", {
+                        {new Date(v.updated_at).toLocaleString("he-IL", {
+                          day: "2-digit",
+                          month: "2-digit",
                           hour: "2-digit",
                           minute: "2-digit",
                           hour12: false,
