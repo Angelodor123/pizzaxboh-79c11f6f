@@ -246,7 +246,7 @@ function NetworkKpiBanner() {
           return (
             <div
               key={b.id}
-              className={`rounded-xl border border-border bg-card/60 p-4 ${multi ? "w-64 shrink-0" : "w-full"} flex flex-col gap-2 ${accent}`}
+              className={`rounded-xl border border-border bg-card/60 p-4 w-full flex flex-col gap-2 ${accent}`}
             >
               <div className="font-bold text-sm">{b.name}</div>
               <div className="flex flex-col gap-1.5">
