@@ -162,7 +162,7 @@ function OrdersPage() {
               <button
                 key={s.id}
                 onClick={() => setSelected(s)}
-                className="group rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
+                className="group min-w-0 rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
               >
                 <div className="h-32 w-full flex items-center justify-center p-4 rounded-t-lg bg-zinc-800/50">
                   {logo ? (
