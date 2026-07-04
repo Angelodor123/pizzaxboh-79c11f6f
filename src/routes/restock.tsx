@@ -123,6 +123,34 @@ function RestockPage() {
         </div>
       </div>
 
+      {(() => {
+        const completedCount = visible.filter((i) => log[i.id]?.completed).length;
+        const totalCount = visible.length;
+        const allDone = totalCount > 0 && completedCount === totalCount;
+        const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        return (
+          <div className="sticky top-20 sm:top-24 z-30 bg-background/95 backdrop-blur border-b border-border py-2 px-1 mb-3">
+            {allDone ? (
+              <div className="text-center text-sm font-bold text-success">
+                ✓ כל ההשלמות הושלמו להיום
+              </div>
+            ) : (
+              <>
+                <div className="text-sm text-muted-foreground text-center mb-1">
+                  {completedCount} / {totalCount} הושלמו
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-border">
+                  <div
+                    className="h-full rounded-full bg-neon transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
