@@ -90,19 +90,30 @@ export function DesktopSidebar() {
 
   const canSeeManagement = isSuperAdmin || role === "admin";
 
-  const workItems: Item[] = [
+  const kitchenItems: Item[] = [
     { to: "/", label: "דף הבית", icon: <Home className="h-4 w-4" /> },
-    { to: "/aids", label: "עזרים", icon: <Package className="h-4 w-4" /> },
-    { to: "/calendar", label: "יומן אירועים וסחורה", icon: <CalendarDays className="h-4 w-4" /> },
-    { to: "/orders", label: "קבלת סחורה", icon: <Truck className="h-4 w-4" /> },
     { to: "/tasks", label: "משימות יומיות", icon: <ListChecks className="h-4 w-4" /> },
+    { to: "/prep", label: "הכנות יומיות", icon: <UtensilsCrossed className="h-4 w-4" /> },
+    { to: "/recipes", label: "ספר המתכונים", icon: <BookOpen className="h-4 w-4" /> },
     { to: "/notebook", label: "פנקס עבודה", icon: <NotebookPen className="h-4 w-4" /> },
+    { to: "/aids", label: "עזרים", icon: <Package className="h-4 w-4" /> },
+  ];
+
+  const logisticsItems: Item[] = [
+    { to: "/orders", label: "הזמנת סחורה", icon: <Truck className="h-4 w-4" /> },
+    { to: "/invoices", label: "קבלת סחורה", icon: <Truck className="h-4 w-4" /> },
+    { to: "/restock", label: "השלמות מחסן", icon: <Package className="h-4 w-4" /> },
+    { to: "/calendar", label: "יומן ואירועים", icon: <CalendarDays className="h-4 w-4" /> },
+  ];
+
+  const generalItems: Item[] = [
     { to: "/maintenance", label: "קריאת שירות", icon: <Wrench className="h-4 w-4" /> },
     { onClick: () => setComplaintOpen(true), label: "פתיחת תלונה", icon: <MessageSquareWarning className="h-4 w-4" /> },
     ...(isModiinBranch
       ? [{ to: "/cibus", label: "צבירות סיבוס", icon: <Wallet className="h-4 w-4" /> } as Item]
       : []),
   ];
+
 
   const personalItems: Item[] = [
     { to: "/my-profile", label: "הפרופיל שלי", icon: <UserCircle className="h-4 w-4" /> },
