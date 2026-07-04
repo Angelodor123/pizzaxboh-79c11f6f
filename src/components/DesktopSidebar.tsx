@@ -14,7 +14,10 @@ import {
   Settings,
   ShieldAlert,
   LogOut,
+  BookOpen,
+  UtensilsCrossed,
 } from "lucide-react";
+
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useIsModiinBranch } from "@/lib/active-branch";
