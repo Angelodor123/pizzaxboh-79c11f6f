@@ -138,31 +138,13 @@ export function CategoryDrawer() {
         </SheetHeader>
 
         <nav className="flex-1 overflow-y-auto py-2">
-          {/* ───── Group 1: עבודה שוטפת ───── */}
-          <div className={groupLabelClass}>עבודה שוטפת</div>
+          {/* ───── Group 1: מטבח ───── */}
+          <div className={groupLabelClass}>מטבח</div>
           <ul className="flex flex-col">
             <li>
               <Link to="/" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">🏠 דף הבית</span>
                 <span className={iconWrap}><Home className="h-5 w-5" /></span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/aids" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">📚 עזרים</span>
-                <span className={iconWrap}><Package className="h-5 w-5" /></span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/calendar" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">📅 יומן אירועים וסחורה</span>
-                <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/orders" onClick={close} className={itemClass}>
-                <span className="flex-1 text-right">📦 קבלת סחורה</span>
-                <span className={iconWrap}><Truck className="h-5 w-5" /></span>
               </Link>
             </li>
             <li>
@@ -172,11 +154,65 @@ export function CategoryDrawer() {
               </Link>
             </li>
             <li>
+              <Link to="/prep" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">🍳 הכנות יומיות</span>
+                <span className={iconWrap}><UtensilsCrossed className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/recipes" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📖 ספר המתכונים</span>
+                <span className={iconWrap}><BookOpen className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
               <Link to="/notebook" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">📋 פנקס עבודה</span>
                 <span className={iconWrap}><NotebookPen className="h-5 w-5" /></span>
               </Link>
             </li>
+            <li>
+              <Link to="/aids" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📚 עזרים</span>
+                <span className={iconWrap}><Package className="h-5 w-5" /></span>
+              </Link>
+            </li>
+          </ul>
+
+          {/* ───── Group 2: לוגיסטיקה ───── */}
+          <GroupDivider />
+          <div className={groupLabelClass}>לוגיסטיקה</div>
+          <ul className="flex flex-col">
+            <li>
+              <Link to="/orders" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📦 הזמנת סחורה</span>
+                <span className={iconWrap}><Truck className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/invoices" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">🧾 קבלת סחורה</span>
+                <span className={iconWrap}><Truck className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/restock" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">🔁 השלמות מחסן</span>
+                <span className={iconWrap}><Package className="h-5 w-5" /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/calendar" onClick={close} className={itemClass}>
+                <span className="flex-1 text-right">📅 יומן ואירועים</span>
+                <span className={iconWrap}><CalendarDays className="h-5 w-5" /></span>
+              </Link>
+            </li>
+          </ul>
+
+          {/* ───── Group 3: כללי ───── */}
+          <GroupDivider />
+          <div className={groupLabelClass}>כללי</div>
+          <ul className="flex flex-col">
             <li>
               <Link to="/maintenance" onClick={close} className={itemClass}>
                 <span className="flex-1 text-right">🛠️ קריאת שירות</span>
@@ -203,7 +239,7 @@ export function CategoryDrawer() {
             )}
           </ul>
 
-          {/* ───── Group 2: אזור אישי ───── */}
+          {/* ───── Group 4: אזור אישי ───── */}
           <GroupDivider />
           <div className={groupLabelClass}>אזור אישי</div>
           <ul className="flex flex-col">
@@ -221,7 +257,8 @@ export function CategoryDrawer() {
             </li>
           </ul>
 
-          {/* ───── Group 3: ניהול (manager + super_admin only) ───── */}
+          {/* ───── Group 5: ניהול (manager + super_admin only) ───── */}
+
           {canSeeManagement && (
             <>
               <GroupDivider />
