@@ -255,35 +255,44 @@ function NetworkKpiBanner() {
             >
               <div className="font-bold text-sm">{b.name}</div>
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2 text-xs">
+                <div
+                  className="items-center gap-2 text-xs"
+                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+                >
                   <Wheat className="h-3.5 w-3.5 shrink-0 text-neon" />
-                  <span className="font-bold tabular-nums">{s.dough}</span>
+                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.dough}</span>
                   <span className="text-muted-foreground">מיכלי בצק</span>
                 </div>
-                <div className={`flex items-center gap-2 text-xs ${tasksColor}`}>
+                <div
+                  className={`items-center gap-2 text-xs ${tasksColor}`}
+                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
+                >
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums">
+                  <span className="font-bold tabular-nums text-right min-w-[2rem]">
                     {s.tasksDone} / {s.tasksTotal}
                   </span>
                   <span className="text-muted-foreground">משימות</span>
                 </div>
                 <div
-                  className={`flex items-center gap-2 text-xs ${s.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
+                  className={`items-center gap-2 text-xs ${s.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
+                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
                 >
                   <Wrench className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums">{s.openTickets}</span>
+                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.openTickets}</span>
                   <span className="text-muted-foreground">
                     {s.openTickets > 0 ? "קריאות פתוחות" : "אין קריאות ✓"}
                   </span>
                 </div>
                 <div
-                  className={`flex items-center gap-2 text-xs ${s.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
+                  className={`items-center gap-2 text-xs ${s.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
+                  style={{ display: "grid", gridTemplateColumns: "1.25rem minmax(2rem, auto) 1fr" }}
                 >
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-bold tabular-nums">{s.shortages}</span>
+                  <span className="font-bold tabular-nums text-right min-w-[2rem]">{s.shortages}</span>
                   <span className="text-muted-foreground">חוסרים</span>
                 </div>
               </div>
+
             </div>
           );
         })}
