@@ -30,15 +30,6 @@ export default defineConfig({
             if (id.includes("/ai/") || id.includes("/@ai-sdk/"))
               return "vendor-ai";
           },
-            "vendor-tanstack": [
-              "@tanstack/react-router",
-              "@tanstack/react-start",
-              "@tanstack/react-query",
-            ],
-            "vendor-supabase": ["@supabase/supabase-js"],
-            "vendor-ui": ["framer-motion", "lucide-react"],
-            "vendor-ai": ["ai", "@ai-sdk/openai-compatible"],
-          },
         },
       },
     },
