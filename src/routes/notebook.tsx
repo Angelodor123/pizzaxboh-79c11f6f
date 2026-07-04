@@ -96,7 +96,7 @@ function NotebookPage() {
         </p>
       </div>
 
-      <div className="flex gap-2 mb-4 border-b border-border">
+      <div className="flex gap-2 mb-4 border-b border-border px-1">
         {[
           { id: "daily" as const, label: "📋 פנקס יומי" },
           { id: "warehouse" as const, label: "🏬 רשימת מחסן" },
