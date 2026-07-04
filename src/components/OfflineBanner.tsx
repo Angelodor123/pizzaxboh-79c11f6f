@@ -8,7 +8,8 @@ export function OfflineBanner() {
   const [queueCount, setQueueCount] = useState(0);
 
   useEffect(() => {
-    return subscribeQueueCount(setQueueCount);
+    const unsub = subscribeQueueCount(setQueueCount);
+    return () => { unsub(); };
   }, []);
 
   useEffect(() => {
