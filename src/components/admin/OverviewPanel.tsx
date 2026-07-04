@@ -264,6 +264,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
                 doughTotal < m.doughThreshold &&
                 doughTotal >= m.doughThreshold / 2
               }
+              href="/"
               sub={
                 loading
                   ? `סף התראה: ${m.doughThreshold}`
@@ -277,7 +278,7 @@ export function OverviewPanel({ onGoToUsers }: { onGoToUsers: () => void }) {
               label="קריאות שירות"
               value={loading ? "…" : m.openTickets}
               alert={m.openTickets > 0}
-              href="/service-calls"
+              href="/maintenance"
             />
             <StatColumn
               icon={<AlertTriangle className="h-5 w-5" />}
