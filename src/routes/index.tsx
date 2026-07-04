@@ -306,6 +306,15 @@ function OperationalDashboard() {
         )
       )}
 
+      {/* Shift feed + personal tasks: stacked on mobile, side-by-side on lg */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 items-start">
+        <div data-tour="shift-feed">
+          <ShiftFeedCard />
+        </div>
+        <PersonalTasksCard />
+      </div>
+
+
       {/* Categorized shortcut sections (RBAC) */}
       {loadingHome ? (
         <div className="space-y-4">
