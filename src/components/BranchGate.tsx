@@ -1,5 +1,14 @@
-import { useEffect, useState } from "react";
-import { Building2, LogOut, ShieldAlert, MapPin, Wheat } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Building2,
+  LogOut,
+  ShieldAlert,
+  MapPin,
+  Wheat,
+  CheckCircle2,
+  AlertTriangle,
+  Wrench,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import {
@@ -69,55 +78,246 @@ export function useBranchFeature(key: string, defaultValue = true): boolean {
   return Boolean(features[key]);
 }
 
+type BranchStats = {
+  dough: number;
+  tasksTotal: number;
+  tasksDone: number;
+  openTickets: number;
+  criticalTickets: number;
+  shortages: number;
+};
+
 function NetworkKpiBanner() {
-  const [total, setTotal] = useState<number | null>(null);
-  const [perBranch, setPerBranch] = useState<{ branch_name: string; total_trays: number }[]>([]);
+  const { branches } = useBranches();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Record<string, BranchStats>>({});
 
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data, error } = await supabase.rpc("network_dough_summary");
-      if (!mounted || error) return;
-      const rows = (data as { branch_name: string; total_trays: number }[] | null) ?? [];
-      setPerBranch(rows);
-      setTotal(rows.reduce((sum, r) => sum + Number(r.total_trays ?? 0), 0));
+      const today = new Date().toISOString().slice(0, 10);
+      const [doughRes, tasksRes, logsRes, ticketsRes, shortagesRes] = await Promise.all([
+        supabase.rpc("network_dough_summary"),
+        supabase.from("tasks").select("id, branch_id").eq("active", true),
+        supabase
+          .from("daily_task_logs")
+          .select("task_id, branch_id, completed")
+          .eq("log_date", today)
+          .eq("completed", true),
+        supabase
+          .from("maintenance_tickets")
+          .select("branch_id, urgency, is_read_by_admin, status")
+          .eq("status", "open")
+          .eq("is_read_by_admin", false),
+        supabase.from("shortage_items").select("branch_id").eq("completed", false),
+      ]);
+      if (!mounted) return;
+
+      const map: Record<string, BranchStats> = {};
+      const ensure = (id: string | null | undefined): BranchStats | null => {
+        if (!id) return null;
+        if (!map[id]) {
+          map[id] = {
+            dough: 0,
+            tasksTotal: 0,
+            tasksDone: 0,
+            openTickets: 0,
+            criticalTickets: 0,
+            shortages: 0,
+          };
+        }
+        return map[id];
+      };
+
+      // seed all branches
+      branches.forEach((b) => ensure(b.id));
+
+      // dough via RPC uses branch_name — map by name
+      const doughRows =
+        (doughRes.data as { branch_name: string; total_trays: number }[] | null) ?? [];
+      doughRows.forEach((r) => {
+        const b = branches.find((x) => x.name === r.branch_name);
+        const s = ensure(b?.id);
+        if (s) s.dough = Number(r.total_trays ?? 0);
+      });
+
+      const tasks = (tasksRes.data as { id: string; branch_id: string | null }[] | null) ?? [];
+      tasks.forEach((t) => {
+        const s = ensure(t.branch_id);
+        if (s) s.tasksTotal += 1;
+      });
+
+      const logs =
+        (logsRes.data as { task_id: string; branch_id: string | null }[] | null) ?? [];
+      logs.forEach((l) => {
+        const s = ensure(l.branch_id);
+        if (s) s.tasksDone += 1;
+      });
+
+      const tickets =
+        (ticketsRes.data as { branch_id: string | null; urgency: string | null }[] | null) ?? [];
+      tickets.forEach((t) => {
+        const s = ensure(t.branch_id);
+        if (!s) return;
+        s.openTickets += 1;
+        if (t.urgency === "קריטי - משבית עבודה") s.criticalTickets += 1;
+      });
+
+      const shortages =
+        (shortagesRes.data as { branch_id: string | null }[] | null) ?? [];
+      shortages.forEach((r) => {
+        const s = ensure(r.branch_id);
+        if (s) s.shortages += 1;
+      });
+
+      setStats(map);
+      setLoading(false);
     })();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [branches]);
+
+  const alerts = useMemo(() => {
+    const list: { branchId: string; branchName: string; kind: "critical" | "shortage" | "tasks"; text: string }[] = [];
+    const afterNoon = new Date().getHours() > 14;
+    branches.forEach((b) => {
+      const s = stats[b.id];
+      if (!s) return;
+      if (s.criticalTickets > 0) {
+        list.push({ branchId: b.id, branchName: b.name, kind: "critical", text: "קריאת שירות קריטית פתוחה" });
+      }
+      if (s.shortages > 2) {
+        list.push({ branchId: b.id, branchName: b.name, kind: "shortage", text: `${s.shortages} חוסרים פתוחים` });
+      }
+      if (afterNoon && s.tasksTotal > 0) {
+        const pct = Math.round((s.tasksDone / s.tasksTotal) * 100);
+        if (pct < 20) {
+          list.push({
+            branchId: b.id,
+            branchName: b.name,
+            kind: "tasks",
+            text: `השלמת משימות נמוכה, ${pct} אחוז`,
+          });
+        }
+      }
+    });
+    return list;
+  }, [branches, stats]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-xl bg-card/40 animate-pulse h-24" />
+        <div className="rounded-xl bg-card/40 animate-pulse h-24" />
+      </div>
+    );
+  }
+
+  const multi = branches.length >= 2;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-neon/40 bg-gradient-to-br from-neon/10 via-card/80 to-card p-6 shadow-[0_0_32px_-8px_rgba(255,20,147,0.5)]">
-      <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-neon/20 blur-3xl" />
-      <div className="relative flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-neon/15 border border-neon/40 p-3">
-            <Wheat className="h-7 w-7 text-neon" />
-          </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-neon">
-              Network KPI
+    <div className="flex flex-col gap-4">
+      {/* Section 1: branch comparison */}
+      <div
+        className={
+          multi
+            ? "flex gap-3 overflow-x-auto pb-2 -mx-1 px-1"
+            : "flex flex-col gap-3"
+        }
+      >
+        {branches.map((b) => {
+          const s = stats[b.id] ?? {
+            dough: 0,
+            tasksTotal: 0,
+            tasksDone: 0,
+            openTickets: 0,
+            criticalTickets: 0,
+            shortages: 0,
+          };
+          const pct = s.tasksTotal > 0 ? (s.tasksDone / s.tasksTotal) * 100 : 100;
+          const tasksColor =
+            s.tasksTotal > 0 && s.tasksDone >= s.tasksTotal
+              ? "text-neon"
+              : pct < 50
+                ? "text-amber-500"
+                : "text-muted-foreground";
+          const accent =
+            s.criticalTickets > 0
+              ? "border-l-2 border-l-red-500"
+              : s.shortages > 0
+                ? "border-l-2 border-l-amber-500"
+                : "border-l-2 border-l-neon";
+          return (
+            <div
+              key={b.id}
+              className={`rounded-xl border border-border bg-card/60 p-4 min-w-48 flex flex-col gap-2 ${accent}`}
+            >
+              <div className="font-bold text-sm">{b.name}</div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2 text-xs">
+                  <Wheat className="h-3.5 w-3.5 shrink-0 text-neon" />
+                  <span className="font-bold tabular-nums">{s.dough}</span>
+                  <span className="text-muted-foreground">מיכלי בצק</span>
+                </div>
+                <div className={`flex items-center gap-2 text-xs ${tasksColor}`}>
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  <span className="font-bold tabular-nums">
+                    {s.tasksDone} / {s.tasksTotal}
+                  </span>
+                  <span className="text-muted-foreground">משימות</span>
+                </div>
+                <div
+                  className={`flex items-center gap-2 text-xs ${s.openTickets > 0 ? "text-red-500" : "text-muted-foreground"}`}
+                >
+                  <Wrench className="h-3.5 w-3.5 shrink-0" />
+                  <span className="font-bold tabular-nums">{s.openTickets}</span>
+                  <span className="text-muted-foreground">
+                    {s.openTickets > 0 ? "קריאות פתוחות" : "אין קריאות ✓"}
+                  </span>
+                </div>
+                <div
+                  className={`flex items-center gap-2 text-xs ${s.shortages > 0 ? "text-amber-500" : "text-muted-foreground"}`}
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <span className="font-bold tabular-nums">{s.shortages}</span>
+                  <span className="text-muted-foreground">חוסרים</span>
+                </div>
+              </div>
             </div>
-            <div className="font-display text-sm font-semibold text-muted-foreground mt-1">
-              סה״כ מיכלי בצק ברשת
-            </div>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="font-display text-5xl font-black text-foreground tabular-nums leading-none">
-            {total === null ? "—" : total}
-          </div>
-          <div className="text-[11px] text-muted-foreground mt-1">מיכלים פעילים</div>
-        </div>
+          );
+        })}
       </div>
-      {perBranch.length > 0 && (
-        <div className="relative mt-4 pt-4 border-t border-border/60 flex flex-wrap gap-x-5 gap-y-1.5 text-[11px]">
-          {perBranch.map((r) => (
-            <div key={r.branch_name} className="text-muted-foreground">
-              {r.branch_name}: <span className="text-foreground font-semibold tabular-nums">{r.total_trays}</span>
-            </div>
-          ))}
+
+      {/* Section 2: alerts */}
+      {alerts.length > 0 ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-500">
+            <AlertTriangle className="h-4 w-4" />
+            <span>דורש תשומת לב</span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {alerts.map((a, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <span
+                  className={`h-2 w-2 rounded-full shrink-0 ${
+                    a.kind === "critical"
+                      ? "bg-red-500"
+                      : a.kind === "shortage"
+                        ? "bg-amber-500"
+                        : "bg-orange-500"
+                  }`}
+                />
+                <span className="font-semibold">{a.branchName}</span>
+                <span className="text-muted-foreground">— {a.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card/40 p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <CheckCircle2 className="h-4 w-4 text-neon" />
+          <span>כל הסניפים תקינים</span>
         </div>
       )}
     </div>
