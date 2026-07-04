@@ -201,7 +201,7 @@ function HistoryTable({ kind, rows }: { kind: Kind; rows: any[] }) {
 
   if (kind === "shortages") {
     return (
-      <div className="rounded-xl border border-border bg-card/60 overflow-hidden">
+      <div className="rounded-xl border border-border bg-card/60 overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/30 text-xs text-muted-foreground">
             <tr>
