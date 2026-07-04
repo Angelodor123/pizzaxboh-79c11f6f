@@ -251,7 +251,7 @@ function MaintenancePage() {
             {tickets.map((t) => (
               <div
                 key={t.id}
-                className="rounded-lg border border-border bg-card/40 p-3"
+                className="rounded-xl border border-border bg-card/40 p-4"
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-2">
