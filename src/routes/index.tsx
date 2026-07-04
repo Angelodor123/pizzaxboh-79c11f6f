@@ -346,7 +346,6 @@ function OperationalDashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-6 w-6" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} primary />
               <ShortcutTile to="/prep" icon={<ChefHat className="h-6 w-6" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} primary />
-              <ShortcutTile to="/recipes" icon={<ChefHat className="h-5 w-5" />} label="כל המתכונים" tourId="tile-recipes" />
               <ShortcutTile to="/notebook" icon={<StickyNote className="h-6 w-6" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} primary />
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
             </div>
@@ -356,8 +355,7 @@ function OperationalDashboard() {
                 <SectionHeader>לוגיסטיקה ומלאי</SectionHeader>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   <ShortcutTile to="/inventory" icon={<Package className="h-5 w-5" />} label="מלאי וסטוק" />
-                  <ShortcutTile to="/invoices" icon={<ClipboardCheck className="h-5 w-5" />} label="קליטת סחורה" />
-                  <ShortcutTile to="/orders" icon={<Truck className="h-5 w-5" />} label="הזמנת סחורה" />
+
                   <ShortcutTile to="/restock" icon={<Truck className="h-5 w-5" />} label="השלמות מהמחסן" tourId="tile-restock" />
                   <ShortcutTile to="/suppliers" icon={<Truck className="h-5 w-5" />} label="ניהול ספקים" tourId="tile-suppliers" />
                 </div>
