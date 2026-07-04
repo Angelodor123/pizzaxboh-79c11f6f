@@ -135,7 +135,7 @@ function MaintenancePage() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border border-border bg-card/40 p-4"
+        className="space-y-5 rounded-xl border border-border bg-card/40 p-4"
       >
         <div>
           <label className="block text-sm font-medium mb-1.5">ציוד</label>
