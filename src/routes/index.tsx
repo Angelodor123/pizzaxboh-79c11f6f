@@ -280,7 +280,7 @@ function OperationalDashboard() {
       {/* Goods management picker */}
       {goodsMenuOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           onClick={() => setGoodsMenuOpen(false)}
         >
           <div
