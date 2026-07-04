@@ -1,5 +1,15 @@
-PizzaXBoh - Back of House management PWA for Pizza X restaurant chain in Israel.
+# Pizza X — Back of House
 
-This application requires authentication. It manages kitchen operations, inventory, suppliers, recipes, tasks, and staff for multi-branch pizza restaurants.
+> Pizza X Back of House הוא PWA לניהול תפעולי של רשת מסעדות פיצה בישראל. המערכת מרכזת מתכונים, מלאי, הזמנות מספקים, הכנות יומיות, משימות צוות, קריאות שירות וניהול רב-סניפי. הממשק בעברית (RTL), הגישה מוגבלת למשתמשים מאומתים בלבד.
 
-Primary language: Hebrew. Technology: React PWA with Supabase backend.
+Pizza X BoH נבנה עם React, TanStack Start ו-Supabase, פרוס כ-PWA להתקנה על מכשירים ניידים במטבחי הסניפים. השימוש דורש התחברות; אין תוכן ציבורי סרוק.
+
+## עקרונות
+
+- אפליקציה פנימית מאובטחת — כל הנתונים דורשים אימות.
+- שפה ראשית: עברית. כיווניות: מימין לשמאל.
+- ריבוי סניפים עם הרשאות לפי תפקיד (עובד / מנהל / סופר-אדמין).
+
+## Optional
+
+- [אתר האפליקציה](https://pizzaxboh.lovable.app/): נקודת הכניסה הראשית (דורש התחברות).
