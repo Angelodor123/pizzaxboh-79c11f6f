@@ -308,6 +308,7 @@ export function BranchGate({ children }: { children: React.ReactNode }) {
     useAuth();
   const { branches, loading: branchesLoading } = useBranches();
   const activeId = useActiveBranch();
+  const { stats, loading: statsLoading, alerts } = useNetworkStats();
 
   // Branch Staff: auto-set their assigned branch
   useEffect(() => {
