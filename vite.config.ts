@@ -25,7 +25,7 @@ export default defineConfig({
             ],
             "vendor-supabase": ["@supabase/supabase-js"],
             "vendor-ui": ["framer-motion", "lucide-react"],
-            "vendor-ai": ["ai", "@ai-sdk/google"],
+            "vendor-ai": ["ai", "@ai-sdk/openai-compatible"],
           },
         },
       },
