@@ -70,6 +70,8 @@ function OperationalDashboard() {
   const [loadingHome, setLoadingHome] = useState(true);
   const [tasksOpenCount, setTasksOpenCount] = useState(0);
   const [prepOpenCount, setPrepOpenCount] = useState(0);
+  const [goodsMenuOpen, setGoodsMenuOpen] = useState(false);
+
 
   useEffect(() => {
     let mounted = true;
