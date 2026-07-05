@@ -584,6 +584,23 @@ function NotebookRow({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              void togglePriority(listKey, item.id);
+            }}
+            aria-label={item.priority === "urgent" ? "בטל דחיפות" : "סמן כדחוף"}
+            aria-pressed={item.priority === "urgent"}
+            title={item.priority === "urgent" ? "דחוף" : "סמן כדחוף"}
+            className={`shrink-0 p-2 rounded active:scale-95 transition min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 inline-flex items-center justify-center ${
+              item.priority === "urgent"
+                ? "text-orange-400 bg-orange-500/15"
+                : "text-muted-foreground hover:text-orange-400 hover:bg-orange-500/10"
+            }`}
+          >
+            <Flame className={`h-4 w-4 ${item.priority === "urgent" ? "fill-orange-400/30" : ""}`} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
               startEdit();
             }}
             aria-label={`ערוך: ${item.text}`}
