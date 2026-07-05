@@ -457,6 +457,7 @@ function NotebookRow({
   const toggleItem = useNotebookStore((s) => s.toggleItem);
   const removeItem = useNotebookStore((s) => s.removeItem);
   const editItem = useNotebookStore((s) => s.editItem);
+  const togglePriority = useNotebookStore((s) => s.togglePriority);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(item.text);
 
