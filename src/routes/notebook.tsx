@@ -604,7 +604,7 @@ function NotebookRow({
               startEdit();
             }}
             aria-label={`ערוך: ${item.text}`}
-            className="shrink-0 p-2 rounded text-muted-foreground hover:text-neon active:scale-95 transition min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 inline-flex items-center justify-center"
+            className="shrink-0 h-8 w-8 grid place-content-center rounded text-muted-foreground hover:text-neon active:scale-95 transition"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
