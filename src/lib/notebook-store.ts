@@ -204,6 +204,22 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     await supabase.from("notebook_items").update({ text: clean }).eq("id", id);
   },
 
+  togglePriority: async (list, id) => {
+    let nextPriority: NotebookPriority = "normal";
+    set((s) => ({
+      lists: {
+        ...s.lists,
+        [list]: s.lists[list].map((it) => {
+          if (it.id !== id) return it;
+          nextPriority = it.priority === "urgent" ? "normal" : "urgent";
+          return { ...it, priority: nextPriority };
+        }),
+      },
+    }));
+    if (id.startsWith("tmp-")) return;
+    await supabase.from("notebook_items").update({ priority: nextPriority }).eq("id", id);
+  },
+
   removeItem: async (list, id) => {
     set((s) => ({
       lists: { ...s.lists, [list]: s.lists[list].filter((it) => it.id !== id) },
