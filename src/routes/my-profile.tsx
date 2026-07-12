@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, ShieldCheck, User, Building2, BadgeCheck, Calendar, Cake, Briefcase, LogOut, Bell } from "lucide-react";
+import { BookOpen, ShieldCheck, User, Building2, BadgeCheck, Calendar, Cake, Briefcase, LogOut, Bell, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { subscribeToPush, PushSubscribeError, isIOS, isStandalone } from "@/lib/push";
@@ -175,6 +175,23 @@ function MyProfilePage() {
             <div className="text-xs text-muted-foreground">צפייה במסמך החתום</div>
           </div>
         </button>
+
+        {!isStandalone() && (
+          <button
+            type="button"
+            onClick={() => {
+              try { localStorage.removeItem("hasSeenInstallPrompt"); } catch { /* noop */ }
+              window.location.reload();
+            }}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-neon hover:bg-neon/5 active:scale-[0.99] transition touch-manipulation text-right"
+          >
+            <Download className="h-5 w-5 text-neon shrink-0" />
+            <div className="flex-1">
+              <div className="font-bold text-sm">התקן את האפליקציה</div>
+              <div className="text-xs text-muted-foreground">הוסף למסך הבית לגישה מהירה</div>
+            </div>
+          </button>
+        )}
 
         {!pushEnabled && (
           <button

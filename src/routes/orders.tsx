@@ -49,6 +49,7 @@ function OrdersPage() {
   const [monthCount, setMonthCount] = useState(0);
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
   const [openShortages, setOpenShortages] = useState<{ text: string }[]>([]);
+  const [supplierShortageMap, setSupplierShortageMap] = useState<Record<string, number>>({});
 
   useEffect(() => subscribeBranch((id) => setBranchId(id)), []);
 
@@ -65,7 +66,35 @@ function OrdersPage() {
       const { data, error } = await supplierQuery;
       if (error) throw error;
       if (signal?.aborted) return;
-      setList((data as Supplier[]) ?? []);
+      const suppliers = (data as Supplier[]) ?? [];
+      setList(suppliers);
+
+      // Per-supplier open-shortage counts for the badge dot
+      if (branchId) {
+        const { data: shortRows } = await supabase
+          .from("notebook_items")
+          .select("text, supplier_products!left(supplier_id)")
+          .eq("list_key", "shortages")
+          .eq("done", false)
+          .is("archived_at", null)
+          .eq("branch_id", branchId);
+        const map: Record<string, number> = {};
+        for (const s of suppliers) map[s.id] = 0;
+        for (const row of (shortRows ?? []) as Array<{ text: string; supplier_products: { supplier_id: string } | { supplier_id: string }[] | null }>) {
+          const sp = row.supplier_products;
+          const sid = Array.isArray(sp) ? sp[0]?.supplier_id : sp?.supplier_id;
+          if (sid && map[sid] !== undefined) {
+            map[sid] += 1;
+          } else {
+            // fallback: match supplier name inside text
+            const hit = suppliers.find((s) => row.text?.includes(s.name));
+            if (hit) map[hit.id] = (map[hit.id] ?? 0) + 1;
+          }
+        }
+        if (!signal?.aborted) setSupplierShortageMap(map);
+      } else {
+        if (!signal?.aborted) setSupplierShortageMap({});
+      }
 
       const firstOfMonth = new Date();
       firstOfMonth.setDate(1);
@@ -158,31 +187,39 @@ function OrdersPage() {
         <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {grid.map((s) => {
             const logo = resolveSupplierLogo(s.name, s.logo_url);
+            const shortCount = supplierShortageMap[s.id] ?? 0;
             return (
-              <button
-                key={s.id}
-                onClick={() => setSelected(s)}
-                className="group min-w-0 rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
-              >
-                <div className="h-32 w-full flex items-center justify-center p-4 rounded-t-lg bg-zinc-800/50">
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={s.name}
-                      width={80}
-                      height={80}
-                      className="object-contain max-h-full max-w-full transition group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Truck className="h-12 w-12 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="p-3">
-                  <div className="font-bold text-sm leading-tight truncate">{s.name}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{s.category}</div>
-                </div>
-              </button>
+              <div key={s.id} className="relative">
+                {shortCount > 0 && (
+                  <span
+                    className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-amber-500 border-2 border-card z-10"
+                    title={`${shortCount} חוסרים פתוחים`}
+                  />
+                )}
+                <button
+                  onClick={() => setSelected(s)}
+                  className="group w-full min-w-0 rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
+                >
+                  <div className="h-32 w-full flex items-center justify-center p-4 rounded-t-lg bg-zinc-800/50">
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={s.name}
+                        width={80}
+                        height={80}
+                        className="object-contain max-h-full max-w-full transition group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Truck className="h-12 w-12 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <div className="font-bold text-sm leading-tight truncate">{s.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{s.category}</div>
+                  </div>
+                </button>
+              </div>
             );
           })}
         </div>

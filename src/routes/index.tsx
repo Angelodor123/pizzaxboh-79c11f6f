@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, Package } from "lucide-react";
+import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, Package, AlertTriangle, CheckCircle2, ChevronLeft } from "lucide-react";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,10 +59,34 @@ function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+type ShiftPeriod = "morning" | "evening" | "closing";
+interface ShiftContext {
+  greeting: string;
+  shiftPeriod: ShiftPeriod;
+  priorityOrder: string[];
+}
+function getShiftContext(): ShiftContext {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Jerusalem",
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  if (hour >= 9 && hour <= 16) {
+    return { greeting: "בוקר טוב", shiftPeriod: "morning", priorityOrder: ["prep", "tasks", "notebook"] };
+  }
+  if (hour >= 17 || hour <= 5) {
+    return { greeting: "ערב טוב", shiftPeriod: "evening", priorityOrder: ["tasks", "notebook", "restock"] };
+  }
+  return { greeting: "בוקר טוב", shiftPeriod: "closing", priorityOrder: ["notebook", "maintenance", "tasks"] };
+}
+
 function OperationalDashboard() {
   const { role, isSuperAdmin } = useAuth();
   const vehiclesEnabled = useBranchFeature("vehicles", true);
   const activeBranch = useActiveBranchData();
+  const shiftCtx = getShiftContext();
+
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -229,8 +253,10 @@ function OperationalDashboard() {
         dir="rtl"
       >
         <span className="text-sm text-muted-foreground">{dateLabel}</span>
-        <span className="text-sm font-bold text-foreground truncate">
-          {activeBranch?.name ?? ""}
+        <span className="text-sm truncate flex items-center gap-1.5">
+          <span className="text-neon font-bold">{shiftCtx.greeting}</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="font-bold text-foreground truncate">{activeBranch?.name ?? ""}</span>
         </span>
         <span className="w-0" />
       </div>
@@ -240,6 +266,35 @@ function OperationalDashboard() {
         <CurrentShiftProgressCard />
       </div>
 
+      {/* Next action strip */}
+      {(() => {
+        const iconCls = "h-5 w-5 shrink-0";
+        const textCls = "text-sm font-bold flex-1";
+        const wrapCls = "rounded-xl border border-border bg-card/40 px-4 py-3 flex items-center gap-3 mb-4";
+        let content: React.ReactNode = null;
+        let to: string | null = null;
+        if (shiftCtx.shiftPeriod === "morning" && prepOpenCount > 0) {
+          to = "/prep";
+          content = (<><ChefHat className={`${iconCls} text-orange-400`} /><span className={textCls}>יש {prepOpenCount} הכנות שממתינות</span></>);
+        } else if (tasksOpenCount > 0) {
+          to = "/tasks";
+          content = (<><ClipboardCheck className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {tasksOpenCount} משימות פתוחות</span></>);
+        } else if (shortagesCount > 0) {
+          to = "/notebook";
+          content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
+        } else {
+          content = (<><CheckCircle2 className={`${iconCls} text-neon`} /><span className={textCls}>הכל מסודר להיום</span></>);
+        }
+        return to ? (
+          <Link to={to} className={wrapCls}>
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+            {content}
+          </Link>
+        ) : (
+          <div className={wrapCls}>{content}</div>
+        );
+      })()}
+
       {/* Quick-access notebook */}
       <Link
         to="/notebook"
@@ -248,7 +303,7 @@ function OperationalDashboard() {
         <StickyNote className="h-7 w-7 text-neon shrink-0" />
         <div className="flex-1">
           <span className="text-base font-bold block">פנקס עבודה</span>
-          <span className="text-xs text-muted-foreground">הערות, משימות ורשימות</span>
+          <span className="text-xs text-muted-foreground">פנקס, רשימת קניות, משימות אישיות</span>
         </div>
         {notebookTotal > 0 && (
           <span className="inline-flex items-center justify-center rounded-full bg-neon/20 text-neon text-xs font-bold h-6 min-w-6 px-1.5">
@@ -256,6 +311,20 @@ function OperationalDashboard() {
           </span>
         )}
       </Link>
+
+      {shortagesCount > 0 && (
+        <Link
+          to="/notebook"
+          className="mb-4 flex items-center gap-3 rounded-xl border-2 border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/15 px-4 py-3 transition"
+        >
+          <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+          <div className="flex-1">
+            <div className="text-sm font-bold text-amber-300">{shortagesCount} חוסרים פתוחים</div>
+            <div className="text-xs text-amber-400/70">לחץ לפתיחת הפנקס</div>
+          </div>
+          <ChevronLeft className="h-4 w-4 text-amber-400" />
+        </Link>
+      )}
 
       {/* Dough — standalone */}
       <div className="mb-4">
@@ -426,9 +495,18 @@ function OperationalDashboard() {
           <>
             <SectionHeader>מטבח ותפעול</SectionHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-6 w-6" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} primary />
-              <ShortcutTile to="/prep" icon={<ChefHat className="h-6 w-6" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} primary />
-              <ShortcutTile to="/notebook" icon={<StickyNote className="h-6 w-6" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} primary />
+              {(() => {
+                const priorityMap: Record<string, string> = { prep: "/prep", tasks: "/tasks", notebook: "/notebook", restock: "/restock", maintenance: "/maintenance" };
+                const primary: Record<string, React.ReactNode> = {
+                  "/tasks": <ShortcutTile key="tasks" to="/tasks" icon={<ClipboardCheck className="h-6 w-6" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} primary />,
+                  "/prep": <ShortcutTile key="prep" to="/prep" icon={<ChefHat className="h-6 w-6" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} primary />,
+                  "/notebook": <ShortcutTile key="notebook" to="/notebook" icon={<StickyNote className="h-6 w-6" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} primary />,
+                };
+                const orderedRoutes = shiftCtx.priorityOrder.map((k) => priorityMap[k]).filter((r) => primary[r]);
+                const shown = new Set(orderedRoutes);
+                const rest = Object.keys(primary).filter((r) => !shown.has(r));
+                return [...orderedRoutes, ...rest].map((r) => primary[r]);
+              })()}
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
             </div>
 

@@ -52,7 +52,7 @@ import { useCookbookStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { QuickEditTaskDialog } from "@/components/QuickEditTaskDialog";
-import { DraggableNotepadFab } from "@/components/DraggableNotepadFab";
+
 import { triggerHaptic } from "@/lib/haptics";
 import { celebrate } from "@/lib/celebrate";
 import { useNotebookStore } from "@/lib/notebook-store";
@@ -1534,8 +1534,6 @@ function TasksPage() {
       </Dialog>
 
 
-      {/* Draggable shortcut to the notepad */}
-      <DraggableNotepadFab />
 
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>

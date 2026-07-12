@@ -34,7 +34,7 @@ const NEW_HIRE_STEPS: TourStep[] = [
   },
   {
     id: "step_aids_hub_v3",
-    selector: '[data-tour="tile-aids"], [data-tour="tile-recipes"]',
+    selector: '[data-tour="tile-aids"]',
     title: "📚 ספריית עזרים",
     body: "כל מה שצריך לדעת: מתכונים, נהלי ניקיון, איש קשר לשעת חירום ודף קשר של הצוות.",
   },
@@ -70,7 +70,7 @@ const ACTIVE_FEATURE_STEPS: TourStep[] = [
   },
   {
     id: "step_notepad_sync_v2",
-    selector: '[data-tour="card-notebook"]',
+    selector: '[data-tour="tile-tasks"]',
     title: "סנכרון משימות חכם",
     body: "מעכשיו, כשאתם מסמנים משימת משמרת כבוצעה, המערכת תסרוק את הפנקס הכללי ותציע לכם לסגור משימות תואמות באופן אוטומטי.",
   },

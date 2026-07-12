@@ -55,6 +55,7 @@ const QUICK_ACTIONS = [
   "מה מצב המלאי?",
   "כמה הכנות נשארו?",
   "מה החוסרים היום?",
+  "פתח פנקס עבודה",
 ];
 
 export function CopilotFab() {
@@ -472,6 +473,11 @@ export function CopilotFab() {
                     key={chip}
                     type="button"
                     onClick={() => {
+                      if (chip === "פתח פנקס עבודה") {
+                        setOpen(false);
+                        void router.navigate({ to: "/notebook" });
+                        return;
+                      }
                       setInput(chip);
                       void handleSend(chip);
                     }}
