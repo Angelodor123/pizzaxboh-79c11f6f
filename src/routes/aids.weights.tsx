@@ -270,10 +270,13 @@ function WeightsPage() {
             </div>
             <div className="flex items-end gap-1">
               <span className="font-black text-3xl tabular-nums text-neon leading-none">
-                {item.weight_grams}
+                {item.unit === "ק״ג"
+                  ? Number(item.weight_grams).toFixed(2).replace(/\.?0+$/, "")
+                  : item.weight_grams}
               </span>
-              <span className="text-xs text-muted-foreground self-end mb-1">גרם</span>
+              <span className="text-xs text-muted-foreground self-end mb-1">{item.unit || "גרם"}</span>
             </div>
+
             {canEdit && (
               <div className="flex items-center gap-1">
                 <button
