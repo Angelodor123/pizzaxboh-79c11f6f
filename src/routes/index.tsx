@@ -123,6 +123,36 @@ function OperationalDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    void supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const fullName = data?.full_name as string | undefined;
+        if (fullName) {
+          setUserFirstName(fullName.split(" ")[0] ?? "");
+        }
+      });
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const tick = () => {
+      setClockTime(
+        new Date().toLocaleTimeString("he-IL", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Jerusalem",
+        }),
+      );
+    };
+    tick();
+    const interval = setInterval(tick, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   useEffect(() => {
     let mounted = true;
