@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wrench, Upload, Loader2, ImageIcon } from "lucide-react";
+import { Wrench, Upload, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ function MaintenancePage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
     void supabase
@@ -269,17 +270,20 @@ function MaintenancePage() {
                 </div>
                 <p className="text-sm whitespace-pre-wrap">{t.description}</p>
                 {t.photo_url && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                    <ImageIcon className="h-3 w-3" />
-                    <a
-                      href={t.photo_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline"
-                    >
-                      צפה בתמונה
-                    </a>
-                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 block"
+                    onClick={() => setLightboxUrl(t.photo_url!)}
+                  >
+                    <img
+                      src={t.photo_url}
+                      alt="תמונת תקלה"
+                      className="w-20 h-20 rounded-lg object-cover border border-border hover:border-neon transition"
+                      width={80}
+                      height={80}
+                      loading="lazy"
+                    />
+                  </button>
                 )}
                 <p className="text-[10px] text-muted-foreground mt-2">
                   {new Date(t.created_at).toLocaleString("he-IL")}
@@ -289,6 +293,27 @@ function MaintenancePage() {
           </div>
         )}
       </div>
+
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black/80"
+            aria-label="סגור"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="תמונת תקלה"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl"
+          />
+        </div>
+      )}
     </div>
   );
 }
