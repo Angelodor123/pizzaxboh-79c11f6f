@@ -3,6 +3,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
+
 
 export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse" | "shortages";
 
