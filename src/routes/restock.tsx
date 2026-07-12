@@ -11,6 +11,8 @@ import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEdit
 import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { runOrQueue } from "@/lib/offline-queue";
 import { QK } from "@/lib/queue-handlers";
+import { PullToRefresh } from "@/components/PullToRefresh";
+
 
 
 export const Route = createFileRoute("/restock")({
