@@ -408,7 +408,9 @@ function SuppliersPage() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
+
 }
 
 function SupplierForm({
