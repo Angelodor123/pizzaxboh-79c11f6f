@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
-import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
+import { CurrentShiftProgressCard, computeShiftProgress, currentShiftFilter } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 import { useBranchFeature, useActiveBranchData } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
@@ -95,6 +95,31 @@ function OperationalDashboard() {
   const [tasksOpenCount, setTasksOpenCount] = useState(0);
   const [prepOpenCount, setPrepOpenCount] = useState(0);
   const [goodsMenuOpen, setGoodsMenuOpen] = useState(false);
+  const [shiftDone, setShiftDone] = useState(0);
+  const [shiftTotal, setShiftTotal] = useState(0);
+  const [shiftPct, setShiftPct] = useState(0);
+  const [shiftName, setShiftName] = useState("");
+  void currentShiftFilter;
+
+  useEffect(() => {
+    let mounted = true;
+    const branchId = getActiveBranchIdSync();
+    if (!branchId) return;
+    const load = async () => {
+      const res = await computeShiftProgress(branchId);
+      if (!mounted) return;
+      setShiftDone(res.done);
+      setShiftTotal(res.total);
+      setShiftPct(res.pct);
+      setShiftName(res.shiftName);
+    };
+    void load();
+    const interval = setInterval(() => void load(), 30_000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -263,7 +288,7 @@ function OperationalDashboard() {
 
       {/* Current shift progress — hero card */}
       <div className="mb-4 rounded-2xl border-2 border-neon/30 bg-gradient-to-br from-neon/5 to-transparent p-1 shadow-[0_0_24px_-8px_rgba(57,255,20,0.2)]">
-        <CurrentShiftProgressCard />
+        <CurrentShiftProgressCard done={shiftDone} total={shiftTotal} pct={shiftPct} shiftName={shiftName} />
       </div>
 
       {/* Next action strip */}
@@ -271,17 +296,18 @@ function OperationalDashboard() {
         const iconCls = "h-5 w-5 shrink-0";
         const textCls = "text-sm font-bold flex-1";
         const wrapCls = "rounded-xl border border-border bg-card/40 px-4 py-3 flex items-center gap-3 mb-4";
+        const shiftRemaining = Math.max(0, shiftTotal - shiftDone);
         let content: React.ReactNode = null;
         let to: string | null = null;
         if (shiftCtx.shiftPeriod === "morning" && prepOpenCount > 0) {
           to = "/prep";
           content = (<><ChefHat className={`${iconCls} text-orange-400`} /><span className={textCls}>יש {prepOpenCount} הכנות שממתינות</span></>);
-        } else if (tasksOpenCount > 0) {
-          to = "/tasks";
-          content = (<><ClipboardCheck className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {tasksOpenCount} משימות פתוחות</span></>);
         } else if (shortagesCount > 0) {
           to = "/notebook";
           content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
+        } else if (shiftRemaining > 0) {
+          to = "/tasks";
+          content = (<><ClipboardCheck className={`${iconCls} text-neon`} /><span className={textCls}>נותרו {shiftRemaining} משימות במשמרת {shiftName}</span></>);
         } else {
           content = (<><CheckCircle2 className={`${iconCls} text-neon`} /><span className={textCls}>הכל מסודר להיום</span></>);
         }
