@@ -231,7 +231,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       lists: { ...s.lists, [list]: s.lists[list].filter((it) => it.id !== id) },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").delete().eq("id", id);
+    await runOrQueue(QK.NotebookDelete, { id }, "מחיקת פריט");
   },
 
   clearDone: async (list) => {
