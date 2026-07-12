@@ -260,8 +260,10 @@ function RestockPage() {
         onDeleted={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
       />
     </div>
+    </PullToRefresh>
   );
 }
+
 
 
 interface RowProps {
