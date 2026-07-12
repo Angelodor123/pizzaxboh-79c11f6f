@@ -357,6 +357,36 @@ function AuthedShell() {
     if (pathname === "/recipes") clearLastRecipe();
   }, [pathname, clearLastRecipe]);
 
+  const [showShortcutLegend, setShowShortcutLegend] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (typeof window !== "undefined" && window.innerWidth < 1024) return;
+      const k = e.key;
+      if (k === "s" || k === "S") {
+        window.dispatchEvent(new CustomEvent("pizzax:open-search"));
+      } else if (k === "n" || k === "N") {
+        router.navigate({ to: "/notebook" });
+      } else if (k === "t" || k === "T") {
+        router.navigate({ to: "/tasks" });
+      } else if (k === "p" || k === "P") {
+        router.navigate({ to: "/prep" });
+      } else if (k === "r" || k === "R") {
+        router.navigate({ to: "/recipes" });
+      } else if ((k === "a" || k === "A") && effSuper) {
+        router.navigate({ to: "/admin" });
+      } else if (k === "Escape") {
+        router.navigate({ to: "/" });
+      } else if (k === "?") {
+        setShowShortcutLegend(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router, effSuper]);
+
+
   const previewMode = useDevicePreview((s) => s.mode);
   const wrapperClass = devicePreviewWrapperClass(previewMode);
   // When simulating mobile/tablet, force the desktop sidebar off so the layout
