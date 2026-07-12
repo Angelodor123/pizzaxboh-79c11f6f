@@ -9,6 +9,8 @@ import { QuickEditStockItemDialog, type StockItem } from "@/components/QuickEdit
 import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { runOrQueue } from "@/lib/offline-queue";
 import { QK } from "@/lib/queue-handlers";
+import { PullToRefresh } from "@/components/PullToRefresh";
+
 
 
 export const Route = createFileRoute("/prep")({
@@ -55,29 +57,33 @@ function PrepPage() {
   const today = todayIso();
 
 
+  const load = async () => {
+    const branchId = getActiveBranchIdSync();
+    let itQuery = supabase
+      .from("prep_items").select("*").eq("active", true);
+    if (branchId) itQuery = itQuery.eq("branch_id", branchId);
+    const { data: it } = await itQuery
+      .order("sort_order").order("name");
+    setItems((it ?? []) as Item[]);
+    const prepItemIds = (it ?? []).map((r: any) => r.id);
+    let lg: any[] = [];
+    if (prepItemIds.length > 0) {
+      const { data } = await supabase
+        .from("prep_log").select("prep_item_id,current_stock,completed")
+        .eq("log_date", today)
+        .in("prep_item_id", prepItemIds);
+      lg = data ?? [];
+    }
+    const map: Record<string, LogRow> = {};
+    lg.forEach((r: any) => { map[r.prep_item_id] = r; });
+    setLog(map);
+  };
+
   useEffect(() => {
-    void (async () => {
-      const branchId = getActiveBranchIdSync();
-      let itQuery = supabase
-        .from("prep_items").select("*").eq("active", true);
-      if (branchId) itQuery = itQuery.eq("branch_id", branchId);
-      const { data: it } = await itQuery
-        .order("sort_order").order("name");
-      setItems((it ?? []) as Item[]);
-      const prepItemIds = (it ?? []).map((r: any) => r.id);
-      let lg: any[] = [];
-      if (prepItemIds.length > 0) {
-        const { data } = await supabase
-          .from("prep_log").select("prep_item_id,current_stock,completed")
-          .eq("log_date", today)
-          .in("prep_item_id", prepItemIds);
-        lg = data ?? [];
-      }
-      const map: Record<string, LogRow> = {};
-      lg.forEach((r: any) => { map[r.prep_item_id] = r; });
-      setLog(map);
-    })();
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today]);
+
 
   const visible = useMemo(() => {
     return items.filter((i) => Number(i[targetCol]) > 0)
@@ -102,7 +108,9 @@ function PrepPage() {
   const allDone = totalCount > 0 && completedCount === totalCount;
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div dir="rtl" className="max-w-3xl mx-auto px-4 py-4">
+
       <div className="mb-4 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Prep</div>
         <h1 className="font-display text-3xl font-bold mt-1">
@@ -224,7 +232,9 @@ function PrepPage() {
         onDeleted={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
       />
     </div>
+    </PullToRefresh>
   );
+
 
 }
 

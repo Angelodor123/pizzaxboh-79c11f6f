@@ -42,7 +42,6 @@ export function BarcodeScanner({ open, onClose, onResult }: Props) {
         );
         controlsRef.current = controls;
       } catch (e) {
-        console.error(e);
         setError("לא ניתן לפתוח את המצלמה. אשר/י הרשאות.");
       }
     })();

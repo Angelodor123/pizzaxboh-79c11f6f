@@ -16,6 +16,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AiTrainingSandbox } from "@/components/AiTrainingSandbox";
 import { supplierFormSchema, validateOrToast } from "@/lib/schemas";
 import { fanOutInsert, fanOutUpdateById } from "@/lib/branch-fanout";
+import { PullToRefresh } from "@/components/PullToRefresh";
+
 
 export const Route = createFileRoute("/suppliers")({
   head: () => ({
@@ -63,22 +65,21 @@ function SuppliersPage() {
   const [catalogFor, setCatalogFor] = useState<Supplier | null>(null);
   const bulk = useBulkSelection();
 
+  const load = async () => {
+    const branchId = getActiveBranchIdSync();
+    let q = supabase
+      .from("suppliers")
+      .select("*")
+      .order("name", { ascending: true });
+    if (branchId) q = q.eq("branch_id", branchId);
+    const { data, error } = await q;
+    if (error) toast.error("שגיאה בטעינת ספקים");
+    else setList((data as Supplier[]) ?? []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      const branchId = getActiveBranchIdSync();
-      let q = supabase
-        .from("suppliers")
-        .select("*")
-        .order("name", { ascending: true });
-      if (branchId) q = q.eq("branch_id", branchId);
-      const { data, error } = await q;
-      if (!mounted) return;
-      if (error) toast.error("שגיאה בטעינת ספקים");
-      else setList((data as Supplier[]) ?? []);
-      setLoading(false);
-    };
-    load();
+    void load();
     const branchId = getActiveBranchIdSync();
     const ch = branchId
       ? supabase
@@ -91,10 +92,11 @@ function SuppliersPage() {
           .subscribe()
       : null;
     return () => {
-      mounted = false;
       if (ch) supabase.removeChannel(ch);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const visible = list.filter((s) => (showArchived ? s.is_archived : !s.is_archived));
 
@@ -115,7 +117,9 @@ function SuppliersPage() {
   };
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div className="max-w-4xl mx-auto px-4 py-6" dir="rtl">
+
       <div className="mb-6 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
         <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
@@ -404,7 +408,9 @@ function SuppliersPage() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
+
 }
 
 function SupplierForm({

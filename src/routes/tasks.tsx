@@ -793,12 +793,13 @@ function TasksPage() {
           unit: result.unit,
         });
       }
-    } catch (e) {
+    } catch {
+
       // AI failed → fall back to local heuristic + confirm dialog
       const guess = extractIngredientName({ name: t.name, ingredient_name: t.ingredient_name });
       setConfirmShortage({ taskId, name: guess, catalogProductId: null, unit: null });
-      if (e instanceof Error) console.error("extract failed", e);
     } finally {
+
       setExtractingTaskId(null);
     }
   };

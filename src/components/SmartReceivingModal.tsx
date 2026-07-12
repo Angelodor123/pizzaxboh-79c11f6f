@@ -498,7 +498,6 @@ export function SmartReceivingModal({ suppliers, onClose, onSaved, linkedOrderId
       if (nextMatches.length > 0) setStage("suggest");
       else skipMatch(normalizedParsed);
     } catch (e) {
-      console.error(e);
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("ניתוח החשבונית נכשל", { description: msg.slice(0, 240) });
       setStage("pick");

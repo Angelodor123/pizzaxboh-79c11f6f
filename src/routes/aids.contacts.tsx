@@ -49,7 +49,6 @@ function AidsContactsPage() {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) {
-      console.error(error);
       toast.error("טעינת אנשי הקשר נכשלה");
     } else {
       setItems((data ?? []) as Contact[]);
@@ -217,7 +216,6 @@ function ContactFormModal({
     const { error } = await op;
     setBusy(false);
     if (error) {
-      console.error(error);
       toast.error("שמירה נכשלה");
       return;
     }

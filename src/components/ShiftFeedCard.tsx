@@ -318,13 +318,11 @@ export function ShiftFeedCard() {
           try {
             await pushFn({ data: { userIds: pushTargets, title, body: text.slice(0, 200) } });
           } catch (e) {
-            console.warn("[push] mention push failed", e);
           }
         }
       }
     } catch (e) {
       toast.error("שליחת הודעה נכשלה");
-      console.error(e);
     } finally {
       setSending(false);
     }
@@ -401,7 +399,6 @@ export function ShiftFeedCard() {
       const res = await summarizeFn({ data: { branchId } });
       setSummary(res.summary);
     } catch (e) {
-      console.error(e);
       toast.error("סיכום AI נכשל");
     } finally {
       setSummaryLoading(false);
@@ -906,13 +903,11 @@ function CommentsThread({
           try {
             await pushFn({ data: { userIds: pushTargets, title, body: t.slice(0, 200) } });
           } catch (e) {
-            console.warn("[push] comment push failed", e);
           }
         }
       }
     } catch (e) {
       toast.error("שליחת התגובה נכשלה");
-      console.error(e);
     } finally {
       setBusy(false);
     }

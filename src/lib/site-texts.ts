@@ -27,7 +27,6 @@ export const useSiteTextsStore = create<SiteTextsState>((set, get) => ({
       .select("key,group_key,label,value")
       .order("group_key", { ascending: true });
     if (error) {
-      console.error("[site-texts] load failed", error);
       set({ loaded: true });
       return;
     }

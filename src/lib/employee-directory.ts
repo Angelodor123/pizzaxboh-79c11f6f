@@ -33,7 +33,6 @@ export async function fetchEmployeeDirectory(): Promise<EmployeeRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("list_employee_directory");
   if (error) {
-    console.error("[employee-directory]", error);
     return [];
   }
   return (data ?? []) as EmployeeRow[];
@@ -43,7 +42,6 @@ export async function fetchGroupUserIds(group: string): Promise<string[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("list_users_in_group", { _group: group });
   if (error) {
-    console.warn("[group expand]", group, error);
     return [];
   }
   return ((data ?? []) as { user_id: string }[]).map((r) => r.user_id);

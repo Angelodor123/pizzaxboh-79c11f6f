@@ -44,7 +44,6 @@ export function NotificationTestCard() {
           await subscribeToPush(session.user.id);
           toast.success("הרשמת ל-Push הצליחה");
         } catch (e) {
-          console.warn(e);
           toast.error("הרשמת Push נכשלה — ייתכן והאתר רץ בתצוגה מקדימה");
         }
       }
@@ -65,7 +64,6 @@ export function NotificationTestCard() {
         try {
           new Notification("בדיקת מערכת", { body: "התראות הפוש עובדות בהצלחה!" });
         } catch (e) {
-          console.warn(e);
         }
       }
       // DB insert → realtime + in-app toast.
@@ -80,7 +78,6 @@ export function NotificationTestCard() {
       if (error) throw error;
       toast.success("נשלחה התראת ניסיון");
     } catch (e) {
-      console.error(e);
       toast.error("בדיקת התראה נכשלה");
     } finally {
       setBusy(false);

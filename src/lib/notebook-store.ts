@@ -3,6 +3,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCurrentBranchId, getActiveBranchIdSync } from "@/lib/current-branch";
+import { runOrQueue } from "@/lib/offline-queue";
+import { QK } from "@/lib/queue-handlers";
+
 
 export type NotebookListKey = "tasks" | "shopping" | "recurring" | "orders" | "warehouse" | "shortages";
 
@@ -163,17 +166,20 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
     const branchId = await requireCurrentBranchId();
-    await supabase.from("notebook_items").insert({
-      list_key: list,
-      text: clean,
-      priority,
-      created_by: user.id,
-      branch_id: branchId,
-      catalog_product_id: catalogProductId,
-      current_stock: currentStock,
-      unit,
-    });
+    await runOrQueue(QK.NotebookInsert, {
+      row: {
+        list_key: list,
+        text: clean,
+        priority,
+        created_by: user.id,
+        branch_id: branchId,
+        catalog_product_id: catalogProductId,
+        current_stock: currentStock,
+        unit,
+      },
+    }, "הוספת פריט");
   },
+
 
   toggleItem: async (list, id) => {
     let nextDone = false;
@@ -188,7 +194,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
+    await runOrQueue(QK.NotebookUpdate, { id, patch: { done: nextDone } }, "עדכון פריט");
   },
 
   editItem: async (list, id, text) => {
@@ -201,7 +207,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").update({ text: clean }).eq("id", id);
+    await runOrQueue(QK.NotebookUpdate, { id, patch: { text: clean } }, "עריכת פריט");
   },
 
   togglePriority: async (list, id) => {
@@ -217,7 +223,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").update({ priority: nextPriority }).eq("id", id);
+    await runOrQueue(QK.NotebookUpdate, { id, patch: { priority: nextPriority } }, "שינוי עדיפות");
   },
 
   removeItem: async (list, id) => {
@@ -225,7 +231,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       lists: { ...s.lists, [list]: s.lists[list].filter((it) => it.id !== id) },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").delete().eq("id", id);
+    await runOrQueue(QK.NotebookDelete, { id }, "מחיקת פריט");
   },
 
   clearDone: async (list) => {
@@ -234,10 +240,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       lists: { ...s.lists, [list]: s.lists[list].filter((it) => !it.done) },
     }));
     if (toDelete.length === 0) return;
-    await supabase
-      .from("notebook_items")
-      .delete()
-      .in("id", toDelete.map((it) => it.id));
+    await runOrQueue(
+      QK.NotebookDeleteMany,
+      { ids: toDelete.map((it) => it.id) },
+      "ניקוי סומנים",
+    );
+
   },
 
   reorderList: async (list, reordered) => {
@@ -249,9 +257,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const updates = withOrder.filter((it) => !it.id.startsWith("tmp-"));
     await Promise.all(
       updates.map((it) =>
-        supabase.from("notebook_items").update({ sort_order: it.sortOrder }).eq("id", it.id),
+        runOrQueue(
+          QK.NotebookUpdate,
+          { id: it.id, patch: { sort_order: it.sortOrder } },
+          "סידור פריטים",
+        ),
       ),
     );
+
   },
 }));
 

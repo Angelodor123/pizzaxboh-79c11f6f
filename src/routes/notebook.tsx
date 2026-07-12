@@ -16,6 +16,8 @@ import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { ShortageCatalogInput } from "@/components/ShortageCatalogInput";
 import { useAuth } from "@/lib/auth";
+import { PullToRefresh } from "@/components/PullToRefresh";
+
 
 
 export const Route = createFileRoute("/notebook")({
@@ -81,8 +83,11 @@ function NotebookPage() {
   const title = useSiteText("notebook.title", "פנקס עבודה יומי");
   const [tab, setTab] = useState<"daily" | "warehouse">("daily");
   const lists = tab === "daily" ? DAILY_LISTS : WAREHOUSE_LISTS;
+  const refresh = useNotebookStore((s) => s.refresh);
   return (
+    <PullToRefresh onRefresh={refresh}>
     <div className="max-w-3xl mx-auto px-4 py-6">
+
       <div className="mb-6">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">
           Daily Workbook
@@ -122,7 +127,9 @@ function NotebookPage() {
         ))}
       </div>
     </div>
+    </PullToRefresh>
   );
+
 }
 
 function buildShareText(cfg: ListConfig, items: NotebookItem[]): string {
