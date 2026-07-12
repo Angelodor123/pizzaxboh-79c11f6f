@@ -32,6 +32,16 @@ export function GlobalSearch() {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
+  // Global shortcut event: open + focus the search input
+  useEffect(() => {
+    const onOpen = () => {
+      setOpen(true);
+      requestAnimationFrame(() => inputRef.current?.focus());
+    };
+    window.addEventListener("pizzax:open-search", onOpen as EventListener);
+    return () => window.removeEventListener("pizzax:open-search", onOpen as EventListener);
+  }, []);
+
   // Run debounced search
   useEffect(() => {
     const term = debounced.trim();
