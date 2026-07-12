@@ -928,6 +928,15 @@ function TasksPage() {
             </bdi>
             <span className="text-foreground">משימות הושלמו</span>
           </div>
+          {pct < 100 && total > 0 && (
+            <button
+              type="button"
+              onClick={() => void openShiftSummary()}
+              className="text-xs border border-border rounded-md px-2 py-1 text-muted-foreground hover:border-neon hover:text-neon transition"
+            >
+              סיים משמרת
+            </button>
+          )}
         </div>
         <div className="mt-2 h-2 rounded-full bg-card border border-border overflow-hidden">
           <div
