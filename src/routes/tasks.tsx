@@ -283,6 +283,15 @@ function TasksPage() {
   const [rejectNoteDraft, setRejectNoteDraft] = useState("");
   const [expandedCompleted, setExpandedCompleted] = useState<Map<string, boolean>>(new Map());
   const [commentOpenMap, setCommentOpenMap] = useState<Map<string, boolean>>(new Map());
+  const [showShiftSummary, setShowShiftSummary] = useState(false);
+  const [shiftSummaryData, setShiftSummaryData] = useState<{
+    shiftName: string;
+    tasksDone: number;
+    tasksTotal: number;
+    prepDone: number;
+    prepTotal: number;
+    shortagesReported: number;
+  }>({ shiftName: "", tasksDone: 0, tasksTotal: 0, prepDone: 0, prepTotal: 0, shortagesReported: 0 });
   const groupCompletionRef = useRef<Map<string, number>>(new Map());
   const notifyCommentFn = useServerFn(notifyTaskComment);
 
