@@ -55,6 +55,7 @@ const QUICK_ACTIONS = [
   "מה מצב המלאי?",
   "כמה הכנות נשארו?",
   "מה החוסרים היום?",
+  "פתח פנקס עבודה",
 ];
 
 export function CopilotFab() {
