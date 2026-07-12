@@ -2240,3 +2240,239 @@ function SuperAdminUsersPanel() {
     </section>
   );
 }
+
+function WeeklyDigestPanel() {
+  const { isSuperAdmin } = useAuth();
+  const [weekOffset, setWeekOffset] = useState(-1);
+  const [data, setData] = useState<WeeklyDigest | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const digestFn = useServerFn(getWeeklyDigest);
+  const pushFn = useServerFn(sendPushToUsers);
+  const triggerFn = useServerFn(triggerWeeklyDigestPush);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    const bid = getActiveBranchIdSync();
+    digestFn({ data: { branchId: bid ?? undefined, weekOffset } })
+      .then((res) => {
+        if (mounted) setData(res);
+      })
+      .catch(() => {
+        if (mounted) toast.error("טעינת הסיכום נכשלה");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [weekOffset, digestFn]);
+
+  if (loading || !data) {
+    return (
+      <div className="space-y-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-24 rounded-xl animate-pulse bg-card/60 border border-border" />
+        ))}
+      </div>
+    );
+  }
+
+  const spendFmt = `₪${Math.round(data.totalSpend).toLocaleString("he-IL")}`;
+
+  const copyDigest = () => {
+    const text = [
+      `סיכום שבועי ${data.weekLabel}${data.branchName ? ` — ${data.branchName}` : ""}`,
+      `השלמת משימות: ${data.taskCompletionPct}% (${data.tasksDone}/${data.tasksTotal})`,
+      `סה״כ הוצאות: ${spendFmt}`,
+      `קריאות פתוחות: ${data.openTickets}`,
+      `חוסרים שדווחו: ${data.shortagesCount}`,
+      `ממוצע מיכלי בצק: ${data.doughAverage.toFixed(1)}`,
+      data.topSuppliers.length
+        ? `ספקים מובילים: ${data.topSuppliers.map((s) => `${s.name} (₪${Math.round(s.total)})`).join(", ")}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    void navigator.clipboard.writeText(text);
+    toast.success("הסיכום הועתק");
+  };
+
+  const sendAsPush = async () => {
+    setSending(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rows } = await (supabase.from("user_roles") as any)
+        .select("user_id")
+        .eq("role", "super_admin");
+      const ids = Array.from(new Set(((rows ?? []) as Array<{ user_id: string }>).map((r) => r.user_id)));
+      if (!ids.length) {
+        toast.error("אין מנהלי־על");
+        return;
+      }
+      const body = `משימות ${data.taskCompletionPct}% | הוצאות ${spendFmt} | קריאות ${data.openTickets}`;
+      await pushFn({
+        data: {
+          userIds: ids,
+          title: "סיכום שבועי — Pizza X",
+          body,
+          tag: "weekly-digest",
+          url: "/admin",
+        },
+      });
+      toast.success("ההתראה נשלחה");
+    } catch {
+      toast.error("שליחה נכשלה");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const triggerNow = async () => {
+    try {
+      const res = await triggerFn({ data: {} } as never);
+      toast.success(res.message ?? "הופעל");
+    } catch {
+      toast.error("נכשל");
+    }
+  };
+
+  return (
+    <div dir="rtl" className="space-y-4">
+      {/* Week nav */}
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/60 p-3">
+        <button
+          type="button"
+          onClick={() => setWeekOffset((w) => w - 1)}
+          className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border hover:border-neon/60"
+          aria-label="שבוע קודם"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+        <div className="text-sm font-bold">{data.weekLabel}{data.branchName ? ` · ${data.branchName}` : ""}</div>
+        <button
+          type="button"
+          onClick={() => setWeekOffset((w) => Math.min(-1, w + 1))}
+          disabled={weekOffset >= -1}
+          className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border hover:border-neon/60 disabled:opacity-40"
+          aria-label="שבוע הבא"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Section 1 */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold">נתוני המערכת</h3>
+          <span className="rounded-full bg-neon/20 text-neon text-[10px] font-bold px-2 py-0.5">פעיל</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <div className="text-3xl font-black text-neon">{data.taskCompletionPct}%</div>
+            <div className="text-xs text-muted-foreground mt-1">השלמת משימות</div>
+          </div>
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <div className="text-3xl font-black text-neon">{spendFmt}</div>
+            <div className="text-xs text-muted-foreground mt-1">סה״כ הוצאות</div>
+          </div>
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <div className={`text-3xl font-black ${data.openTickets > 0 ? "text-red-400" : "text-neon"}`}>
+              {data.openTickets}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">קריאות שירות פתוחות</div>
+          </div>
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <div className={`text-3xl font-black ${data.shortagesCount > 0 ? "text-amber-400" : "text-neon"}`}>
+              {data.shortagesCount}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">חוסרים שדווחו</div>
+          </div>
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <div className="text-3xl font-black text-neon">{data.doughAverage.toFixed(1)}</div>
+            <div className="text-xs text-muted-foreground mt-1">ממוצע מיכלי בצק</div>
+          </div>
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <div className="text-xs text-muted-foreground mb-2">ספקים מובילים</div>
+            {data.topSuppliers.length === 0 ? (
+              <div className="text-xs text-muted-foreground">אין נתונים</div>
+            ) : (
+              <ol className="space-y-1">
+                {data.topSuppliers.map((s, i) => (
+                  <li key={i} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-bold text-neon">₪{Math.round(s.total).toLocaleString("he-IL")}</span>
+                    <span className="truncate">
+                      {i + 1}. {s.name}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="border-t border-border/60 my-4" />
+
+      {/* Section 2 */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold">נתוני Tabit</h3>
+          <span className="rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold px-2 py-0.5">בקרוב</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: "מכירות לפי פריט", subtitle: "דורש Inventory API" },
+            { label: "הכנסות יומיות", subtitle: "דורש Inventory API" },
+            { label: "ביצועי תפריט", subtitle: "דורש Open API" },
+            { label: "דוח אנליטי", subtitle: "דורש Open API" },
+          ].map((c) => (
+            <div
+              key={c.label}
+              className="border-dashed border border-amber-500/30 bg-amber-500/5 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-center min-h-24"
+            >
+              <Lock className="h-5 w-5 text-amber-500/50" />
+              <div className="text-sm font-bold text-amber-400/60">{c.label}</div>
+              <div className="text-[11px] text-amber-500/40">{c.subtitle}</div>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-[11px] text-amber-400/70 text-center">
+          החיבור ל־Tabit יאכלס סעיף זה אוטומטית. Inventory API לנתוני מכירות, Open API לדוחות תפעוליים.
+        </div>
+      </section>
+
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={copyDigest}
+          className="text-sm rounded-md border border-border bg-card/60 px-3 py-1.5 hover:border-neon/60"
+        >
+          העתק סיכום
+        </button>
+        <button
+          type="button"
+          onClick={() => void sendAsPush()}
+          disabled={sending}
+          className="text-sm rounded-md bg-neon text-primary-foreground px-3 py-1.5 font-bold disabled:opacity-50"
+        >
+          שלח כהתראה
+        </button>
+      </div>
+      {isSuperAdmin && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => void triggerNow()}
+            className="text-xs border border-border rounded-md px-2 py-1 text-muted-foreground hover:border-neon hover:text-neon transition"
+          >
+            שלח עכשיו
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
