@@ -364,6 +364,14 @@ function AdminPage() {
             </>
           )}
 
+          {tab === "digest" && isSuperAdmin && (
+            <>
+              <TabHeader title="סיכום שבועי" description="נתוני מערכת + placeholders ל־Tabit" />
+              <WeeklyDigestPanel />
+            </>
+          )}
+
+
           {tab === "recipes" && (
             <section>
               <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
