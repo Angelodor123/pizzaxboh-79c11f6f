@@ -11,7 +11,12 @@ export const QK = {
   PrepLogUpsert: "prep.log.upsert",
   RestockLogUpsert: "restock.log.upsert",
   ComplaintInsert: "complaint.insert",
+  NotebookInsert: "notebook.insert",
+  NotebookUpdate: "notebook.update",
+  NotebookDelete: "notebook.delete",
+  NotebookDeleteMany: "notebook.delete.many",
 } as const;
+
 
 export type DoughLogInsertPayload = {
   rows: Array<{
