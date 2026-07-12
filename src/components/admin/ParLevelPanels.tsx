@@ -332,7 +332,9 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
             label: "הפעל",
             icon: Power,
             onClick: async () => {
-              const { error } = await supabase.from(table).update({ active: true }).in("id", bulk.ids);
+              const branchId = getActiveBranchIdSync();
+              if (!branchId) { toast.error("לא ניתן לבצע פעולה ללא סניף פעיל"); return; }
+              const { error } = await supabase.from(table).update({ active: true }).eq("branch_id", branchId).in("id", bulk.ids);
               if (error) { toast.error(error.message); return; }
               toast.success(`הופעלו ${bulk.count} פריטים`);
               bulk.clear(); void load();
@@ -343,12 +345,15 @@ function ParItemsPanel({ table, title, withBarcode }: { table: "prep_items" | "r
             label: "השבת",
             icon: Power,
             onClick: async () => {
-              const { error } = await supabase.from(table).update({ active: false }).in("id", bulk.ids);
+              const branchId = getActiveBranchIdSync();
+              if (!branchId) { toast.error("לא ניתן לבצע פעולה ללא סניף פעיל"); return; }
+              const { error } = await supabase.from(table).update({ active: false }).eq("branch_id", branchId).in("id", bulk.ids);
               if (error) { toast.error(error.message); return; }
               toast.success(`הושבתו ${bulk.count} פריטים`);
               bulk.clear(); void load();
             },
           },
+
           {
             key: "delete",
             label: "מחק",
