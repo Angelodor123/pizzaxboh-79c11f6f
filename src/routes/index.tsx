@@ -85,6 +85,8 @@ function OperationalDashboard() {
   const { role, isSuperAdmin } = useAuth();
   const vehiclesEnabled = useBranchFeature("vehicles", true);
   const activeBranch = useActiveBranchData();
+  const shiftCtx = getShiftContext();
+
 
   const lists = useNotebookStore((s) => s.lists);
   const [events, setEvents] = useState<CalEvent[]>([]);
