@@ -43,6 +43,8 @@ function WeightsPage() {
   const [modalName, setModalName] = useState("");
   const [modalWeight, setModalWeight] = useState("");
   const [modalNotes, setModalNotes] = useState("");
+  const [modalUnit, setModalUnit] = useState<string>("גרם");
+
   const [modalBranchScope, setModalBranchScope] = useState<"all" | "branch">("all");
   const [modalSelectedBranchId, setModalSelectedBranchId] = useState("");
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
