@@ -182,6 +182,26 @@ export function CopilotFab() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  useEffect(() => {
+    if (!showRecipeSearch) return;
+    const q = recipeQuery.trim();
+    if (!q) { setRecipeResults([]); return; }
+    const t = setTimeout(async () => {
+      const bid = getActiveBranchIdSync();
+      if (!bid) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase.from("recipes") as any)
+        .select("id, name, category")
+        .eq("branch_id", bid)
+        .ilike("name", `%${q}%`)
+        .order("name", { ascending: true })
+        .limit(5);
+      setRecipeResults((data ?? []) as Array<{ id: string; name: string; category: string | null }>);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [recipeQuery, showRecipeSearch]);
+
+
   const initSession = useCallback(
     async (firstToday: boolean) => {
       if (initializedRef.current) return;
