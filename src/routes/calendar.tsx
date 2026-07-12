@@ -762,6 +762,15 @@ function DayDetails({
           {events.map((ev) => {
             const isRecurring = ev.recurring_weekday !== null;
             const isAuto = !!ev.is_auto;
+            const typeColor = eventTypeColor(ev.event_type);
+            const liStyle: React.CSSProperties = isAuto
+              ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" }
+              : {};
+            if (typeColor && !isAuto) {
+              liStyle.borderLeftWidth = "3px";
+              liStyle.borderLeftStyle = "solid";
+              liStyle.borderLeftColor = typeColor;
+            }
             return (
               <li
                 key={ev.id}
@@ -772,7 +781,7 @@ function DayDetails({
                     ? "border-success/60"
                     : "border-border/60"
                 }`}
-                style={isAuto ? { borderInlineStartWidth: 4, borderInlineStartColor: "var(--success)" } : undefined}
+                style={Object.keys(liStyle).length ? liStyle : undefined}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
