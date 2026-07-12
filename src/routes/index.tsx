@@ -285,9 +285,10 @@ function OperationalDashboard() {
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("he-IL", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "numeric",
+    timeZone: "Asia/Jerusalem",
   });
 
   // Site texts kept for compatibility but no longer rendered in the header.
