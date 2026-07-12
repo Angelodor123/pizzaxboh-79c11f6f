@@ -1534,8 +1534,6 @@ function TasksPage() {
       </Dialog>
 
 
-      {/* Draggable shortcut to the notepad */}
-      <DraggableNotepadFab />
 
       {/* Recipe drawer */}
       <Sheet open={!!openRecipe} onOpenChange={(o) => !o && setRecipeOpen(null)}>
