@@ -207,7 +207,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").update({ text: clean }).eq("id", id);
+    await runOrQueue(QK.NotebookUpdate, { id, patch: { text: clean } }, "עריכת פריט");
   },
 
   togglePriority: async (list, id) => {
