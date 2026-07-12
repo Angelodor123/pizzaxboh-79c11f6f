@@ -95,6 +95,31 @@ function OperationalDashboard() {
   const [tasksOpenCount, setTasksOpenCount] = useState(0);
   const [prepOpenCount, setPrepOpenCount] = useState(0);
   const [goodsMenuOpen, setGoodsMenuOpen] = useState(false);
+  const [shiftDone, setShiftDone] = useState(0);
+  const [shiftTotal, setShiftTotal] = useState(0);
+  const [shiftPct, setShiftPct] = useState(0);
+  const [shiftName, setShiftName] = useState("");
+  void currentShiftFilter;
+
+  useEffect(() => {
+    let mounted = true;
+    const branchId = getActiveBranchIdSync();
+    if (!branchId) return;
+    const load = async () => {
+      const res = await computeShiftProgress(branchId);
+      if (!mounted) return;
+      setShiftDone(res.done);
+      setShiftTotal(res.total);
+      setShiftPct(res.pct);
+      setShiftName(res.shiftName);
+    };
+    void load();
+    const interval = setInterval(() => void load(), 30_000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
 
   useEffect(() => {
