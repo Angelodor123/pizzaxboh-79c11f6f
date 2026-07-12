@@ -52,7 +52,11 @@ import { TasksPanel } from "@/components/admin/TasksPanel";
 import { OverviewPanel } from "@/components/admin/OverviewPanel";
 import { EditEmployeeDialog } from "@/components/EditEmployeeDialog";
 import type { EmployeeRow } from "@/lib/employee-directory";
-import { Building2, ListChecks, LayoutDashboard } from "lucide-react";
+import { Building2, ListChecks, LayoutDashboard, BarChart3, Lock, ChevronRight } from "lucide-react";
+import { getWeeklyDigest, type WeeklyDigest } from "@/lib/weekly-digest.functions";
+import { triggerWeeklyDigestPush } from "@/lib/weekly-digest-cron.functions";
+import { sendPushToUsers } from "@/lib/push-send.functions";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { ModalDeleteButton } from "@/components/ModalDeleteButton";
 
 export const Route = createFileRoute("/admin")({
