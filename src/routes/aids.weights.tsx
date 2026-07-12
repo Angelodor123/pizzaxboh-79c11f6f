@@ -116,7 +116,10 @@ function WeightsPage() {
 
   const copyWeight = async (item: ContainerWeight) => {
     try {
-      await navigator.clipboard.writeText(`משקל ${item.name}: ${item.weight_grams}גרם`);
+      const display = item.unit === "ק״ג"
+        ? Number(item.weight_grams).toFixed(2).replace(/\.?0+$/, "")
+        : String(item.weight_grams);
+      await navigator.clipboard.writeText(`משקל ${item.name}: ${display}${item.unit || "גרם"}`);
       setCopiedId(item.id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
@@ -124,9 +127,10 @@ function WeightsPage() {
     }
   };
 
-  const weightNum = parseInt(modalWeight, 10);
+  const weightNum = modalUnit === "ק״ג" ? parseFloat(modalWeight) : parseInt(modalWeight, 10);
   const canSave =
     modalName.trim().length > 0 && Number.isFinite(weightNum) && weightNum > 0;
+
 
   const handleSave = async () => {
     if (!canSave) return;
