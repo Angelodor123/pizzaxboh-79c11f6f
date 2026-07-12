@@ -1214,6 +1214,7 @@ function AdminNav({
         { key: "units", label: "יחידות מידה", icon: <FileText className="h-4 w-4" /> },
         { key: "onboarding", label: "הסברי דפים", icon: <FileText className="h-4 w-4" /> },
         { key: "recipes", label: "מתכונים", icon: <ChefHat className="h-4 w-4" /> },
+        { key: "digest", label: "סיכום שבועי", icon: <BarChart3 className="h-4 w-4" /> },
       ]
     : [];
 
