@@ -104,4 +104,33 @@ export function registerOfflineHandlers() {
     const { error } = await supabase.from("customer_complaints").insert(row);
     if (error) throw error;
   });
+
+  registerQueueHandler(QK.NotebookInsert, async (payload) => {
+    const row = (payload as { row: Record<string, unknown> })?.row;
+    if (!row) return;
+    const { error } = await supabase.from("notebook_items").insert(row as never);
+    if (error) throw error;
+  });
+
+  registerQueueHandler(QK.NotebookUpdate, async (payload) => {
+    const p = payload as { id: string; patch: Record<string, unknown> };
+    if (!p?.id) return;
+    const { error } = await supabase.from("notebook_items").update(p.patch as never).eq("id", p.id);
+    if (error) throw error;
+  });
+
+  registerQueueHandler(QK.NotebookDelete, async (payload) => {
+    const p = payload as { id: string };
+    if (!p?.id) return;
+    const { error } = await supabase.from("notebook_items").delete().eq("id", p.id);
+    if (error) throw error;
+  });
+
+  registerQueueHandler(QK.NotebookDeleteMany, async (payload) => {
+    const p = payload as { ids: string[] };
+    if (!p?.ids?.length) return;
+    const { error } = await supabase.from("notebook_items").delete().in("id", p.ids);
+    if (error) throw error;
+  });
 }
+
