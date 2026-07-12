@@ -128,7 +128,7 @@ function OperationalDashboard() {
     void supabase
       .from("profiles")
       .select("full_name")
-      .eq("id", session.user.id)
+      .eq("user_id", session.user.id)
       .maybeSingle()
       .then(({ data }) => {
         const fullName = data?.full_name as string | undefined;
