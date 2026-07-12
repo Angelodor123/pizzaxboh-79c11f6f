@@ -82,7 +82,7 @@ function getShiftContext(): ShiftContext {
 }
 
 function OperationalDashboard() {
-  const { role, isSuperAdmin } = useAuth();
+  const { role, isSuperAdmin, session } = useAuth();
   const vehiclesEnabled = useBranchFeature("vehicles", true);
   const activeBranch = useActiveBranchData();
   const shiftCtx = getShiftContext();
@@ -99,6 +99,8 @@ function OperationalDashboard() {
   const [shiftTotal, setShiftTotal] = useState(0);
   const [shiftPct, setShiftPct] = useState(0);
   const [shiftName, setShiftName] = useState("");
+  const [userFirstName, setUserFirstName] = useState("");
+  const [clockTime, setClockTime] = useState("");
   void currentShiftFilter;
 
   useEffect(() => {
@@ -119,6 +121,36 @@ function OperationalDashboard() {
       mounted = false;
       clearInterval(interval);
     };
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    void supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const fullName = data?.full_name as string | undefined;
+        if (fullName) {
+          setUserFirstName(fullName.split(" ")[0] ?? "");
+        }
+      });
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const tick = () => {
+      setClockTime(
+        new Date().toLocaleTimeString("he-IL", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Jerusalem",
+        }),
+      );
+    };
+    tick();
+    const interval = setInterval(tick, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -253,9 +285,10 @@ function OperationalDashboard() {
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("he-IL", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "numeric",
+    timeZone: "Asia/Jerusalem",
   });
 
   // Site texts kept for compatibility but no longer rendered in the header.
@@ -278,12 +311,24 @@ function OperationalDashboard() {
         dir="rtl"
       >
         <span className="text-sm text-muted-foreground">{dateLabel}</span>
-        <span className="text-sm truncate flex items-center gap-1.5">
-          <span className="text-neon font-bold">{shiftCtx.greeting}</span>
+        <div className="min-w-0 flex-1 text-sm truncate flex items-center justify-center gap-1.5">
+          <span className="text-neon font-bold truncate">
+            {userFirstName ? `${shiftCtx.greeting}, ${userFirstName}` : shiftCtx.greeting}
+          </span>
+          {shiftName && (
+            <>
+              <span className="text-muted-foreground">·</span>
+              <span className="font-bold text-foreground truncate">{shiftName}</span>
+            </>
+          )}
           <span className="text-muted-foreground">·</span>
           <span className="font-bold text-foreground truncate">{activeBranch?.name ?? ""}</span>
-        </span>
-        <span className="w-0" />
+        </div>
+        {clockTime ? (
+          <span className="text-sm font-bold tabular-nums text-foreground">{clockTime}</span>
+        ) : (
+          <span className="w-8" />
+        )}
       </div>
 
       {/* Current shift progress — hero card */}
