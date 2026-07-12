@@ -288,7 +288,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
       if (editInvoice.image_url) {
         const { data: signed } = await supabase.storage
           .from("invoice-images")
-          .createSignedUrl(editInvoice.image_url, 60 * 60);
+          .createSignedUrl(editInvoice.image_url, 60 * 60 * 24 * 7);
         if (!cancelled && signed?.signedUrl) setPreviewUrl(signed.signedUrl);
       }
     })();
