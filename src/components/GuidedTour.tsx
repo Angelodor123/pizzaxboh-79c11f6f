@@ -70,7 +70,7 @@ const ACTIVE_FEATURE_STEPS: TourStep[] = [
   },
   {
     id: "step_notepad_sync_v2",
-    selector: '[data-tour="card-notebook"]',
+    selector: '[data-tour="tile-tasks"]',
     title: "סנכרון משימות חכם",
     body: "מעכשיו, כשאתם מסמנים משימת משמרת כבוצעה, המערכת תסרוק את הפנקס הכללי ותציע לכם לסגור משימות תואמות באופן אוטומטי.",
   },
