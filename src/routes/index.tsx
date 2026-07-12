@@ -82,7 +82,7 @@ function getShiftContext(): ShiftContext {
 }
 
 function OperationalDashboard() {
-  const { role, isSuperAdmin } = useAuth();
+  const { role, isSuperAdmin, session } = useAuth();
   const vehiclesEnabled = useBranchFeature("vehicles", true);
   const activeBranch = useActiveBranchData();
   const shiftCtx = getShiftContext();
