@@ -16,6 +16,8 @@ import { BulkActionBar } from "@/components/BulkActionBar";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { ShortageCatalogInput } from "@/components/ShortageCatalogInput";
 import { useAuth } from "@/lib/auth";
+import { PullToRefresh } from "@/components/PullToRefresh";
+
 
 
 export const Route = createFileRoute("/notebook")({
