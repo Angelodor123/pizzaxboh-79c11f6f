@@ -816,13 +816,54 @@ function TasksPage() {
   const total = countableTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
+  const openShiftSummary = useCallback(async () => {
+    const shiftName = shifts[0]?.name ?? "היום";
+    let prepTotal = 0, prepDone = 0, shortagesReported = 0;
+    if (branchId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: pItems } = await (supabase.from("prep_items") as any)
+        .select("id").eq("active", true).eq("branch_id", branchId);
+      const ids = ((pItems ?? []) as { id: string }[]).map((x) => x.id);
+      prepTotal = ids.length;
+      if (ids.length && logDate) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { count } = await (supabase.from("prep_log") as any)
+          .select("*", { count: "exact", head: true })
+          .eq("log_date", logDate).eq("completed", true).in("prep_item_id", ids);
+        prepDone = count ?? 0;
+      }
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count: sc } = await (supabase.from("notebook_items") as any)
+        .select("*", { count: "exact", head: true })
+        .eq("list_key", "shortages")
+        .gte("created_at", start.toISOString())
+        .eq("branch_id", branchId);
+      shortagesReported = sc ?? 0;
+    }
+    setShiftSummaryData({
+      shiftName,
+      tasksDone: completedCount,
+      tasksTotal: total,
+      prepDone, prepTotal, shortagesReported,
+    });
+    setShowShiftSummary(true);
+  }, [branchId, logDate, completedCount, total, shifts]);
+
   const prevPctRef = useRef(pct);
   useEffect(() => {
     if (total > 0 && pct === 100 && prevPctRef.current < 100) {
       void celebrate();
+      void openShiftSummary();
     }
     prevPctRef.current = pct;
-  }, [pct, total]);
+  }, [pct, total, openShiftSummary]);
+
+  useEffect(() => {
+    if (!showShiftSummary) return;
+    const id = setTimeout(() => setShowShiftSummary(false), 15000);
+    return () => clearTimeout(id);
+  }, [showShiftSummary]);
 
   // Group micro-celebration: fire once per group when it hits 100%.
   useEffect(() => {
