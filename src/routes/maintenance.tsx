@@ -270,17 +270,20 @@ function MaintenancePage() {
                 </div>
                 <p className="text-sm whitespace-pre-wrap">{t.description}</p>
                 {t.photo_url && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                    <ImageIcon className="h-3 w-3" />
-                    <a
-                      href={t.photo_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline"
-                    >
-                      צפה בתמונה
-                    </a>
-                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 block"
+                    onClick={() => setLightboxUrl(t.photo_url!)}
+                  >
+                    <img
+                      src={t.photo_url}
+                      alt="תמונת תקלה"
+                      className="w-20 h-20 rounded-lg object-cover border border-border hover:border-neon transition"
+                      width={80}
+                      height={80}
+                      loading="lazy"
+                    />
+                  </button>
                 )}
                 <p className="text-[10px] text-muted-foreground mt-2">
                   {new Date(t.created_at).toLocaleString("he-IL")}
