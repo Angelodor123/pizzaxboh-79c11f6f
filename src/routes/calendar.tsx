@@ -618,6 +618,17 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
   const Icon = ev.category === "delivery" ? Truck : Sparkles;
   const isAuto = !!ev.is_auto;
   const missing = !!ev._missingInvoice;
+  const typeColor = eventTypeColor(ev.event_type);
+  const baseStyle: React.CSSProperties = isAuto && !missing
+    ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" }
+    : missing
+    ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--destructive)" }
+    : {};
+  if (typeColor && !isAuto && !missing) {
+    baseStyle.borderLeftWidth = "3px";
+    baseStyle.borderLeftStyle = "solid";
+    baseStyle.borderLeftColor = typeColor;
+  }
   return (
     <li
       className={`rounded-md px-2 py-1.5 border text-[11px] leading-tight ${
@@ -631,7 +642,7 @@ function EventChip({ ev }: { ev: EffectiveEvent }) {
           ? "border-neon/40 bg-neon/5"
           : "border-border bg-background/40"
       } ${isAuto && !missing ? "border-success/70" : ""}`}
-      style={isAuto && !missing ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--success)" } : missing ? { borderInlineStartWidth: 3, borderInlineStartColor: "var(--destructive)" } : undefined}
+      style={Object.keys(baseStyle).length ? baseStyle : undefined}
     >
       <div className="flex items-center gap-1 font-bold">
         {(missing || ev.high_priority) && <AlertTriangle className={`h-3 w-3 ${missing ? "text-destructive" : "text-destructive"}`} />}
