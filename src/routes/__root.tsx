@@ -385,7 +385,7 @@ function AuthedShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [router, effSuper]);
+  }, [router, effSuper, showShortcutLegend]);
 
 
   const previewMode = useDevicePreview((s) => s.mode);
