@@ -65,22 +65,21 @@ function SuppliersPage() {
   const [catalogFor, setCatalogFor] = useState<Supplier | null>(null);
   const bulk = useBulkSelection();
 
+  const load = async () => {
+    const branchId = getActiveBranchIdSync();
+    let q = supabase
+      .from("suppliers")
+      .select("*")
+      .order("name", { ascending: true });
+    if (branchId) q = q.eq("branch_id", branchId);
+    const { data, error } = await q;
+    if (error) toast.error("שגיאה בטעינת ספקים");
+    else setList((data as Supplier[]) ?? []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      const branchId = getActiveBranchIdSync();
-      let q = supabase
-        .from("suppliers")
-        .select("*")
-        .order("name", { ascending: true });
-      if (branchId) q = q.eq("branch_id", branchId);
-      const { data, error } = await q;
-      if (!mounted) return;
-      if (error) toast.error("שגיאה בטעינת ספקים");
-      else setList((data as Supplier[]) ?? []);
-      setLoading(false);
-    };
-    load();
+    void load();
     const branchId = getActiveBranchIdSync();
     const ch = branchId
       ? supabase
@@ -93,10 +92,11 @@ function SuppliersPage() {
           .subscribe()
       : null;
     return () => {
-      mounted = false;
       if (ch) supabase.removeChannel(ch);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const visible = list.filter((s) => (showArchived ? s.is_archived : !s.is_archived));
 
