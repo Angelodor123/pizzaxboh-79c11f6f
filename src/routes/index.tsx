@@ -99,6 +99,8 @@ function OperationalDashboard() {
   const [shiftTotal, setShiftTotal] = useState(0);
   const [shiftPct, setShiftPct] = useState(0);
   const [shiftName, setShiftName] = useState("");
+  const [userFirstName, setUserFirstName] = useState("");
+  const [clockTime, setClockTime] = useState("");
   void currentShiftFilter;
 
   useEffect(() => {
