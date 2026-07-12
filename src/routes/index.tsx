@@ -311,12 +311,24 @@ function OperationalDashboard() {
         dir="rtl"
       >
         <span className="text-sm text-muted-foreground">{dateLabel}</span>
-        <span className="text-sm truncate flex items-center gap-1.5">
-          <span className="text-neon font-bold">{shiftCtx.greeting}</span>
+        <div className="min-w-0 flex-1 text-sm truncate flex items-center justify-center gap-1.5">
+          <span className="text-neon font-bold truncate">
+            {userFirstName ? `${shiftCtx.greeting}, ${userFirstName}` : shiftCtx.greeting}
+          </span>
+          {shiftName && (
+            <>
+              <span className="text-muted-foreground">·</span>
+              <span className="font-bold text-foreground truncate">{shiftName}</span>
+            </>
+          )}
           <span className="text-muted-foreground">·</span>
           <span className="font-bold text-foreground truncate">{activeBranch?.name ?? ""}</span>
-        </span>
-        <span className="w-0" />
+        </div>
+        {clockTime ? (
+          <span className="text-sm font-bold tabular-nums text-foreground">{clockTime}</span>
+        ) : (
+          <span className="w-8" />
+        )}
       </div>
 
       {/* Current shift progress — hero card */}
