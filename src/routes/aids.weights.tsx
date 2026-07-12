@@ -86,9 +86,11 @@ function WeightsPage() {
     setModalName("");
     setModalWeight("");
     setModalNotes("");
+    setModalUnit("גרם");
     setModalBranchScope("all");
     setModalSelectedBranchId("");
   };
+
 
   const openAdd = () => {
     resetModal();
