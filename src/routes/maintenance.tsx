@@ -293,6 +293,27 @@ function MaintenancePage() {
           </div>
         )}
       </div>
+
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black/80"
+            aria-label="סגור"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="תמונת תקלה"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl"
+          />
+        </div>
+      )}
     </div>
   );
 }
