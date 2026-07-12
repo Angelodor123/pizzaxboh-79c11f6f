@@ -25,10 +25,12 @@ interface ContainerWeight {
   id: string;
   name: string;
   weight_grams: number;
+  unit: string;
   notes: string | null;
   branch_id: string | null;
   created_at: string;
 }
+
 
 function WeightsPage() {
   const { role, isSuperAdmin, session } = useAuth();
