@@ -1653,6 +1653,51 @@ function TasksPage() {
         </SheetContent>
       </Sheet>
     </div>
+    {showShiftSummary && (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm" dir="rtl">
+        <div className="rounded-2xl border-2 border-neon bg-card p-6 max-w-sm w-full mx-4 text-center space-y-4">
+          <div className="text-4xl">🎉</div>
+          <div className="font-display text-xl font-bold text-neon">
+            משמרת {shiftSummaryData.shiftName} הסתיימה בהצלחה
+          </div>
+          <div className="rounded-xl bg-card/60 border border-border p-3 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm font-bold text-neon">{shiftSummaryData.tasksDone}/{shiftSummaryData.tasksTotal}</span>
+              <span className="text-sm text-muted-foreground">משימות הושלמו</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm font-bold text-neon">{shiftSummaryData.prepDone}/{shiftSummaryData.prepTotal}</span>
+              <span className="text-sm text-muted-foreground">הכנות בוצעו</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm font-bold text-neon">{shiftSummaryData.shortagesReported}</span>
+              <span className="text-sm text-muted-foreground">חוסרים דווחו</span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowShiftSummary(false)}
+              className="border border-border rounded-lg px-4 py-2 text-sm flex-1"
+            >
+              סגור
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const s = shiftSummaryData;
+                const text = `סיכום משמרת ${s.shiftName}\nמשימות: ${s.tasksDone}/${s.tasksTotal}\nהכנות: ${s.prepDone}/${s.prepTotal}\nחוסרים: ${s.shortagesReported}`;
+                void navigator.clipboard.writeText(text);
+                toast.success("הסיכום הועתק");
+              }}
+              className="bg-neon text-primary-foreground rounded-lg px-4 py-2 text-sm font-bold flex-1"
+            >
+              העתק סיכום
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </PullToRefresh>
   );
 }
