@@ -473,6 +473,11 @@ export function CopilotFab() {
                     key={chip}
                     type="button"
                     onClick={() => {
+                      if (chip === "פתח פנקס עבודה") {
+                        setOpen(false);
+                        void router.navigate({ to: "/notebook" });
+                        return;
+                      }
                       setInput(chip);
                       void handleSend(chip);
                     }}
