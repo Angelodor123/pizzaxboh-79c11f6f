@@ -1,0 +1,1 @@
+ALTER TABLE public.container_weights ADD COLUMN IF NOT EXISTS unit text NOT NULL DEFAULT 'גרם';

@@ -342,6 +342,7 @@ export type Database = {
           name: string
           notes: string | null
           sort_order: number
+          unit: string
           updated_at: string
           weight_grams: number
         }
@@ -353,6 +354,7 @@ export type Database = {
           name: string
           notes?: string | null
           sort_order?: number
+          unit?: string
           updated_at?: string
           weight_grams: number
         }
@@ -364,6 +366,7 @@ export type Database = {
           name?: string
           notes?: string | null
           sort_order?: number
+          unit?: string
           updated_at?: string
           weight_grams?: number
         }
