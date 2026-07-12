@@ -257,9 +257,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const updates = withOrder.filter((it) => !it.id.startsWith("tmp-"));
     await Promise.all(
       updates.map((it) =>
-        supabase.from("notebook_items").update({ sort_order: it.sortOrder }).eq("id", it.id),
+        runOrQueue(
+          QK.NotebookUpdate,
+          { id: it.id, patch: { sort_order: it.sortOrder } },
+          "סידור פריטים",
+        ),
       ),
     );
+
   },
 }));
 
