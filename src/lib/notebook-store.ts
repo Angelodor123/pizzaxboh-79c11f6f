@@ -166,17 +166,20 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     set((s) => ({ lists: { ...s.lists, [list]: [optimistic, ...s.lists[list]] } }));
     const branchId = await requireCurrentBranchId();
-    await supabase.from("notebook_items").insert({
-      list_key: list,
-      text: clean,
-      priority,
-      created_by: user.id,
-      branch_id: branchId,
-      catalog_product_id: catalogProductId,
-      current_stock: currentStock,
-      unit,
-    });
+    await runOrQueue(QK.NotebookInsert, {
+      row: {
+        list_key: list,
+        text: clean,
+        priority,
+        created_by: user.id,
+        branch_id: branchId,
+        catalog_product_id: catalogProductId,
+        current_stock: currentStock,
+        unit,
+      },
+    }, "הוספת פריט");
   },
+
 
   toggleItem: async (list, id) => {
     let nextDone = false;
