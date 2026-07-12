@@ -31,7 +31,7 @@ function currentShiftFilter(now: Date): {
   if (hour >= 17) return evening;
   // hour < 9 → after-midnight; previous day's evening may still own us
   const prevWeekday = (weekday + 6) % 7;
-  const cutoff = prevWeekday === 5 ? 4 : 2; // Friday night → 04:00, else 02:00
+  const cutoff = 6; // closing shift runs until 06:00 every day
   if (hour < cutoff) return evening;
   return closing;
 }
