@@ -357,7 +357,14 @@ function OperationalDashboard() {
         } else if (shortagesCount > 0) {
           to = "/notebook";
           content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
-        } else {
+        } else if (shiftTotal > 0) {
+          const shiftRemaining = shiftTotal - shiftDone;
+          if (shiftRemaining > 0) {
+            to = "/tasks";
+            content = (<><ClipboardCheck className={`${iconCls} text-neon`} /><span className={textCls}>נותרו {shiftRemaining} משימות במשמרת</span></>);
+          }
+        }
+        if (!content) {
           content = (<><CheckCircle2 className={`${iconCls} text-neon`} /><span className={textCls}>הכל מסודר להיום</span></>);
         }
         return to ? (
