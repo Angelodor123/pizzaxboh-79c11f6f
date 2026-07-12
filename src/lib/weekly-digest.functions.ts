@@ -166,5 +166,6 @@ export const getWeeklyDigest = createServerFn({ method: "POST" })
       openTickets: tk.count ?? 0,
       shortagesCount: sh.count ?? 0,
       doughAverage,
+      topSuppliers,
     };
   });
