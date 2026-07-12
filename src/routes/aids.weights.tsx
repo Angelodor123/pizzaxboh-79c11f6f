@@ -143,12 +143,14 @@ function WeightsPage() {
     const record = {
       name: modalName.trim(),
       weight_grams: weightNum,
+      unit: modalUnit,
       notes: modalNotes.trim() || null,
       branch_id:
         modalBranchScope === "all"
           ? null
           : modalSelectedBranchId || null,
     };
+
     if (editingItem) {
       const { error } = await supabase
         .from("container_weights")
