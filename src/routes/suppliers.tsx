@@ -117,7 +117,9 @@ function SuppliersPage() {
   };
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div className="max-w-4xl mx-auto px-4 py-6" dir="rtl">
+
       <div className="mb-6 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Suppliers</div>
         <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
