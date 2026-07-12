@@ -253,8 +253,10 @@ function OperationalDashboard() {
         dir="rtl"
       >
         <span className="text-sm text-muted-foreground">{dateLabel}</span>
-        <span className="text-sm font-bold text-foreground truncate">
-          {activeBranch?.name ?? ""}
+        <span className="text-sm truncate flex items-center gap-1.5">
+          <span className="text-neon font-bold">{shiftCtx.greeting}</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="font-bold text-foreground truncate">{activeBranch?.name ?? ""}</span>
         </span>
         <span className="w-0" />
       </div>
@@ -264,6 +266,35 @@ function OperationalDashboard() {
         <CurrentShiftProgressCard />
       </div>
 
+      {/* Next action strip */}
+      {(() => {
+        const iconCls = "h-5 w-5 shrink-0";
+        const textCls = "text-sm font-bold flex-1";
+        const wrapCls = "rounded-xl border border-border bg-card/40 px-4 py-3 flex items-center gap-3 mb-4";
+        let content: React.ReactNode = null;
+        let to: string | null = null;
+        if (shiftCtx.shiftPeriod === "morning" && prepOpenCount > 0) {
+          to = "/prep";
+          content = (<><ChefHat className={`${iconCls} text-orange-400`} /><span className={textCls}>יש {prepOpenCount} הכנות שממתינות</span></>);
+        } else if (tasksOpenCount > 0) {
+          to = "/tasks";
+          content = (<><ClipboardCheck className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {tasksOpenCount} משימות פתוחות</span></>);
+        } else if (shortagesCount > 0) {
+          to = "/notebook";
+          content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
+        } else {
+          content = (<><CheckCircle2 className={`${iconCls} text-neon`} /><span className={textCls}>הכל מסודר להיום</span></>);
+        }
+        return to ? (
+          <Link to={to} className={wrapCls}>
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+            {content}
+          </Link>
+        ) : (
+          <div className={wrapCls}>{content}</div>
+        );
+      })()}
+
       {/* Quick-access notebook */}
       <Link
         to="/notebook"
@@ -272,7 +303,7 @@ function OperationalDashboard() {
         <StickyNote className="h-7 w-7 text-neon shrink-0" />
         <div className="flex-1">
           <span className="text-base font-bold block">פנקס עבודה</span>
-          <span className="text-xs text-muted-foreground">הערות, משימות ורשימות</span>
+          <span className="text-xs text-muted-foreground">פנקס, רשימת קניות, משימות אישיות</span>
         </div>
         {notebookTotal > 0 && (
           <span className="inline-flex items-center justify-center rounded-full bg-neon/20 text-neon text-xs font-bold h-6 min-w-6 px-1.5">
@@ -280,6 +311,20 @@ function OperationalDashboard() {
           </span>
         )}
       </Link>
+
+      {shortagesCount > 0 && (
+        <Link
+          to="/notebook"
+          className="mb-4 flex items-center gap-3 rounded-xl border-2 border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/15 px-4 py-3 transition"
+        >
+          <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+          <div className="flex-1">
+            <div className="text-sm font-bold text-amber-300">{shortagesCount} חוסרים פתוחים</div>
+            <div className="text-xs text-amber-400/70">לחץ לפתיחת הפנקס</div>
+          </div>
+          <ChevronLeft className="h-4 w-4 text-amber-400" />
+        </Link>
+      )}
 
       {/* Dough — standalone */}
       <div className="mb-4">
