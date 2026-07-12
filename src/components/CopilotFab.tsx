@@ -491,7 +491,51 @@ export function CopilotFab() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-border p-3 bg-card/80">
-            {messages.length === 0 && (
+            {showRecipeSearch ? (
+              <div className="mb-2 rounded-lg border border-border bg-card/60 p-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => { setShowRecipeSearch(false); setRecipeQuery(""); setRecipeResults([]); }}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="סגור"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs font-bold text-neon">מתכונים</span>
+                </div>
+                <input
+                  dir="rtl"
+                  value={recipeQuery}
+                  onChange={(e) => setRecipeQuery(e.target.value)}
+                  placeholder="שם מתכון..."
+                  className="w-full rounded-md bg-background border border-border px-2 py-1.5 text-sm outline-none focus:border-neon/60"
+                />
+                {recipeQuery.trim() === "" ? (
+                  <div className="text-[11px] text-muted-foreground text-center py-2">הקלד שם מתכון לחיפוש</div>
+                ) : (
+                  <div className="space-y-1">
+                    {recipeResults.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          void router.navigate({ to: "/recipes", search: { openRecipeId: r.id } as never });
+                          setShowRecipeSearch(false);
+                          setRecipeQuery("");
+                          setRecipeResults([]);
+                          setOpen(false);
+                        }}
+                        className="w-full text-right rounded-md border border-border bg-background/60 px-2 py-1.5 hover:border-neon/60 transition"
+                      >
+                        <div className="font-bold text-sm">{r.name}</div>
+                        {r.category && <div className="text-xs text-muted-foreground">{r.category}</div>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : messages.length === 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {QUICK_ACTIONS.map((chip) => (
                   <button
@@ -501,6 +545,10 @@ export function CopilotFab() {
                       if (chip === "פתח פנקס עבודה") {
                         setOpen(false);
                         void router.navigate({ to: "/notebook" });
+                        return;
+                      }
+                      if (chip === "חפש מתכון") {
+                        setShowRecipeSearch(true);
                         return;
                       }
                       setInput(chip);
