@@ -102,7 +102,7 @@ function relTime(iso: string): string {
 }
 
 export function ShiftFeedCard() {
-  const { session, fullName, isSuperAdmin } = useAuth();
+  const { session, fullName, isSuperAdmin, role } = useAuth();
   const uid = session?.user?.id ?? null;
   const [branchId, setBranchId] = useState<string | null>(() => getActiveBranchIdSync());
   const [rows, setRows] = useState<FeedRow[]>([]);
@@ -766,7 +766,7 @@ export function ShiftFeedCard() {
                   )}
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  {isSuperAdmin && (
+                  {(isSuperAdmin || role === "admin") && (
                     <button
                       type="button"
                       onClick={() => void togglePin(r)}

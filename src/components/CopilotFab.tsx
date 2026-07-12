@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useMotionValue } from "framer-motion";
-import { Loader2, Minus, Send, ListChecks, Package, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Loader2, Minus, Send, ListChecks, Package, AlertTriangle, ArrowLeft, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { getActiveBranchIdSync } from "@/lib/current-branch";
 import { askCopilot, type CopilotAction } from "@/lib/copilot.functions";
 import { getDailyBriefing } from "@/lib/briefing.functions";
 import { useAuth } from "@/lib/auth";
@@ -56,6 +58,7 @@ const QUICK_ACTIONS = [
   "כמה הכנות נשארו?",
   "מה החוסרים היום?",
   "פתח פנקס עבודה",
+  "חפש מתכון",
 ];
 
 export function CopilotFab() {
@@ -65,6 +68,9 @@ export function CopilotFab() {
   const [loading, setLoading] = useState(false);
   const [showDailyCta, setShowDailyCta] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
+  const [showRecipeSearch, setShowRecipeSearch] = useState(false);
+  const [recipeQuery, setRecipeQuery] = useState("");
+  const [recipeResults, setRecipeResults] = useState<Array<{ id: string; name: string; category: string | null }>>([]);
   const ask = useServerFn(askCopilot);
   const fetchBriefing = useServerFn(getDailyBriefing);
   const router = useRouter();
@@ -175,6 +181,26 @@ export function CopilotFab() {
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  useEffect(() => {
+    if (!showRecipeSearch) return;
+    const q = recipeQuery.trim();
+    if (!q) { setRecipeResults([]); return; }
+    const t = setTimeout(async () => {
+      const bid = getActiveBranchIdSync();
+      if (!bid) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase.from("recipes") as any)
+        .select("id, name, category")
+        .eq("branch_id", bid)
+        .ilike("name", `%${q}%`)
+        .order("name", { ascending: true })
+        .limit(5);
+      setRecipeResults((data ?? []) as Array<{ id: string; name: string; category: string | null }>);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [recipeQuery, showRecipeSearch]);
+
 
   const initSession = useCallback(
     async (firstToday: boolean) => {
@@ -465,7 +491,51 @@ export function CopilotFab() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-border p-3 bg-card/80">
-            {messages.length === 0 && (
+            {showRecipeSearch ? (
+              <div className="mb-2 rounded-lg border border-border bg-card/60 p-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => { setShowRecipeSearch(false); setRecipeQuery(""); setRecipeResults([]); }}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="סגור"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs font-bold text-neon">מתכונים</span>
+                </div>
+                <input
+                  dir="rtl"
+                  value={recipeQuery}
+                  onChange={(e) => setRecipeQuery(e.target.value)}
+                  placeholder="שם מתכון..."
+                  className="w-full rounded-md bg-background border border-border px-2 py-1.5 text-sm outline-none focus:border-neon/60"
+                />
+                {recipeQuery.trim() === "" ? (
+                  <div className="text-[11px] text-muted-foreground text-center py-2">הקלד שם מתכון לחיפוש</div>
+                ) : (
+                  <div className="space-y-1">
+                    {recipeResults.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          void router.navigate({ to: "/recipes", search: { openRecipeId: r.id } as never });
+                          setShowRecipeSearch(false);
+                          setRecipeQuery("");
+                          setRecipeResults([]);
+                          setOpen(false);
+                        }}
+                        className="w-full text-right rounded-md border border-border bg-background/60 px-2 py-1.5 hover:border-neon/60 transition"
+                      >
+                        <div className="font-bold text-sm">{r.name}</div>
+                        {r.category && <div className="text-xs text-muted-foreground">{r.category}</div>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : messages.length === 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {QUICK_ACTIONS.map((chip) => (
                   <button
@@ -475,6 +545,10 @@ export function CopilotFab() {
                       if (chip === "פתח פנקס עבודה") {
                         setOpen(false);
                         void router.navigate({ to: "/notebook" });
+                        return;
+                      }
+                      if (chip === "חפש מתכון") {
+                        setShowRecipeSearch(true);
                         return;
                       }
                       setInput(chip);

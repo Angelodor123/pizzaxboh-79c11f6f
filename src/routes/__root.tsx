@@ -357,6 +357,37 @@ function AuthedShell() {
     if (pathname === "/recipes") clearLastRecipe();
   }, [pathname, clearLastRecipe]);
 
+  const [showShortcutLegend, setShowShortcutLegend] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (typeof window !== "undefined" && window.innerWidth < 1024) return;
+      const k = e.key;
+      if (k === "s" || k === "S") {
+        window.dispatchEvent(new CustomEvent("pizzax:open-search"));
+      } else if (k === "n" || k === "N") {
+        router.navigate({ to: "/notebook" });
+      } else if (k === "t" || k === "T") {
+        router.navigate({ to: "/tasks" });
+      } else if (k === "p" || k === "P") {
+        router.navigate({ to: "/prep" });
+      } else if (k === "r" || k === "R") {
+        router.navigate({ to: "/recipes" });
+      } else if ((k === "a" || k === "A") && effSuper) {
+        router.navigate({ to: "/admin" });
+      } else if (k === "Escape") {
+        if (showShortcutLegend) { setShowShortcutLegend(false); return; }
+        router.navigate({ to: "/" });
+      } else if (k === "?") {
+        setShowShortcutLegend(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router, effSuper, showShortcutLegend]);
+
+
   const previewMode = useDevicePreview((s) => s.mode);
   const wrapperClass = devicePreviewWrapperClass(previewMode);
   // When simulating mobile/tablet, force the desktop sidebar off so the layout
@@ -459,6 +490,49 @@ function AuthedShell() {
         </ErrorBoundary>
         <CriticalMaintenanceInterceptor />
         {showQuickBack && <QuickBackBubble />}
+        {showShortcutLegend && (
+          <div
+            className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center"
+            onClick={() => setShowShortcutLegend(false)}
+            dir="rtl"
+          >
+            <div
+              className="rounded-2xl border border-border bg-card p-6 max-w-sm w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowShortcutLegend(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="סגור"
+                >
+                  ✕
+                </button>
+                <h3 className="font-bold text-lg">קיצורי מקלדת</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { k: "S", label: "פתוח חיפוש" },
+                  { k: "N", label: "פנקס עבודה" },
+                  { k: "T", label: "משימות" },
+                  { k: "P", label: "הכנות" },
+                  { k: "R", label: "מתכונים" },
+                  { k: "A", label: "פאנל ניהול (מנהל בלבד)" },
+                  { k: "Esc", label: "חזור לדף הבית" },
+                  { k: "?", label: "הצג קיצורים" },
+                ].map((s) => (
+                  <div key={s.k} className="flex items-center justify-between gap-4">
+                    <kbd className="inline-flex items-center justify-center rounded border border-border bg-card/60 px-2 py-0.5 text-xs font-mono font-bold text-neon min-w-[2rem] text-center">
+                      {s.k}
+                    </kbd>
+                    <span className="text-sm">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         <footer className="border-t border-border py-4 px-4 text-center space-y-1">
           <p className="text-xs text-muted-foreground">Pizza X • Urban Jungle Kitchen OS</p>
           <p className="text-[11px] text-foreground/80 tracking-wide" dir="rtl">

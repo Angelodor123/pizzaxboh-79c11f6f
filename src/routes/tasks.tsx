@@ -283,6 +283,15 @@ function TasksPage() {
   const [rejectNoteDraft, setRejectNoteDraft] = useState("");
   const [expandedCompleted, setExpandedCompleted] = useState<Map<string, boolean>>(new Map());
   const [commentOpenMap, setCommentOpenMap] = useState<Map<string, boolean>>(new Map());
+  const [showShiftSummary, setShowShiftSummary] = useState(false);
+  const [shiftSummaryData, setShiftSummaryData] = useState<{
+    shiftName: string;
+    tasksDone: number;
+    tasksTotal: number;
+    prepDone: number;
+    prepTotal: number;
+    shortagesReported: number;
+  }>({ shiftName: "", tasksDone: 0, tasksTotal: 0, prepDone: 0, prepTotal: 0, shortagesReported: 0 });
   const groupCompletionRef = useRef<Map<string, number>>(new Map());
   const notifyCommentFn = useServerFn(notifyTaskComment);
 
@@ -807,13 +816,54 @@ function TasksPage() {
   const total = countableTasks.length;
   const pct = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
+  const openShiftSummary = useCallback(async () => {
+    const shiftName = shifts[0]?.name ?? "היום";
+    let prepTotal = 0, prepDone = 0, shortagesReported = 0;
+    if (branchId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: pItems } = await (supabase.from("prep_items") as any)
+        .select("id").eq("active", true).eq("branch_id", branchId);
+      const ids = ((pItems ?? []) as { id: string }[]).map((x) => x.id);
+      prepTotal = ids.length;
+      if (ids.length && logDate) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { count } = await (supabase.from("prep_log") as any)
+          .select("*", { count: "exact", head: true })
+          .eq("log_date", logDate).eq("completed", true).in("prep_item_id", ids);
+        prepDone = count ?? 0;
+      }
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count: sc } = await (supabase.from("notebook_items") as any)
+        .select("*", { count: "exact", head: true })
+        .eq("list_key", "shortages")
+        .gte("created_at", start.toISOString())
+        .eq("branch_id", branchId);
+      shortagesReported = sc ?? 0;
+    }
+    setShiftSummaryData({
+      shiftName,
+      tasksDone: completedCount,
+      tasksTotal: total,
+      prepDone, prepTotal, shortagesReported,
+    });
+    setShowShiftSummary(true);
+  }, [branchId, logDate, completedCount, total, shifts]);
+
   const prevPctRef = useRef(pct);
   useEffect(() => {
     if (total > 0 && pct === 100 && prevPctRef.current < 100) {
       void celebrate();
+      void openShiftSummary();
     }
     prevPctRef.current = pct;
-  }, [pct, total]);
+  }, [pct, total, openShiftSummary]);
+
+  useEffect(() => {
+    if (!showShiftSummary) return;
+    const id = setTimeout(() => setShowShiftSummary(false), 15000);
+    return () => clearTimeout(id);
+  }, [showShiftSummary]);
 
   // Group micro-celebration: fire once per group when it hits 100%.
   useEffect(() => {
@@ -878,6 +928,15 @@ function TasksPage() {
             </bdi>
             <span className="text-foreground">משימות הושלמו</span>
           </div>
+          {pct < 100 && total > 0 && (
+            <button
+              type="button"
+              onClick={() => void openShiftSummary()}
+              className="text-xs border border-border rounded-md px-2 py-1 text-muted-foreground hover:border-neon hover:text-neon transition"
+            >
+              סיים משמרת
+            </button>
+          )}
         </div>
         <div className="mt-2 h-2 rounded-full bg-card border border-border overflow-hidden">
           <div
@@ -1594,6 +1653,51 @@ function TasksPage() {
         </SheetContent>
       </Sheet>
     </div>
+    {showShiftSummary && (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm" dir="rtl">
+        <div className="rounded-2xl border-2 border-neon bg-card p-6 max-w-sm w-full mx-4 text-center space-y-4">
+          <div className="text-4xl">🎉</div>
+          <div className="font-display text-xl font-bold text-neon">
+            משמרת {shiftSummaryData.shiftName} הסתיימה בהצלחה
+          </div>
+          <div className="rounded-xl bg-card/60 border border-border p-3 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm font-bold text-neon">{shiftSummaryData.tasksDone}/{shiftSummaryData.tasksTotal}</span>
+              <span className="text-sm text-muted-foreground">משימות הושלמו</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm font-bold text-neon">{shiftSummaryData.prepDone}/{shiftSummaryData.prepTotal}</span>
+              <span className="text-sm text-muted-foreground">הכנות בוצעו</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm font-bold text-neon">{shiftSummaryData.shortagesReported}</span>
+              <span className="text-sm text-muted-foreground">חוסרים דווחו</span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowShiftSummary(false)}
+              className="border border-border rounded-lg px-4 py-2 text-sm flex-1"
+            >
+              סגור
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const s = shiftSummaryData;
+                const text = `סיכום משמרת ${s.shiftName}\nמשימות: ${s.tasksDone}/${s.tasksTotal}\nהכנות: ${s.prepDone}/${s.prepTotal}\nחוסרים: ${s.shortagesReported}`;
+                void navigator.clipboard.writeText(text);
+                toast.success("הסיכום הועתק");
+              }}
+              className="bg-neon text-primary-foreground rounded-lg px-4 py-2 text-sm font-bold flex-1"
+            >
+              העתק סיכום
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </PullToRefresh>
   );
 }
