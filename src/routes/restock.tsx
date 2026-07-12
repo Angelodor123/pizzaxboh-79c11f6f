@@ -52,33 +52,37 @@ function RestockPage() {
   const today = todayIso();
 
 
+  const load = async () => {
+    const branchId = getActiveBranchIdSync();
+    if (!branchId) {
+      setItems([]);
+      return;
+    }
+    const { data: it } = await supabase
+      .from("restock_items").select("*").eq("active", true)
+      .eq("branch_id", branchId)
+      .order("name", { ascending: true });
+    const fetchedItems = (it ?? []) as Item[];
+    setItems(fetchedItems);
+    const ids = fetchedItems.map((i) => i.id);
+    if (ids.length === 0) {
+      setLog({});
+      return;
+    }
+    const { data: lg } = await supabase
+      .from("restock_log").select("restock_item_id,current_stock,completed")
+      .eq("log_date", today)
+      .in("restock_item_id", ids);
+    const map: Record<string, LogRow> = {};
+    (lg ?? []).forEach((r: any) => { map[r.restock_item_id] = r; });
+    setLog(map);
+  };
+
   useEffect(() => {
-    void (async () => {
-      const branchId = getActiveBranchIdSync();
-      if (!branchId) {
-        setItems([]);
-        return;
-      }
-      const { data: it } = await supabase
-        .from("restock_items").select("*").eq("active", true)
-        .eq("branch_id", branchId)
-        .order("name", { ascending: true });
-      const fetchedItems = (it ?? []) as Item[];
-      setItems(fetchedItems);
-      const ids = fetchedItems.map((i) => i.id);
-      if (ids.length === 0) {
-        setLog({});
-        return;
-      }
-      const { data: lg } = await supabase
-        .from("restock_log").select("restock_item_id,current_stock,completed")
-        .eq("log_date", today)
-        .in("restock_item_id", ids);
-      const map: Record<string, LogRow> = {};
-      (lg ?? []).forEach((r: any) => { map[r.restock_item_id] = r; });
-      setLog(map);
-    })();
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today]);
+
 
   const visible = useMemo(() => {
     return items.filter((i) => Number(i[targetCol]) > 0)
