@@ -1186,7 +1186,8 @@ type AdminTab =
   | "units"
   | "prep"
   | "restock"
-  | "onboarding";
+  | "onboarding"
+  | "digest";
 
 type AdminNavItem = { key: AdminTab; label: string; icon: React.ReactNode };
 
