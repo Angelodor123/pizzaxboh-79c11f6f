@@ -51,7 +51,6 @@ export function TaskPhotoButton({
       onUploaded(path);
       toast.success("התמונה הועלתה בהצלחה");
     } catch (e) {
-      console.error("task photo upload failed", e);
       toast.error(e instanceof Error ? e.message : "העלאת התמונה נכשלה");
     } finally {
       setUploading(false);

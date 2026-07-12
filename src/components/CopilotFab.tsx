@@ -195,7 +195,6 @@ export function CopilotFab() {
         setBriefingText(briefing.summaryText);
         setMessages([{ role: "model", content: briefing.summaryText }]);
       } catch (err) {
-        console.error("[copilot] briefing fetch failed", err);
         const hour = new Date().getHours();
         const tg = hour >= 5 && hour < 12 ? "בוקר טוב" : hour >= 12 && hour < 18 ? "צהריים טובים" : "ערב טוב";
         setMessages([

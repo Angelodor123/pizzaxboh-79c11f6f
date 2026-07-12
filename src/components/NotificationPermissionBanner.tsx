@@ -36,7 +36,6 @@ export function NotificationPermissionBanner() {
           try {
             await subscribeToPush(session.user.id);
           } catch (e) {
-            console.warn("[push] subscribe failed", e);
           }
         }
         setShow(false);

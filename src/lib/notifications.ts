@@ -34,7 +34,6 @@ export function ensureServiceWorker(): Promise<ServiceWorkerRegistration | null>
     try {
       return await navigator.serviceWorker.register(SW_URL, { scope: "/" });
     } catch (e) {
-      console.warn("SW registration failed", e);
       return null;
     }
   })();

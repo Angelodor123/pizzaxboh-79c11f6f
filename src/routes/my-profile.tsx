@@ -88,7 +88,6 @@ function MyProfilePage() {
       setPushEnabled(true);
       toast.success("התראות הופעלו בהצלחה");
     } catch (e) {
-      console.error("[my-profile] enablePush failed", e);
       if (e instanceof PushSubscribeError) {
         switch (e.reason) {
           case "permission-denied":

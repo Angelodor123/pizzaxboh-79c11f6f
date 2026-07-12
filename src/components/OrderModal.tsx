@@ -267,7 +267,6 @@ export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Pr
         sent_at: new Date().toISOString(),
       });
     } catch (e) {
-      console.error("saveHistory failed", e);
     }
   };
 
@@ -388,7 +387,6 @@ export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Pr
       setEditingInvoice(null);
       await loadReceived();
     } catch (e) {
-      console.error(e);
       toast.error("עדכון החשבונית נכשל");
     } finally {
       setSavingEdit(false);
@@ -406,7 +404,6 @@ export function OrderModal({ supplier, onClose, onReceive, isAdmin = false }: Pr
       setDeletingInvoiceId(null);
       await loadReceived();
     } catch (e) {
-      console.error(e);
       toast.error("מחיקת החשבונית נכשלה");
     } finally {
       setDeleteBusy(false);

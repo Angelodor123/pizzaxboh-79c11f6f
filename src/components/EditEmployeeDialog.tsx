@@ -39,7 +39,6 @@ export function EditEmployeeDialog({ employee, onClose, onSaved }: Props) {
       .eq("user_id", employee.user_id);
     setBusy(false);
     if (error) {
-      console.error(error);
       toast.error("שמירה נכשלה: " + error.message);
       return;
     }

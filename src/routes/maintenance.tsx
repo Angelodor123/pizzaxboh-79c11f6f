@@ -119,7 +119,6 @@ function MaintenancePage() {
       setUrgency("רגיל");
       await refreshTickets();
     } catch (err) {
-      console.error(err);
       toast.error("שליחה נכשלה");
     } finally {
       setSubmitting(false);

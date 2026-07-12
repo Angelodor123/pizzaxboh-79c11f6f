@@ -102,7 +102,6 @@ export async function subscribeToPush(userId: string): Promise<void> {
     try {
       res = await Notification.requestPermission();
     } catch (e) {
-      console.error("[push] requestPermission failed", e);
       throw new PushSubscribeError("permission-denied", "בקשת ההרשאה נכשלה", e);
     }
     if (res === "denied") {
@@ -135,7 +134,6 @@ export async function subscribeToPush(userId: string): Promise<void> {
       });
     }
   } catch (e) {
-    console.error("[push] pushManager.subscribe failed", e);
     throw new PushSubscribeError(
       "subscribe-failed",
       e instanceof Error ? e.message : "ההרשמה ל-Push נכשלה",
@@ -162,7 +160,6 @@ export async function subscribeToPush(userId: string): Promise<void> {
       { onConflict: "endpoint" },
     );
   if (error) {
-    console.error("[push] save subscription failed", error);
     throw new PushSubscribeError("save-failed", error.message, error);
   }
 }
