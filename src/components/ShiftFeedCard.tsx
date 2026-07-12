@@ -766,7 +766,7 @@ export function ShiftFeedCard() {
                   )}
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  {isSuperAdmin && (
+                  {(isSuperAdmin || role === "admin") && (
                     <button
                       type="button"
                       onClick={() => void togglePin(r)}
