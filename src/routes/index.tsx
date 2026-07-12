@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, Package, AlertTriangle, CheckCircle2, ChevronLeft } from "lucide-react";
+import { ChefHat, ClipboardCheck, Truck, ShieldCheck, StickyNote, Package, AlertTriangle, ChevronLeft } from "lucide-react";
 import { useNotebookStore } from "@/lib/notebook-store";
 import { useSiteText } from "@/lib/site-texts";
 import { supabase } from "@/integrations/supabase/client";
@@ -357,9 +357,8 @@ function OperationalDashboard() {
         } else if (shortagesCount > 0) {
           to = "/notebook";
           content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
-        } else {
-          content = (<><CheckCircle2 className={`${iconCls} text-neon`} /><span className={textCls}>הכל מסודר להיום</span></>);
         }
+        if (!content) return null;
         return to ? (
           <Link to={to} className={wrapCls}>
             <ChevronLeft className="h-4 w-4 text-muted-foreground" />
