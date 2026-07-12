@@ -59,6 +59,28 @@ function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+type ShiftPeriod = "morning" | "evening" | "closing";
+interface ShiftContext {
+  greeting: string;
+  shiftPeriod: ShiftPeriod;
+  priorityOrder: string[];
+}
+function getShiftContext(): ShiftContext {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Jerusalem",
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  if (hour >= 9 && hour <= 16) {
+    return { greeting: "בוקר טוב", shiftPeriod: "morning", priorityOrder: ["prep", "tasks", "notebook"] };
+  }
+  if (hour >= 17 || hour <= 5) {
+    return { greeting: "ערב טוב", shiftPeriod: "evening", priorityOrder: ["tasks", "notebook", "restock"] };
+  }
+  return { greeting: "בוקר טוב", shiftPeriod: "closing", priorityOrder: ["notebook", "maintenance", "tasks"] };
+}
+
 function OperationalDashboard() {
   const { role, isSuperAdmin } = useAuth();
   const vehiclesEnabled = useBranchFeature("vehicles", true);
