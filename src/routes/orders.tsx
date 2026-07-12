@@ -66,7 +66,35 @@ function OrdersPage() {
       const { data, error } = await supplierQuery;
       if (error) throw error;
       if (signal?.aborted) return;
-      setList((data as Supplier[]) ?? []);
+      const suppliers = (data as Supplier[]) ?? [];
+      setList(suppliers);
+
+      // Per-supplier open-shortage counts for the badge dot
+      if (branchId) {
+        const { data: shortRows } = await supabase
+          .from("notebook_items")
+          .select("text, supplier_products!left(supplier_id)")
+          .eq("list_key", "shortages")
+          .eq("done", false)
+          .is("archived_at", null)
+          .eq("branch_id", branchId);
+        const map: Record<string, number> = {};
+        for (const s of suppliers) map[s.id] = 0;
+        for (const row of (shortRows ?? []) as Array<{ text: string; supplier_products: { supplier_id: string } | { supplier_id: string }[] | null }>) {
+          const sp = row.supplier_products;
+          const sid = Array.isArray(sp) ? sp[0]?.supplier_id : sp?.supplier_id;
+          if (sid && map[sid] !== undefined) {
+            map[sid] += 1;
+          } else {
+            // fallback: match supplier name inside text
+            const hit = suppliers.find((s) => row.text?.includes(s.name));
+            if (hit) map[hit.id] = (map[hit.id] ?? 0) + 1;
+          }
+        }
+        if (!signal?.aborted) setSupplierShortageMap(map);
+      } else {
+        if (!signal?.aborted) setSupplierShortageMap({});
+      }
 
       const firstOfMonth = new Date();
       firstOfMonth.setDate(1);
