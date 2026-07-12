@@ -377,6 +377,7 @@ function AuthedShell() {
       } else if ((k === "a" || k === "A") && effSuper) {
         router.navigate({ to: "/admin" });
       } else if (k === "Escape") {
+        if (showShortcutLegend) { setShowShortcutLegend(false); return; }
         router.navigate({ to: "/" });
       } else if (k === "?") {
         setShowShortcutLegend(true);
