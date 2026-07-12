@@ -68,6 +68,9 @@ export function CopilotFab() {
   const [loading, setLoading] = useState(false);
   const [showDailyCta, setShowDailyCta] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
+  const [showRecipeSearch, setShowRecipeSearch] = useState(false);
+  const [recipeQuery, setRecipeQuery] = useState("");
+  const [recipeResults, setRecipeResults] = useState<Array<{ id: string; name: string; category: string | null }>>([]);
   const ask = useServerFn(askCopilot);
   const fetchBriefing = useServerFn(getDailyBriefing);
   const router = useRouter();
