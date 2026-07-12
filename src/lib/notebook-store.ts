@@ -240,10 +240,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       lists: { ...s.lists, [list]: s.lists[list].filter((it) => !it.done) },
     }));
     if (toDelete.length === 0) return;
-    await supabase
-      .from("notebook_items")
-      .delete()
-      .in("id", toDelete.map((it) => it.id));
+    await runOrQueue(
+      QK.NotebookDeleteMany,
+      { ids: toDelete.map((it) => it.id) },
+      "ניקוי סומנים",
+    );
+
   },
 
   reorderList: async (list, reordered) => {
