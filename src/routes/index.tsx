@@ -288,7 +288,7 @@ function OperationalDashboard() {
 
       {/* Current shift progress — hero card */}
       <div className="mb-4 rounded-2xl border-2 border-neon/30 bg-gradient-to-br from-neon/5 to-transparent p-1 shadow-[0_0_24px_-8px_rgba(57,255,20,0.2)]">
-        <CurrentShiftProgressCard />
+        <CurrentShiftProgressCard done={shiftDone} total={shiftTotal} pct={shiftPct} shiftName={shiftName} />
       </div>
 
       {/* Next action strip */}
