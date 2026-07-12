@@ -1,0 +1,1 @@
+ALTER TABLE public.container_weights ALTER COLUMN weight_grams TYPE numeric USING weight_grams::numeric;
