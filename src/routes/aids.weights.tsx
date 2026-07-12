@@ -102,10 +102,12 @@ function WeightsPage() {
     setModalName(item.name);
     setModalWeight(item.weight_grams.toString());
     setModalNotes(item.notes || "");
+    setModalUnit(item.unit || "גרם");
     setModalBranchScope(item.branch_id ? "branch" : "all");
     setModalSelectedBranchId(item.branch_id || "");
     setShowModal(true);
   };
+
 
   const closeModal = () => {
     setShowModal(false);
