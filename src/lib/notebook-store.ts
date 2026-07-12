@@ -194,7 +194,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       },
     }));
     if (id.startsWith("tmp-")) return;
-    await supabase.from("notebook_items").update({ done: nextDone }).eq("id", id);
+    await runOrQueue(QK.NotebookUpdate, { id, patch: { done: nextDone } }, "עדכון פריט");
   },
 
   editItem: async (list, id, text) => {
