@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { EvChargingWidget } from "@/components/EvChargingWidget";
 import { DoughStatusCard } from "@/components/DoughStatusCard";
-import { CurrentShiftProgressCard } from "@/components/CurrentShiftProgressCard";
+import { CurrentShiftProgressCard, computeShiftProgress, currentShiftFilter } from "@/components/CurrentShiftProgressCard";
 import { SupplierAlertsBanner } from "@/components/SupplierAlertsBanner";
 import { useBranchFeature, useActiveBranchData } from "@/components/BranchGate";
 import { withBranch } from "@/lib/branch-scope";
