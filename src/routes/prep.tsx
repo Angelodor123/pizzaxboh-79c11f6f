@@ -57,29 +57,33 @@ function PrepPage() {
   const today = todayIso();
 
 
+  const load = async () => {
+    const branchId = getActiveBranchIdSync();
+    let itQuery = supabase
+      .from("prep_items").select("*").eq("active", true);
+    if (branchId) itQuery = itQuery.eq("branch_id", branchId);
+    const { data: it } = await itQuery
+      .order("sort_order").order("name");
+    setItems((it ?? []) as Item[]);
+    const prepItemIds = (it ?? []).map((r: any) => r.id);
+    let lg: any[] = [];
+    if (prepItemIds.length > 0) {
+      const { data } = await supabase
+        .from("prep_log").select("prep_item_id,current_stock,completed")
+        .eq("log_date", today)
+        .in("prep_item_id", prepItemIds);
+      lg = data ?? [];
+    }
+    const map: Record<string, LogRow> = {};
+    lg.forEach((r: any) => { map[r.prep_item_id] = r; });
+    setLog(map);
+  };
+
   useEffect(() => {
-    void (async () => {
-      const branchId = getActiveBranchIdSync();
-      let itQuery = supabase
-        .from("prep_items").select("*").eq("active", true);
-      if (branchId) itQuery = itQuery.eq("branch_id", branchId);
-      const { data: it } = await itQuery
-        .order("sort_order").order("name");
-      setItems((it ?? []) as Item[]);
-      const prepItemIds = (it ?? []).map((r: any) => r.id);
-      let lg: any[] = [];
-      if (prepItemIds.length > 0) {
-        const { data } = await supabase
-          .from("prep_log").select("prep_item_id,current_stock,completed")
-          .eq("log_date", today)
-          .in("prep_item_id", prepItemIds);
-        lg = data ?? [];
-      }
-      const map: Record<string, LogRow> = {};
-      lg.forEach((r: any) => { map[r.prep_item_id] = r; });
-      setLog(map);
-    })();
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today]);
+
 
   const visible = useMemo(() => {
     return items.filter((i) => Number(i[targetCol]) > 0)
