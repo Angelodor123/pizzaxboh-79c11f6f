@@ -108,7 +108,9 @@ function PrepPage() {
   const allDone = totalCount > 0 && completedCount === totalCount;
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div dir="rtl" className="max-w-3xl mx-auto px-4 py-4">
+
       <div className="mb-4 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neon font-bold">Prep</div>
         <h1 className="font-display text-3xl font-bold mt-1">
