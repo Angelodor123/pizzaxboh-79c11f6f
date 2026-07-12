@@ -25,10 +25,12 @@ interface ContainerWeight {
   id: string;
   name: string;
   weight_grams: number;
+  unit: string;
   notes: string | null;
   branch_id: string | null;
   created_at: string;
 }
+
 
 function WeightsPage() {
   const { role, isSuperAdmin, session } = useAuth();
@@ -41,6 +43,8 @@ function WeightsPage() {
   const [modalName, setModalName] = useState("");
   const [modalWeight, setModalWeight] = useState("");
   const [modalNotes, setModalNotes] = useState("");
+  const [modalUnit, setModalUnit] = useState<string>("גרם");
+
   const [modalBranchScope, setModalBranchScope] = useState<"all" | "branch">("all");
   const [modalSelectedBranchId, setModalSelectedBranchId] = useState("");
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
@@ -82,9 +86,11 @@ function WeightsPage() {
     setModalName("");
     setModalWeight("");
     setModalNotes("");
+    setModalUnit("גרם");
     setModalBranchScope("all");
     setModalSelectedBranchId("");
   };
+
 
   const openAdd = () => {
     resetModal();
@@ -96,10 +102,12 @@ function WeightsPage() {
     setModalName(item.name);
     setModalWeight(item.weight_grams.toString());
     setModalNotes(item.notes || "");
+    setModalUnit(item.unit || "גרם");
     setModalBranchScope(item.branch_id ? "branch" : "all");
     setModalSelectedBranchId(item.branch_id || "");
     setShowModal(true);
   };
+
 
   const closeModal = () => {
     setShowModal(false);
@@ -108,7 +116,10 @@ function WeightsPage() {
 
   const copyWeight = async (item: ContainerWeight) => {
     try {
-      await navigator.clipboard.writeText(`משקל ${item.name}: ${item.weight_grams}גרם`);
+      const display = item.unit === "ק״ג"
+        ? Number(item.weight_grams).toFixed(2).replace(/\.?0+$/, "")
+        : String(item.weight_grams);
+      await navigator.clipboard.writeText(`משקל ${item.name}: ${display}${item.unit || "גרם"}`);
       setCopiedId(item.id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
@@ -116,9 +127,10 @@ function WeightsPage() {
     }
   };
 
-  const weightNum = parseInt(modalWeight, 10);
+  const weightNum = modalUnit === "ק״ג" ? parseFloat(modalWeight) : parseInt(modalWeight, 10);
   const canSave =
     modalName.trim().length > 0 && Number.isFinite(weightNum) && weightNum > 0;
+
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -131,12 +143,14 @@ function WeightsPage() {
     const record = {
       name: modalName.trim(),
       weight_grams: weightNum,
+      unit: modalUnit,
       notes: modalNotes.trim() || null,
       branch_id:
         modalBranchScope === "all"
           ? null
           : modalSelectedBranchId || null,
     };
+
     if (editingItem) {
       const { error } = await supabase
         .from("container_weights")
@@ -256,10 +270,13 @@ function WeightsPage() {
             </div>
             <div className="flex items-end gap-1">
               <span className="font-black text-3xl tabular-nums text-neon leading-none">
-                {item.weight_grams}
+                {item.unit === "ק״ג"
+                  ? Number(item.weight_grams).toFixed(2).replace(/\.?0+$/, "")
+                  : item.weight_grams}
               </span>
-              <span className="text-xs text-muted-foreground self-end mb-1">גרם</span>
+              <span className="text-xs text-muted-foreground self-end mb-1">{item.unit || "גרם"}</span>
             </div>
+
             {canEdit && (
               <div className="flex items-center gap-1">
                 <button
@@ -321,18 +338,41 @@ function WeightsPage() {
 
             <div>
               <label className="block text-xs text-muted-foreground mb-1">
-                משקל בגרמים
+                משקל {modalUnit === "ק״ג" ? "בק״ג" : "בגרמים"}
               </label>
               <input
                 type="number"
                 value={modalWeight}
                 onChange={(e) => setModalWeight(e.target.value)}
-                min={1}
+                min={modalUnit === "ק״ג" ? 0.001 : 1}
                 max={99999}
-                step={1}
+                step={modalUnit === "ק״ג" ? 0.001 : 1}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
               />
             </div>
+
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">
+                יחידת משקל
+              </label>
+              <div className="flex gap-2">
+                {(["גרם", "ק״ג"] as const).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setModalUnit(u)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-bold border transition flex-1 text-center ${
+                      modalUnit === u
+                        ? "bg-neon/10 border-neon text-neon"
+                        : "border-border text-muted-foreground hover:border-neon/50"
+                    }`}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+
 
             <div>
               <label className="block text-xs text-muted-foreground mb-1">
@@ -349,15 +389,15 @@ function WeightsPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">תחולה</label>
+              <label className="block text-xs text-muted-foreground mb-1">סניף</label>
               <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => setModalBranchScope("all")}
-                  className={`rounded-md border px-3 py-2 text-sm text-right ${
+                  className={`w-full rounded-lg py-2.5 px-4 text-sm font-bold border-2 text-center transition ${
                     modalBranchScope === "all"
                       ? "bg-neon/10 border-neon text-neon"
-                      : "border-border text-muted-foreground"
+                      : "border-border text-muted-foreground hover:border-neon/50"
                   }`}
                 >
                   כל הסניפים
@@ -365,10 +405,10 @@ function WeightsPage() {
                 <button
                   type="button"
                   onClick={() => setModalBranchScope("branch")}
-                  className={`rounded-md border px-3 py-2 text-sm text-right ${
+                  className={`w-full rounded-lg py-2.5 px-4 text-sm font-bold border-2 text-center transition ${
                     modalBranchScope === "branch"
                       ? "bg-neon/10 border-neon text-neon"
-                      : "border-border text-muted-foreground"
+                      : "border-border text-muted-foreground hover:border-neon/50"
                   }`}
                 >
                   סניף ספציפי
@@ -389,6 +429,7 @@ function WeightsPage() {
                 )}
               </div>
             </div>
+
 
             <button
               type="button"

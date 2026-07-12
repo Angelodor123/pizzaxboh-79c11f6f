@@ -349,7 +349,6 @@ function OperationalDashboard() {
         const iconCls = "h-5 w-5 shrink-0";
         const textCls = "text-sm font-bold flex-1";
         const wrapCls = "rounded-xl border border-border bg-card/40 px-4 py-3 flex items-center gap-3 mb-4";
-        const shiftRemaining = Math.max(0, shiftTotal - shiftDone);
         let content: React.ReactNode = null;
         let to: string | null = null;
         if (shiftCtx.shiftPeriod === "morning" && prepOpenCount > 0) {
@@ -358,9 +357,6 @@ function OperationalDashboard() {
         } else if (shortagesCount > 0) {
           to = "/notebook";
           content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
-        } else if (shiftRemaining > 0) {
-          to = "/tasks";
-          content = (<><ClipboardCheck className={`${iconCls} text-neon`} /><span className={textCls}>נותרו {shiftRemaining} משימות במשמרת {shiftName}</span></>);
         } else {
           content = (<><CheckCircle2 className={`${iconCls} text-neon`} /><span className={textCls}>הכל מסודר להיום</span></>);
         }
@@ -373,6 +369,7 @@ function OperationalDashboard() {
           <div className={wrapCls}>{content}</div>
         );
       })()}
+
 
       {/* Quick-access notebook */}
       <Link
