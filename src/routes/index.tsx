@@ -495,9 +495,18 @@ function OperationalDashboard() {
           <>
             <SectionHeader>מטבח ותפעול</SectionHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <ShortcutTile to="/tasks" icon={<ClipboardCheck className="h-6 w-6" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} primary />
-              <ShortcutTile to="/prep" icon={<ChefHat className="h-6 w-6" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} primary />
-              <ShortcutTile to="/notebook" icon={<StickyNote className="h-6 w-6" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} primary />
+              {(() => {
+                const priorityMap: Record<string, string> = { prep: "/prep", tasks: "/tasks", notebook: "/notebook", restock: "/restock", maintenance: "/maintenance" };
+                const primary: Record<string, React.ReactNode> = {
+                  "/tasks": <ShortcutTile key="tasks" to="/tasks" icon={<ClipboardCheck className="h-6 w-6" />} label="צ'ק-ליסט משמרות" tourId="tile-tasks" badgeCount={tasksOpenCount} primary />,
+                  "/prep": <ShortcutTile key="prep" to="/prep" icon={<ChefHat className="h-6 w-6" />} label="הכנות יומיות" tourId="tile-prep" badgeCount={prepOpenCount} primary />,
+                  "/notebook": <ShortcutTile key="notebook" to="/notebook" icon={<StickyNote className="h-6 w-6" />} label="פנקס הערות ומשימות" badgeCount={notebookTotal} primary />,
+                };
+                const orderedRoutes = shiftCtx.priorityOrder.map((k) => priorityMap[k]).filter((r) => primary[r]);
+                const shown = new Set(orderedRoutes);
+                const rest = Object.keys(primary).filter((r) => !shown.has(r));
+                return [...orderedRoutes, ...rest].map((r) => primary[r]);
+              })()}
               <ShortcutTile to="/aids" icon={<ChefHat className="h-5 w-5" />} label="ספריית עזרים" tourId="tile-aids" />
             </div>
 
