@@ -56,6 +56,7 @@ const QUICK_ACTIONS = [
   "כמה הכנות נשארו?",
   "מה החוסרים היום?",
   "פתח פנקס עבודה",
+  "חפש מתכון",
 ];
 
 export function CopilotFab() {
