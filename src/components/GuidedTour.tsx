@@ -34,7 +34,7 @@ const NEW_HIRE_STEPS: TourStep[] = [
   },
   {
     id: "step_aids_hub_v3",
-    selector: '[data-tour="tile-aids"], [data-tour="tile-recipes"]',
+    selector: '[data-tour="tile-aids"]',
     title: "📚 ספריית עזרים",
     body: "כל מה שצריך לדעת: מתכונים, נהלי ניקיון, איש קשר לשעת חירום ודף קשר של הצוות.",
   },
