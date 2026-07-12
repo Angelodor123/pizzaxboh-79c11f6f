@@ -69,6 +69,13 @@ function AidsHubPage() {
       accent: "from-violet-500/20 to-violet-500/5 border-violet-500/40 text-violet-300",
     },
     {
+      title: "משקלי כלים",
+      emoji: "⚖️",
+      Icon: Scale,
+      to: "/aids/weights",
+      accent: "from-blue-500/20 to-blue-500/5 border-blue-500/40 text-blue-300",
+    },
+    {
       title: "דף קשר — צוות הסניף",
       emoji: "👥",
       Icon: Contact,
