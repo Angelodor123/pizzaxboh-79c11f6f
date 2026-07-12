@@ -31,6 +31,7 @@ import { Route as AidsRouteImport } from './routes/aids'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AidsIndexRouteImport } from './routes/aids.index'
+import { Route as AidsWeightsRouteImport } from './routes/aids.weights'
 import { Route as AidsSuppliersRouteImport } from './routes/aids.suppliers'
 import { Route as AidsStaffRouteImport } from './routes/aids.staff'
 import { Route as AidsOperationsRouteImport } from './routes/aids.operations'
@@ -150,6 +151,11 @@ const AidsIndexRoute = AidsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AidsRoute,
 } as any)
+const AidsWeightsRoute = AidsWeightsRouteImport.update({
+  id: '/weights',
+  path: '/weights',
+  getParentRoute: () => AidsRoute,
+} as any)
 const AidsSuppliersRoute = AidsSuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/staff': typeof AidsStaffRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
+  '/aids/weights': typeof AidsWeightsRoute
   '/aids/': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/staff': typeof AidsStaffRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
+  '/aids/weights': typeof AidsWeightsRoute
   '/aids': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/aids/operations': typeof AidsOperationsRoute
   '/aids/staff': typeof AidsStaffRoute
   '/aids/suppliers': typeof AidsSuppliersRoute
+  '/aids/weights': typeof AidsWeightsRoute
   '/aids/': typeof AidsIndexRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
@@ -318,6 +327,7 @@ export interface FileRouteTypes {
     | '/aids/operations'
     | '/aids/staff'
     | '/aids/suppliers'
+    | '/aids/weights'
     | '/aids/'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/aids/operations'
     | '/aids/staff'
     | '/aids/suppliers'
+    | '/aids/weights'
     | '/aids'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/aids/operations'
     | '/aids/staff'
     | '/aids/suppliers'
+    | '/aids/weights'
     | '/aids/'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
@@ -567,6 +579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AidsIndexRouteImport
       parentRoute: typeof AidsRoute
     }
+    '/aids/weights': {
+      id: '/aids/weights'
+      path: '/weights'
+      fullPath: '/aids/weights'
+      preLoaderRoute: typeof AidsWeightsRouteImport
+      parentRoute: typeof AidsRoute
+    }
     '/aids/suppliers': {
       id: '/aids/suppliers'
       path: '/suppliers'
@@ -645,6 +664,7 @@ interface AidsRouteChildren {
   AidsOperationsRoute: typeof AidsOperationsRoute
   AidsStaffRoute: typeof AidsStaffRoute
   AidsSuppliersRoute: typeof AidsSuppliersRoute
+  AidsWeightsRoute: typeof AidsWeightsRoute
   AidsIndexRoute: typeof AidsIndexRoute
 }
 
@@ -653,6 +673,7 @@ const AidsRouteChildren: AidsRouteChildren = {
   AidsOperationsRoute: AidsOperationsRoute,
   AidsStaffRoute: AidsStaffRoute,
   AidsSuppliersRoute: AidsSuppliersRoute,
+  AidsWeightsRoute: AidsWeightsRoute,
   AidsIndexRoute: AidsIndexRoute,
 }
 
