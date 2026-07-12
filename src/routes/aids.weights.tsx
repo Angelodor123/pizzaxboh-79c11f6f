@@ -338,20 +338,42 @@ function WeightsPage() {
 
             <div>
               <label className="block text-xs text-muted-foreground mb-1">
-                משקל בגרמים
+                משקל {modalUnit === "ק״ג" ? "בק״ג" : "בגרמים"}
               </label>
               <input
                 type="number"
                 value={modalWeight}
                 onChange={(e) => setModalWeight(e.target.value)}
-                min={1}
+                min={modalUnit === "ק״ג" ? 0.001 : 1}
                 max={99999}
-                step={1}
+                step={modalUnit === "ק״ג" ? 0.001 : 1}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
               />
             </div>
 
             <div>
+              <label className="block text-xs text-muted-foreground mb-1">
+                יחידת משקל
+              </label>
+              <div className="flex gap-2">
+                {(["גרם", "ק״ג"] as const).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setModalUnit(u)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-bold border transition flex-1 text-center ${
+                      modalUnit === u
+                        ? "bg-neon/10 border-neon text-neon"
+                        : "border-border text-muted-foreground hover:border-neon/50"
+                    }`}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+
               <label className="block text-xs text-muted-foreground mb-1">
                 הערות (אופציונלי)
               </label>
