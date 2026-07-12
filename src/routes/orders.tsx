@@ -187,31 +187,39 @@ function OrdersPage() {
         <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {grid.map((s) => {
             const logo = resolveSupplierLogo(s.name, s.logo_url);
+            const shortCount = supplierShortageMap[s.id] ?? 0;
             return (
-              <button
-                key={s.id}
-                onClick={() => setSelected(s)}
-                className="group min-w-0 rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
-              >
-                <div className="h-32 w-full flex items-center justify-center p-4 rounded-t-lg bg-zinc-800/50">
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={s.name}
-                      width={80}
-                      height={80}
-                      className="object-contain max-h-full max-w-full transition group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Truck className="h-12 w-12 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="p-3">
-                  <div className="font-bold text-sm leading-tight truncate">{s.name}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{s.category}</div>
-                </div>
-              </button>
+              <div key={s.id} className="relative">
+                {shortCount > 0 && (
+                  <span
+                    className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-amber-500 border-2 border-card z-10"
+                    title={`${shortCount} חוסרים פתוחים`}
+                  />
+                )}
+                <button
+                  onClick={() => setSelected(s)}
+                  className="group w-full min-w-0 rounded-xl border border-border bg-card overflow-hidden text-center transition hover:border-neon hover:shadow-[0_0_0_3px_color-mix(in_oklab,var(--neon)_30%,transparent)] hover:scale-[1.03] active:scale-95"
+                >
+                  <div className="h-32 w-full flex items-center justify-center p-4 rounded-t-lg bg-zinc-800/50">
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={s.name}
+                        width={80}
+                        height={80}
+                        className="object-contain max-h-full max-w-full transition group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Truck className="h-12 w-12 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <div className="font-bold text-sm leading-tight truncate">{s.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{s.category}</div>
+                  </div>
+                </button>
+              </div>
             );
           })}
         </div>
