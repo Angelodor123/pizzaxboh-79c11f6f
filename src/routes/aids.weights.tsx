@@ -374,6 +374,7 @@ function WeightsPage() {
             </div>
 
 
+            <div>
               <label className="block text-xs text-muted-foreground mb-1">
                 הערות (אופציונלי)
               </label>
@@ -388,15 +389,15 @@ function WeightsPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">תחולה</label>
+              <label className="block text-xs text-muted-foreground mb-1">סניף</label>
               <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => setModalBranchScope("all")}
-                  className={`rounded-md border px-3 py-2 text-sm text-right ${
+                  className={`w-full rounded-lg py-2.5 px-4 text-sm font-bold border-2 text-center transition ${
                     modalBranchScope === "all"
                       ? "bg-neon/10 border-neon text-neon"
-                      : "border-border text-muted-foreground"
+                      : "border-border text-muted-foreground hover:border-neon/50"
                   }`}
                 >
                   כל הסניפים
@@ -404,10 +405,10 @@ function WeightsPage() {
                 <button
                   type="button"
                   onClick={() => setModalBranchScope("branch")}
-                  className={`rounded-md border px-3 py-2 text-sm text-right ${
+                  className={`w-full rounded-lg py-2.5 px-4 text-sm font-bold border-2 text-center transition ${
                     modalBranchScope === "branch"
                       ? "bg-neon/10 border-neon text-neon"
-                      : "border-border text-muted-foreground"
+                      : "border-border text-muted-foreground hover:border-neon/50"
                   }`}
                 >
                   סניף ספציפי
@@ -428,6 +429,7 @@ function WeightsPage() {
                 )}
               </div>
             </div>
+
 
             <button
               type="button"
