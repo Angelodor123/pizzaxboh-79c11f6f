@@ -127,7 +127,9 @@ function NotebookPage() {
         ))}
       </div>
     </div>
+    </PullToRefresh>
   );
+
 }
 
 function buildShareText(cfg: ListConfig, items: NotebookItem[]): string {
