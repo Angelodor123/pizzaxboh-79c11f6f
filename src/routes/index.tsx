@@ -344,30 +344,6 @@ function OperationalDashboard() {
         <CurrentShiftProgressCard done={shiftDone} total={shiftTotal} pct={shiftPct} shiftName={shiftName} />
       </div>
 
-      {/* Next action strip */}
-      {(() => {
-        const iconCls = "h-5 w-5 shrink-0";
-        const textCls = "text-sm font-bold flex-1";
-        const wrapCls = "rounded-xl border border-border bg-card/40 px-4 py-3 flex items-center gap-3 mb-4";
-        let content: React.ReactNode = null;
-        let to: string | null = null;
-        if (shiftCtx.shiftPeriod === "morning" && prepOpenCount > 0) {
-          to = "/prep";
-          content = (<><ChefHat className={`${iconCls} text-orange-400`} /><span className={textCls}>יש {prepOpenCount} הכנות שממתינות</span></>);
-        } else if (shortagesCount > 0) {
-          to = "/notebook";
-          content = (<><AlertTriangle className={`${iconCls} text-amber-400`} /><span className={textCls}>יש {shortagesCount} חוסרים פתוחים</span></>);
-        }
-        if (!content) return null;
-        return to ? (
-          <Link to={to} className={wrapCls}>
-            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-            {content}
-          </Link>
-        ) : (
-          <div className={wrapCls}>{content}</div>
-        );
-      })()}
 
 
       {/* Quick-access notebook */}
