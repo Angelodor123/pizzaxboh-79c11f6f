@@ -20,6 +20,7 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as MyProfileRouteImport } from './routes/my-profile'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -38,7 +39,11 @@ import { Route as AidsOperationsRouteImport } from './routes/aids.operations'
 import { Route as AidsContactsRouteImport } from './routes/aids.contacts'
 import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AdminSettingsEquipmentRouteImport } from './routes/admin.settings.equipment'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksDoughAlertRouteImport } from './routes/api/public/hooks/dough-alert'
 
 const TasksRoute = TasksRouteImport.update({
@@ -94,6 +99,11 @@ const NotebookRoute = NotebookRouteImport.update({
 const MyProfileRoute = MyProfileRouteImport.update({
   id: '/my-profile',
   path: '/my-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MaintenanceRoute = MaintenanceRouteImport.update({
@@ -186,10 +196,33 @@ const AdminAlertsRoute = AdminAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => AdminRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminSettingsEquipmentRoute = AdminSettingsEquipmentRouteImport.update({
   id: '/settings/equipment',
   path: '/settings/equipment',
   getParentRoute: () => AdminRoute,
+} as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksDoughAlertRoute =
   ApiPublicHooksDoughAlertRouteImport.update({
@@ -209,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
+  '/mcp': typeof McpRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/notifications': typeof NotificationsRoute
@@ -220,6 +254,8 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/aids/contacts': typeof AidsContactsRoute
@@ -228,6 +264,8 @@ export interface FileRoutesByFullPath {
   '/aids/suppliers': typeof AidsSuppliersRoute
   '/aids/weights': typeof AidsWeightsRoute
   '/aids/': typeof AidsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
@@ -241,6 +279,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
+  '/mcp': typeof McpRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/notifications': typeof NotificationsRoute
@@ -252,6 +291,8 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/aids/contacts': typeof AidsContactsRoute
@@ -260,6 +301,8 @@ export interface FileRoutesByTo {
   '/aids/suppliers': typeof AidsSuppliersRoute
   '/aids/weights': typeof AidsWeightsRoute
   '/aids': typeof AidsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
@@ -275,6 +318,7 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/invoices': typeof InvoicesRoute
   '/maintenance': typeof MaintenanceRoute
+  '/mcp': typeof McpRoute
   '/my-profile': typeof MyProfileRoute
   '/notebook': typeof NotebookRoute
   '/notifications': typeof NotificationsRoute
@@ -286,6 +330,8 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suppliers': typeof SuppliersRoute
   '/tasks': typeof TasksRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/history': typeof AdminHistoryRoute
   '/aids/contacts': typeof AidsContactsRoute
@@ -294,6 +340,8 @@ export interface FileRoutesById {
   '/aids/suppliers': typeof AidsSuppliersRoute
   '/aids/weights': typeof AidsWeightsRoute
   '/aids/': typeof AidsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/settings/equipment': typeof AdminSettingsEquipmentRoute
   '/api/public/hooks/dough-alert': typeof ApiPublicHooksDoughAlertRoute
 }
@@ -310,6 +358,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/invoices'
     | '/maintenance'
+    | '/mcp'
     | '/my-profile'
     | '/notebook'
     | '/notifications'
@@ -321,6 +370,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/suppliers'
     | '/tasks'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/alerts'
     | '/admin/history'
     | '/aids/contacts'
@@ -329,6 +380,8 @@ export interface FileRouteTypes {
     | '/aids/suppliers'
     | '/aids/weights'
     | '/aids/'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
   fileRoutesByTo: FileRoutesByTo
@@ -342,6 +395,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/invoices'
     | '/maintenance'
+    | '/mcp'
     | '/my-profile'
     | '/notebook'
     | '/notifications'
@@ -353,6 +407,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/suppliers'
     | '/tasks'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/alerts'
     | '/admin/history'
     | '/aids/contacts'
@@ -361,6 +417,8 @@ export interface FileRouteTypes {
     | '/aids/suppliers'
     | '/aids/weights'
     | '/aids'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
   id:
@@ -375,6 +433,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/invoices'
     | '/maintenance'
+    | '/mcp'
     | '/my-profile'
     | '/notebook'
     | '/notifications'
@@ -386,6 +445,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/suppliers'
     | '/tasks'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/alerts'
     | '/admin/history'
     | '/aids/contacts'
@@ -394,6 +455,8 @@ export interface FileRouteTypes {
     | '/aids/suppliers'
     | '/aids/weights'
     | '/aids/'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/admin/settings/equipment'
     | '/api/public/hooks/dough-alert'
   fileRoutesById: FileRoutesById
@@ -409,6 +472,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   InvoicesRoute: typeof InvoicesRoute
   MaintenanceRoute: typeof MaintenanceRoute
+  McpRoute: typeof McpRoute
   MyProfileRoute: typeof MyProfileRoute
   NotebookRoute: typeof NotebookRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -420,6 +484,10 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuppliersRoute: typeof SuppliersRoute
   TasksRoute: typeof TasksRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicHooksDoughAlertRoute: typeof ApiPublicHooksDoughAlertRoute
 }
 
@@ -500,6 +568,13 @@ declare module '@tanstack/react-router' {
       path: '/my-profile'
       fullPath: '/my-profile'
       preLoaderRoute: typeof MyProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/maintenance': {
@@ -628,12 +703,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAlertsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/settings/equipment': {
       id: '/admin/settings/equipment'
       path: '/settings/equipment'
       fullPath: '/admin/settings/equipment'
       preLoaderRoute: typeof AdminSettingsEquipmentRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/dough-alert': {
       id: '/api/public/hooks/dough-alert'
@@ -690,6 +793,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   InvoicesRoute: InvoicesRoute,
   MaintenanceRoute: MaintenanceRoute,
+  McpRoute: McpRoute,
   MyProfileRoute: MyProfileRoute,
   NotebookRoute: NotebookRoute,
   NotificationsRoute: NotificationsRoute,
@@ -701,6 +805,11 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SuppliersRoute: SuppliersRoute,
   TasksRoute: TasksRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicHooksDoughAlertRoute: ApiPublicHooksDoughAlertRoute,
 }
 export const routeTree = rootRouteImport

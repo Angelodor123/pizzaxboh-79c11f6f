@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://kilsuzlhnyacntvlcsdg.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "pizzaxboh-mcp",
+      "version": "0.1.0",
+      "title": "PizzaXBoh"
+    },
+    "tools": [
+      {
+        "name": "list_open_shortages",
+        "title": "רשימת חוסרים פתוחים",
+        "description": "Return open (not completed) shortage items across branches the signed-in user has access to. RLS scopes the result to that user.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max rows to return (default 50).",
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_personal_tasks",
+        "title": "רשימת משימות אישיות",
+        "description": "List the signed-in user's personal tasks. Optionally filter to only open (not completed) tasks.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "only_open": {
+              "description": "If true, return only tasks that are not completed.",
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_personal_task",
+        "title": "יצירת משימה אישית",
+        "description": "Create a new personal task for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Task title."
+            },
+            "is_urgent": {
+              "description": "Mark as urgent (flame).",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
