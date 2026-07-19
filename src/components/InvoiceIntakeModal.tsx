@@ -359,6 +359,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   }, [totalAmount]);
   // total_amount is OPTIONAL — delivery notes (תעודת משלוח) often have no prices.
   // Only supplier + date are required.
+  const supplierName = useMemo(() => suppliers.find((s) => s.id === supplierId)?.name ?? "", [suppliers, supplierId]);
+  const totalRequired = !/בנדיקט|benedict/i.test(supplierName);
   const formValid = !!supplierId && !!docDate;
 
   const fileToDataUrl = (f: File): Promise<string> =>
