@@ -534,12 +534,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   // Training-only: all header fields + all items must be resolved (approved or corrected).
   const allValidated = useMemo(() => {
-    const headerOk = (Object.values(headerVal) as ValState[]).every((s) => s !== "pending");
+    const entries = Object.entries(headerVal) as [HeaderKey, ValState][];
+    const headerOk = entries.every(([k, s]) => (!totalRequired && k === "total_amount") || s !== "pending");
     const itemsOk = itemVal.length > 0 && itemVal.every((s) => s !== "pending");
     return headerOk && itemsOk;
-  }, [headerVal, itemVal]);
+  }, [headerVal, itemVal, totalRequired]);
   const pendingCount = useMemo(() => {
-    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "pending").length;
+    const entries = Object.entries(headerVal) as [HeaderKey, ValState][];
+    const h = entries.filter(([k, s]) => s === "pending" && !(!totalRequired && k === "total_amount")).length;
     const it = itemVal.filter((s) => s === "pending").length;
     return h + it;
   }, [headerVal, itemVal]);
