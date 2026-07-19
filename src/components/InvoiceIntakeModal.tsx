@@ -968,7 +968,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-muted-foreground">
-                  סכום כולל ₪ <span className="text-destructive">*</span>
+                  סכום כולל ₪ {totalRequired && <span className="text-destructive">*</span>}
                 </label>
                 {trainingMode && (
                   <ValBtns
