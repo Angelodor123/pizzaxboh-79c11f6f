@@ -23,7 +23,7 @@ const optionalString = (max: number, label: string) =>
 
 const optionalNumber = (label: string, opts: { min?: number; max?: number } = {}) =>
   z
-    .number({ invalid_type_error: `${label} חייב להיות מספר` })
+    .number({ error: `${label} חייב להיות מספר` })
     .finite()
     .refine((v) => opts.min === undefined || v >= opts.min, {
       message: `${label} חייב להיות לפחות ${opts.min}`,
@@ -42,7 +42,7 @@ export const supplierProductSchema = z.object({
   unit_size: optionalString(50, "גודל יחידה"),
   unit: trimmed(20, "יחידת מידה").default(""),
   default_qty: z
-    .number({ invalid_type_error: "כמות ברירת מחדל חייבת להיות מספר" })
+    .number({ error: "כמות ברירת מחדל חייבת להיות מספר" })
     .min(0, { message: "כמות לא יכולה להיות שלילית" })
     .max(100000, { message: "כמות גבוהה מדי" }),
   price: optionalNumber("מחיר", { min: 0, max: 1000000 }),
@@ -93,7 +93,7 @@ export const receivingHeaderSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "תאריך לא תקין" }),
   total_amount: z
-    .number({ invalid_type_error: "סכום חייב להיות מספר" })
+    .number({ error: "סכום חייב להיות מספר" })
     .positive({ message: "הסכום חייב להיות גדול מאפס" })
     .max(10000000, { message: "סכום גבוה מדי" }),
 });
