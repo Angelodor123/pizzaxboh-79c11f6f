@@ -483,11 +483,12 @@ function AuthedShell() {
             <GuidedTour />
           </Suspense>
         </ErrorBoundary>
-        <ErrorBoundary fallback={() => null}>
+        {/* גוני (העוזר החכם) הוסתר זמנית — הקוד נשמר ב-CopilotFab.tsx */}
+        {/* <ErrorBoundary fallback={() => null}>
           <Suspense fallback={null}>
             <CopilotFab />
           </Suspense>
-        </ErrorBoundary>
+        </ErrorBoundary> */}
         <CriticalMaintenanceInterceptor />
         {showQuickBack && <QuickBackBubble />}
         {showShortcutLegend && (
