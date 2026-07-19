@@ -984,7 +984,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 inputMode="decimal"
                 value={totalAmount}
                 onChange={(e) => { setTotalAmount(e.target.value); if (trainingMode) markHeaderEdited("total_amount"); }}
-                required
+                required={totalRequired}
                 className={`w-full h-11 rounded-md bg-background border-2 px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums ${trainingMode ? valBorder(headerVal.total_amount) : "border-border"}`}
               />
             </div>
