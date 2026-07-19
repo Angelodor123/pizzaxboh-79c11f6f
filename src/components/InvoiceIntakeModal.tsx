@@ -359,6 +359,8 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
   }, [totalAmount]);
   // total_amount is OPTIONAL — delivery notes (תעודת משלוח) often have no prices.
   // Only supplier + date are required.
+  const supplierName = useMemo(() => suppliers.find((s) => s.id === supplierId)?.name ?? "", [suppliers, supplierId]);
+  const totalRequired = !/בנדיקט|benedict/i.test(supplierName);
   const formValid = !!supplierId && !!docDate;
 
   const fileToDataUrl = (f: File): Promise<string> =>
@@ -532,12 +534,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
 
   // Training-only: all header fields + all items must be resolved (approved or corrected).
   const allValidated = useMemo(() => {
-    const headerOk = (Object.values(headerVal) as ValState[]).every((s) => s !== "pending");
+    const entries = Object.entries(headerVal) as [HeaderKey, ValState][];
+    const headerOk = entries.every(([k, s]) => (!totalRequired && k === "total_amount") || s !== "pending");
     const itemsOk = itemVal.length > 0 && itemVal.every((s) => s !== "pending");
     return headerOk && itemsOk;
-  }, [headerVal, itemVal]);
+  }, [headerVal, itemVal, totalRequired]);
   const pendingCount = useMemo(() => {
-    const h = (Object.values(headerVal) as ValState[]).filter((s) => s === "pending").length;
+    const entries = Object.entries(headerVal) as [HeaderKey, ValState][];
+    const h = entries.filter(([k, s]) => s === "pending" && !(!totalRequired && k === "total_amount")).length;
     const it = itemVal.filter((s) => s === "pending").length;
     return h + it;
   }, [headerVal, itemVal]);
@@ -964,7 +968,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-muted-foreground">
-                  סכום כולל ₪ <span className="text-destructive">*</span>
+                  סכום כולל ₪ {totalRequired && <span className="text-destructive">*</span>}
                 </label>
                 {trainingMode && (
                   <ValBtns
@@ -980,7 +984,7 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                 inputMode="decimal"
                 value={totalAmount}
                 onChange={(e) => { setTotalAmount(e.target.value); if (trainingMode) markHeaderEdited("total_amount"); }}
-                required
+                required={totalRequired}
                 className={`w-full h-11 rounded-md bg-background border-2 px-2.5 text-base font-bold focus:border-neon outline-none tabular-nums ${trainingMode ? valBorder(headerVal.total_amount) : "border-border"}`}
               />
             </div>
