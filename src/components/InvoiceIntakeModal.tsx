@@ -514,6 +514,23 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     setItems((p) => p.map((row, idx) => {
       if (idx !== i) return row;
       const next: ItemRow = { ...row, [k]: v };
+      // Manual override of the total → back-derive unit price = total / quantity,
+      // treat as no discount so the math stays consistent (base = net = total/qty).
+      if (k === "total_price") {
+        const totalN = Number(v) || 0;
+        const qtyN = Number(next.quantity) || 0;
+        if (totalN > 0 && qtyN > 0) {
+          const unit = totalN / qtyN;
+          return {
+            ...next,
+            base_unit_price: fmt2(unit),
+            unit_price: fmt2(unit),
+            discount: "",
+            total_price: v,
+          };
+        }
+        return next;
+      }
       if (k === "base_unit_price" || k === "discount" || k === "quantity") {
         return recalcRow(next);
       }
