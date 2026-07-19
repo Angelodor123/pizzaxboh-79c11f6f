@@ -514,6 +514,23 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
     setItems((p) => p.map((row, idx) => {
       if (idx !== i) return row;
       const next: ItemRow = { ...row, [k]: v };
+      // Manual override of the total → back-derive unit price = total / quantity,
+      // treat as no discount so the math stays consistent (base = net = total/qty).
+      if (k === "total_price") {
+        const totalN = Number(v) || 0;
+        const qtyN = Number(next.quantity) || 0;
+        if (totalN > 0 && qtyN > 0) {
+          const unit = totalN / qtyN;
+          return {
+            ...next,
+            base_unit_price: fmt2(unit),
+            unit_price: fmt2(unit),
+            discount: "",
+            total_price: v,
+          };
+        }
+        return next;
+      }
       if (k === "base_unit_price" || k === "discount" || k === "quantity") {
         return recalcRow(next);
       }
@@ -1093,12 +1110,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">סה״כ ₪</label>
-                          <div
-                            className="w-full h-10 rounded-md border-2 border-border bg-zinc-900/40 px-1 text-sm text-center tabular-nums font-bold text-neon flex items-center justify-center"
-                            title="מחושב: כמות × נטו ליחידה"
-                          >
-                            {totalN > 0 ? totalN.toFixed(2) : "—"}
-                          </div>
+                          <input
+                            value={row.total_price}
+                            onChange={(e) => updateItem(i, "total_price", e.target.value)}
+                            className="w-full h-10 rounded-md border-2 border-border bg-background px-1 text-sm text-center tabular-nums font-bold text-neon focus:border-neon outline-none"
+                            inputMode="decimal"
+                            placeholder={totalN > 0 ? totalN.toFixed(2) : "0.00"}
+                            title="הזן ידנית או השאר לחישוב אוטומטי (כמות × נטו ליחידה)"
+                          />
                         </div>
                       </div>
                     </div>
