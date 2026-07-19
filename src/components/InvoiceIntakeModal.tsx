@@ -1110,12 +1110,14 @@ export function InvoiceIntakeModal({ suppliers, onClose, onSaved, editInvoice = 
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-0.5 text-center">סה״כ ₪</label>
-                          <div
-                            className="w-full h-10 rounded-md border-2 border-border bg-zinc-900/40 px-1 text-sm text-center tabular-nums font-bold text-neon flex items-center justify-center"
-                            title="מחושב: כמות × נטו ליחידה"
-                          >
-                            {totalN > 0 ? totalN.toFixed(2) : "—"}
-                          </div>
+                          <input
+                            value={row.total_price}
+                            onChange={(e) => updateItem(i, "total_price", e.target.value)}
+                            className="w-full h-10 rounded-md border-2 border-border bg-background px-1 text-sm text-center tabular-nums font-bold text-neon focus:border-neon outline-none"
+                            inputMode="decimal"
+                            placeholder={totalN > 0 ? totalN.toFixed(2) : "0.00"}
+                            title="הזן ידנית או השאר לחישוב אוטומטי (כמות × נטו ליחידה)"
+                          />
                         </div>
                       </div>
                     </div>
